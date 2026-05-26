@@ -9,6 +9,10 @@ export * from "./common/registry";
 // Feature-specific types
 export * from "./features/auth";
 export * from "./features/demo/book";
+export * from "./features/vocabulary/language";
+export * from "./features/vocabulary/level";
+export * from "./features/vocabulary/representation";
+export * from "./features/vocabulary/meaning";
 export * from "./features/menu/module";
 export * from "./features/menu/module_group";
 export * from "./features/rbac/permission";
