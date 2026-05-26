@@ -7,6 +7,7 @@ import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
+import LibraryPage from "@/pages/student/LibraryPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import type { ComponentType } from "react";
@@ -23,6 +24,7 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
+  { path: "/library", component: LibraryPage, requiredPermission: "FOLDER_READ" },
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },

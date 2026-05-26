@@ -9,6 +9,9 @@ export * from "./common/registry";
 // Feature-specific types
 export * from "./features/auth";
 export * from "./features/demo/book";
+export * from "./features/library/folder";
+export * from "./features/library/deck";
+export * from "./features/library/tag";
 export * from "./features/menu/module";
 export * from "./features/menu/module_group";
 export * from "./features/rbac/permission";
