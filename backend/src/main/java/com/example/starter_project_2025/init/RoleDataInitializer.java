@@ -45,15 +45,19 @@ public class RoleDataInitializer implements CommandLineRunner {
 
         upsertRole(
                 STUDENT_ROLE,
-                "Student with read access to decks and full control over personal folders and favorites",
+                "Student with read access to decks and full control over personal folders, favorites, and quizlet study",
                 findPermissions(
                         "MENU_READ",
                         "BOOK_READ",
-                        "DECK_READ","DECK_CREATE", "DECK_UPDATE", "DECK_DELETE",
+                        "DECK_READ", "DECK_CREATE", "DECK_UPDATE", "DECK_DELETE",
                         "DECK_ITEM_READ",
                         "FLASHCARD_READ",
                         "FOLDER_CREATE", "FOLDER_READ", "FOLDER_UPDATE", "FOLDER_DELETE",
-                        "FAVORITE_DECK_CREATE", "FAVORITE_DECK_READ", "FAVORITE_DECK_DELETE"
+                        "FAVORITE_DECK_CREATE", "FAVORITE_DECK_READ", "FAVORITE_DECK_DELETE",
+                        "QUIZLET_CARD_PROGRESS_READ", "QUIZLET_CARD_PROGRESS_CREATE", "QUIZLET_CARD_PROGRESS_UPDATE", "QUIZLET_CARD_PROGRESS_DELETE",
+                        "QUIZLET_STUDY_SESSION_READ", "QUIZLET_STUDY_SESSION_CREATE", "QUIZLET_STUDY_SESSION_UPDATE", "QUIZLET_STUDY_SESSION_DELETE",
+                        "QUIZLET_SESSION_ITEM_READ", "QUIZLET_SESSION_ITEM_CREATE", "QUIZLET_SESSION_ITEM_UPDATE", "QUIZLET_SESSION_ITEM_DELETE",
+                        "QUIZLET_STUDY_LOG_READ", "QUIZLET_STUDY_LOG_CREATE", "QUIZLET_STUDY_LOG_UPDATE", "QUIZLET_STUDY_LOG_DELETE"
                 )
         );
 
