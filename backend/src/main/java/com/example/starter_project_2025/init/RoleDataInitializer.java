@@ -45,8 +45,16 @@ public class RoleDataInitializer implements CommandLineRunner {
 
         upsertRole(
                 STUDENT_ROLE,
-                "Student with read-only access to books",
-                findPermissions("MENU_READ", "BOOK_READ")
+                "Student with read access to decks and full control over personal folders and favorites",
+                findPermissions(
+                        "MENU_READ",
+                        "BOOK_READ",
+                        "DECK_READ",
+                        "DECK_ITEM_READ",
+                        "FLASHCARD_READ",
+                        "FOLDER_CREATE", "FOLDER_READ", "FOLDER_UPDATE", "FOLDER_DELETE",
+                        "FAVORITE_DECK_CREATE", "FAVORITE_DECK_READ", "FAVORITE_DECK_DELETE"
+                )
         );
 
         upsertRole(
