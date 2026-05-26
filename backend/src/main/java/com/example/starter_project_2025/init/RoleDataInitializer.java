@@ -49,7 +49,7 @@ public class RoleDataInitializer implements CommandLineRunner {
                 findPermissions(
                         "MENU_READ",
                         "BOOK_READ",
-                        "DECK_READ",
+                        "DECK_READ","DECK_CREATE", "DECK_UPDATE", "DECK_DELETE",
                         "DECK_ITEM_READ",
                         "FLASHCARD_READ",
                         "FOLDER_CREATE", "FOLDER_READ", "FOLDER_UPDATE", "FOLDER_DELETE",
