@@ -12,6 +12,8 @@ export * from "./features/demo/book";
 export * from "./features/library/folder";
 export * from "./features/library/deck";
 export * from "./features/library/tag";
+export * from "./features/library/flashcard";
+export * from "./features/library/deck_item";
 export * from "./features/menu/module";
 export * from "./features/menu/module_group";
 export * from "./features/rbac/permission";
