@@ -53,4 +53,18 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     protected Long updatedBy;
+
+    /**
+     * Enforce defaults for flag/version columns before persisting.
+     * Needed because MapStruct's generated {@code toEntity(dto)} calls the no-args
+     * constructor (which honors field initializers) and then overwrites these
+     * fields from the (typically null) DTO values, dropping the initializers.
+     * BaseDTO marks isDeleted/version as read-only, so they always arrive null.
+     */
+    @PrePersist
+    protected void applyDefaultsBeforePersist() {
+        if (isActive == null)  isActive = Boolean.TRUE;
+        if (isDeleted == null) isDeleted = Boolean.FALSE;
+        if (version == null)   version = 0L;
+    }
 }
