@@ -63,6 +63,7 @@ public class SecurityConfig {
             "/api/meta/**",
             "/api/i18n/**",
             "/api/files/**",
+            "/api/public/**",
             "/h2-console/**"
     };
 
