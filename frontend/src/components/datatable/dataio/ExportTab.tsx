@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
+import { logger } from "@/lib/logger";
 import type { FileFormat } from "@/types";
 import {
   Download,
@@ -46,7 +47,7 @@ export function ExportTab({ loading, onExport }: ExportTabProps) {
       await onExport(selectedFormat);
       setSelectedFormat(null);
     } catch (error) {
-      console.error("Export error:", error);
+      logger.error("Export error:", error);
     }
   };
 

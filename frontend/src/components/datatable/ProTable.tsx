@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAutoPageSize } from "@/components/datatable/hook/useAutoPageSize";
+import { logger } from "@/lib/logger";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import Loading from "./common/Loading";
@@ -308,7 +309,7 @@ export function ProTable<TData = any>({
                                                             if (target && target.closest("button, a, input, label"))
                                                                 return;
                                                         } catch (err) {
-                                                            console.error("Error checking click target:", err);
+                                                            logger.error("Error checking click target:", err);
                                                         }
                                                         if (onRowClick) onRowClick(row);
                                                     }}

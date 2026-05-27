@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { dashboardApi, type DashboardStats } from "../../../api/features/dashboard.api";
 import { MainLayout } from "../../../components/layout/MainLayout";
 import { usePermissions } from "@/hooks/usePermissions";
+import { logger } from "@/lib/logger";
 
 export const Dashboard: React.FC = () => {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -18,7 +19,7 @@ export const Dashboard: React.FC = () => {
             const data = await dashboardApi.getStats();
             setStats(data);
         } catch (error) {
-            console.error("Error loading dashboard stats:", error);
+            logger.error("Error loading dashboard stats:", error);
         } finally {
             setIsLoading(false);
         }

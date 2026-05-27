@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface ModuleGroupsRepository
+public interface ModuleGroupRepository
         extends BaseCrudRepository<ModuleGroup, Long> {
 
     boolean existsByNameIgnoreCase(String name);
