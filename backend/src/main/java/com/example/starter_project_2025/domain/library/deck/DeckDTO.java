@@ -34,6 +34,8 @@ public class DeckDTO extends BaseDTO {
 
     String visibility;
 
+    String studyMode;
+
     String coverImageUrl;
 
     String sourceLanguage;
