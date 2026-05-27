@@ -1,4 +1,4 @@
-import { representationApi } from "@/api";
+import { levelApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -6,8 +6,8 @@ import {
   type FieldSchema,
 } from "@/types";
 
-const representationSchema: EntitySchema = {
-  entityName: "representation",
+const levelSchema: EntitySchema = {
+  entityName: "level",
   idField: "id",
   fields: [
     {
@@ -28,8 +28,8 @@ const representationSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Representations",
-  path: "/representations",
-  api: representationApi,
-  schema: representationSchema,
+  name: "Levels",
+  path: "/levels",
+  api: levelApi,
+  schema: levelSchema,
 };

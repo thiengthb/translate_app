@@ -27,7 +27,7 @@ const meaningSchema: EntitySchema = {
       label: "Language",
       type: "text",
       sortable: true,
-      editable: false,   // display-only; editing done via languageId
+      editable: false,
     },
     {
       name: "name",

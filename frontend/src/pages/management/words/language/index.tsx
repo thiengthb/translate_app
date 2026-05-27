@@ -1,4 +1,4 @@
-import { levelApi } from "@/api";
+import { languageApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -6,20 +6,20 @@ import {
   type FieldSchema,
 } from "@/types";
 
-const levelSchema: EntitySchema = {
-  entityName: "level",
+const languageSchema: EntitySchema = {
+  entityName: "language",
   idField: "id",
   fields: [
     {
-      name: "name",
-      label: "Name",
+      name: "code",
+      label: "Code",
       type: "text",
       sortable: true,
       bold: true,
     },
     {
-      name: "code",
-      label: "Code",
+      name: "name",
+      label: "Name",
       type: "text",
       sortable: true,
     },
@@ -28,8 +28,8 @@ const levelSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Levels",
-  path: "/levels",
-  api: levelApi,
-  schema: levelSchema,
+  name: "Languages",
+  path: "/languages",
+  api: languageApi,
+  schema: languageSchema,
 };
