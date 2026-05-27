@@ -1,7 +1,10 @@
+import { useSelector } from "react-redux";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import HeaderRight from "@/components/layout/HeaderRight";
 import { SidebarMenu } from "@/components/layout/Sidebar.tsx";
 import DynamicBreadcrumbs from "@/components/layout/DynamicBreadcrumbs.tsx";
+import { GuestLayout } from "@/components/layout/GuestLayout";
+import type { RootState } from "@/store/store";
 
 export function MainLayout({
     children,
@@ -10,6 +13,17 @@ export function MainLayout({
     children: React.ReactNode;
     pathName?: Record<string, string>;
 }) {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+    // Guests visiting public modules use the guest layout
+    if (!isAuthenticated) {
+        return (
+            <GuestLayout>
+                <div className="flex-1 px-6 pb-6 pt-6">{children}</div>
+            </GuestLayout>
+        );
+    }
+
     return (
         <SidebarProvider>
             <SidebarMenu />
