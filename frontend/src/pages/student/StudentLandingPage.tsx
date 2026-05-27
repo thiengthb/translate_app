@@ -41,28 +41,28 @@ export default function StudentLandingPage() {
             <Badge className="bg-sky-600 text-white hover:bg-sky-600">
               {formatRoleLabel(activeRole ?? "STUDENT")}
             </Badge>
-            <Badge variant="secondary" className="bg-white/80 text-slate-700">
+            <Badge variant="secondary" className="bg-background/80 text-foreground">
               Book list only
             </Badge>
           </div>
 
-          <h1 className="max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
+          <h1 className="max-w-3xl text-3xl font-bold leading-tight text-foreground sm:text-4xl">
             Chao mung tro lai, {displayName}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-slate-700 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm text-foreground sm:text-base">
             Day la landing toi gian cho STUDENT. Ban chi duoc truy cap danh sach books de xem thong tin.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             {canReadBooks ? (
-              <Button asChild className="bg-slate-900 text-white hover:bg-slate-800">
+              <Button asChild className="bg-foreground text-background hover:bg-foreground/90">
                 <Link to="/books">
                   Mo danh sach books
                   <ArrowRight className="ml-2 size-4" />
                 </Link>
               </Button>
             ) : (
-              <Button disabled variant="outline" className="border-slate-300 bg-white/80">
+              <Button disabled variant="outline" className="border-border bg-background/80">
                 Khong co quyen BOOK_READ
               </Button>
             )}
@@ -78,14 +78,14 @@ export default function StudentLandingPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.1 + index * 0.08, ease: "easeOut" }}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
               style={{ fontFamily: '"DM Sans", "Segoe UI", sans-serif' }}
             >
-              <div className="inline-flex rounded-xl bg-slate-100 p-2 text-slate-700">
+              <div className="inline-flex rounded-xl bg-muted p-2 text-muted-foreground">
                 <CheckCircle2 className="size-5" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-slate-900">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+              <h3 className="mt-4 text-lg font-semibold text-foreground">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.text}</p>
             </motion.article>
           );
         })}
@@ -95,9 +95,9 @@ export default function StudentLandingPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.45 }}
-        className="mt-6 rounded-2xl border border-slate-200 bg-white p-5"
+        className="mt-6 rounded-2xl border border-border bg-card p-5"
       >
-        <div className="flex items-center gap-3 text-slate-700">
+        <div className="flex items-center gap-3 text-foreground">
           <BookOpen className="size-5" />
           <p className="text-sm">
             Neu can chinh sua noi dung sach, vui long lien he TEACHER hoac ADMIN.

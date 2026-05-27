@@ -27,14 +27,14 @@ export function RowActions({
         <ActionButton
           onClick={() => onView(row)}
           tooltip="View detail"
-          icon={<Eye size={10} className="text-gray-500" />}
+          icon={<Eye size={10} className="text-muted-foreground" />}
         />
       </PermissionGate>
       <PermissionGate permission={editPermission}>
         <ActionButton
           onClick={() => onEdit(row)}
           tooltip="Edit"
-          icon={<Pen size={10} className="text-gray-500" />}
+          icon={<Pen size={10} className="text-muted-foreground" />}
         />
       </PermissionGate>
       <PermissionGate permission={deletePermission}>

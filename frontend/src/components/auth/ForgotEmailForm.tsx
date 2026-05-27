@@ -25,8 +25,8 @@ export const ForgotEmailForm = ({ onSubmit, loading }: ForgotEmailFormProps) => 
     return (
         <div className="p-10 space-y-7">
             <div className="text-center space-y-3">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Forgot Password?</h1>
-                <p className="text-lg text-gray-500">Enter your email to receive a reset link</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Forgot Password?</h1>
+                <p className="text-lg text-muted-foreground">Enter your email to receive a reset link</p>
             </div>
 
             <Form {...form}>
@@ -38,7 +38,7 @@ export const ForgotEmailForm = ({ onSubmit, loading }: ForgotEmailFormProps) => 
                             <FormItem>
                                 <div className="relative">
                                     <Mail
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
                                         size={22}
                                     />
                                     <FormControl>

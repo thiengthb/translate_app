@@ -53,7 +53,7 @@ export default function HeaderRight() {
       <div className="flex items-center gap-3">
         <Badge
           variant="secondary"
-          className="text-sm text-blue-500 bg-blue-100"
+          className="text-sm text-primary bg-primary/15"
         >
           {formatRoleLabel(currentRole)}
         </Badge>
@@ -78,7 +78,7 @@ export default function HeaderRight() {
           onClick={() => setOpen((o) => !o)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer ${isStudentRole
             ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-            : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+            : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15"
             }`}
         >
           {isStudentRole ? (
@@ -94,7 +94,7 @@ export default function HeaderRight() {
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-1.5 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-1.5 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
             {availableRoles.map((availableRole) => {
               const selected = normalizeRole(availableRole) === currentRole;
               const isAssignedRole = assignedRoles.includes(normalizeRole(availableRole));
@@ -104,11 +104,11 @@ export default function HeaderRight() {
                 <button
                   key={availableRole}
                   onClick={() => switchRole(availableRole)}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors cursor-pointer ${selected
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent transition-colors cursor-pointer ${selected
                     ? studentRow
                       ? "text-green-700 font-medium bg-green-50"
-                      : "text-blue-700 font-medium bg-blue-50"
-                    : "text-gray-700"
+                      : "text-primary font-medium bg-primary/10"
+                    : "text-foreground"
                     }`}
                 >
                   {studentRow ? <GraduationCap size={15} /> : <ShieldCheck size={15} />}
@@ -116,7 +116,7 @@ export default function HeaderRight() {
                   {(selected || !isAssignedRole) && (
                     <span className="ml-auto flex items-center gap-2">
                       {selected && (
-                        <span className={`text-xs ${studentRow ? "text-green-500" : "text-blue-500"}`}>
+                        <span className={`text-xs ${studentRow ? "text-green-500" : "text-primary"}`}>
                           ●
                         </span>
                       )}

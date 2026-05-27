@@ -137,7 +137,7 @@ export function ImportTab({ loading, onImport, entityName }: ImportTabProps) {
             flex flex-col items-center justify-center flex-1
             border-2 border-dashed rounded-xl p-8 text-center gap-3
             transition-colors cursor-pointer
-            ${isDragging ? "border-blue-600 bg-blue-50 dark:bg-blue-950" : "border-muted hover:border-primary hover:bg-accent"}
+            ${isDragging ? "border-primary bg-primary/10 dark:bg-primary/20" : "border-muted hover:border-primary hover:bg-accent"}
             ${loading ? "opacity-50 pointer-events-none" : ""}
           `}
           onClick={() => fileInputRef.current?.click()}

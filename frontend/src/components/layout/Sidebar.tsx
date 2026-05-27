@@ -57,12 +57,12 @@ export function SidebarMenu() {
             group-data-[collapsible=icon]:px-0
           "
                 >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-blue-800 text-sm font-semibold text-white">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-sm font-semibold text-primary-foreground">
                         RB
                     </div>
 
                     {state === "expanded" && (
-                        <span className="text-lg font-bold text-blue-800 truncate">RBAC System</span>
+                        <span className="text-lg font-bold text-primary truncate">RBAC System</span>
                     )}
                 </Button>
             </SidebarHeader>
