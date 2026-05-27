@@ -121,6 +121,13 @@ const authSlice = createSlice({
             localStorage.setItem("permissions", JSON.stringify(normalized.permissions));
             localStorage.setItem("rolePermissions", JSON.stringify(normalized.rolePermissions));
         },
+        updateProfile: (state, action: PayloadAction<{ firstName: string; lastName?: string }>) => {
+            const { firstName, lastName } = action.payload;
+            state.firstName = firstName || "";
+            state.lastName = lastName || "";
+            localStorage.setItem("firstName", firstName || "");
+            localStorage.setItem("lastName", lastName || "");
+        },
         setLogout: (state) => {
             state.token = "";
             state.email = "";
@@ -136,5 +143,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { setLogin, setLogout } = authSlice.actions;
+export const { setLogin, setLogout, updateProfile } = authSlice.actions;
 export default authSlice.reducer;

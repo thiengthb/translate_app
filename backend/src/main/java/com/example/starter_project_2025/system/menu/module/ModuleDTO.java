@@ -34,4 +34,6 @@ public class ModuleDTO extends BaseDTO {
     Integer displayOrder;
 
     String requiredPermission;
+
+    Boolean isPublic;
 }
