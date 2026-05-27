@@ -72,6 +72,11 @@ public class Deck extends BaseEntity {
     @Column(length = 20)
     String visibility = "PRIVATE";
 
+    @Builder.Default
+    @Column(name = "study_mode", nullable = false, length = 20)
+    @FieldMeta(label = "Study Mode", type = "select", order = 3, group = "Study", placeholder = "QUIZLET or ANKI")
+    String studyMode = "QUIZLET";
+
     @Column
     String coverImageUrl;
 

@@ -26,8 +26,8 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
-  { path: "/library", component: LibraryPage, requiredPermission: "FOLDER_READ" },
-  { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/library", component: LibraryPage, isModuleDriven: true },
+  { path: "/create-deck", component: CreateDeckPage, isModuleDriven: true },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
