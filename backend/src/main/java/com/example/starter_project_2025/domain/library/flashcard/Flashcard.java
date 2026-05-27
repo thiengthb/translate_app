@@ -9,6 +9,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -28,7 +31,7 @@ import lombok.experimental.SuperBuilder;
 )
 @EntityLabel(name = "Flashcard", plural = "Flashcards", description = "Flashcard management")
 @AutoCrud(path = "flashcards")
-@Searchable(fields = {"front", "back", "hint"})
+@Searchable(fields = {"hint", "explanation"})
 @Filterable(fields = {"cardType", "itemType", "isActive"})
 @Sortable(fields = {"createdAt", "updatedAt"})
 @SoftDelete
@@ -49,25 +52,17 @@ public class Flashcard extends BaseEntity {
     @Column(nullable = false)
     Long itemId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    @FieldMeta(label = "Front", type = "textarea", required = true, order = 1,
-               placeholder = "Enter front content", group = "Basic Info")
-    String front;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    @FieldMeta(label = "Back", type = "textarea", required = true, order = 2,
-               placeholder = "Enter back content", group = "Basic Info")
-    String back;
-
-    @Column
-    String imageUrl;
-
-    @Column
-    String audioUrl;
-
     @Column(columnDefinition = "TEXT")
+    @FieldMeta(label = "Hint", type = "textarea", order = 1,
+               placeholder = "Optional hint", group = "Basic Info")
     String hint;
 
     @Column(columnDefinition = "TEXT")
+    @FieldMeta(label = "Explanation", type = "textarea", order = 2,
+               placeholder = "Optional explanation", group = "Basic Info")
     String explanation;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "flashcard", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<FlashcardSide> sides = new ArrayList<>();
 }
