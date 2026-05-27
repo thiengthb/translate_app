@@ -47,8 +47,8 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-[#f9fafb] p-6">
-            <div className="w-full max-w-lg overflow-hidden bg-white shadow-2xl rounded-[32px] border border-gray-100">
+        <div className="flex min-h-screen items-center justify-center bg-background p-6">
+            <div className="w-full max-w-lg overflow-hidden bg-card shadow-2xl rounded-[32px] border border-border">
                 {!token ? (
                     <ForgotEmailForm onSubmit={onForgotPasswordSubmit} loading={loading} />
                 ) : (

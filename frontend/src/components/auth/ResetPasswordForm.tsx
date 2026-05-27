@@ -35,8 +35,8 @@ export const ResetPasswordForm = ({ onSubmit, loading }: ResetPasswordFormProps)
     return (
         <div className="p-10 space-y-7">
             <div className="text-center space-y-3">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">New Password</h1>
-                <p className="text-lg text-gray-500">Please enter your new secure password</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-foreground">New Password</h1>
+                <p className="text-lg text-muted-foreground">Please enter your new secure password</p>
             </div>
 
             <Form {...form}>

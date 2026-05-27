@@ -2,6 +2,9 @@ import {SidebarInset, SidebarProvider} from "@/components/ui/sidebar";
 import HeaderRight from "@/components/layout/HeaderRight";
 import {SidebarMenu} from "@/components/layout/Sidebar.tsx";
 import DynamicBreadcrumbs from "@/components/layout/DynamicBreadcrumbs.tsx";
+import { UserTopNavbar } from "@/components/layout/UserTopNavbar.tsx";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ADMIN_ROLE } from "@/utils/rbac.utils";
 
 export function MainLayout({
                                children,
@@ -10,6 +13,20 @@ export function MainLayout({
     children: React.ReactNode;
     pathName?: Record<string, string>;
 }) {
+    const { activeRole } = usePermissions();
+    const isAdmin = activeRole === ADMIN_ROLE;
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen flex flex-col">
+                <UserTopNavbar />
+                <main className="flex-1 flex flex-col px-6 pb-6 pt-6">
+                    {children}
+                </main>
+            </div>
+        );
+    }
+
     return (
         <SidebarProvider>
             <SidebarMenu />
