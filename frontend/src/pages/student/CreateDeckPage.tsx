@@ -5,7 +5,7 @@ import { deckApi, deckItemApi, flashcardApi } from "@/api";
 import { fileApi } from "@/api/features/file.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { Globe, GripVertical, Image, Lock, Plus, Trash2, X } from "lucide-react";
+import { BookOpen, Brain, Globe, GripVertical, Image, Lock, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 
@@ -33,6 +33,7 @@ export default function CreateDeckPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
+  const [studyMode, setStudyMode] = useState<"QUIZLET" | "ANKI">("QUIZLET");
   const [cards, setCards] = useState<CardDraft[]>([makeCard(), makeCard()]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,6 +71,7 @@ export default function CreateDeckPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         visibility,
+        studyMode,
         totalCards: valid.length,
         isActive: true,
       });
@@ -198,6 +200,70 @@ export default function CreateDeckPage() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                   Only you can see and study this set
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════
+            STUDY MODE
+        ════════════════════════════════ */}
+        <div className="rounded-xl border border-border bg-card shadow-sm p-5 space-y-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Study mode</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Choose how you want to study this deck</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Quizlet option */}
+            <button
+              onClick={() => setStudyMode("QUIZLET")}
+              className={cn(
+                "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                studyMode === "QUIZLET"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/20 hover:bg-accent"
+              )}
+            >
+              <div className={cn(
+                "shrink-0 size-9 rounded-lg flex items-center justify-center mt-0.5",
+                studyMode === "QUIZLET" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <BookOpen className="size-4" />
+              </div>
+              <div>
+                <p className={cn("text-sm font-semibold", studyMode === "QUIZLET" ? "text-primary" : "text-foreground")}>
+                  Quizlet
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Casual flashcard study with flip cards
+                </p>
+              </div>
+            </button>
+
+            {/* Anki option */}
+            <button
+              onClick={() => setStudyMode("ANKI")}
+              className={cn(
+                "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                studyMode === "ANKI"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/20 hover:bg-accent"
+              )}
+            >
+              <div className={cn(
+                "shrink-0 size-9 rounded-lg flex items-center justify-center mt-0.5",
+                studyMode === "ANKI" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <Brain className="size-4" />
+              </div>
+              <div>
+                <p className={cn("text-sm font-semibold", studyMode === "ANKI" ? "text-primary" : "text-foreground")}>
+                  Anki
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Smart scheduling with SM2 spaced repetition
                 </p>
               </div>
             </button>

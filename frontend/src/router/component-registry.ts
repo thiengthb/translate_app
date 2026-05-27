@@ -10,6 +10,7 @@ import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
+import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import type { ComponentType } from "react";
@@ -29,6 +30,7 @@ export const routes: RouteConfig[] = [
   { path: "/library", component: LibraryPage, isModuleDriven: true },
   { path: "/create-deck", component: CreateDeckPage, isModuleDriven: true },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
+  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },

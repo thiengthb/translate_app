@@ -324,7 +324,9 @@ function DeckRow({
   return (
     <div
       className="relative flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-accent group transition-colors cursor-pointer"
-      onClick={() => navigate(`/deck/${deck.id}`)}
+      onClick={() =>
+        navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)
+      }
     >
       {/* Icon */}
       <div className="shrink-0 size-10 rounded-lg bg-gradient-to-br from-chart-1 to-chart-2 flex items-center justify-center shadow-sm">
