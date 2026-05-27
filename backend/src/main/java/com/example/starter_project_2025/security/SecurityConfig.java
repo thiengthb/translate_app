@@ -62,6 +62,7 @@ public class SecurityConfig {
             "/api/auth/**",
             "/api/i18n/**",
             "/api/files/**",
+            "/api/public/**",
             "/h2-console/**"
     };
 

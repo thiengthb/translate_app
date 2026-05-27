@@ -66,15 +66,15 @@ export function ExportTab({ loading, onExport }: ExportTabProps) {
           return (
             <div
               key={option.format}
-              className={`p-3 cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl border-2 ${
+              className={`p-3 cursor-pointer transition-all hover:bg-accent rounded-xl border-2 ${
                 selectedFormat === option.format
-                  ? "bg-gray-200 dark:bg-gray-700 border-primary"
+                  ? "bg-accent border-primary"
                   : "hover:border-primary/50"
               }`}
               onClick={() => setSelectedFormat(option.format)}
             >
               <div className="flex items-center gap-4">
-                <IconComponent className="h-8 w-8 text-gray-500" />
+                <IconComponent className="h-8 w-8 text-muted-foreground" />
                 <div className="flex-1">
                   <h4 className="font-medium text-sm">{option.label}</h4>
                   <p className="text-xs text-muted-foreground">

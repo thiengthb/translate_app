@@ -18,5 +18,7 @@ public interface ModuleRepository extends BaseCrudRepository<Module, Long> {
     boolean existsByUrlAndIdNot(String url, Long id);
 
     List<Module> findByIsActive(Boolean isActive);
+
+    List<Module> findByIsActiveAndIsPublicOrderByDisplayOrderAscTitleAsc(Boolean isActive, Boolean isPublic);
 }
 

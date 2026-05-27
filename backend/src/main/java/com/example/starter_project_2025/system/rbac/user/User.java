@@ -60,6 +60,15 @@ public class User extends BaseEntity {
     @Column(length = 100)
     String lastName;
 
+    @Column(length = 20)
+    String phone;
+
+    @Column(length = 500)
+    String bio;
+
+    @Column(length = 512)
+    String avatarUrl;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @ExportField(name = "Roles", relation = true, path = "name")

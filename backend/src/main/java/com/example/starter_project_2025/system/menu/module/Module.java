@@ -58,4 +58,8 @@ public class Module extends BaseEntity {
 
     @Column(length = 100)
     String requiredPermission;
+
+    @Builder.Default
+    @Column(nullable = false)
+    Boolean isPublic = false;
 }

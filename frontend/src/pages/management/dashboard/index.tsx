@@ -28,14 +28,14 @@ export const Dashboard: React.FC = () => {
     return (
         <MainLayout>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-card rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Users</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-2">
+                            <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                            <p className="text-3xl font-bold text-foreground mt-2">
                                 {isLoading ? "..." : stats?.totalUsers || 0}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">{stats?.activeUsers || 0} active</p>
+                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeUsers || 0} active</p>
                         </div>
                         <div className="text-4xl">
                             <Users />
@@ -43,14 +43,14 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-card rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Roles</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-2">
+                            <p className="text-sm font-medium text-muted-foreground">Total Roles</p>
+                            <p className="text-3xl font-bold text-foreground mt-2">
                                 {isLoading ? "..." : stats?.totalRoles || 0}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">{stats?.activeRoles || 0} active</p>
+                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeRoles || 0} active</p>
                         </div>
                         <div className="text-4xl">
                             <KeyRound />
@@ -58,14 +58,14 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-card rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Menus</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-2">
+                            <p className="text-sm font-medium text-muted-foreground">Total Menus</p>
+                            <p className="text-3xl font-bold text-foreground mt-2">
                                 {isLoading ? "..." : stats?.totalMenus || 0}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">{stats?.activeMenus || 0} active</p>
+                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeMenus || 0} active</p>
                         </div>
                         <div className="text-4xl">
                             <Menu />
@@ -73,14 +73,14 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-card rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Menu Items</p>
-                            <p className="text-3xl font-bold text-gray-900 mt-2">
+                            <p className="text-sm font-medium text-muted-foreground">Menu Items</p>
+                            <p className="text-3xl font-bold text-foreground mt-2">
                                 {isLoading ? "..." : stats?.totalMenuItems || 0}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">Navigation items</p>
+                            <p className="text-sm text-muted-foreground mt-1">Navigation items</p>
                         </div>
                         <div className="text-4xl">
                             <ListChevronsUpDown />
@@ -89,11 +89,11 @@ export const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            <div className="mt-8 bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Permissions</h3>
+            <div className="mt-8 bg-card rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Your Permissions</h3>
                 <div className="flex flex-wrap gap-2">
                     {effectivePermissions.map((permission) => (
-                        <span key={permission} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                        <span key={permission} className="px-3 py-1 bg-primary/15 text-primary text-sm rounded-full">
                             {permission}
                         </span>
                     ))}

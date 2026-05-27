@@ -8,7 +8,9 @@ import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
+import { usePublicModules } from "./hooks/usePublicModules";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
+import LandingPage from "./pages/landing/LandingPage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
 import { routes } from "./router/component-registry";
 import type { RootState } from "./store/store";
@@ -24,6 +26,25 @@ function AppRoutes() {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const { activeRole } = usePermissions();
     const { data: moduleGroups = [] } = useActiveModuleGroups(isAuthenticated);
+    const { data: publicModules = [] } = usePublicModules();
+
+    // Authenticated users go to role home, guests stay on landing page
+    const rootElement = isAuthenticated ? (
+        <Navigate to={getHomePathByRole(activeRole)} replace />
+    ) : (
+        <LandingPage />
+    );
+
+    const componentRegistry = Object.fromEntries(
+        routes.filter((r) => r.isModuleDriven).map((r) => [r.path, r.component]),
+    );
+
+    const staticRoutes = routes.filter((r) => !r.isModuleDriven);
+
+    // Public module URLs — skipped from protected routes
+    const publicModuleUrls = new Set(
+        publicModules.filter((m) => !!m.url).map((m) => m.url as string),
+    );
 
     const homePath = useMemo(
         () => (isAuthenticated ? getHomePathByRole(activeRole) : "/login"),
@@ -32,9 +53,24 @@ function AppRoutes() {
 
     return (
         <Routes>
-            {/* Root redirect */}
-            <Route path="/" element={<Navigate to={homePath} replace />} />
+            <Route path="/" element={rootElement} />
 
+            {/* Public modules — accessible without auth */}
+            {publicModules
+                .filter((m) => !!m.url)
+                .map((m) => {
+                    const Component = componentRegistry[m.url!];
+                    if (!Component) return null;
+                    return (
+                        <Route
+                            key={`public-${m.id}`}
+                            path={m.url!}
+                            element={<Component />}
+                        />
+                    );
+                })}
+
+            {/* Authenticated module routes from backend Module table */}
             {/* Dynamic routes from backend Module table.
                 Resolution order for each module URL:
                   1. File-based entityConfig in src/pages/management/.../<entity>/index.tsx
@@ -44,8 +80,18 @@ function AppRoutes() {
             {moduleGroups.flatMap((group) =>
                 group.modules.map((m) => {
                     if (!m.url) return null;
+                    if (publicModuleUrls.has(m.url)) return null; // already registered above
                     const Component = componentRegistry[m.url];
 
+                    if (!Component) {
+                        return (
+                            <Route
+                                key={`missing-${m.id ?? m.url}`}
+                                path={m.url}
+                                element={<Navigate to="/not-found-page" replace />}
+                            />
+                        );
+                    }
                     const element = Component ? (
                         <Component />
                     ) : (
@@ -87,7 +133,6 @@ function AppRoutes() {
                 );
             })}
 
-            {/* Catch all */}
             <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
     );
@@ -95,6 +140,14 @@ function AppRoutes() {
 
 function App() {
     return (
+        <BrowserRouter>
+            <Toaster
+                duration={1500}
+                position="top-right"
+                richColors
+                toastOptions={{ className: "p-4" }}
+            />
+            <AuthProvider>
         <ErrorBoundary>
             <BrowserRouter>
                 <Toaster

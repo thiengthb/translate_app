@@ -71,7 +71,7 @@ export default function DynamicBreadcrumbs({
 
                             {isLast || !hasPage ? (
                                   <div className={"flex gap-2 items-center"}>
-                                      <Icon className="text-gray-600" />
+                                      <Icon className="text-muted-foreground" />
                                       <BreadcrumbPage className="text-foreground text-2xl font-bold">
                                           {title}
                                       </BreadcrumbPage>
