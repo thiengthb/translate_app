@@ -30,7 +30,7 @@ public class WordKanji extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_word_kanjis_kanji"))
     Kanji kanji;
 
-    @Column(name = "character")
+    @Column(name = "kanji_char")
     String character;
 
     @Column(name = "onyomi", columnDefinition = "text")

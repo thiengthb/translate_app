@@ -21,7 +21,7 @@ import java.util.List;
 @ResourcePermission("KANJI")
 public class Kanji extends BaseEntity {
 
-    @Column(name = "character", nullable = false, unique = true)
+    @Column(name = "kanji_char", nullable = false, unique = true)
     String character;
 
     @Column(name = "onyomi", columnDefinition = "text")

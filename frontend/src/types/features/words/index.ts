@@ -1,5 +1,40 @@
 import type { BaseDTO, BaseFilter } from "@/types/common/base";
 
+// ── Language ───────────────────────────────────────────────────────────
+export interface LanguageDTO extends BaseDTO {
+  code?: string;
+  name?: string;
+}
+
+export interface LanguageFilter extends BaseFilter {}
+
+// ── Level ──────────────────────────────────────────────────────────────
+export interface LevelDTO extends BaseDTO {
+  name?: string;
+  code?: string;
+}
+
+export interface LevelFilter extends BaseFilter {}
+
+// ── Representation ─────────────────────────────────────────────────────
+export interface RepresentationDTO extends BaseDTO {
+  name?: string;
+  code?: string;
+}
+
+export interface RepresentationFilter extends BaseFilter {}
+
+// ── Meaning ────────────────────────────────────────────────────────────
+export interface MeaningDTO extends BaseDTO {
+  languageId?: number;
+  languageName?: string;
+  name?: string;
+}
+
+export interface MeaningFilter extends BaseFilter {
+  languageId?: number;
+}
+
 // ── Word ───────────────────────────────────────────────────────────────
 export interface WordDTO extends BaseDTO {
   representationId?: number;
