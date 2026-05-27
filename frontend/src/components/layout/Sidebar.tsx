@@ -6,16 +6,16 @@ import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { Button } from "@/components/ui/button";
 import { LogOutIcon } from "lucide-react";
 import { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { authApi } from "@/api/features/auth.api";
+import { useLocation } from "react-router-dom";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
+import { useLogout } from "@/hooks/useLogout";
 import { iconMap } from "@/components/datatable/iconMap";
 
 export function SidebarMenu() {
     const location = useLocation();
-    const navigate = useNavigate();
     const { toggleSidebar, state } = useSidebar();
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const handleLogout = useLogout();
 
     const navGroups = useMemo(() => {
         const resolveIcon = (iconName?: string) => {
@@ -84,10 +84,7 @@ export function SidebarMenu() {
                     <Button
                         size="icon"
                         variant="ghost"
-                        onClick={async () => {
-                            await authApi.logout();
-                            navigate("/login");
-                        }}
+                        onClick={handleLogout}
                     >
                         <LogOutIcon className="size-4" />
                     </Button>

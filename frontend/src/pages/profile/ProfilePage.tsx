@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AccountInfoCard } from "./components/AccountInfoCard";
 import { IdentityCard } from "./components/IdentityCard";
+import { LanguageCard } from "./components/LanguageCard";
 import { PersonalInfoCard } from "./components/PersonalInfoCard";
 import { SecurityCard } from "./components/SecurityCard";
 import { useProfile } from "./useProfile";
@@ -28,6 +29,7 @@ export default function ProfilePage() {
                     <PersonalInfoCard profile={profile} onSave={saveInfo} />
                     <AccountInfoCard profile={profile} />
                     <SecurityCard onChangePassword={changePassword} />
+                    <LanguageCard />
                 </div>
             </div>
         </MainLayout>

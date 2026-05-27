@@ -1,71 +1,108 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { i18nApi } from "@/api/features/i18n.api";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
+} from "react";
 
-interface I18nContextType {
-  locale: string;
-  setLocale: (locale: string) => void;
-  t: (key: string, fallback?: string) => string;
-  translations: Record<string, string>;
-  loading: boolean;
+import {
+    DEFAULT_LOCALE,
+    LOCALES,
+    MESSAGES,
+    isLocale,
+    type Locale,
+    type LocaleOption,
+    type MessageKey,
+} from "@/i18n";
+
+const STORAGE_KEY = "app-locale";
+
+/** Parameter bag for placeholder interpolation — `t("key", { name: "..." })`. */
+export type TranslationValues = Record<string, string | number>;
+
+interface I18nContextValue {
+    locale: Locale;
+    setLocale: (next: Locale) => void;
+    locales: readonly LocaleOption[];
+    /**
+     * Resolve a message key against the current catalog.
+     * - Falls back to the English value if a key is missing from the active
+     *   locale (defensive — TS already prevents this, but runtime catalogs
+     *   loaded from outside the bundle would skip the check).
+     * - Falls back to the key itself if both are missing.
+     * - Substitutes `{name}` placeholders with values from `params`.
+     */
+    t: (key: MessageKey, params?: TranslationValues) => string;
 }
 
-const I18nContext = createContext<I18nContextType>({
-  locale: "en",
-  setLocale: () => {},
-  t: (key: string) => key,
-  translations: {},
-  loading: false,
-});
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+function loadInitialLocale(): Locale {
+    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    if (isLocale(stored)) return stored;
+
+    const browser =
+        typeof navigator !== "undefined" ? navigator.language?.split("-")[0] : null;
+    if (isLocale(browser)) return browser;
+
+    return DEFAULT_LOCALE;
+}
+
+function interpolate(template: string, params?: TranslationValues): string {
+    if (!params) return template;
+    return template.replace(/\{(\w+)\}/g, (_, name) => {
+        const value = params[name];
+        return value === undefined ? `{${name}}` : String(value);
+    });
+}
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<string>(
-    () => localStorage.getItem("app-locale") || "en",
-  );
-  const [translations, setTranslations] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+    const [locale, setLocaleState] = useState<Locale>(loadInitialLocale);
 
-  const setLocale = useCallback((newLocale: string) => {
-    setLocaleState(newLocale);
-    localStorage.setItem("app-locale", newLocale);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    i18nApi
-      .getTranslations(locale)
-      .then((data) => {
-        if (!cancelled) {
-          setTranslations(data);
+    const setLocale = useCallback((next: Locale) => {
+        setLocaleState(next);
+        try {
+            localStorage.setItem(STORAGE_KEY, next);
+        } catch {
+            // ignore quota / private-mode errors
         }
-      })
-      .catch(() => {
-        // Translations may not exist yet, use keys as fallback
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    }, []);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [locale]);
+    // Keep `<html lang>` in sync so screen readers + browser features know.
+    useEffect(() => {
+        if (typeof document !== "undefined") {
+            document.documentElement.lang = locale;
+        }
+    }, [locale]);
 
-  const t = useCallback(
-    (key: string, fallback?: string) => {
-      return translations[key] || fallback || key;
-    },
-    [translations],
-  );
+    const t = useCallback(
+        (key: MessageKey, params?: TranslationValues) => {
+            const catalog = MESSAGES[locale] ?? MESSAGES[DEFAULT_LOCALE];
+            const fallback = MESSAGES[DEFAULT_LOCALE];
+            const template = catalog[key] ?? fallback[key] ?? key;
+            return interpolate(template, params);
+        },
+        [locale],
+    );
 
-  return (
-    <I18nContext.Provider value={{ locale, setLocale, t, translations, loading }}>
-      {children}
-    </I18nContext.Provider>
-  );
+    const value = useMemo<I18nContextValue>(
+        () => ({ locale, setLocale, locales: LOCALES, t }),
+        [locale, setLocale, t],
+    );
+
+    return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-export function useI18n() {
-  return useContext(I18nContext);
+export function useTranslation(): I18nContextValue {
+    const ctx = useContext(I18nContext);
+    if (!ctx) {
+        throw new Error("useTranslation must be used inside <I18nProvider>");
+    }
+    return ctx;
 }
+
+// Backwards-compatible alias for older call sites.
+export const useI18n = useTranslation;

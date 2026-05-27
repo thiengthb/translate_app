@@ -15,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { useTranslation } from "@/contexts/I18nContext"
 
 const Form = FormProvider
 
@@ -135,9 +136,20 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
   )
 }
 
+// Translation-aware: if the error message looks like a translation key
+// ("auth.register.email", "common.required", ...) we run it through `t()`.
+// Anything else falls through unchanged — including children passed inline.
+const TRANSLATION_KEY_RE = /^[a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9]+)+$/
+
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const { t } = useTranslation()
+
+  const raw = error ? String(error?.message ?? "") : props.children
+  const body =
+    typeof raw === "string" && TRANSLATION_KEY_RE.test(raw)
+      ? t(raw as Parameters<typeof t>[0])
+      : raw
 
   if (!body) {
     return null

@@ -5,6 +5,7 @@ import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GuestLayout } from "@/components/layout/GuestLayout";
+import { useTranslation } from "@/contexts/I18nContext";
 import { authApi } from "@/api/features/auth.api";
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -15,6 +16,7 @@ export default function CheckYourEmailPage() {
 
     const [cooldown, setCooldown] = useState(0);
     const [resending, setResending] = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (cooldown <= 0) return;
@@ -30,10 +32,10 @@ export default function CheckYourEmailPage() {
         setResending(true);
         try {
             await authApi.resendVerification(email);
-            toast.success("Verification email sent. Please check your inbox.");
+            toast.success(t("auth.checkEmail.resendSuccess"));
             setCooldown(RESEND_COOLDOWN_SECONDS);
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Could not resend the email. Try again later.");
+            toast.error(err?.response?.data?.message || t("auth.checkEmail.resendFailed"));
         } finally {
             setResending(false);
         }
@@ -52,15 +54,15 @@ export default function CheckYourEmailPage() {
                     <div className="bg-primary/10 text-primary p-4 rounded-full">
                         <Mail size={36} />
                     </div>
-                    <h2 className="text-2xl font-bold tracking-tight">Check your email</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">{t("auth.checkEmail.title")}</h2>
                     <p className="text-sm text-muted-foreground">
-                        We sent a verification link to <br />
+                        {t("auth.checkEmail.sentTo")} <br />
                         <span className="font-medium text-foreground">{email}</span>
                     </p>
                 </div>
 
                 <p className="text-sm text-muted-foreground text-center mb-6">
-                    Click the link in the email to activate your account. The link expires in 15 minutes.
+                    {t("auth.checkEmail.instructions")}
                 </p>
 
                 <Button
@@ -70,16 +72,16 @@ export default function CheckYourEmailPage() {
                     disabled={resending || cooldown > 0}
                 >
                     {resending
-                        ? "Sending..."
+                        ? t("auth.checkEmail.resending")
                         : cooldown > 0
-                            ? `Resend in ${cooldown}s`
-                            : "Resend verification email"}
+                            ? t("auth.checkEmail.resendCooldown", { seconds: cooldown })
+                            : t("auth.checkEmail.resend")}
                 </Button>
 
                 <div className="mt-6 text-center text-sm text-muted-foreground">
-                    Already verified?{" "}
+                    {t("auth.checkEmail.alreadyVerified")}{" "}
                     <Link to="/login" className="font-semibold text-primary hover:underline">
-                        Log in
+                        {t("auth.register.logIn")}
                     </Link>
                 </div>
             </motion.div>

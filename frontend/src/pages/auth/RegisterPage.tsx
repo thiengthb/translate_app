@@ -7,6 +7,7 @@ import { authApi } from "@/api/features/auth.api";
 import { Button } from "@/components/ui/button";
 import { GuestLayout } from "@/components/layout/GuestLayout";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { useTranslation } from "@/contexts/I18nContext";
 import type { RegisterRequest } from "@/types/features/auth";
 
 const URL_LOGIN_WITH_GOOGLE =
@@ -16,17 +17,18 @@ export default function RegisterPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const { t } = useTranslation();
 
     const onRegister = async (data: RegisterRequest) => {
         setLoading(true);
         setError("");
         try {
             await authApi.register(data);
-            toast.success("Account created. Check your inbox to verify your email.");
+            toast.success(t("auth.register.success"));
             navigate("/check-email", { replace: true, state: { email: data.email } });
         } catch (err: any) {
             const backendMsg = err?.response?.data?.message;
-            setError(backendMsg || "Registration failed");
+            setError(backendMsg || t("auth.register.failed"));
         } finally {
             setLoading(false);
         }
@@ -48,8 +50,8 @@ export default function RegisterPage() {
                 className="max-w-md w-full border rounded-xl shadow-lg p-8 bg-card text-card-foreground"
             >
                 <div className="space-y-2 text-center mb-8">
-                    <h2 className="text-3xl font-bold tracking-tight">Create your account</h2>
-                    <p className="text-sm text-muted-foreground">Get started in less than a minute</p>
+                    <h2 className="text-3xl font-bold tracking-tight">{t("auth.register.title")}</h2>
+                    <p className="text-sm text-muted-foreground">{t("auth.register.subtitle")}</p>
                 </div>
 
                 {error && (
@@ -66,17 +68,17 @@ export default function RegisterPage() {
                     variant="outline"
                     className="w-full mt-3"
                 >
-                    <FcGoogle className="mr-2 h-4 w-4" /> Continue with Google
+                    <FcGoogle className="mr-2 h-4 w-4" /> {t("auth.login.continueGoogle")}
                 </Button>
 
                 <div className="mt-4 text-center">
                     <p className="text-sm text-muted-foreground">
-                        Already have an account?{" "}
+                        {t("auth.register.alreadyHaveAccount")}{" "}
                         <Link
                             to="/login"
                             className="font-semibold text-primary hover:underline"
                         >
-                            Log in
+                            {t("auth.register.logIn")}
                         </Link>
                     </p>
                 </div>

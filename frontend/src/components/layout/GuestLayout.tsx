@@ -11,8 +11,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ToggleTheme from "@/components/ToggleTheme";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import UserMenu from "@/components/layout/UserMenu";
 import NotificationCenter from "@/components/notification/NotificationCenter";
+import { useTranslation } from "@/contexts/I18nContext";
 import { usePublicModules } from "@/hooks/usePublicModules";
 import { useActiveModuleGroups, type SidebarModuleGroup } from "@/hooks/useSidebarMenus";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -67,6 +69,7 @@ export function GuestLayout({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const { isAuthenticated, role } = useSelector((state: RootState) => state.auth);
     const { activeRole } = usePermissions();
+    const { t } = useTranslation();
     const isAdmin = normalizeRole(role) === ADMIN_ROLE;
 
     const { data: publicModules = [] } = usePublicModules();
@@ -140,6 +143,7 @@ export function GuestLayout({ children }: { children: React.ReactNode }) {
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-2">
+                        <LanguageSwitcher />
                         <ToggleTheme />
 
                         {isAuthenticated ? (
@@ -162,14 +166,14 @@ export function GuestLayout({ children }: { children: React.ReactNode }) {
                                         className="gap-1.5"
                                     >
                                         <LogIn size={15} />
-                                        <span className="hidden sm:inline">Đăng nhập</span>
+                                        <span className="hidden sm:inline">{t("nav.login")}</span>
                                     </Button>
                                     <Button
                                         size="sm"
                                         onClick={() => navigate("/register")}
                                         className="gap-1.5"
                                     >
-                                        <span>Đăng ký</span>
+                                        <span>{t("nav.register")}</span>
                                         <ArrowRight size={15} />
                                     </Button>
                                 </>

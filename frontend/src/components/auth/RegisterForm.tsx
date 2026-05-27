@@ -12,19 +12,20 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "@/contexts/I18nContext";
 import type { RegisterRequest } from "@/types";
 import { useState } from "react";
 
 const registerSchema = z
     .object({
-        firstName: z.string().min(1, "Required"),
-        lastName: z.string().min(1, "Required"),
-        email: z.string().email("Invalid email format"),
-        password: z.string().min(6, "Min 6 characters"),
-        confirmPassword: z.string().min(6, "Min 6 characters"),
+        firstName: z.string().min(1, "common.required"),
+        lastName: z.string().min(1, "common.required"),
+        email: z.string().email("common.invalidEmail"),
+        password: z.string().min(8, "common.passwordTooShort"),
+        confirmPassword: z.string().min(8, "common.passwordTooShort"),
     })
     .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords do not match",
+        message: "common.passwordsNoMatch",
         path: ["confirmPassword"],
     });
 
@@ -36,6 +37,7 @@ interface RegisterFormProps {
 export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const { t } = useTranslation();
     const form = useForm<RegisterRequest>({
         resolver: zodResolver(registerSchema),
         mode: "onChange",
@@ -52,10 +54,10 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                         render={({ field }) => (
                             <FormItem className="space-y-2">
                                 <FormLabel className="text-sm font-medium leading-none">
-                                    First name
+                                    {t("auth.register.firstName")}
                                 </FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="John" className="bg-background" />
+                                    <Input {...field} placeholder={t("auth.register.firstNamePlaceholder")} className="bg-background" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -67,10 +69,10 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                         render={({ field }) => (
                             <FormItem className="space-y-2">
                                 <FormLabel className="text-sm font-medium leading-none">
-                                    Last name
+                                    {t("auth.register.lastName")}
                                 </FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="Doe" className="bg-background" />
+                                    <Input {...field} placeholder={t("auth.register.lastNamePlaceholder")} className="bg-background" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -83,12 +85,12 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                     name="email"
                     render={({ field }) => (
                         <FormItem className="space-y-2">
-                            <FormLabel className="text-sm font-medium leading-none">Email</FormLabel>
+                            <FormLabel className="text-sm font-medium leading-none">{t("auth.register.email")}</FormLabel>
                             <FormControl>
                                 <Input
                                     {...field}
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder={t("auth.login.emailPlaceholder")}
                                     className="bg-background"
                                 />
                             </FormControl>
@@ -102,7 +104,7 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                     name="password"
                     render={({ field }) => (
                         <FormItem className="space-y-2">
-                            <FormLabel className="text-sm font-medium leading-none">Password</FormLabel>
+                            <FormLabel className="text-sm font-medium leading-none">{t("auth.register.password")}</FormLabel>
                             <div className="relative">
                                 <FormControl>
                                     <Input
@@ -116,7 +118,7 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                                     type="button"
                                     onClick={() => setShowPassword((v) => !v)}
                                     className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -132,7 +134,7 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                     render={({ field }) => (
                         <FormItem className="space-y-2">
                             <FormLabel className="text-sm font-medium leading-none">
-                                Confirm password
+                                {t("auth.register.confirmPassword")}
                             </FormLabel>
                             <div className="relative">
                                 <FormControl>
@@ -147,7 +149,7 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                                     type="button"
                                     onClick={() => setShowConfirmPassword((v) => !v)}
                                     className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                    aria-label={showConfirmPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -176,10 +178,10 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                 />
                             </svg>
-                            Processing...
+                            {t("common.processing")}
                         </span>
                     ) : (
-                        "Create account"
+                        t("auth.register.submit")
                     )}
                 </Button>
             </form>

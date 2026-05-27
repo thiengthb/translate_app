@@ -8,6 +8,8 @@ import { useDispatch } from "react-redux";
 import { setLogin } from "@/store/slices/auth/authSlice";
 import { authApi } from "@/api/features/auth.api";
 import { GuestLayout } from "@/components/layout/GuestLayout";
+import { useTranslation } from "@/contexts/I18nContext";
+import type { MessageKey } from "@/i18n";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { getHomePathByRole } from "@/utils/rbac.utils";
@@ -15,19 +17,11 @@ import { getHomePathByRole } from "@/utils/rbac.utils";
 const URL_LOGIN_WITH_GOOGLE =
     import.meta.env.VITE_API_URL_FOR_GOOGLE || "http://localhost:8080/oauth2/authorization/google";
 
-const getOAuthErrorMessage = (errorParam: string | null): string => {
-    switch (errorParam) {
-        case "google_auth_failed":
-            return "Google sign-in failed. Please try again.";
-        case "google_token_missing":
-            return "Google sign-in did not return an access token.";
-        case "google_token_invalid":
-            return "Google sign-in returned an invalid token.";
-        case "true":
-            return "Unable to complete sign-in. Please try again.";
-        default:
-            return "";
-    }
+const OAUTH_ERROR_KEYS: Record<string, MessageKey> = {
+    google_auth_failed: "auth.login.googleFailed",
+    google_token_missing: "auth.login.googleTokenMissing",
+    google_token_invalid: "auth.login.googleTokenInvalid",
+    "true": "auth.login.signInGeneric",
 };
 
 export const Login: React.FC = () => {
@@ -39,13 +33,13 @@ export const Login: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
+    const { t } = useTranslation();
 
     useEffect(() => {
-        const oauthErrorMessage = getOAuthErrorMessage(searchParams.get("error"));
-        if (oauthErrorMessage) {
-            setError(oauthErrorMessage);
-        }
-    }, [searchParams]);
+        const param = searchParams.get("error");
+        const key = param ? OAUTH_ERROR_KEYS[param] : undefined;
+        if (key) setError(t(key));
+    }, [searchParams, t]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,11 +54,11 @@ export const Login: React.FC = () => {
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const backendMsg = err.response?.data?.message;
-                setError(backendMsg || "Invalid email or password");
+                setError(backendMsg || t("auth.login.invalidCredentials"));
             } else if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError("An unexpected error occurred!");
+                setError(t("auth.login.unexpectedError"));
             }
         } finally {
             setIsLoading(false);
@@ -87,7 +81,7 @@ export const Login: React.FC = () => {
                 className="max-w-md w-full border rounded-xl shadow-lg p-8 bg-card text-card-foreground"
             >
                 <div className="space-y-2 text-center mb-8">
-                    <h2 className="text-3xl font-bold tracking-tight">Welcome back!</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">{t("auth.login.title")}</h2>
                 </div>
 
                 {error && (
@@ -99,7 +93,7 @@ export const Login: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
                         <label htmlFor="email" className="text-sm font-medium leading-none">
-                            Email
+                            {t("auth.login.email")}
                         </label>
                         <Input
                             type="email"
@@ -107,7 +101,7 @@ export const Login: React.FC = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="admin@example.com"
+                            placeholder={t("auth.login.emailPlaceholder")}
                             className="bg-background"
                         />
                     </div>
@@ -115,13 +109,13 @@ export const Login: React.FC = () => {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label htmlFor="password" className="text-sm font-medium leading-none">
-                                Password
+                                {t("auth.login.password")}
                             </label>
                             <Link
                                 to="/forgot-password"
                                 className="text-xs text-muted-foreground hover:text-primary hover:underline"
                             >
-                                Forgot password?
+                                {t("auth.login.forgotPassword")}
                             </Link>
                         </div>
                         <div className="relative">
@@ -131,14 +125,14 @@ export const Login: React.FC = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                placeholder="••••••••"
+                                placeholder={t("auth.login.passwordPlaceholder")}
                                 className="bg-background pr-10"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword((v) => !v)}
                                 className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -164,10 +158,10 @@ export const Login: React.FC = () => {
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                     />
                                 </svg>
-                                Processing...
+                                {t("common.processing")}
                             </span>
                         ) : (
-                            "Login"
+                            t("auth.login.submit")
                         )}
                     </Button>
                 </form>
@@ -178,24 +172,24 @@ export const Login: React.FC = () => {
                     variant="outline"
                     className="w-full mt-3"
                 >
-                    <FcGoogle className="mr-2 h-4 w-4" /> Continue with Google
+                    <FcGoogle className="mr-2 h-4 w-4" /> {t("auth.login.continueGoogle")}
                 </Button>
 
                 <div className="mt-4 text-center">
                     <p className="text-sm text-muted-foreground">
-                        Don't have an account yet?{" "}
+                        {t("auth.login.noAccount")}{" "}
                         <Link
                             to="/register"
                             className="font-semibold text-primary hover:underline"
                         >
-                            Register now
+                            {t("auth.login.registerNow")}
                         </Link>
                     </p>
                 </div>
 
                 {import.meta.env.DEV && (
                     <div className="mt-8 pt-6 border-t border-dashed">
-                        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">(Test Only):</p>
+                        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("auth.login.testCredsTitle")}</p>
                         <div className="space-y-2 text-sm bg-muted/50 p-3 rounded-lg border">
                             <p className="flex justify-between">
                                 <span className="text-muted-foreground font-mono text-[11px]">ADMIN:</span>

@@ -6,6 +6,7 @@ import { authApi } from "@/api/features/auth.api";
 import { GuestLayout } from "@/components/layout/GuestLayout";
 import { ForgotEmailForm } from "@/components/auth/ForgotEmailForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { useTranslation } from "@/contexts/I18nContext";
 import type { ForgotPasswordEmailRequest, ResetPasswordData } from "@/types/features/auth";
 
 export default function ForgotPasswordPage() {
@@ -14,15 +15,16 @@ export default function ForgotPasswordPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+    const { t } = useTranslation();
 
     const onForgotPasswordSubmit = async (data: ForgotPasswordEmailRequest) => {
         setLoading(true);
         try {
             await authApi.forgotPassword(data);
             setEmailSent(true);
-            toast.success("If an account exists, a reset link has been sent.");
+            toast.success(t("auth.forgot.success"));
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Could not send reset email");
+            toast.error(err?.response?.data?.message || t("auth.forgot.failed"));
         } finally {
             setLoading(false);
         }
@@ -30,7 +32,7 @@ export default function ForgotPasswordPage() {
 
     const onResetPasswordSubmit = async (data: ResetPasswordData) => {
         if (!token) {
-            toast.error("Invalid password reset link.");
+            toast.error(t("auth.reset.invalidLink"));
             return;
         }
 
@@ -40,10 +42,10 @@ export default function ForgotPasswordPage() {
                 token,
                 newPassword: data.password,
             });
-            toast.success("Password reset successful! Please log in.");
+            toast.success(t("auth.reset.success"));
             navigate("/login", { replace: true });
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Password reset failed");
+            toast.error(err?.response?.data?.message || t("auth.reset.failed"));
         } finally {
             setLoading(false);
         }
@@ -62,12 +64,10 @@ export default function ForgotPasswordPage() {
             >
                 <div className="space-y-2 text-center mb-8">
                     <h2 className="text-3xl font-bold tracking-tight">
-                        {isResetMode ? "Set a new password" : "Forgot your password?"}
+                        {isResetMode ? t("auth.reset.title") : t("auth.forgot.title")}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        {isResetMode
-                            ? "Enter and confirm your new password."
-                            : "Enter your email and we'll send a reset link."}
+                        {isResetMode ? t("auth.reset.subtitle") : t("auth.forgot.subtitle")}
                     </p>
                 </div>
 
@@ -75,8 +75,8 @@ export default function ForgotPasswordPage() {
                     <ResetPasswordForm onSubmit={onResetPasswordSubmit} loading={loading} />
                 ) : emailSent ? (
                     <div className="text-center text-sm text-muted-foreground space-y-2">
-                        <p>Check your inbox for the reset link.</p>
-                        <p className="text-xs">The link will expire in 15 minutes.</p>
+                        <p>{t("auth.forgot.checkInbox")}</p>
+                        <p className="text-xs">{t("auth.forgot.linkExpires")}</p>
                     </div>
                 ) : (
                     <ForgotEmailForm onSubmit={onForgotPasswordSubmit} loading={loading} />
@@ -84,9 +84,9 @@ export default function ForgotPasswordPage() {
 
                 <div className="mt-6 text-center">
                     <p className="text-sm text-muted-foreground">
-                        Remembered your password?{" "}
+                        {t("auth.forgot.rememberPassword")}{" "}
                         <Link to="/login" className="font-semibold text-primary hover:underline">
-                            Log in
+                            {t("auth.register.logIn")}
                         </Link>
                     </p>
                 </div>
