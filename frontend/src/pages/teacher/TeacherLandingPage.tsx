@@ -45,20 +45,20 @@ export default function TeacherLandingPage() {
           <Badge className="bg-amber-600 text-white hover:bg-amber-600">
             {formatRoleLabel(activeRole ?? "TEACHER")}
           </Badge>
-          <Badge variant="secondary" className="bg-white/80 text-slate-700">
+          <Badge variant="secondary" className="bg-background/80 text-foreground">
             Book management
           </Badge>
         </div>
 
-        <h1 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-bold text-foreground sm:text-4xl">
           Xin chao {displayName}
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-slate-700 sm:text-base">
+        <p className="mt-3 max-w-2xl text-sm text-foreground sm:text-base">
           Day la trang dieu huong cho TEACHER. Ban co the quan ly sach va cap nhat noi dung hoc tap cho hoc vien.
         </p>
 
         <div className="mt-6">
-          <Button asChild className="bg-slate-900 text-white hover:bg-slate-800">
+          <Button asChild className="bg-foreground text-background hover:bg-foreground/90">
             <Link to="/books">
               Mo trang quan ly books
               <ArrowRight className="ml-2 size-4" />
@@ -78,14 +78,14 @@ export default function TeacherLandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: 0.1 + index * 0.08, ease: "easeOut" }}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
             >
-              <div className="inline-flex rounded-xl bg-slate-100 p-2 text-slate-700">
+              <div className="inline-flex rounded-xl bg-muted p-2 text-muted-foreground">
                 <Icon className="size-5" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">{item.label}</h3>
-              <p className="mt-2 text-sm text-slate-600">{item.description}</p>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+              <h3 className="mt-4 text-base font-semibold text-foreground">{item.label}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {enabled ? "Enabled" : "Missing permission"}
               </p>
             </motion.article>
