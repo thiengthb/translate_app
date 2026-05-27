@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.menu.module_groups;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.template.annotation.ImportEntity;
@@ -33,8 +35,10 @@ import java.util.List;
         icon = "menu_groups",
         url = "/menu-groups",
         order = 1,
-    permission = "USER_READ"
+        permission = "MENU_READ"
 )
+@Searchable(fields = {"name", "description"})
+@AutoCrud(path = "module-groups")
 public class ModuleGroup extends BaseEntity {
 
     @Column(unique = true, nullable = false, length = 100)

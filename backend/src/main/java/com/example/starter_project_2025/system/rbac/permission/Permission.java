@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.rbac.permission;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportField;
@@ -35,6 +37,8 @@ import java.util.Set;
         order = 3,
         permission = "PERMISSION_READ"
 )
+@Searchable(fields = {"name", "description", "resource", "action"})
+@AutoCrud(path = "permissions")
 public class Permission extends BaseEntity {
 
     @Column(unique = true, nullable = false, length = 100)

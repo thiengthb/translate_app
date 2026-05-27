@@ -4,7 +4,7 @@ import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.system.menu.module.Module;
 import com.example.starter_project_2025.system.menu.module.ModuleRepository;
 import com.example.starter_project_2025.system.menu.module_groups.ModuleGroup;
-import com.example.starter_project_2025.system.menu.module_groups.ModuleGroupsRepository;
+import com.example.starter_project_2025.system.menu.module_groups.ModuleGroupRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class AutoMenuInitializer implements CommandLineRunner {
 
     private final ModuleRepository moduleRepository;
-    private final ModuleGroupsRepository groupRepository;
+    private final ModuleGroupRepository groupRepository;
 
     private static final String BASE_PACKAGE = "com.example";
 

@@ -53,4 +53,20 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     protected Long updatedBy;
+
+    /**
+     * Apply non-null defaults for @Builder.Default-annotated flags before INSERT.
+     *
+     * Lombok's @SuperBuilder strips the field initializer for any field marked
+     * with @Builder.Default — only the builder applies the default. Construction
+     * paths that bypass the builder (no-args constructor + setters, MapStruct,
+     * Jackson deserialization) leave these fields null, which violates the
+     * NOT NULL columns and crashes the INSERT.
+     */
+    @PrePersist
+    void applyBaseDefaults() {
+        if (isActive == null) isActive = true;
+        if (isDeleted == null) isDeleted = false;
+        if (version == null) version = 0L;
+    }
 }

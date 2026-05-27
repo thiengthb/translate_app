@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.rbac.user;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportField;
@@ -36,6 +38,8 @@ import java.util.Set;
         order = 1,
         permission = "USER_READ"
 )
+@Searchable(fields = {"email", "firstName", "lastName"})
+@AutoCrud(path = "users")
 public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)

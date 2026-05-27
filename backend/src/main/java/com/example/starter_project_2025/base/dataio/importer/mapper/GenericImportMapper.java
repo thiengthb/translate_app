@@ -52,7 +52,7 @@ public class GenericImportMapper {
                 }
 
                 field.set(entity,
-                        converter.convert(field.getType(), raw));
+                        converter.convert(field.getType(), raw, meta.dateFormat()));
             }
 
             // ⭐ NEW: run PostImport lifecycle

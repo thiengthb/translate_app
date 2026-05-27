@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.menu.module;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.template.annotation.ImportEntity;
@@ -28,8 +30,10 @@ import lombok.experimental.SuperBuilder;
         icon = "menus",
         url = "/menus",
         order = 2,
-    permission = "USER_READ"
+        permission = "MENU_READ"
 )
+@Searchable(fields = {"title", "url", "description"})
+@AutoCrud(path = "modules")
 public class Module extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
