@@ -12,7 +12,7 @@ export function SearchInput({ search, onSearchChange }: SearchInputProps) {
     <div className="relative w-full lg:w-[420px]">
       <Search
         size={16}
-        className="absolute text-gray-500 top-1/2 -translate-y-1/2 left-2"
+        className="absolute text-muted-foreground top-1/2 -translate-y-1/2 left-2"
       />
       <Input
         placeholder="Search..."

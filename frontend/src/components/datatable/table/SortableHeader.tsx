@@ -48,12 +48,12 @@ export function SortableHeader({ field, sortState, onToggleSort, width, onResize
               className={cn(
                 "h-4 w-4",
                 entry
-                  ? "text-blue-500"
+                  ? "text-primary"
                   : "text-muted-foreground/50"
               )}
             />
             {entry && sortState.length > 1 && (
-              <span className="text-[10px] font-semibold leading-none text-blue-500 min-w-[12px] text-center">
+              <span className="text-[10px] font-semibold leading-none text-primary min-w-[12px] text-center">
                 {sortIndex + 1}
               </span>
             )}
@@ -81,9 +81,9 @@ export function SortableHeader({ field, sortState, onToggleSort, width, onResize
           onClick={(e) => e.stopPropagation()}
         >
           {/* Visible line */}
-          <div className="w-[2px] h-3/5 rounded-full bg-muted-foreground/20 group-hover/header:bg-blue-400/60 group-hover/resize:!bg-blue-500 transition-all duration-150 group-hover/resize:h-4/5 group-hover/resize:w-[3px] group-hover/resize:shadow-[0_0_6px_rgba(59,130,246,0.5)]" />
+          <div className="w-[2px] h-3/5 rounded-full bg-muted-foreground/20 group-hover/header:bg-primary/60 group-hover/resize:!bg-primary transition-all duration-150 group-hover/resize:h-4/5 group-hover/resize:w-[3px] group-hover/resize:shadow-[0_0_6px_rgba(201,112,64,0.5)]" />
           {/* Grip dots on hover */}
-          <GripVertical className="absolute h-3 w-3 text-blue-500 opacity-0 group-hover/resize:opacity-100 transition-opacity duration-150" />
+          <GripVertical className="absolute h-3 w-3 text-primary opacity-0 group-hover/resize:opacity-100 transition-opacity duration-150" />
         </div>
       )}
     </TableHead>

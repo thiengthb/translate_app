@@ -39,8 +39,8 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-10 space-y-7">
                 <div className="text-center space-y-3">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Create Account</h1>
-                    <p className="text-lg text-gray-500">Join our RBAC system today</p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Create Account</h1>
+                    <p className="text-lg text-muted-foreground">Join our RBAC system today</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -76,7 +76,7 @@ export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={22} />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={22} />
                                 <FormControl>
                                     <Input
                                         {...field}

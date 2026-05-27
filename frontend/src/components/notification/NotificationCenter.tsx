@@ -10,7 +10,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
 const typeColors: Record<string, string> = {
-  INFO: "bg-blue-100 text-blue-700",
+  INFO: "bg-primary/15 text-primary",
   SUCCESS: "bg-green-100 text-green-700",
   WARNING: "bg-yellow-100 text-yellow-700",
   ERROR: "bg-red-100 text-red-700",
@@ -104,7 +104,7 @@ export default function NotificationCenter() {
                       </span>
                     </div>
                     {!n.isRead && (
-                      <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                      <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
                     )}
                   </div>
                 ))
