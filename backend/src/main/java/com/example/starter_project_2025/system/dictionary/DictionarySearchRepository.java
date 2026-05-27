@@ -1,0 +1,47 @@
+package com.example.starter_project_2025.system.dictionary;
+
+import com.example.starter_project_2025.system.words.word.Word;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
+
+    @Query("""
+            SELECT DISTINCT w FROM Word w
+            JOIN FETCH w.meaning m
+            JOIN FETCH w.level l
+            JOIN FETCH w.representation r
+            WHERE w.isDeleted = false
+            AND w.isActive = true
+            AND (
+                LOWER(w.word)       LIKE LOWER(CONCAT('%', :q,    '%'))
+                OR LOWER(w.reading) LIKE LOWER(CONCAT('%', :q,    '%'))
+                OR LOWER(m.name)    LIKE LOWER(CONCAT('%', :q,    '%'))
+                OR LOWER(w.word)    LIKE LOWER(CONCAT('%', :kana, '%'))
+                OR LOWER(w.reading) LIKE LOWER(CONCAT('%', :kana, '%'))
+            )
+            ORDER BY w.frequency ASC NULLS LAST, w.word ASC
+            """)
+    List<Word> search(@Param("q") String q, @Param("kana") String kana, Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT w FROM Word w
+            JOIN FETCH w.meaning m
+            JOIN FETCH w.level l
+            WHERE w.isDeleted = false
+            AND w.isActive = true
+            AND (
+                LOWER(w.word)       LIKE LOWER(CONCAT(:q,    '%'))
+                OR LOWER(w.reading) LIKE LOWER(CONCAT(:kana, '%'))
+                OR LOWER(m.name)    LIKE LOWER(CONCAT(:q,    '%'))
+            )
+            ORDER BY w.frequency ASC NULLS LAST, w.word ASC
+            """)
+    List<Word> suggest(@Param("q") String q, @Param("kana") String kana, Pageable pageable);
+}

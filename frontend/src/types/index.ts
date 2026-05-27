@@ -13,6 +13,7 @@ export * from "./features/vocabulary/language";
 export * from "./features/vocabulary/level";
 export * from "./features/vocabulary/representation";
 export * from "./features/vocabulary/meaning";
+export * from "./features/words";
 export * from "./features/menu/module";
 export * from "./features/menu/module_group";
 export * from "./features/rbac/permission";

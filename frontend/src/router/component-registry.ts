@@ -9,6 +9,7 @@ import { Dashboard } from "@/pages/management/dashboard";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -22,6 +23,7 @@ export interface RouteConfig {
 
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
+  { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
   { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
