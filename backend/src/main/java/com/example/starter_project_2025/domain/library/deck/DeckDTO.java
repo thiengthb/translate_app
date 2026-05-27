@@ -18,7 +18,6 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DeckDTO extends BaseDTO {
 
-    @NotNull(groups = OnCreate.class, message = "User ID is required")
     Long userId;
 
     Long folderId;

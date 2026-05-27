@@ -295,6 +295,14 @@ public abstract class BaseCrudServiceImpl<
         };
     }
 
+    protected Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     private E cloneEntity(E entity) {
         try {

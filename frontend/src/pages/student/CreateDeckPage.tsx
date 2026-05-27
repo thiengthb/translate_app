@@ -7,6 +7,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
 import { Globe, GripVertical, Image, Lock, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { getCurrentUserId } from "@/utils/auth.utils";
 
 /* ─── Types ─── */
 interface CardDraft {
@@ -61,13 +62,16 @@ export default function CreateDeckPage() {
       return;
     }
 
+    const userId = getCurrentUserId();
     setSubmitting(true);
     try {
       const deck = await deckApi.create({
+        userId,
         title: title.trim(),
         description: description.trim() || undefined,
         visibility,
         totalCards: valid.length,
+        isActive: true,
       });
 
       for (const [i, card] of valid.entries()) {
@@ -77,6 +81,7 @@ export default function CreateDeckPage() {
           cardType: "BASIC",
           itemType: "WORD",
           itemId: 0,
+          isActive: true,
         });
 
         if (card.imageFile && fc.id) {
@@ -92,6 +97,7 @@ export default function CreateDeckPage() {
           deckId: deck.id,
           flashcardId: fc.id,
           orderIndex: i,
+          isActive: true,
         });
       }
 
@@ -106,42 +112,14 @@ export default function CreateDeckPage() {
 
   return (
     <MainLayout pathName={{ "/create-deck": "Create deck" }}>
-      <div className="max-w-4xl mx-auto w-full pb-16 space-y-5">
+      <div className="max-w-4xl mx-auto w-full pb-32 space-y-5">
 
         {/* ════════════════════════════════
-            HEADER (single set of action buttons)
+            PAGE TITLE
         ════════════════════════════════ */}
-        <div className="flex items-start justify-between gap-4 pt-1">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              Create a new flashcard set
-            </h1>
-            <button
-              onClick={() => setVisibility((v) => (v === "PUBLIC" ? "PRIVATE" : "PUBLIC"))}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-            >
-              {visibility === "PUBLIC" ? <Globe className="size-3" /> : <Lock className="size-3" />}
-              {visibility === "PUBLIC" ? "Public" : "Private"}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => handleCreate(false)}
-              disabled={submitting}
-              className="px-5 py-2.5 rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
-            >
-              {submitting ? "Creating…" : "Create"}
-            </button>
-            <button
-              onClick={() => handleCreate(true)}
-              disabled={submitting}
-              className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
-            >
-              Create and practice
-            </button>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight pt-1">
+          Create a new flashcard set
+        </h1>
 
         {/* ════════════════════════════════
             TITLE + DESCRIPTION
@@ -160,6 +138,70 @@ export default function CreateDeckPage() {
             rows={2}
             className="w-full px-5 py-3 text-sm bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none resize-none"
           />
+        </div>
+
+        {/* ════════════════════════════════
+            VISIBILITY
+        ════════════════════════════════ */}
+        <div className="rounded-xl border border-border bg-card shadow-sm p-5 space-y-3">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Visibility</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Choose who can see this flashcard set</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Public option */}
+            <button
+              onClick={() => setVisibility("PUBLIC")}
+              className={cn(
+                "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                visibility === "PUBLIC"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/20 hover:bg-accent"
+              )}
+            >
+              <div className={cn(
+                "shrink-0 size-9 rounded-lg flex items-center justify-center mt-0.5",
+                visibility === "PUBLIC" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <Globe className="size-4" />
+              </div>
+              <div>
+                <p className={cn("text-sm font-semibold", visibility === "PUBLIC" ? "text-primary" : "text-foreground")}>
+                  Public
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Anyone can find and study this set
+                </p>
+              </div>
+            </button>
+
+            {/* Private option */}
+            <button
+              onClick={() => setVisibility("PRIVATE")}
+              className={cn(
+                "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                visibility === "PRIVATE"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-foreground/20 hover:bg-accent"
+              )}
+            >
+              <div className={cn(
+                "shrink-0 size-9 rounded-lg flex items-center justify-center mt-0.5",
+                visibility === "PRIVATE" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <Lock className="size-4" />
+              </div>
+              <div>
+                <p className={cn("text-sm font-semibold", visibility === "PRIVATE" ? "text-primary" : "text-foreground")}>
+                  Private
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Only you can see and study this set
+                </p>
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* ════════════════════════════════
@@ -202,6 +244,30 @@ export default function CreateDeckPage() {
           >
             <Plus className="size-4" />
             Add a card
+          </button>
+        </div>
+
+        {/* ════════════════════════════════
+            CREATE BUTTONS (bottom)
+        ════════════════════════════════ */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground mr-auto self-center hidden sm:block">
+            {cards.filter((c) => c.front.trim() || c.back.trim()).length} card
+            {cards.filter((c) => c.front.trim() || c.back.trim()).length !== 1 ? "s" : ""} ready
+          </p>
+          <button
+            onClick={() => handleCreate(false)}
+            disabled={submitting}
+            className="px-8 py-2.5 rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
+          >
+            {submitting ? "Creating…" : "Save"}
+          </button>
+          <button
+            onClick={() => handleCreate(true)}
+            disabled={submitting}
+            className="px-8 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            Save and practice
           </button>
         </div>
       </div>
