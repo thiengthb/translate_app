@@ -4,8 +4,12 @@ import com.example.starter_project_2025.domain.library.deck.Deck;
 import com.example.starter_project_2025.domain.library.deck.DeckRepository;
 import com.example.starter_project_2025.domain.library.deck_item.DeckItem;
 import com.example.starter_project_2025.domain.library.deck_item.DeckItemRepository;
+import com.example.starter_project_2025.domain.library.flashcard.ContentType;
 import com.example.starter_project_2025.domain.library.flashcard.Flashcard;
 import com.example.starter_project_2025.domain.library.flashcard.FlashcardRepository;
+import com.example.starter_project_2025.domain.library.flashcard.FlashcardSide;
+import com.example.starter_project_2025.domain.library.flashcard.FlashcardSideContent;
+import com.example.starter_project_2025.domain.library.flashcard.SideType;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgress;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgressRepository;
 import com.example.starter_project_2025.security.UserPrincipal;
@@ -218,9 +222,9 @@ public class AnkiStudyController {
     private AnkiStudyCardDTO buildCardDTO(Flashcard fc, AnkiSrsProgress p) {
         return AnkiStudyCardDTO.builder()
                 .flashcardId(fc.getId())
-                .front(fc.getFront())
-                .back(fc.getBack())
-                .imageUrl(fc.getImageUrl())
+                .front(extractText(fc, SideType.FRONT))
+                .back(extractText(fc, SideType.BACK))
+                .imageUrl(extractFirstImage(fc))
                 .progressId(p != null ? p.getId() : null)
                 .state(p != null ? p.getState() : "NEW")
                 .easeFactor(p != null ? p.getEaseFactor() : 2.5)
@@ -229,5 +233,31 @@ public class AnkiStudyController {
                 .lapses(p != null ? p.getLapses() : 0)
                 .nextReviewAt(p != null ? p.getNextReviewAt() : null)
                 .build();
+    }
+
+    /* ── Derive legacy front/back text from the new sides/contents structure ── */
+    private String extractText(Flashcard fc, SideType sideType) {
+        if (fc.getSides() == null) return null;
+        for (FlashcardSide side : fc.getSides()) {
+            if (side.getSide() != sideType || side.getContents() == null) continue;
+            for (FlashcardSideContent c : side.getContents()) {
+                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
+                if (c.getContentType() == ContentType.TEXT) return c.getContentValue();
+            }
+        }
+        return null;
+    }
+
+    /* ── First non-deleted IMAGE content across any side ── */
+    private String extractFirstImage(Flashcard fc) {
+        if (fc.getSides() == null) return null;
+        for (FlashcardSide side : fc.getSides()) {
+            if (side.getContents() == null) continue;
+            for (FlashcardSideContent c : side.getContents()) {
+                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
+                if (c.getContentType() == ContentType.IMAGE) return c.getContentValue();
+            }
+        }
+        return null;
     }
 }

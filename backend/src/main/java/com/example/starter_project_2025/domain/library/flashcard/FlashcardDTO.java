@@ -2,10 +2,14 @@ package com.example.starter_project_2025.domain.library.flashcard;
 
 import com.example.starter_project_2025.base.crud.dto.BaseDTO;
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -20,16 +24,55 @@ public class FlashcardDTO extends BaseDTO {
     @NotNull(groups = OnCreate.class, message = "Item ID is required")
     Long itemId;
 
-    @NotBlank(groups = OnCreate.class, message = "Front content is required")
-    String front;
-
-    @NotBlank(groups = OnCreate.class, message = "Back content is required")
-    String back;
-
     String cardType;
     String itemType;
-    String imageUrl;
-    String audioUrl;
     String hint;
     String explanation;
+
+    @Valid
+    List<SideDTO> sides;
+
+    /* ─────────────────────────────────────────
+       Nested DTO · FlashcardSide
+    ───────────────────────────────────────── */
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class SideDTO {
+
+        Long id;
+
+        @NotNull(groups = OnCreate.class, message = "Side type is required")
+        SideType side;
+
+        @Valid
+        List<ContentDTO> contents;
+    }
+
+    /* ─────────────────────────────────────────
+       Nested DTO · FlashcardSideContent
+    ───────────────────────────────────────── */
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class ContentDTO {
+
+        Long id;
+
+        @NotNull(message = "Content type is required")
+        ContentType contentType;
+
+        @NotBlank(message = "Content value is required")
+        String contentValue;
+
+        int orderIndex;
+
+        Map<String, Object> metadata;
+    }
 }
