@@ -29,6 +29,10 @@ public class FlashcardDTO extends BaseDTO {
     String hint;
     String explanation;
 
+    /** Derived from FRONT/BACK sides for display compatibility. */
+    String front;
+    String back;
+
     @Valid
     List<SideDTO> sides;
 

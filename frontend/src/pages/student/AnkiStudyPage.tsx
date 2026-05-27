@@ -297,9 +297,24 @@ export default function AnkiStudyPage() {
                   <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                     {flipped ? "Answer" : "Question"}
                   </span>
-                  <p className="text-2xl font-bold text-foreground text-center leading-snug">
-                    {flipped ? current.back : current.front}
-                  </p>
+                  <div className="w-full flex flex-col items-center gap-1.5">
+                    {(flipped ? current.back : current.front)
+                      ?.split("\n")
+                      .filter(Boolean)
+                      .map((line, i) => (
+                        <p
+                          key={i}
+                          className={cn(
+                            "font-bold text-foreground text-center leading-snug w-full",
+                            i === 0 ? "text-2xl" : "text-base text-foreground/80"
+                          )}
+                        >
+                          {line}
+                        </p>
+                      )) ?? (
+                      <p className="text-2xl font-bold text-foreground text-center leading-snug" />
+                    )}
+                  </div>
                   {flipped && current.imageUrl && (
                     <img
                       src={current.imageUrl}

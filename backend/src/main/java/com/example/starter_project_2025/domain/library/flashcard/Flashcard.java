@@ -52,6 +52,16 @@ public class Flashcard extends BaseEntity {
     @Column(nullable = false)
     Long itemId;
 
+    /* Legacy columns kept for DB backward compatibility (NOT NULL, no default).
+       New content is stored in FlashcardSide / FlashcardSideContent. */
+    @Builder.Default
+    @Column(columnDefinition = "TEXT")
+    String front = "";
+
+    @Builder.Default
+    @Column(columnDefinition = "TEXT")
+    String back = "";
+
     @Column(columnDefinition = "TEXT")
     @FieldMeta(label = "Hint", type = "textarea", order = 1,
                placeholder = "Optional hint", group = "Basic Info")
