@@ -1,5 +1,6 @@
 import ToggleTheme from "@/components/ToggleTheme";
 import NotificationCenter from "@/components/notification/NotificationCenter";
+import UserMenu from "@/components/layout/UserMenu";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
 import type { RootState } from "@/store/store";
@@ -60,6 +61,7 @@ export default function HeaderRight() {
 
         <NotificationCenter />
         <ToggleTheme />
+        <UserMenu />
       </div>
     );
   }
@@ -142,6 +144,7 @@ export default function HeaderRight() {
 
       <NotificationCenter />
       <ToggleTheme />
+      <UserMenu />
     </div >
   );
 }
