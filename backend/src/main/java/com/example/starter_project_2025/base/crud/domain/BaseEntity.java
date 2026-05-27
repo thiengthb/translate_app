@@ -36,6 +36,13 @@ public abstract class BaseEntity {
     @Builder.Default
     protected Long version = 0L;
 
+    @PrePersist
+    protected void prePersist() {
+        if (isActive == null) isActive = true;
+        if (isDeleted == null) isDeleted = false;
+        if (version == null) version = 0L;
+    }
+
     @Column
     protected Long tenantId;
 

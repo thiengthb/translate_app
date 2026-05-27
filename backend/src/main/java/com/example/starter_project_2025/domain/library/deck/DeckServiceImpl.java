@@ -51,7 +51,12 @@ public class DeckServiceImpl
     @Override
     protected void beforeCreate(Deck deck, DeckDTO request, ValidationContext ctx) {
 
-        User user = userRepository.findById(request.getUserId()).orElse(null);
+        Long userId = getCurrentUserId() != null ? getCurrentUserId() : request.getUserId();
+        if (userId == null) {
+            ctx.add("userId", "User not found");
+            return;
+        }
+        User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             ctx.add("userId", "User not found");
             return;
@@ -81,7 +86,7 @@ public class DeckServiceImpl
             deck.setTags(tags);
         }
 
-        if (deckRepository.existsByTitleAndUserId(request.getTitle(), request.getUserId())) {
+        if (deckRepository.existsByTitleAndUserId(request.getTitle(), user.getId())) {
             ctx.add("title", "Deck title already exists for this user");
         }
     }

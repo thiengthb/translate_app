@@ -9,6 +9,7 @@ import { Dashboard } from "@/pages/management/dashboard";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
+import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import type { ComponentType } from "react";
@@ -27,6 +28,7 @@ export const routes: RouteConfig[] = [
   { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
   { path: "/library", component: LibraryPage, requiredPermission: "FOLDER_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },

@@ -1,10 +1,12 @@
 package com.example.starter_project_2025.domain.library.folder;
 
-import com.example.starter_project_2025.base.crud.domain.BaseCrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FolderRepository extends BaseCrudRepository<Folder, Long> {
+public interface FolderRepository
+        extends JpaRepository<Folder, Long>, JpaSpecificationExecutor<Folder> {
 
     boolean existsByNameAndUserId(String name, Long userId);
 
