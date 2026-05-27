@@ -23,12 +23,12 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-[#f9fafb] p-6">
-            <div className="w-full max-w-lg overflow-hidden bg-white shadow-2xl rounded-[32px] border border-gray-100 transition-all">
+        <div className="flex min-h-screen items-center justify-center bg-background p-6">
+            <div className="w-full max-w-lg overflow-hidden bg-card shadow-2xl rounded-[32px] border border-border transition-all">
                 <RegisterForm onSubmit={onRegister} loading={loading} />
                 <div className="text-center mb-6">
                     Forgot Password?{" "}
-                    <Link to="/forgot-password" className="text-blue-600 hover:underline">
+                    <Link to="/forgot-password" className="text-primary hover:underline">
                         Reset here
                     </Link>
                 </div>

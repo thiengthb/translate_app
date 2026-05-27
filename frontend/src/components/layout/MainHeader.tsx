@@ -33,7 +33,7 @@ export default function MainHeader({
     return (
         <div className="flex flex-col">
             <div className="flex gap-2 items-center">
-                <Icon className="text-gray-600" />
+                <Icon className="text-muted-foreground" />
                 <h1 className="text-xl font-bold">{resolvedTitle}</h1>
             </div>
             {/*{resolvedDescription && (*/}

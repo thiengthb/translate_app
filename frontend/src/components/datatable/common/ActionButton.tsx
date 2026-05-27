@@ -17,7 +17,7 @@ const ActionButton = ({
   title,
   tooltip = "Action",
   variant = "outline",
-  icon = <GripVertical size={10} className="text-gray-500" />,
+  icon = <GripVertical size={10} className="text-muted-foreground" />,
   disabled = false,
   className,
 }: ActionButtonProps) => {

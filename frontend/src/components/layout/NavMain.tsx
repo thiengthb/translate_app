@@ -1,4 +1,5 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useState } from "react";
 
 import {
     Collapsible,
@@ -13,6 +14,28 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem
 } from "@/components/ui/sidebar";
+
+const STORAGE_KEY = "sidebar-groups-open";
+
+function readGroupState(title: string): boolean {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const map = JSON.parse(raw) as Record<string, boolean>;
+            if (title in map) return map[title];
+        }
+    } catch {}
+    return true;
+}
+
+function writeGroupState(title: string, open: boolean): void {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const map = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+        map[title] = open;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    } catch {}
+}
 
 type NavItem = {
     title: string;
@@ -31,6 +54,12 @@ export function NavMain({
     sidebarState: "expanded" | "collapsed";
 }) {
     const groupActive = items.some((i) => i.isActive);
+    const [isOpen, setIsOpen] = useState(() => readGroupState(title));
+
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        writeGroupState(title, open);
+    };
 
     /* ================= COLLAPSED =================
        icons only
@@ -53,8 +82,8 @@ export function NavMain({
                             items-center
                             justify-center
 
-                            data-[active=true]:!bg-blue-800
-                            data-[active=true]:!text-white
+                            data-[active=true]:!bg-primary
+                            data-[active=true]:!text-primary-foreground
                         "
                         >
                             <a
@@ -83,9 +112,9 @@ export function NavMain({
     ============================================= */
     return (
         <Collapsible
-            key={title}
             asChild
-            defaultOpen={true}
+            open={isOpen}
+            onOpenChange={handleOpenChange}
             className="group/collapsible"
         >
             <SidebarMenuItem>
@@ -94,8 +123,8 @@ export function NavMain({
                         tooltip={title}
                         isActive={groupActive}
                         className="
-                            data-[active=true]:data-[state=closed]:bg-blue-800
-                            data-[active=true]:data-[state=closed]:text-white
+                            data-[active=true]:data-[state=closed]:bg-primary
+                            data-[active=true]:data-[state=closed]:text-primary-foreground
                         "
                     >
                         <span>{title}</span>
@@ -119,15 +148,15 @@ export function NavMain({
                                     isActive={subItem.isActive}
                                     className="
                                         group
-                                        data-[active=true]:bg-blue-800
-                                        data-[active=true]:text-white
+                                        data-[active=true]:bg-primary
+                                        data-[active=true]:text-primary-foreground
                                     "
                                 >
                                     <a
                                         href={subItem.url}
                                         className="flex items-center gap-2"
                                     >
-                                        <subItem.icon className="h-4 w-4 group-data-[active=true]:text-white" />
+                                        <subItem.icon className="h-4 w-4 group-data-[active=true]:text-primary-foreground" />
                                         <span>{subItem.title}</span>
                                     </a>
                                 </SidebarMenuSubButton>
