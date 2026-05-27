@@ -235,15 +235,20 @@ public class AnkiStudyController {
                 .build();
     }
 
-    /* ── Derive legacy front/back text from the new sides/contents structure ── */
+    /* ── All non-deleted TEXT/CLOZE blocks from a side, joined with newline ── */
     private String extractText(Flashcard fc, SideType sideType) {
         if (fc.getSides() == null) return null;
         for (FlashcardSide side : fc.getSides()) {
             if (side.getSide() != sideType || side.getContents() == null) continue;
-            for (FlashcardSideContent c : side.getContents()) {
-                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
-                if (c.getContentType() == ContentType.TEXT) return c.getContentValue();
-            }
+            String joined = side.getContents().stream()
+                    .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
+                    .filter(c -> c.getContentType() == ContentType.TEXT
+                              || c.getContentType() == ContentType.CLOZE)
+                    .sorted(java.util.Comparator.comparingInt(FlashcardSideContent::getOrderIndex))
+                    .map(FlashcardSideContent::getContentValue)
+                    .filter(v -> v != null && !v.isBlank())
+                    .collect(java.util.stream.Collectors.joining("\n"));
+            return joined.isBlank() ? null : joined;
         }
         return null;
     }

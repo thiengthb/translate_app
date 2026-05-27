@@ -50,17 +50,16 @@ public class FlashcardServiceImpl
 
     @Override
     protected void beforeCreate(Flashcard flashcard, FlashcardDTO request, ValidationContext ctx) {
-        // Mapper ignored sides — build them manually so cascade saves them in the same transaction.
         flashcard.setSides(buildSidesFromRequest(flashcard, request));
+        syncLegacyFields(flashcard, request);
     }
 
     @Override
     protected void beforeUpdate(Flashcard flashcard, FlashcardDTO request, ValidationContext ctx) {
         if (request.getSides() == null) return;
-
-        // orphanRemoval = true → clearing the collection deletes orphaned children at flush time.
         flashcard.getSides().clear();
         flashcard.getSides().addAll(buildSidesFromRequest(flashcard, request));
+        syncLegacyFields(flashcard, request);
     }
 
     /* ─────────────────────────────────────────
@@ -116,8 +115,49 @@ public class FlashcardServiceImpl
     }
 
     /* ─────────────────────────────────────────
+       After-read: populate derived front/back
+    ───────────────────────────────────────── */
+
+    @Override
+    protected FlashcardDTO afterRead(FlashcardDTO dto, Flashcard entity) {
+        dto.setFront(extractSideText(entity, SideType.FRONT));
+        dto.setBack(extractSideText(entity, SideType.BACK));
+        return dto;
+    }
+
+    /* ─────────────────────────────────────────
        Helpers
     ───────────────────────────────────────── */
+
+    /** Populate legacy front/back columns from FRONT/BACK side text so DB constraint is satisfied. */
+    private void syncLegacyFields(Flashcard flashcard, FlashcardDTO request) {
+        if (request.getSides() == null) return;
+        for (FlashcardDTO.SideDTO side : request.getSides()) {
+            if (side.getContents() == null) continue;
+            String text = side.getContents().stream()
+                    .filter(c -> c.getContentType() == ContentType.TEXT || c.getContentType() == ContentType.CLOZE)
+                    .map(FlashcardDTO.ContentDTO::getContentValue)
+                    .filter(v -> v != null && !v.isBlank())
+                    .findFirst()
+                    .orElse("");
+            if (side.getSide() == SideType.FRONT) flashcard.setFront(text);
+            if (side.getSide() == SideType.BACK)  flashcard.setBack(text);
+        }
+    }
+
+    /** Join all non-deleted TEXT/CLOZE values from a side (ordered), separated by newline. */
+    private String extractSideText(Flashcard flashcard, SideType sideType) {
+        if (flashcard.getSides() == null) return "";
+        return flashcard.getSides().stream()
+                .filter(s -> sideType == s.getSide())
+                .flatMap(s -> s.getContents() == null ? java.util.stream.Stream.empty() : s.getContents().stream())
+                .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
+                .filter(c -> c.getContentType() == ContentType.TEXT || c.getContentType() == ContentType.CLOZE)
+                .sorted(java.util.Comparator.comparingInt(FlashcardSideContent::getOrderIndex))
+                .map(FlashcardSideContent::getContentValue)
+                .filter(v -> v != null && !v.isBlank())
+                .collect(java.util.stream.Collectors.joining("\n"));
+    }
 
     private List<FlashcardSide> buildSidesFromRequest(Flashcard parent, FlashcardDTO request) {
 

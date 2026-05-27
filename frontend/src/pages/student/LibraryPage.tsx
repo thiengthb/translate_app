@@ -5,13 +5,14 @@ import { deckApi, tagApi } from "@/api";
 import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { BookOpen, Check, MoreHorizontal, Plus, Search, Tag, X } from "lucide-react";
+import { BookOpen, Check, MoreHorizontal, Plus, Search, Sparkles, Tag, X } from "lucide-react";
 import { getCurrentUserId } from "@/utils/auth.utils";
 
 /* ─────────────────────────────────────────
    Main page
 ───────────────────────────────────────── */
 export default function LibraryPage() {
+  const navigate = useNavigate();
   const [decks, setDecks] = useState<DeckDTO[]>([]);
   const [tags, setTags] = useState<TagDTO[]>([]);
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
@@ -108,13 +109,13 @@ export default function LibraryPage() {
             </button>
           </div>
 
-          {/* Create tag button */}
+          {/* Create deck button */}
           <button
-            onClick={() => setNewTagOpen(true)}
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            onClick={() => navigate("/create-deck")}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
-            <Tag className="size-3.5" />
-            New tag
+            <Sparkles className="size-3.5" />
+            Create deck
           </button>
         </div>
 

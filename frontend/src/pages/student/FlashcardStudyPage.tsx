@@ -4,6 +4,33 @@ import { motion, AnimatePresence } from "motion/react";
 import { deckApi, deckItemApi, flashcardApi } from "@/api";
 import type { DeckDTO, FlashcardDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
+
+/** All TEXT/CLOZE blocks from a named side. Falls back to legacy single field. */
+function getSideTextBlocks(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
+  const found = fc.sides?.find((s) => s.side === side);
+  if (found?.contents) {
+    const blocks = found.contents
+      .filter((c) => c.contentType === "TEXT" || c.contentType === "CLOZE")
+      .map((c) => c.contentValue)
+      .filter(Boolean) as string[];
+    if (blocks.length > 0) return blocks;
+  }
+  // Legacy fallback: back/front may be multi-line joined string
+  const legacy = side === "FRONT" ? fc.front : fc.back;
+  return legacy ? legacy.split("\n").filter(Boolean) : [""];
+}
+
+function getSideImages(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
+  const found = fc.sides?.find((s) => s.side === side);
+  if (found?.contents) {
+    const imgs = found.contents
+      .filter((c) => c.contentType === "IMAGE")
+      .map((c) => c.contentValue)
+      .filter(Boolean) as string[];
+    if (imgs.length > 0) return imgs;
+  }
+  return fc.imageUrl ? [fc.imageUrl] : [];
+}
 import { BookOpen, Check, ChevronLeft, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -292,16 +319,29 @@ export default function FlashcardStudyPage() {
                   <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                     {flipped ? "Definition" : "Term"}
                   </span>
-                  <p className="text-2xl font-bold text-foreground text-center leading-snug">
-                    {flipped ? current.back : current.front}
-                  </p>
-                  {flipped && current.imageUrl && (
+
+                  {/* Text blocks */}
+                  <div className="w-full flex flex-col items-center gap-1.5">
+                    {getSideTextBlocks(current, flipped ? "BACK" : "FRONT").map((text, i) => (
+                      <p key={i} className={cn(
+                        "font-bold text-foreground text-center leading-snug w-full",
+                        i === 0 ? "text-2xl" : "text-base text-foreground/80"
+                      )}>
+                        {text}
+                      </p>
+                    ))}
+                  </div>
+
+                  {/* Images */}
+                  {getSideImages(current, flipped ? "BACK" : "FRONT").map((url, i) => (
                     <img
-                      src={current.imageUrl}
+                      key={i}
+                      src={url}
                       alt=""
-                      className="mt-2 max-h-20 rounded-xl object-contain border border-border"
+                      className="mt-1 max-h-20 rounded-xl object-contain border border-border"
                     />
-                  )}
+                  ))}
+
                   {!flipped && (
                     <p className="text-[10px] text-muted-foreground/50 mt-2">
                       Click to reveal · Space
