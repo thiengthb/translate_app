@@ -1,7 +1,6 @@
 export interface LoginRequest {
   email: string;
   password: string;
-  isRememberedMe?: boolean;
 }
 
 export interface LoginResponse {

@@ -1,8 +1,9 @@
 package com.example.starter_project_2025.system.auth.verify;
 
-import com.example.starter_project_2025.exception.BadRequestException;
+import com.example.starter_project_2025.exception.TooManyRequestsException;
 import com.example.starter_project_2025.system.auth.token.onetime.OneTimeToken;
 import com.example.starter_project_2025.system.auth.token.onetime.OneTimeTokenService;
+import com.example.starter_project_2025.system.auth.util.EmailThrottle;
 import com.example.starter_project_2025.system.auth.util.MailUtil;
 import com.example.starter_project_2025.system.rbac.user.User;
 import com.example.starter_project_2025.system.rbac.user.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -27,6 +29,7 @@ public class VerificationServiceImpl implements VerificationService {
     OneTimeTokenService oneTimeTokenService;
     UserRepository userRepository;
     MailUtil mailUtil;
+    EmailThrottle emailThrottle;
 
     private static final String VERIFICATION_EMAIL = "email/verification_email";
     private static final String RESET_PASSWORD_EMAIL = "email/reset_password_email";
@@ -45,32 +48,46 @@ public class VerificationServiceImpl implements VerificationService {
 
     @Override
     public void sendEmailVerification(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("User with email " + email + " not found"));
-
-        String token = oneTimeTokenService.createOneTimeToken(user, OneTimeToken.TokenType.EMAIL_VERIFY);
-
-        String verificationLink = String.format("%s/verify?token=%s", backendUrl, token);
-
-        sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
+        // First-send path (called by register). No user-facing throttle here:
+        // we still mark the timestamp so an immediate resend will respect the
+        // cooldown window.
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.debug("sendEmailVerification: no user for email {}", email);
+            return;
+        }
+        User user = userOpt.get();
+        if (Boolean.TRUE.equals(user.getIsActive())) {
+            log.debug("sendEmailVerification: user {} already active, skipping", email);
+            return;
+        }
+        emailThrottle.tryConsume("verify:" + email);
+        dispatchVerificationEmail(user);
     }
 
     @Override
     public void resendVerification(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("User with email " + email + " not found"));
-
-        if (user.getIsActive()) {
-            throw new BadRequestException("User with email " + email + " is already active");
+        // Throttle check runs BEFORE the user lookup so cooldown semantics
+        // are identical for known and unknown emails (anti-enumeration).
+        if (!emailThrottle.tryConsume("verify:" + email)) {
+            throw new TooManyRequestsException("Please wait before requesting another email.");
         }
-
-        sendEmailVerification(user.getEmail());
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.debug("resendVerification: no user for email {}", email);
+            return;
+        }
+        User user = userOpt.get();
+        if (Boolean.TRUE.equals(user.getIsActive())) {
+            log.debug("resendVerification: user {} already active, skipping", email);
+            return;
+        }
+        dispatchVerificationEmail(user);
     }
 
     @Override
     @Transactional
     public boolean verifyEmail(String rawToken) {
-
         OneTimeToken token = oneTimeTokenService.verifyOneTimeToken(rawToken, OneTimeToken.TokenType.EMAIL_VERIFY);
         oneTimeTokenService.markUsed(token);
 
@@ -86,18 +103,29 @@ public class VerificationServiceImpl implements VerificationService {
 
     @Override
     public void sendForgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("User with email " + email + " not found"));
-
-        if (!user.getIsActive()) {
-            throw new BadRequestException("User with email " + email + " is not active");
+        if (!emailThrottle.tryConsume("reset:" + email)) {
+            throw new TooManyRequestsException("Please wait before requesting another email.");
+        }
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.debug("sendForgotPassword: no user for email {}", email);
+            return;
+        }
+        User user = userOpt.get();
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            log.debug("sendForgotPassword: user {} not active, skipping", email);
+            return;
         }
 
         String token = oneTimeTokenService.createOneTimeToken(user, OneTimeToken.TokenType.RESET_PASSWORD);
+        String resetLink = String.format("%s/forgot-password?token=%s", frontendUrl, token);
+        sendResetPasswordMail(user.getEmail(), user.getFullName(), resetLink);
+    }
 
-        String verificationLink = String.format("%s/forgot-password?token=%s", frontendUrl, token);
-
-        sendResetPasswordMail(user.getEmail(), user.getFullName(), verificationLink);
+    private void dispatchVerificationEmail(User user) {
+        String token = oneTimeTokenService.createOneTimeToken(user, OneTimeToken.TokenType.EMAIL_VERIFY);
+        String verificationLink = String.format("%s/verify?token=%s", backendUrl, token);
+        sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
     }
 
     public void sendVerificationEmail(String to, String username, String verificationLink) {
@@ -125,7 +153,6 @@ public class VerificationServiceImpl implements VerificationService {
                         Map.entry("resetLink", resetLink)
                 )
         );
-        log.info("Verification email sent to {}", to);
+        log.info("Reset password email sent to {}", to);
     }
-
 }

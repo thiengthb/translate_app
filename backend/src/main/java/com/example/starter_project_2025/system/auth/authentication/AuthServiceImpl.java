@@ -12,6 +12,7 @@ import com.example.starter_project_2025.system.auth.token.onetime.OneTimeToken;
 import com.example.starter_project_2025.system.auth.token.onetime.OneTimeTokenService;
 import com.example.starter_project_2025.system.auth.token.refresh.RefreshToken;
 import com.example.starter_project_2025.system.auth.token.refresh.RefreshTokenService;
+import com.example.starter_project_2025.system.auth.util.LoginAttemptTracker;
 import com.example.starter_project_2025.system.auth.verify.VerificationService;
 import com.example.starter_project_2025.system.rbac.role.Role;
 import com.example.starter_project_2025.system.rbac.role.RoleRepository;
@@ -50,15 +51,24 @@ public class AuthServiceImpl implements AuthService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+    LoginAttemptTracker loginAttemptTracker;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
-        );
+        String email = request.email();
+        loginAttemptTracker.assertNotLocked(email);
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.password())
+            );
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            loginAttemptTracker.recordFailure(email);
+            throw ex;
+        }
+
+        loginAttemptTracker.recordSuccess(email);
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 

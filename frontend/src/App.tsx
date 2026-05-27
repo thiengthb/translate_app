@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -35,20 +34,9 @@ function AppRoutes() {
         <LandingPage />
     );
 
-    const componentRegistry = Object.fromEntries(
-        routes.filter((r) => r.isModuleDriven).map((r) => [r.path, r.component]),
-    );
-
-    const staticRoutes = routes.filter((r) => !r.isModuleDriven);
-
     // Public module URLs — skipped from protected routes
     const publicModuleUrls = new Set(
         publicModules.filter((m) => !!m.url).map((m) => m.url as string),
-    );
-
-    const homePath = useMemo(
-        () => (isAuthenticated ? getHomePathByRole(activeRole) : "/login"),
-        [isAuthenticated, activeRole],
     );
 
     return (
@@ -140,23 +128,13 @@ function AppRoutes() {
 
 function App() {
     return (
-        <BrowserRouter>
-            <Toaster
-                duration={1500}
-                position="top-right"
-                richColors
-                toastOptions={{ className: "p-4" }}
-            />
-            <AuthProvider>
         <ErrorBoundary>
             <BrowserRouter>
                 <Toaster
                     duration={1500}
                     position="top-right"
                     richColors
-                    toastOptions={{
-                        className: "p-4",
-                    }}
+                    toastOptions={{ className: "p-4" }}
                 />
                 <I18nProvider>
                     <RoleSwitchProvider>

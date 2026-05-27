@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "motion/react";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
 import { setLogin } from "@/store/slices/auth/authSlice";
 import { authApi } from "@/api/features/auth.api";
+import { GuestLayout } from "@/components/layout/GuestLayout";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { getHomePathByRole } from "@/utils/rbac.utils";
@@ -33,7 +33,6 @@ const getOAuthErrorMessage = (errorParam: string | null): string => {
 export const Login: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isRememberedMe, setIsRememberedMe] = useState<boolean>(false);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -55,13 +54,12 @@ export const Login: React.FC = () => {
         const cleanEmail = email.trim();
         const cleanPassword = password.trim();
         try {
-            const res = await authApi.login({ email: cleanEmail, password: cleanPassword, isRememberedMe });
+            const res = await authApi.login({ email: cleanEmail, password: cleanPassword });
             dispatch(setLogin(res));
             navigate(getHomePathByRole(res.role), { replace: true });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const backendMsg = err.response?.data?.message;
-
                 setError(backendMsg || "Invalid email or password");
             } else if (err instanceof Error) {
                 setError(err.message);
@@ -73,18 +71,15 @@ export const Login: React.FC = () => {
         }
     };
 
-    const handleIsRememberMe = (checked: boolean) => {
-        setIsRememberedMe(checked);
-    };
-
-    const handleGoogleLogin = async () => {
+    const handleGoogleLogin = () => {
         setIsLoading(true);
         setError("");
         window.location.href = URL_LOGIN_WITH_GOOGLE;
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <GuestLayout>
+        <div className="flex-1 flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -103,10 +98,7 @@ export const Login: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <label
-                            htmlFor="email"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
+                        <label htmlFor="email" className="text-sm font-medium leading-none">
                             Email
                         </label>
                         <Input
@@ -125,8 +117,14 @@ export const Login: React.FC = () => {
                             <label htmlFor="password" className="text-sm font-medium leading-none">
                                 Password
                             </label>
+                            <Link
+                                to="/forgot-password"
+                                className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                            >
+                                Forgot password?
+                            </Link>
                         </div>
-                        <div className="flex justify-items-center">
+                        <div className="relative">
                             <Input
                                 type={showPassword ? "text" : "password"}
                                 id="password"
@@ -134,23 +132,17 @@ export const Login: React.FC = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 placeholder="••••••••"
-                                className="bg-background "
+                                className="bg-background pr-10"
                             />
-                            <Button
+                            <button
                                 type="button"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                                style={{ marginLeft: "10px" }}
+                                onClick={() => setShowPassword((v) => !v)}
+                                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </Button>
+                            </button>
                         </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                        <Checkbox id="remember" onCheckedChange={(checked: boolean) => handleIsRememberMe(checked)} />
-                        <label htmlFor="remember" className="text-sm font-medium leading-none cursor-pointer">
-                            Remember me
-                        </label>
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>
@@ -180,41 +172,48 @@ export const Login: React.FC = () => {
                     </Button>
                 </form>
 
-                <Button disabled={isLoading} onClick={handleGoogleLogin} variant="outline" className="w-full mt-3">
+                <Button
+                    disabled={isLoading}
+                    onClick={handleGoogleLogin}
+                    variant="outline"
+                    className="w-full mt-3"
+                >
                     <FcGoogle className="mr-2 h-4 w-4" /> Continue with Google
                 </Button>
 
                 <div className="mt-4 text-center">
                     <p className="text-sm text-muted-foreground">
                         Don't have an account yet?{" "}
-                        <Button
-                            variant="link"
-                            className="p-0 h-auto font-semibold text-primary"
-                            onClick={() => navigate("/register")}
+                        <Link
+                            to="/register"
+                            className="font-semibold text-primary hover:underline"
                         >
                             Register now
-                        </Button>
+                        </Link>
                     </p>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-dashed">
-                    <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">(Test Only):</p>
-                    <div className="space-y-2 text-sm bg-muted/50 p-3 rounded-lg border">
-                        <p className="flex justify-between">
-                            <span className="text-muted-foreground font-mono text-[11px]">ADMIN:</span>
-                            <span className="font-medium">admin@example.com / password123</span>
-                        </p>
-                        <p className="flex justify-between">
-                            <span className="text-muted-foreground font-mono text-[11px]">STUDENT:</span>
-                            <span className="font-medium">student@example.com / password123</span>
-                        </p>
-                        <p className="flex justify-between">
-                            <span className="text-muted-foreground font-mono text-[11px]">TEACHER:</span>
-                            <span className="font-medium">teacher@example.com / password123</span>
-                        </p>
+                {import.meta.env.DEV && (
+                    <div className="mt-8 pt-6 border-t border-dashed">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">(Test Only):</p>
+                        <div className="space-y-2 text-sm bg-muted/50 p-3 rounded-lg border">
+                            <p className="flex justify-between">
+                                <span className="text-muted-foreground font-mono text-[11px]">ADMIN:</span>
+                                <span className="font-medium">admin@example.com / password123</span>
+                            </p>
+                            <p className="flex justify-between">
+                                <span className="text-muted-foreground font-mono text-[11px]">STUDENT:</span>
+                                <span className="font-medium">student@example.com / password123</span>
+                            </p>
+                            <p className="flex justify-between">
+                                <span className="text-muted-foreground font-mono text-[11px]">TEACHER:</span>
+                                <span className="font-medium">teacher@example.com / password123</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
             </motion.div>
         </div>
+        </GuestLayout>
     );
 };
