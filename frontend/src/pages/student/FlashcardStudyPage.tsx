@@ -43,7 +43,7 @@ function getSideAudio(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
   }
   return fc.audioUrl ? [fc.audioUrl] : [];
 }
-import { BookOpen, Check, ChevronLeft, RotateCcw, X } from "lucide-react";
+import { BookOpen, Check, ChevronLeft, Maximize2, Minimize2, RotateCcw, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CardEntry {
@@ -59,6 +59,15 @@ interface SessionState {
   roundTotal: number;       // size of remaining at the start of each round (for progress bar)
   done: boolean;
   correctTotal: number;     // cumulative correct answers
+}
+
+function shuffleCards(cards: CardEntry[]): CardEntry[] {
+  const out = [...cards];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 function buildSession(cards: CardEntry[]): SessionState {
@@ -85,6 +94,8 @@ export default function FlashcardStudyPage() {
   const [flipped, setFlipped] = useState(false);
   const [slideDir, setSlideDir] = useState<SlideDir>(null);
   const [loading, setLoading] = useState(true);
+  const [fullView, setFullView] = useState(false);
+  const [shuffled, setShuffled] = useState(false);
 
   /* ── Load deck + cards ── */
   useEffect(() => {
@@ -123,6 +134,10 @@ export default function FlashcardStudyPage() {
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && fullView) {
+        setFullView(false);
+        return;
+      }
       if (!session || session.done) return;
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); setFlipped((f) => !f); }
       if (flipped) {
@@ -132,7 +147,17 @@ export default function FlashcardStudyPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [session, flipped]);
+  }, [session, flipped, fullView]);
+
+  /* ── Lock scroll while in full view ── */
+  useEffect(() => {
+    if (!fullView) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [fullView]);
 
   /* ── Session actions ── */
   const advance = (dir: SlideDir, updater: (s: SessionState) => SessionState) => {
@@ -184,7 +209,15 @@ export default function FlashcardStudyPage() {
   const reset = () => {
     setFlipped(false);
     setSlideDir(null);
-    setSession(buildSession(allCards));
+    setSession(buildSession(shuffled ? shuffleCards(allCards) : allCards));
+  };
+
+  const toggleShuffle = () => {
+    setFlipped(false);
+    setSlideDir(null);
+    const next = !shuffled;
+    setShuffled(next);
+    setSession(buildSession(next ? shuffleCards(allCards) : allCards));
   };
 
   /* ── Derived ── */
@@ -192,29 +225,58 @@ export default function FlashcardStudyPage() {
   const answered = session ? session.roundTotal - session.remaining.length : 0;
   const progress = session && session.roundTotal > 0 ? (answered / session.roundTotal) * 100 : 0;
 
-  return (
-    <MainLayout pathName={{ "/library": "Library", [`/deck/${deckId}`]: deck?.title ?? "Study" }}>
-      <div className="max-w-3xl mx-auto w-full pb-16 space-y-6 pt-2">
+  const content = (
+      <div className={cn(
+        "w-full space-y-6",
+        fullView
+          ? "max-w-3xl mx-auto px-4 py-6 sm:py-10"
+          : "max-w-3xl mx-auto pb-16 pt-2"
+      )}>
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/library")}
+            onClick={() => (fullView ? setFullView(false) : navigate("/library"))}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="size-4" />
-            Back to library
+            {fullView ? "Exit full view" : "Back to library"}
           </button>
 
-          {session && !session.done && (
+          <div className="flex items-center gap-3">
+            {session && !session.done && allCards.length > 1 && (
+              <button
+                onClick={toggleShuffle}
+                className={cn(
+                  "flex items-center gap-1.5 text-sm transition-colors",
+                  shuffled
+                    ? "text-primary hover:text-primary/80"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title={shuffled ? "Restore original order" : "Shuffle deck"}
+              >
+                <Shuffle className="size-3.5" />
+                {shuffled ? "Shuffled" : "Shuffle"}
+              </button>
+            )}
+            {session && !session.done && (
+              <button
+                onClick={reset}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <RotateCcw className="size-3.5" />
+                Reset
+              </button>
+            )}
             <button
-              onClick={reset}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setFullView((v) => !v)}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title={fullView ? "Exit full view (Esc)" : "Full view"}
             >
-              <RotateCcw className="size-3.5" />
-              Reset
+              {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {fullView ? "Exit" : "Full view"}
             </button>
-          )}
+          </div>
         </div>
 
         {/* Deck title */}
@@ -304,7 +366,10 @@ export default function FlashcardStudyPage() {
 
             {/* Flip card */}
             <div
-              className="relative h-64 cursor-pointer select-none"
+              className={cn(
+                "relative cursor-pointer select-none",
+                fullView ? "h-[65vh]" : "h-64"
+              )}
               onClick={() => !slideDir && setFlipped((f) => !f)}
               style={{ perspective: 1200 }}
             >
@@ -337,7 +402,9 @@ export default function FlashcardStudyPage() {
                     {getSideTextBlocks(current, flipped ? "BACK" : "FRONT").map((text, i) => (
                       <p key={i} className={cn(
                         "font-bold text-foreground text-center leading-snug w-full",
-                        i === 0 ? "text-2xl" : "text-base text-foreground/80"
+                        i === 0
+                          ? fullView ? "text-5xl" : "text-2xl"
+                          : fullView ? "text-xl text-foreground/80" : "text-base text-foreground/80"
                       )}>
                         {text}
                       </p>
@@ -350,7 +417,10 @@ export default function FlashcardStudyPage() {
                       key={i}
                       src={url}
                       alt=""
-                      className="mt-1 max-h-20 rounded-xl object-contain border border-border"
+                      className={cn(
+                        "mt-1 rounded-xl object-contain border border-border",
+                        fullView ? "max-h-64" : "max-h-20"
+                      )}
                     />
                   ))}
 
@@ -414,7 +484,7 @@ export default function FlashcardStudyPage() {
         )}
 
         {/* ── All terms list ── */}
-        {!loading && allCards.length > 0 && (
+        {!loading && !fullView && allCards.length > 0 && (
           <div className="pt-4 space-y-3">
             <h2 className="text-sm font-semibold text-foreground">
               Terms in this set ({allCards.length})
@@ -470,6 +540,19 @@ export default function FlashcardStudyPage() {
           </div>
         )}
       </div>
+  );
+
+  if (fullView) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <MainLayout pathName={{ "/library": "Library", [`/deck/${deckId}`]: deck?.title ?? "Study" }}>
+      {content}
     </MainLayout>
   );
 }
