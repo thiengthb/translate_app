@@ -315,20 +315,51 @@ export default function AnkiStudyPage() {
                       <p className="text-2xl font-bold text-foreground text-center leading-snug" />
                     )}
                   </div>
-                  {current.imageUrl && (
-                    <img
-                      src={current.imageUrl}
-                      alt=""
-                      className="mt-2 max-h-20 rounded-xl object-contain border border-border"
-                    />
-                  )}
-                  {current.audioUrl && (
-                    <audio
-                      src={current.audioUrl}
-                      controls
-                      className="mt-1 w-full max-w-xs h-8"
-                    />
-                  )}
+                  {(() => {
+                    const images = (flipped ? current.backImages : current.frontImages) ?? [];
+                    const audios = (flipped ? current.backAudios : current.frontAudios) ?? [];
+                    const videos = (flipped ? current.backVideos : current.frontVideos) ?? [];
+                    return (
+                      <>
+                        {images.length > 0 && (
+                          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
+                            {images.map((url, i) => (
+                              <img
+                                key={`img-${i}-${url}`}
+                                src={url}
+                                alt=""
+                                className="max-h-20 rounded-xl object-contain border border-border"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {videos.length > 0 && (
+                          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
+                            {videos.map((url, i) => (
+                              <video
+                                key={`vid-${i}-${url}`}
+                                src={url}
+                                controls
+                                className="max-h-24 rounded-xl border border-border"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {audios.length > 0 && (
+                          <div className="mt-1 flex flex-col items-center gap-1 w-full max-w-xs">
+                            {audios.map((url, i) => (
+                              <audio
+                                key={`aud-${i}-${url}`}
+                                src={url}
+                                controls
+                                className="w-full h-8"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   {!flipped && (
                     <p className="text-[10px] text-muted-foreground/50 mt-2">
                       Click to reveal · Space

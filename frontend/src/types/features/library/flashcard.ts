@@ -1,7 +1,7 @@
 import type { BaseDTO, BaseFilter } from "@/types/common/base";
 
 export type FlashcardSideType = "FRONT" | "BACK" | "HINT";
-export type FlashcardContentType = "TEXT" | "IMAGE" | "AUDIO" | "CLOZE";
+export type FlashcardContentType = "TEXT" | "IMAGE" | "AUDIO" | "VIDEO" | "CLOZE";
 
 export interface FlashcardSideContentDTO {
   id?: number;
