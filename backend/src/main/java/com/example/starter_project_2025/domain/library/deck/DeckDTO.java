@@ -3,7 +3,6 @@ package com.example.starter_project_2025.domain.library.deck;
 import com.example.starter_project_2025.base.crud.dto.BaseDTO;
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -43,4 +42,6 @@ public class DeckDTO extends BaseDTO {
     String targetLanguage;
 
     Integer totalCards;
+
+    Long templateId;
 }

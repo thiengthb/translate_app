@@ -23,6 +23,7 @@ public class FlashcardController
 
     FlashcardService flashcardService;
     FlashcardRepository flashcardRepository;
+    FlashcardRenderService flashcardRenderService;
 
     @Override
     protected BaseCrudService<Long, FlashcardDTO, FlashcardFilter> getService() {
@@ -70,5 +71,15 @@ public class FlashcardController
     ) {
         flashcardService.reorderContents(sideId, orderedContentIds);
         return ResponseEntity.noContent().build();
+    }
+
+    /* ─────────────────────────────────────────
+       Render endpoint — returns HTML built from the deck's template
+       (or the system default for the card's cardType).
+    ───────────────────────────────────────── */
+
+    @GetMapping("/{id}/render")
+    public ResponseEntity<FlashcardRenderDTO> render(@PathVariable Long id) {
+        return ResponseEntity.ok(flashcardRenderService.renderCard(id));
     }
 }

@@ -4,10 +4,12 @@ import com.example.starter_project_2025.base.crud.domain.BaseCrudRepository;
 import com.example.starter_project_2025.base.crud.mapper.BaseCrudMapper;
 import com.example.starter_project_2025.base.crud.service.BaseCrudServiceImpl;
 import com.example.starter_project_2025.base.crud.validation.ValidationContext;
+import com.example.starter_project_2025.domain.library.flashcard.FlashcardTemplateRepository;
 import com.example.starter_project_2025.domain.library.folder.Folder;
 import com.example.starter_project_2025.domain.library.folder.FolderRepository;
 import com.example.starter_project_2025.domain.library.tag.Tag;
 import com.example.starter_project_2025.domain.library.tag.TagRepository;
+import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.system.rbac.user.User;
 import com.example.starter_project_2025.system.rbac.user.UserRepository;
 import lombok.AccessLevel;
@@ -32,6 +34,7 @@ public class DeckServiceImpl
     UserRepository userRepository;
     FolderRepository folderRepository;
     TagRepository tagRepository;
+    FlashcardTemplateRepository flashcardTemplateRepository;
 
     @Override
     protected BaseCrudRepository<Deck, Long> getRepository() {
@@ -133,5 +136,33 @@ public class DeckServiceImpl
                         request.getTitle(), deck.getUser().getId(), deck.getId())) {
             ctx.add("title", "Deck title already exists for this user");
         }
+    }
+
+    /* ─────────────────────────────────────────
+       Template wiring
+    ───────────────────────────────────────── */
+
+    @Override
+    public DeckDTO applyTemplate(Long deckId, Long templateId) {
+        Deck deck = deckRepository.findById(deckId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found"));
+        if (templateId == null) {
+            throw new IllegalArgumentException("templateId is required");
+        }
+        if (!flashcardTemplateRepository.existsById(templateId)) {
+            throw new ResourceNotFoundException("Template not found");
+        }
+        deck.setTemplateId(templateId);
+        Deck saved = deckRepository.save(deck);
+        return deckMapper.toResponse(saved);
+    }
+
+    @Override
+    public DeckDTO removeTemplate(Long deckId) {
+        Deck deck = deckRepository.findById(deckId)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found"));
+        deck.setTemplateId(null);
+        Deck saved = deckRepository.save(deck);
+        return deckMapper.toResponse(saved);
     }
 }

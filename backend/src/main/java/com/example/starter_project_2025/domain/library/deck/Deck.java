@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.library.deck;
 
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
+import com.example.starter_project_2025.domain.library.flashcard.FlashcardTemplate;
 import com.example.starter_project_2025.domain.library.folder.Folder;
 import com.example.starter_project_2025.domain.library.tag.Tag;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
@@ -89,4 +90,11 @@ public class Deck extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     int totalCards = 0;
+
+    @Column(name = "template_id")
+    Long templateId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id", insertable = false, updatable = false)
+    FlashcardTemplate template;
 }

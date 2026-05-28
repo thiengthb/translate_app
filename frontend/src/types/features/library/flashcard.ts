@@ -39,3 +39,44 @@ export interface FlashcardFilter extends BaseFilter {
   itemType?: string;
   front?: string;
 }
+
+/* ─────────────────────────────────────────
+   Templates
+───────────────────────────────────────── */
+
+export interface FlashcardTemplateDTO extends BaseDTO {
+  userId: number | null;
+  cardType: string | null;
+  name: string;
+  description: string | null;
+  frontTemplate: string | null;
+  backTemplate: string | null;
+  styling: string | null;
+  isSystem: boolean;
+  isDefault: boolean;
+}
+
+export interface FlashcardTemplateFilter extends BaseFilter {
+  userId?: number;
+  cardType?: string;
+  isSystem?: boolean;
+  isDefault?: boolean;
+}
+
+export interface CreateUpdateTemplateRequest {
+  name: string;
+  cardType: string | null;
+  description: string | null;
+  frontTemplate: string | null;
+  backTemplate: string | null;
+  styling: string | null;
+  isActive: boolean;
+}
+
+export interface FlashcardRenderDTO {
+  flashcardId: number;
+  frontHtml: string;
+  backHtml: string;
+  styling: string | null;
+  templateId: number | null;
+}

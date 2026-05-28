@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ankiStudyApi } from "@/api";
+import { ankiStudyApi, flashcardApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api/features/library/ankiStudy.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, ChevronLeft, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, Brush, ChevronLeft, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import type { FlashcardRenderDTO } from "@/types";
 import { AnkiCardEditModal } from "./AnkiCardEditModal";
+import { TemplateEditorModal } from "./TemplateEditorModal";
 
 /* ── SM2 preview: interval each button would produce (display only) ── */
 function fallbackPreview(card: AnkiStudyCard, rating: AnkiRating): string {
@@ -103,7 +105,9 @@ export default function AnkiStudyPage() {
   const [totalNew, setTotalNew] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [fullView, setFullView] = useState(false);
+  const [renderData, setRenderData] = useState<FlashcardRenderDTO | null>(null);
 
   /* ── Load queue ── */
   const loadQueue = (showSpinner = true) => {
@@ -160,6 +164,36 @@ export default function AnkiStudyPage() {
       document.body.style.overflow = prev;
     };
   }, [fullView]);
+
+  /* ── Fetch rendered HTML when current card changes ── */
+  const currentFlashcardId = queue[0]?.flashcardId ?? null;
+  useEffect(() => {
+    if (currentFlashcardId == null) {
+      setRenderData(null);
+      return;
+    }
+    let cancelled = false;
+    flashcardApi
+      .getRender(currentFlashcardId)
+      .then((data) => {
+        if (!cancelled) setRenderData(data);
+      })
+      .catch(() => {
+        if (!cancelled) setRenderData(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFlashcardId]);
+
+  const refetchRender = () => {
+    if (currentFlashcardId == null) return;
+    flashcardApi
+      .getRender(currentFlashcardId)
+      .then((data) => setRenderData(data))
+      .catch(() => setRenderData(null));
+  };
 
   /* ── Rate current card ── */
   const handleRate = async (rating: AnkiRating) => {
@@ -326,6 +360,14 @@ export default function AnkiStudyPage() {
                 <Pencil className="size-3.5" />
                 Edit card
               </button>
+              <button
+                onClick={() => setTemplateEditorOpen(true)}
+                className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                title="Edit template (affects all cards using this template)"
+              >
+                <Brush className="size-3.5" />
+                Edit template
+              </button>
             </div>
 
             {/* Flip card */}
@@ -345,92 +387,36 @@ export default function AnkiStudyPage() {
                   exit={{ rotateY: -90, opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className={cn(
-                    "absolute inset-0 rounded-2xl border border-border shadow-md flex flex-col items-center justify-center gap-3 px-10 py-8",
+                    "absolute inset-0 rounded-2xl border border-border shadow-md overflow-hidden p-0",
                     flipped ? "bg-primary/5" : "bg-card"
                   )}
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    {flipped ? "Answer" : "Question"}
-                  </span>
-                  <div className="w-full flex flex-col items-center gap-1.5">
-                    {(flipped ? current.back : current.front)
-                      ?.split("\n")
-                      .filter(Boolean)
-                      .map((line, i) => (
-                        <p
-                          key={i}
-                          className={cn(
-                            "font-bold text-foreground text-center leading-snug w-full",
-                            i === 0
-                              ? fullView ? "text-5xl" : "text-2xl"
-                              : fullView ? "text-xl text-foreground/80" : "text-base text-foreground/80"
-                          )}
-                        >
-                          {line}
-                        </p>
-                      )) ?? (
-                      <p className="text-2xl font-bold text-foreground text-center leading-snug" />
+                  <div className="flex flex-col h-full">
+                    <span className="shrink-0 pt-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      {flipped ? "Answer" : "Question"}
+                    </span>
+
+                    {hasTemplateRender(renderData, flipped) ? (
+                      <TemplateSideRender
+                        html={flipped ? renderData!.backHtml : renderData!.frontHtml}
+                        styling={renderData!.styling}
+                      />
+                    ) : (
+                      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-10 py-4 overflow-auto">
+                        <PlainSideRender
+                          card={current}
+                          flipped={flipped}
+                          fullView={fullView}
+                        />
+                      </div>
+                    )}
+
+                    {!flipped && (
+                      <p className="shrink-0 pb-3 text-center text-[10px] text-muted-foreground/50">
+                        Click to reveal · Space
+                      </p>
                     )}
                   </div>
-                  {(() => {
-                    const images = (flipped ? current.backImages : current.frontImages) ?? [];
-                    const audios = (flipped ? current.backAudios : current.frontAudios) ?? [];
-                    const videos = (flipped ? current.backVideos : current.frontVideos) ?? [];
-                    return (
-                      <>
-                        {images.length > 0 && (
-                          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
-                            {images.map((url, i) => (
-                              <img
-                                key={`img-${i}-${url}`}
-                                src={url}
-                                alt=""
-                                className={cn(
-                                  "rounded-xl object-contain border border-border",
-                                  fullView ? "max-h-64" : "max-h-20"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        )}
-                        {videos.length > 0 && (
-                          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
-                            {videos.map((url, i) => (
-                              <video
-                                key={`vid-${i}-${url}`}
-                                src={url}
-                                controls
-                                className={cn(
-                                  "rounded-xl border border-border",
-                                  fullView ? "max-h-72" : "max-h-24"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        )}
-                        {audios.length > 0 && (
-                          <div className={cn(
-                            "mt-1 flex flex-col items-center gap-1 w-full",
-                            fullView ? "max-w-md" : "max-w-xs"
-                          )}>
-                            {audios.map((url, i) => (
-                              <audio
-                                key={`aud-${i}-${url}`}
-                                src={url}
-                                controls
-                                className="w-full h-8"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                  {!flipped && (
-                    <p className="text-[10px] text-muted-foreground/50 mt-2">
-                      Click to reveal · Space
-                    </p>
-                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -483,12 +469,23 @@ export default function AnkiStudyPage() {
   );
 
   const modal = current && (
-    <AnkiCardEditModal
-      flashcardId={current.flashcardId}
-      open={editOpen}
-      onClose={() => setEditOpen(false)}
-      onSaved={() => loadQueue(false)}
-    />
+    <>
+      <AnkiCardEditModal
+        flashcardId={current.flashcardId}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => {
+          loadQueue(false);
+          refetchRender();
+        }}
+      />
+      <TemplateEditorModal
+        deckId={Number(deckId)}
+        open={templateEditorOpen}
+        onClose={() => setTemplateEditorOpen(false)}
+        onSaved={() => refetchRender()}
+      />
+    </>
   );
 
   if (fullView) {
@@ -510,6 +507,133 @@ export default function AnkiStudyPage() {
       {content}
       {modal}
     </MainLayout>
+  );
+}
+
+/* ── Template render helpers ── */
+function hasTemplateRender(
+  render: FlashcardRenderDTO | null,
+  flipped: boolean
+): boolean {
+  if (!render) return false;
+  const html = flipped ? render.backHtml : render.frontHtml;
+  return typeof html === "string" && html.trim().length > 0;
+}
+
+function TemplateSideRender({
+  html,
+  styling,
+}: {
+  html: string;
+  styling: string | null;
+}) {
+  const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><style>
+:root { color-scheme: light dark; }
+html, body {
+  margin: 0;
+  padding: 12px 16px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background: transparent;
+  color: inherit;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+${styling ?? ""}
+</style></head><body><div class="card">${html}</div></body></html>`;
+
+  return (
+    <iframe
+      title="Card content"
+      sandbox=""
+      srcDoc={srcDoc}
+      className="w-full flex-1 min-h-0 border-0 bg-transparent"
+      style={{ minHeight: 0 }}
+    />
+  );
+}
+
+function PlainSideRender({
+  card,
+  flipped,
+  fullView,
+}: {
+  card: AnkiStudyCard;
+  flipped: boolean;
+  fullView: boolean;
+}) {
+  const images = (flipped ? card.backImages : card.frontImages) ?? [];
+  const audios = (flipped ? card.backAudios : card.frontAudios) ?? [];
+  const videos = (flipped ? card.backVideos : card.frontVideos) ?? [];
+  const text = flipped ? card.back : card.front;
+
+  return (
+    <>
+      <div className="w-full flex flex-col items-center gap-1.5">
+        {text
+          ?.split("\n")
+          .filter(Boolean)
+          .map((line, i) => (
+            <p
+              key={i}
+              className={cn(
+                "font-bold text-foreground text-center leading-snug w-full",
+                i === 0
+                  ? fullView ? "text-5xl" : "text-2xl"
+                  : fullView ? "text-xl text-foreground/80" : "text-base text-foreground/80"
+              )}
+            >
+              {line}
+            </p>
+          )) ?? (
+          <p className="text-2xl font-bold text-foreground text-center leading-snug" />
+        )}
+      </div>
+      {images.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
+          {images.map((url, i) => (
+            <img
+              key={`img-${i}-${url}`}
+              src={url}
+              alt=""
+              className={cn(
+                "rounded-xl object-contain border border-border",
+                fullView ? "max-h-64" : "max-h-20"
+              )}
+            />
+          ))}
+        </div>
+      )}
+      {videos.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2 max-w-full">
+          {videos.map((url, i) => (
+            <video
+              key={`vid-${i}-${url}`}
+              src={url}
+              controls
+              className={cn(
+                "rounded-xl border border-border",
+                fullView ? "max-h-72" : "max-h-24"
+              )}
+            />
+          ))}
+        </div>
+      )}
+      {audios.length > 0 && (
+        <div className={cn(
+          "mt-1 flex flex-col items-center gap-1 w-full",
+          fullView ? "max-w-md" : "max-w-xs"
+        )}>
+          {audios.map((url, i) => (
+            <audio
+              key={`aud-${i}-${url}`}
+              src={url}
+              controls
+              className="w-full h-8"
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
