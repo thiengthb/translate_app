@@ -15,4 +15,9 @@ export const dictionaryApi = {
         });
         return response.data;
     },
+
+    recognizeHandwriting: async (strokes: Array<[number[], number[]]>): Promise<string[]> => {
+        const response = await axiosInstance.post<string[]>("/dictionary/handwriting", { strokes });
+        return response.data;
+    },
 };

@@ -4,6 +4,8 @@ import { dictionaryApi } from "@/api/features/dictionary.api";
 import type { WordSearchResult, WordSuggestion, DictionaryKanjiInfo, DictionaryExampleInfo } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HandwritingInput } from "./HandwritingInput";
+import { VoiceInput } from "./VoiceInput";
 
 // ── Constants ─────────────────────────────────────────────────────────
 const WORD_TYPE_LABELS: Record<string, string> = {
@@ -16,22 +18,57 @@ const WORD_TYPE_LABELS: Record<string, string> = {
     suf: "Hậu tố", conj: "Liên từ", int: "Thán từ",
 };
 
-const JLPT: Record<string, { badge: string; bar: string }> = {
-    N1: { badge: "bg-red-100 text-red-700 border-red-200",          bar: "bg-gradient-to-r from-red-500 to-rose-500" },
-    N2: { badge: "bg-orange-100 text-orange-700 border-orange-200", bar: "bg-gradient-to-r from-orange-500 to-amber-500" },
-    N3: { badge: "bg-yellow-100 text-yellow-700 border-yellow-200", bar: "bg-gradient-to-r from-yellow-400 to-orange-400" },
-    N4: { badge: "bg-green-100 text-green-700 border-green-200",    bar: "bg-gradient-to-r from-green-500 to-emerald-500" },
-    N5: { badge: "bg-blue-100 text-blue-700 border-blue-200",       bar: "bg-gradient-to-r from-blue-500 to-indigo-500" },
+const JLPT: Record<string, { badge: string; bar: string; accent: string; soft: string; softDark: string; text: string }> = {
+    N1: {
+        badge:    "bg-red-100 text-red-700 border-red-300",
+        bar:      "bg-gradient-to-r from-red-500 to-rose-500",
+        accent:   "border-l-red-400",
+        soft:     "bg-red-50",
+        softDark: "dark:bg-red-950/20",
+        text:     "text-red-600 dark:text-red-400",
+    },
+    N2: {
+        badge:    "bg-orange-100 text-orange-700 border-orange-300",
+        bar:      "bg-gradient-to-r from-orange-500 to-amber-400",
+        accent:   "border-l-orange-400",
+        soft:     "bg-orange-50",
+        softDark: "dark:bg-orange-950/20",
+        text:     "text-orange-600 dark:text-orange-400",
+    },
+    N3: {
+        badge:    "bg-yellow-100 text-yellow-700 border-yellow-300",
+        bar:      "bg-gradient-to-r from-yellow-400 to-orange-400",
+        accent:   "border-l-yellow-400",
+        soft:     "bg-yellow-50",
+        softDark: "dark:bg-yellow-950/20",
+        text:     "text-yellow-600 dark:text-yellow-500",
+    },
+    N4: {
+        badge:    "bg-green-100 text-green-700 border-green-300",
+        bar:      "bg-gradient-to-r from-green-500 to-emerald-400",
+        accent:   "border-l-green-400",
+        soft:     "bg-green-50",
+        softDark: "dark:bg-green-950/20",
+        text:     "text-green-600 dark:text-green-400",
+    },
+    N5: {
+        badge:    "bg-blue-100 text-blue-700 border-blue-300",
+        bar:      "bg-gradient-to-r from-blue-500 to-indigo-500",
+        accent:   "border-l-blue-400",
+        soft:     "bg-blue-50",
+        softDark: "dark:bg-blue-950/20",
+        text:     "text-blue-600 dark:text-blue-400",
+    },
 };
 
-const REP_STYLES: Record<string, string> = {
-    KANJI:    "bg-purple-100 text-purple-700",
-    HIRAGANA: "bg-pink-100 text-pink-700",
-    KATAKANA: "bg-cyan-100 text-cyan-700",
-    MIXED:    "bg-indigo-100 text-indigo-700",
+const REP_LABELS: Record<string, { label: string; style: string }> = {
+    KANJI:    { label: "漢字", style: "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" },
+    HIRAGANA: { label: "ひら", style: "bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300" },
+    KATAKANA: { label: "カナ", style: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300" },
+    MIXED:    { label: "混合", style: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" },
 };
 
-const QUICK_EXAMPLES = ["食べる", "水", "学校", "taberu", "mizu", "gakkou", "ăn", "nước"];
+const QUICK_EXAMPLES = ["食べる", "水", "学校", "taberu", "mizu", "ăn", "nước"];
 const HISTORY_KEY = "dict_search_history";
 const MAX_HISTORY = 10;
 
@@ -152,17 +189,38 @@ export default function DictionaryPage() {
             <div className="max-w-3xl mx-auto w-full space-y-5">
 
                 {/* ── Hero ── */}
-                <div className="relative rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-900 dark:via-indigo-900 dark:to-violet-950 shadow-xl">
-                    <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none select-none" aria-hidden>
-                        <span className="absolute -top-2 right-4 text-white/10 text-8xl font-bold">辞</span>
-                        <span className="absolute bottom-0 left-6 text-white/5 text-6xl font-bold">書</span>
+                <div className="relative rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-950 dark:via-indigo-950 dark:to-violet-950 shadow-2xl">
+                    {/* Decorative layer — overflow-hidden scoped here so dropdown is never clipped */}
+                    <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none select-none" aria-hidden>
+                        <span className="absolute -top-4 -right-2 text-white/[0.07] text-[9rem] font-black leading-none">辞</span>
+                        <span className="absolute top-2 right-32 text-white/[0.04] text-5xl font-black">書</span>
+                        <span className="absolute -bottom-6 -left-2 text-white/[0.06] text-[7rem] font-black leading-none">語</span>
+                        <span className="absolute bottom-4 left-28 text-white/[0.03] text-4xl font-black">日</span>
+                        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/[0.02] text-[14rem] font-black leading-none">本</span>
+                        <div
+                            className="absolute inset-0 opacity-[0.04]"
+                            style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+                        />
                     </div>
-                    <div className="relative z-10 p-6">
-                        <h1 className="text-2xl font-bold text-white mb-0.5">Từ điển Nhật-Việt</h1>
-                        <p className="text-blue-200 text-sm mb-5">
-                            Tìm bằng kanji・kana・romaji・nghĩa tiếng Việt・tiếng Anh
-                        </p>
 
+                    <div className="relative z-10 p-6">
+                        <div className="flex items-start justify-between mb-4">
+                            <div>
+                                <h1 className="text-2xl font-black text-white tracking-tight mb-1">
+                                    日本語辞書
+                                </h1>
+                                <p className="text-blue-200/80 text-sm">Từ điển Nhật – Việt toàn diện</p>
+                            </div>
+                            <div className="flex flex-col gap-1 items-end">
+                                {["JLPT N1–N5", "Kanji・Kana・Romaji", "Tiếng Việt & Anh"].map((f) => (
+                                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70 font-medium">
+                                        {f}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Search bar */}
                         <div ref={wrapRef} className="relative">
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
@@ -173,27 +231,37 @@ export default function DictionaryPage() {
                                         onChange={(e) => setQuery(e.target.value)}
                                         onKeyDown={onKeyDown}
                                         onFocus={onFocus}
-                                        placeholder="食べる / taberu / ăn / eat..."
-                                        className="text-base pl-9 bg-white dark:bg-gray-900 border-0 h-11"
+                                        placeholder="食べる・taberu・ăn・eat..."
+                                        className="text-base pl-9 pr-3 bg-white dark:bg-gray-900 border-0 h-11 rounded-xl shadow-inner"
                                         autoFocus
                                         autoComplete="off"
                                     />
                                 </div>
+                                <HandwritingInput
+                                    onSelect={(char) => { setQuery(char); handleSearch(char); }}
+                                />
+                                <VoiceInput
+                                    onSelect={(text) => { setQuery(text); handleSearch(text); }}
+                                />
                                 <Button
                                     onClick={() => handleSearch()}
                                     disabled={loading || !query.trim()}
-                                    className="h-11 px-6 bg-white text-blue-700 hover:bg-blue-50 font-semibold border-0 shadow-none"
+                                    className="h-11 px-5 bg-white text-blue-700 hover:bg-blue-50 font-bold border-0 shadow-none rounded-xl shrink-0"
                                 >
                                     {loading ? <Spinner /> : "Tìm"}
                                 </Button>
                             </div>
 
+                            {/* Dropdown */}
                             {showDrop && dropItems.length > 0 && (
-                                <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+                                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
                                     {dropMode === "history" ? (
                                         <>
                                             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-                                                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tìm kiếm gần đây</span>
+                                                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                                                    <ClockIcon className="h-3.5 w-3.5" />
+                                                    Gần đây
+                                                </span>
                                                 <button
                                                     onMouseDown={(e) => { e.preventDefault(); clearAllHistory(); }}
                                                     className="text-xs text-blue-500 hover:text-blue-700 font-medium"
@@ -216,21 +284,13 @@ export default function DictionaryPage() {
                             )}
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5 mt-3 items-center">
-                            <span className="text-xs text-blue-300 mr-0.5">Thử:</span>
-                            {QUICK_EXAMPLES.map((w) => (
-                                <button key={w} onClick={() => quickSearch(w)}
-                                    className="text-xs px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
-                                    {w}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
                 {/* ── Error ── */}
                 {error && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-4 text-sm text-red-700 dark:text-red-400">
+                    <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+                        <span className="text-lg">⚠</span>
                         {error}
                     </div>
                 )}
@@ -240,15 +300,19 @@ export default function DictionaryPage() {
                     <div className="space-y-4 animate-pulse">
                         {[1, 2].map((i) => (
                             <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden">
-                                <div className="h-1 bg-gray-200 dark:bg-gray-700" />
-                                <div className="p-5 space-y-3">
-                                    <div className="flex gap-2">
-                                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                <div className="h-1.5 bg-gray-200 dark:bg-gray-700" />
+                                <div className="p-5 space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-5 w-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                        <div className="h-5 w-14 bg-gray-200 dark:bg-gray-700 rounded-full" />
                                         <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
                                     </div>
-                                    <div className="h-9 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-                                    <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded-md" />
-                                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                                    <div className="h-12 w-40 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                                    <div className="h-10 bg-blue-50 dark:bg-blue-950/20 rounded-xl" />
+                                    <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                        <div className="h-16 w-24 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                                        <div className="h-16 w-24 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -259,10 +323,12 @@ export default function DictionaryPage() {
                 {!loading && results !== null && results.length > 0 && (
                     <>
                         <div className="flex items-center gap-2 px-1">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                                <span className="font-semibold text-gray-700 dark:text-gray-200">{results.length}</span> kết quả cho{" "}
-                                <span className="font-semibold text-blue-600 dark:text-blue-400">「{searched}」</span>
+                            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                <span className="font-bold text-gray-600 dark:text-gray-300">{results.length}</span> kết quả cho{" "}
+                                <span className="font-bold text-blue-600 dark:text-blue-400">「{searched}」</span>
                             </span>
+                            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                         </div>
                         {results.map((w) => <WordCard key={w.id} word={w} onSearch={quickSearch} />)}
                     </>
@@ -270,30 +336,44 @@ export default function DictionaryPage() {
 
                 {/* ── No results ── */}
                 {!loading && results !== null && results.length === 0 && (
-                    <div className="text-center py-14 bg-white dark:bg-gray-900 rounded-2xl border">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
-                            <SearchIcon className="h-6 w-6 text-gray-400" />
+                    <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4 text-3xl select-none">
+                            🔍
                         </div>
-                        <p className="font-semibold text-gray-700 dark:text-gray-300">Không tìm thấy kết quả</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                            Thử từ khác hoặc kiểm tra lại chính tả
+                        <p className="font-bold text-gray-700 dark:text-gray-300 text-lg">Không tìm thấy kết quả</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1.5 max-w-xs mx-auto">
+                            Thử tìm bằng kanji, kana, romaji hoặc nghĩa tiếng Việt
                         </p>
+                        <div className="flex flex-wrap gap-2 justify-center mt-4">
+                            {QUICK_EXAMPLES.slice(0, 4).map((w) => (
+                                <button key={w} onClick={() => quickSearch(w)}
+                                    className="text-xs px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors border border-blue-100 dark:border-blue-900/50 font-medium">
+                                    {w}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
                 {/* ── Initial empty state ── */}
                 {!loading && results === null && (
-                    <div className="text-center py-16">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 mb-4 select-none">
-                            <span className="text-4xl">辞</span>
+                    <div className="text-center py-14">
+                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-950/60 dark:to-indigo-950/60 mb-5 select-none shadow-inner">
+                            <span className="text-5xl font-black text-blue-500/60 dark:text-blue-400/40">辞</span>
                         </div>
-                        <p className="font-semibold text-gray-600 dark:text-gray-400">Từ điển Nhật-Việt</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-600 mt-1 mb-5">Nhập từ để bắt đầu tra cứu</p>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {["JLPT N1 – N5", "Kanji • Kana • Romaji", "Tiếng Việt & Anh", "Ví dụ câu"].map((tag) => (
-                                <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    {tag}
-                                </span>
+                        <p className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-1">Từ điển Nhật – Việt</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Hỗ trợ kanji, kana, romaji, nghĩa Việt và Anh</p>
+                        <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                            {[
+                                { icon: "🎌", label: "JLPT N1 – N5" },
+                                { icon: "✍️", label: "Viết tay kanji" },
+                                { icon: "🎙️", label: "Tìm bằng giọng nói" },
+                                { icon: "📖", label: "Ví dụ câu thực tế" },
+                            ].map(({ icon, label }) => (
+                                <div key={label} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 text-left">
+                                    <span className="text-lg shrink-0">{icon}</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-tight">{label}</span>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -313,7 +393,7 @@ function HistoryRow({ term, active, onSelect, onRemove, onHover }: {
             className={`flex items-center gap-3 px-4 py-2.5 group transition-colors ${active ? "bg-blue-50 dark:bg-blue-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"}`}>
             <div onMouseDown={(e) => { e.preventDefault(); onSelect(); }}
                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
-                <ClockIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                <ClockIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                 <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{term}</span>
             </div>
             <button
@@ -328,29 +408,33 @@ function HistoryRow({ term, active, onSelect, onRemove, onHover }: {
 function SuggestionItem({ suggestion, active, onSelect, onHover }: {
     suggestion: WordSuggestion; active: boolean; onSelect: () => void; onHover: () => void;
 }) {
-    const badge = JLPT[suggestion.levelCode]?.badge ?? "bg-gray-100 text-gray-600 border-gray-200";
+    const jlpt = JLPT[suggestion.levelCode];
     return (
         <button
             onMouseDown={(e) => { e.preventDefault(); onSelect(); }}
             onMouseEnter={onHover}
             className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${active ? "bg-blue-50 dark:bg-blue-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"}`}
         >
-            <span className="text-lg font-bold text-gray-900 dark:text-gray-100 w-20 shrink-0">{suggestion.word}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-gray-100 w-20 shrink-0 truncate">{suggestion.word}</span>
             {suggestion.reading && suggestion.reading !== suggestion.word && (
-                <span className="text-sm text-gray-500 dark:text-gray-400 w-24 shrink-0">{suggestion.reading}</span>
+                <span className="text-sm text-gray-400 dark:text-gray-500 w-20 shrink-0 truncate">【{suggestion.reading}】</span>
             )}
             <span className="text-sm text-gray-600 dark:text-gray-300 flex-1 truncate">{suggestion.meaningText}</span>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${badge}`}>{suggestion.levelCode}</span>
+            {jlpt && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${jlpt.badge}`}>
+                    {suggestion.levelCode}
+                </span>
+            )}
         </button>
     );
 }
 
 // ── Word card ─────────────────────────────────────────────────────────
 function WordCard({ word, onSearch }: { word: WordSearchResult; onSearch: (w: string) => void }) {
-    const [showEx, setShowEx]   = useState(false);
-    const [copied, setCopied]   = useState(false);
+    const [showEx, setShowEx] = useState(false);
+    const [copied, setCopied] = useState(false);
     const jlpt     = JLPT[word.levelCode];
-    const repStyle = REP_STYLES[word.representationCode] ?? "bg-gray-100 text-gray-600";
+    const rep      = REP_LABELS[word.representationCode];
     const typeLabel = word.wordType ? (WORD_TYPE_LABELS[word.wordType] ?? word.wordType) : null;
 
     const copy = () => {
@@ -360,93 +444,105 @@ function WordCard({ word, onSearch }: { word: WordSearchResult; onSearch: (w: st
     };
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-            {/* JLPT gradient bar */}
+        <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-l-4 shadow-sm overflow-hidden transition-shadow hover:shadow-lg ${jlpt ? jlpt.accent : "border-l-gray-300"}`}>
+
+            {/* Top gradient accent bar */}
             {jlpt && <div className={`h-1 ${jlpt.bar}`} />}
 
-            <div className="p-5">
-                {/* Top row: badges + copy */}
-                <div className="flex items-center justify-between mb-3">
+            {/* Card header – tinted bg */}
+            <div className={`px-5 pt-4 pb-4 ${jlpt ? `${jlpt.soft} ${jlpt.softDark}` : ""}`}>
+
+                {/* Meta row */}
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         {jlpt && (
-                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${jlpt.badge}`}>
+                            <span className={`text-[11px] font-black px-2.5 py-1 rounded-full border tracking-wide ${jlpt.badge}`}>
                                 {word.levelCode}
                             </span>
                         )}
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${repStyle}`}>
-                            {word.representationCode}
-                        </span>
+                        {rep && (
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${rep.style}`}>
+                                {rep.label}
+                            </span>
+                        )}
                         {typeLabel && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                            <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
                                 {typeLabel}
                             </span>
                         )}
                         {word.frequency && (
-                            <span className="text-xs text-gray-400 flex items-center gap-0.5 px-1">
-                                <span className="text-yellow-400">★</span> #{word.frequency}
+                            <span className="text-[11px] text-gray-400 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-900/40">
+                                <span className="text-yellow-500">★</span>
+                                <span className="font-medium text-yellow-600 dark:text-yellow-500">#{word.frequency}</span>
                             </span>
                         )}
                     </div>
                     <button
                         onClick={copy}
-                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all ${
+                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-all font-medium ${
                             copied
-                                ? "bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400"
-                                : "text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+                                ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                                : "text-gray-400 hover:text-gray-700 hover:bg-white/80 dark:hover:text-gray-300 dark:hover:bg-gray-800 bg-white/50 dark:bg-gray-800/50"
                         }`}
                     >
                         {copied ? <CheckIcon className="h-3.5 w-3.5" /> : <CopyIcon className="h-3.5 w-3.5" />}
-                        <span>{copied ? "Đã sao chép" : "Sao chép"}</span>
+                        {copied ? "Đã sao chép" : "Sao chép"}
                     </button>
                 </div>
 
-                {/* Word + reading */}
-                <div className="mb-2">
-                    <div className="flex items-baseline gap-2.5 flex-wrap">
-                        <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
-                            {word.word}
+                {/* Word headline */}
+                <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-5xl font-black text-gray-900 dark:text-gray-50 leading-none tracking-tight">
+                        {word.word}
+                    </span>
+                    {word.reading && word.reading !== word.word && (
+                        <span className={`text-lg font-medium leading-none ${jlpt ? jlpt.text : "text-gray-400"}`}>
+                            【{word.reading}】
                         </span>
-                        {word.reading && word.reading !== word.word && (
-                            <span className="text-xl text-gray-400 dark:text-gray-500 font-normal">
-                                【{word.reading}】
-                            </span>
-                        )}
-                    </div>
-                    <p className="mt-2 text-lg font-semibold text-blue-600 dark:text-blue-400 leading-snug">
+                    )}
+                </div>
+            </div>
+
+            {/* Meaning callout */}
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl ${jlpt ? `${jlpt.soft} ${jlpt.softDark}` : "bg-gray-50 dark:bg-gray-800"} border ${jlpt ? "border-transparent" : "border-gray-100 dark:border-gray-700"}`}>
+                    <div className={`w-0.5 rounded-full self-stretch shrink-0 ${jlpt ? jlpt.bar : "bg-gray-300"}`} />
+                    <p className="text-base font-semibold text-gray-800 dark:text-gray-100 leading-snug">
                         {word.meaningText}
                     </p>
                 </div>
-
-                {/* Kanji section */}
-                {word.kanjis.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
-                            Hán tự
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                            {word.kanjis.map((k) => (
-                                <KanjiCard key={k.character} kanji={k} onClick={() => onSearch(k.character ?? "")} />
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
+
+            {/* Kanji section */}
+            {word.kanjis.length > 0 && (
+                <div className="px-5 pt-3.5 pb-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <span>漢</span>
+                        <span>Hán tự trong từ</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {word.kanjis.map((k) => (
+                            <KanjiCard key={k.character} kanji={k} onClick={() => onSearch(k.character ?? "")} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Examples accordion */}
             {word.examples.length > 0 && (
                 <>
                     <button
                         onClick={() => setShowEx((v) => !v)}
-                        className="w-full px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/70 hover:bg-gray-100 dark:hover:bg-gray-800 border-t flex items-center justify-between transition-colors"
+                        className="w-full px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between transition-colors"
                     >
                         <span className="flex items-center gap-2">
                             <BookIcon className="h-3.5 w-3.5" />
-                            Ví dụ ({word.examples.length})
+                            Ví dụ câu ({word.examples.length})
                         </span>
                         <ChevronIcon className={`h-4 w-4 transition-transform duration-200 ${showEx ? "rotate-180" : ""}`} />
                     </button>
                     {showEx && (
-                        <div className="border-t bg-gray-50 dark:bg-gray-800/50 divide-y divide-gray-100 dark:divide-gray-700/50">
+                        <div className="divide-y divide-gray-100 dark:divide-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                             {word.examples.map((ex, i) => (
                                 <ExampleRow key={i} example={ex} index={i + 1} />
                             ))}
@@ -463,29 +559,34 @@ function KanjiCard({ kanji, onClick }: { kanji: DictionaryKanjiInfo; onClick: ()
     return (
         <button
             onClick={onClick}
-            className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-400 hover:bg-blue-50/60 dark:hover:bg-blue-950/30 transition-all hover:shadow-sm text-left group"
+            className="flex items-stretch gap-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all text-left group overflow-hidden"
         >
-            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 leading-none mt-0.5 shrink-0">
-                {kanji.character}
-            </span>
-            <div className="min-w-0">
+            {/* Big character column */}
+            <div className="w-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 transition-colors border-r border-gray-200 dark:border-gray-700 shrink-0 py-3">
+                <span className="text-3xl font-black text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-none">
+                    {kanji.character}
+                </span>
+            </div>
+
+            {/* Info column */}
+            <div className="px-3 py-2.5 min-w-0 flex flex-col justify-center gap-1">
                 {kanji.meaning && (
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-200 leading-tight line-clamp-2 max-w-[7rem]">
                         {kanji.meaning}
                     </p>
                 )}
                 {kanji.stroke != null && (
-                    <p className="text-xs text-gray-400 leading-tight mt-0.5">{kanji.stroke} nét</p>
+                    <p className="text-[10px] text-gray-400 leading-none">{kanji.stroke} nét</p>
                 )}
                 {(kanji.onyomi || kanji.kunyomi) && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
+                    <div className="flex flex-wrap gap-1 mt-0.5">
                         {kanji.onyomi && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-medium leading-none border border-orange-100 dark:border-orange-900/50">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold leading-none border border-orange-100 dark:border-orange-900/50 whitespace-nowrap">
                                 音 {kanji.onyomi}
                             </span>
                         )}
                         {kanji.kunyomi && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-medium leading-none border border-blue-100 dark:border-blue-900/50">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold leading-none border border-blue-100 dark:border-blue-900/50 whitespace-nowrap">
                                 訓 {kanji.kunyomi}
                             </span>
                         )}
@@ -499,13 +600,15 @@ function KanjiCard({ kanji, onClick }: { kanji: DictionaryKanjiInfo; onClick: ()
 // ── Example row ───────────────────────────────────────────────────────
 function ExampleRow({ example, index }: { example: DictionaryExampleInfo; index: number }) {
     return (
-        <div className="flex gap-3 px-5 py-3.5">
-            <span className="text-xs font-bold text-gray-300 dark:text-gray-600 mt-0.5 shrink-0 w-4">{index}.</span>
-            <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-relaxed">
+        <div className="flex gap-3 px-5 py-4">
+            <span className="text-[11px] font-black text-gray-300 dark:text-gray-600 mt-0.5 shrink-0 w-5 pt-0.5 tabular-nums">
+                {index}.
+            </span>
+            <div className="min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-relaxed">
                     {example.rootExample}
                 </p>
-                <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5 leading-relaxed">
+                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1 leading-relaxed font-medium">
                     {example.toExample}
                 </p>
             </div>
