@@ -315,11 +315,18 @@ export default function AnkiStudyPage() {
                       <p className="text-2xl font-bold text-foreground text-center leading-snug" />
                     )}
                   </div>
-                  {flipped && current.imageUrl && (
+                  {current.imageUrl && (
                     <img
                       src={current.imageUrl}
                       alt=""
                       className="mt-2 max-h-20 rounded-xl object-contain border border-border"
+                    />
+                  )}
+                  {current.audioUrl && (
+                    <audio
+                      src={current.audioUrl}
+                      controls
+                      className="mt-1 w-full max-w-xs h-8"
                     />
                   )}
                   {!flipped && (

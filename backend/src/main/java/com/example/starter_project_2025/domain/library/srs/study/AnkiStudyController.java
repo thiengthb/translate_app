@@ -224,7 +224,8 @@ public class AnkiStudyController {
                 .flashcardId(fc.getId())
                 .front(extractText(fc, SideType.FRONT))
                 .back(extractText(fc, SideType.BACK))
-                .imageUrl(extractFirstImage(fc))
+                .imageUrl(extractFirstMedia(fc, ContentType.IMAGE))
+                .audioUrl(extractFirstMedia(fc, ContentType.AUDIO))
                 .progressId(p != null ? p.getId() : null)
                 .state(p != null ? p.getState() : "NEW")
                 .easeFactor(p != null ? p.getEaseFactor() : 2.5)
@@ -253,14 +254,15 @@ public class AnkiStudyController {
         return null;
     }
 
-    /* ── First non-deleted IMAGE content across any side ── */
-    private String extractFirstImage(Flashcard fc) {
+    /* ── First non-deleted content of the given type across any side ── */
+    private String extractFirstMedia(Flashcard fc, ContentType type) {
         if (fc.getSides() == null) return null;
         for (FlashcardSide side : fc.getSides()) {
             if (side.getContents() == null) continue;
             for (FlashcardSideContent c : side.getContents()) {
                 if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
-                if (c.getContentType() == ContentType.IMAGE) return c.getContentValue();
+                if (c.getContentType() == type && c.getContentValue() != null && !c.getContentValue().isBlank())
+                    return c.getContentValue();
             }
         }
         return null;

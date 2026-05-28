@@ -17,6 +17,7 @@ public class AnkiStudyCardDTO {
     String front;
     String back;
     String imageUrl;
+    String audioUrl;
 
     Long progressId;
     String state;
