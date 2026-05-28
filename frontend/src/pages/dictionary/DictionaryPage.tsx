@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { dictionaryApi } from "@/api/features/dictionary.api";
-import type { WordSearchResult, WordSuggestion, DictionaryKanjiInfo, DictionaryExampleInfo, DictionaryKanjiDetail } from "@/types";
+import type { WordSearchResult, WordSuggestion, DictionaryKanjiInfo, DictionaryExampleInfo, DictionaryKanjiDetail, FeaturedResult } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HandwritingInput } from "./HandwritingInput";
@@ -113,9 +113,16 @@ export default function DictionaryPage() {
     const [showDrop, setShowDrop]       = useState(false);
     const [activeIdx, setActiveIdx]     = useState(-1);
 
+    const [featured, setFeatured]       = useState<FeaturedResult | null>(null);
+
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapRef  = useRef<HTMLDivElement>(null);
     const debouncedQ = useDebounce(query, 250);
+
+    // Load featured on mount
+    useEffect(() => {
+        dictionaryApi.featured().then(setFeatured).catch(() => {});
+    }, []);
 
     // Clear results when switching mode
     useEffect(() => {
@@ -414,6 +421,51 @@ export default function DictionaryPage() {
                         {kanjiResults!.map((k) => (
                             <KanjiDetailCard key={k.character} kanji={k} onVocabSearch={quickVocabSearch} />
                         ))}
+                    </div>
+                )}
+
+                {/* ── Featured (shown only before any search) ── */}
+                {!searched && !loading && featured && (
+                    <div className="space-y-3">
+                        {featured.words.length > 0 && (
+                            <div className="bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden">
+                                <div className="px-4 pt-3.5 pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                                    <span className="text-sm font-black text-yellow-500">★</span>
+                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        Từ vựng phổ biến
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-px bg-gray-100 dark:bg-gray-800">
+                                    {featured.words.map((w) => (
+                                        <FeaturedWordChip key={w.id} word={w} onClick={quickSearch} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {featured.kanjis.length > 0 && (
+                            <div className="bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden">
+                                <div className="px-4 pt-3.5 pb-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                                    <span className="text-sm font-black text-purple-500">漢</span>
+                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        Kanji cơ bản
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2 p-3">
+                                    {featured.kanjis.map((k) => (
+                                        <FeaturedKanjiChip
+                                            key={k.character}
+                                            kanji={k}
+                                            onClick={(ch) => {
+                                                setSearchMode("kanji");
+                                                setQuery(ch);
+                                                handleSearch(ch, "kanji");
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -809,6 +861,75 @@ function ExampleRow({ example, index }: { example: DictionaryExampleInfo; index:
                 </p>
             </div>
         </div>
+    );
+}
+
+// ── Featured word chip ────────────────────────────────────────────────
+function FeaturedWordChip({ word, onClick }: { word: WordSearchResult; onClick: (w: string) => void }) {
+    const jlpt = JLPT[word.levelCode ?? ""];
+    const rep  = REP_LABELS[word.representationCode ?? ""];
+    return (
+        <button
+            onClick={() => onClick(word.word)}
+            className="flex items-center gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 hover:bg-blue-50/60 dark:hover:bg-blue-950/20 transition-colors text-left group"
+        >
+            <div className="flex flex-col items-center shrink-0 min-w-[3rem]">
+                <span className={`text-xl font-black leading-none whitespace-nowrap ${jlpt ? jlpt.text : "text-gray-700 dark:text-gray-200"} group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors`}>
+                    {word.word}
+                </span>
+                {word.reading && word.reading !== word.word && (
+                    <span className="text-[9px] text-gray-400 leading-tight mt-0.5 whitespace-nowrap">
+                        {word.reading}
+                    </span>
+                )}
+            </div>
+            <div className="flex-1 min-w-0 space-y-0.5">
+                <p className="text-xs text-gray-600 dark:text-gray-300 leading-tight line-clamp-1">
+                    {word.meaningText}
+                </p>
+                <div className="flex items-center gap-1">
+                    {jlpt && (
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border ${jlpt.badge}`}>
+                            {word.levelCode}
+                        </span>
+                    )}
+                    {rep && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${rep.style}`}>
+                            {rep.label}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </button>
+    );
+}
+
+// ── Featured kanji chip ───────────────────────────────────────────────
+function FeaturedKanjiChip({ kanji, onClick }: { kanji: DictionaryKanjiDetail; onClick: (ch: string) => void }) {
+    const jlpt = kanji.jlptLevel ? JLPT[kanji.jlptLevel] : null;
+    return (
+        <button
+            onClick={() => onClick(kanji.character)}
+            className={`flex flex-col items-center px-3 py-2 rounded-xl border transition-all hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 group ${
+                jlpt
+                    ? `${jlpt.soft} ${jlpt.softDark} border-transparent`
+                    : "bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700"
+            }`}
+        >
+            <span className={`text-2xl font-black leading-none ${jlpt ? jlpt.text : "text-gray-700 dark:text-gray-200"} group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors`}>
+                {kanji.character}
+            </span>
+            {kanji.meaning && (
+                <span className="text-[9px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5 max-w-[3.5rem] truncate text-center">
+                    {kanji.meaning}
+                </span>
+            )}
+            {jlpt && (
+                <span className={`text-[8px] font-black mt-0.5 ${jlpt.text}`}>
+                    {kanji.jlptLevel}
+                </span>
+            )}
+        </button>
     );
 }
 

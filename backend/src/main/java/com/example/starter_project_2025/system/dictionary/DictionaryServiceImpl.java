@@ -118,6 +118,26 @@ public class DictionaryServiceImpl implements DictionaryService {
         return kanjiMap.values().stream().map(KanjiAccumulator::toResult).toList();
     }
 
+    @Override
+    public FeaturedResult featured(int wordLimit, int kanjiLimit) {
+        List<Word> words = searchRepository.findFeaturedWords(PageRequest.of(0, wordLimit));
+        List<Kanji> kanjis = kanjiRepository.findFeaturedKanjis(PageRequest.of(0, kanjiLimit));
+
+        return FeaturedResult.builder()
+                .words(words.stream().map(this::toResult).toList())
+                .kanjis(kanjis.stream().map(k -> KanjiSearchResult.builder()
+                        .character(k.getCharacter())
+                        .meaning(k.getMeaning())
+                        .onyomi(k.getOnyomi())
+                        .kunyomi(k.getKunyomi())
+                        .stroke(k.getStroke())
+                        .radical(k.getRadical())
+                        .jlptLevel(k.getJlptLevel())
+                        .words(List.of())
+                        .build()).toList())
+                .build();
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────
 
     private static Set<String> extractKanjiChars(String s) {

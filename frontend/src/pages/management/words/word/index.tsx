@@ -49,13 +49,6 @@ const wordSchema: EntitySchema = {
       },
     },
     {
-      name: "representationName",
-      label: "Representation",
-      type: "text",
-      sortable: false,
-      editable: false,
-    },
-    {
       name: "meaningId",
       label: "Meaning",
       type: "relation",
@@ -67,13 +60,6 @@ const wordSchema: EntitySchema = {
       },
     },
     {
-      name: "meaningName",
-      label: "Meaning",
-      type: "text",
-      sortable: false,
-      editable: false,
-    },
-    {
       name: "levelId",
       label: "Level",
       type: "relation",
@@ -83,13 +69,6 @@ const wordSchema: EntitySchema = {
         labelField: "name",
         multiple: false,
       },
-    },
-    {
-      name: "levelName",
-      label: "Level",
-      type: "text",
-      sortable: false,
-      editable: false,
     },
     ...(auditableFieldsSchema as FieldSchema[]),
   ],

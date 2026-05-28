@@ -44,4 +44,15 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
             ORDER BY w.frequency ASC NULLS LAST, w.word ASC
             """)
     List<Word> suggest(@Param("q") String q, @Param("kana") String kana, Pageable pageable);
+
+    @Query("""
+            SELECT w FROM Word w
+            JOIN FETCH w.meaning m
+            JOIN FETCH w.level l
+            JOIN FETCH w.representation r
+            WHERE w.isDeleted = false AND w.isActive = true
+            AND w.frequency IS NOT NULL
+            ORDER BY w.frequency ASC
+            """)
+    List<Word> findFeaturedWords(Pageable pageable);
 }

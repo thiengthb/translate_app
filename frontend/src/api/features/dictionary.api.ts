@@ -1,5 +1,5 @@
 import axiosInstance from "../axios";
-import type { WordSearchResult, WordSuggestion, DictionaryKanjiDetail } from "@/types";
+import type { WordSearchResult, WordSuggestion, DictionaryKanjiDetail, FeaturedResult } from "@/types";
 
 export const dictionaryApi = {
     search: async (q: string, limit = 20): Promise<WordSearchResult[]> => {
@@ -19,6 +19,13 @@ export const dictionaryApi = {
     kanjiSearch: async (q: string, limit = 10): Promise<DictionaryKanjiDetail[]> => {
         const response = await axiosInstance.get<DictionaryKanjiDetail[]>("/dictionary/kanji-search", {
             params: { q: q.trim(), limit },
+        });
+        return response.data;
+    },
+
+    featured: async (wordLimit = 8, kanjiLimit = 12): Promise<FeaturedResult> => {
+        const response = await axiosInstance.get<FeaturedResult>("/dictionary/featured", {
+            params: { wordLimit, kanjiLimit },
         });
         return response.data;
     },

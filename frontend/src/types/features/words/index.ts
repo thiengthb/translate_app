@@ -162,3 +162,8 @@ export interface DictionaryKanjiDetail {
   jlptLevel?: string;
   words: DictionaryKanjiWordInfo[];
 }
+
+export interface FeaturedResult {
+  words: WordSearchResult[];
+  kanjis: DictionaryKanjiDetail[];
+}

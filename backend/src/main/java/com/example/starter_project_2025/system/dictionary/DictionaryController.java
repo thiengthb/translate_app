@@ -76,6 +76,16 @@ public class DictionaryController {
         return ResponseEntity.ok(dictionaryService.searchKanji(q, Math.min(limit, 20)));
     }
 
+    @GetMapping("/featured")
+    @Operation(summary = "Lấy từ vựng và kanji đề xuất cho trang chủ từ điển")
+    public ResponseEntity<FeaturedResult> featured(
+            @RequestParam(defaultValue = "8") int wordLimit,
+            @RequestParam(defaultValue = "12") int kanjiLimit) {
+        return ResponseEntity.ok(dictionaryService.featured(
+                Math.min(wordLimit, 20),
+                Math.min(kanjiLimit, 30)));
+    }
+
     @PostMapping("/handwriting")
     @Operation(summary = "Nhận diện chữ viết tay kanji (proxy tới Google Input Tools)")
     public ResponseEntity<List<String>> recognizeHandwriting(@RequestBody HandwritingRequest request) {
