@@ -6,10 +6,10 @@ import lombok.Builder;
 @Builder
 public record LoginRequest(
 
-        @NotBlank(message = "Email is required")
+        @NotBlank(message = "{validation.email.required}")
         String email,
 
-        @NotBlank(message = "Password is required")
+        @NotBlank(message = "{validation.password.required}")
         String password
 ) {
 }

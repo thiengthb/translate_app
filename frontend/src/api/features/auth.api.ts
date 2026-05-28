@@ -6,6 +6,7 @@ import {
     type LoginRequest,
     type LoginResponse,
     type RegisterRequest,
+    type TwoFactorLoginRequest,
 } from "../../types/features/auth";
 
 export const authApi = {
@@ -17,9 +18,25 @@ export const authApi = {
         return mapAuthResponse(response.data) as LoginResponse;
     },
 
+    completeTwoFactor: async (req: TwoFactorLoginRequest): Promise<LoginResponse> => {
+        const response = await axiosInstance.post<BackendAuthResponse>(
+            "/auth/login/2fa",
+            req,
+        );
+        return mapAuthResponse(response.data) as LoginResponse;
+    },
+
     logout: async () => {
         try {
             await axiosInstance.post("/auth/logout");
+        } finally {
+            authStorage.clear();
+        }
+    },
+
+    logoutAllDevices: async () => {
+        try {
+            await axiosInstance.post("/auth/logout-all");
         } finally {
             authStorage.clear();
         }

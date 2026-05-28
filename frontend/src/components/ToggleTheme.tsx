@@ -11,15 +11,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
+import { profileApi } from "@/api/features/profile.api"
+import { setTheme as setThemeAction } from "@/store/slices/auth/authSlice"
+import type { RootState } from "@/store/store"
 import { Check, Monitor, Moon, Sun, type LucideIcon } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
 
 type Animation = "ripple" | "fade" | "none"
 type ThemePreference = "light" | "dark" | "system"
 type ResolvedTheme = "light" | "dark"
 
 const THEME_STORAGE_KEY = "theme"
+const THEME_PREFERENCE_KEY = "themePreference"
 const SYSTEM_THEME_QUERY = "(prefers-color-scheme: dark)"
+
+const isThemePreference = (value: unknown): value is ThemePreference =>
+  value === "dark" || value === "light" || value === "system"
 
 const THEME_OPTIONS: Array<{
   value: ThemePreference
@@ -48,15 +57,13 @@ const THEME_OPTIONS: Array<{
 ]
 
 const getStoredThemePreference = (): ThemePreference => {
-  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+  // Prefer the auth-synced key (themePreference) so the BE → FE flow on
+  // login/refresh wins over the older anonymous "theme" key.
+  const synced = localStorage.getItem(THEME_PREFERENCE_KEY)
+  if (isThemePreference(synced)) return synced
 
-  if (
-    storedTheme === "dark" ||
-    storedTheme === "light" ||
-    storedTheme === "system"
-  ) {
-    return storedTheme
-  }
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+  if (isThemePreference(storedTheme)) return storedTheme
 
   return "system"
 }
@@ -91,12 +98,30 @@ const ToggleTheme: React.FC<ToggleThemeProps> = ({
   className = "",
   ...props
 }) => {
+  const dispatch = useDispatch()
+  const { isAuthenticated, theme: authTheme } = useSelector(
+    (state: RootState) => state.auth,
+  )
   const [themePreference, setThemePreference] = useState<ThemePreference>(() =>
     getStoredThemePreference(),
   )
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
     getSystemTheme(),
   )
+
+  // Tracks the value last pushed to the BE to avoid PATCH-after-PATCH echoes
+  // when the BE response refreshes our state.
+  const lastSyncedRef = useRef<ThemePreference | null>(null)
+
+  // BE → FE: when the auth slice carries a theme (post-login / refresh), adopt
+  // it locally so multi-device theme sync works.
+  useEffect(() => {
+    if (!isAuthenticated) return
+    if (!isThemePreference(authTheme)) return
+    if (authTheme === themePreference) return
+    setThemePreference(authTheme)
+    lastSyncedRef.current = authTheme
+  }, [isAuthenticated, authTheme, themePreference])
   const resolvedTheme = useMemo(
     () => resolveTheme(themePreference, systemTheme),
     [themePreference, systemTheme],
@@ -119,7 +144,10 @@ const ToggleTheme: React.FC<ToggleThemeProps> = ({
   }, [resolvedTheme])
 
   useEffect(() => {
+    // Mirror to both keys so older readers (and the early boot script in
+    // main.tsx that uses the raw "theme" key) stay consistent.
     localStorage.setItem(THEME_STORAGE_KEY, themePreference)
+    localStorage.setItem(THEME_PREFERENCE_KEY, themePreference)
   }, [themePreference])
 
   useEffect(() => {
@@ -201,7 +229,16 @@ const ToggleTheme: React.FC<ToggleThemeProps> = ({
     triggerThemeTransition()
     setAnimKey(k => k + 1)
     setThemePreference(nextTheme)
-  }, [themePreference, triggerThemeTransition])
+
+    if (isAuthenticated && lastSyncedRef.current !== nextTheme) {
+      lastSyncedRef.current = nextTheme
+      dispatch(setThemeAction(nextTheme))
+      profileApi.updateTheme({ theme: nextTheme }).catch((err) => {
+        lastSyncedRef.current = null
+        logger.warn("Failed to persist theme to profile", err)
+      })
+    }
+  }, [themePreference, triggerThemeTransition, isAuthenticated, dispatch])
 
   return (
     <DropdownMenu>

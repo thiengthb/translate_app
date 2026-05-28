@@ -7,12 +7,18 @@ import com.example.starter_project_2025.system.auth.authentication.dto.request.L
 import com.example.starter_project_2025.system.auth.authentication.dto.request.RegisterRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.request.ResetPasswordRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.request.TokenRequest;
+import com.example.starter_project_2025.system.auth.authentication.dto.request.TwoFactorLoginRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.response.AuthenticationResponse;
 import com.example.starter_project_2025.system.auth.token.onetime.OneTimeToken;
 import com.example.starter_project_2025.system.auth.token.onetime.OneTimeTokenService;
 import com.example.starter_project_2025.system.auth.token.refresh.RefreshToken;
 import com.example.starter_project_2025.system.auth.token.refresh.RefreshTokenService;
+import com.example.starter_project_2025.system.auth.twofactor.RecoveryCode;
+import com.example.starter_project_2025.system.auth.twofactor.RecoveryCodeRepository;
+import com.example.starter_project_2025.system.auth.twofactor.TotpChallengeStore;
+import com.example.starter_project_2025.system.auth.twofactor.TotpService;
 import com.example.starter_project_2025.system.auth.util.LoginAttemptTracker;
+import com.example.starter_project_2025.system.auth.util.TokenUtil;
 import com.example.starter_project_2025.system.auth.verify.VerificationService;
 import com.example.starter_project_2025.system.rbac.role.Role;
 import com.example.starter_project_2025.system.rbac.role.RoleRepository;
@@ -52,6 +58,9 @@ public class AuthServiceImpl implements AuthService {
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     LoginAttemptTracker loginAttemptTracker;
+    TotpService totpService;
+    TotpChallengeStore totpChallengeStore;
+    RecoveryCodeRepository recoveryCodeRepository;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
@@ -68,23 +77,94 @@ public class AuthServiceImpl implements AuthService {
             throw ex;
         }
 
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        User user = principal.getUser();
+
+        // 2FA gate — password was correct but we don't yet count this as a
+        // "successful login" for the attempt tracker. The successRecord call
+        // happens once the second factor is also accepted.
+        if (Boolean.TRUE.equals(user.getTotpEnabled())) {
+            String tempToken = totpChallengeStore.issue(email);
+            return AuthenticationResponse.builder()
+                    .requiresTotp(true)
+                    .tempToken(tempToken)
+                    .email(email)
+                    .build();
+        }
+
         loginAttemptTracker.recordSuccess(email);
 
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return completeSuccessfulLogin(authentication, user);
+    }
 
-        refreshTokenService.revokeAllRefreshTokens(principal.getUser().getId());
+    @Override
+    @Transactional
+    public AuthenticationResponse completeTwoFactor(TwoFactorLoginRequest request) {
+        String email = totpChallengeStore.peek(request.tempToken())
+                .orElseThrow(() -> new BadRequestException("error.token.invalidType"));
 
+        loginAttemptTracker.assertNotLocked(email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("error.profile.userNotFound"));
+
+        if (!Boolean.TRUE.equals(user.getTotpEnabled()) || user.getTotpSecret() == null) {
+            // Defensive — challenge was issued but user disabled 2FA between
+            // the two requests. Treat as invalid challenge.
+            totpChallengeStore.consume(request.tempToken());
+            throw new BadRequestException("error.token.invalidType");
+        }
+
+        boolean accepted = isTotpCode(request.code())
+                ? totpService.verify(user.getTotpSecret(), request.code())
+                : consumeRecoveryCode(user.getId(), request.code());
+
+        if (!accepted) {
+            loginAttemptTracker.recordFailure(email);
+            throw new BadRequestException("error.token.expired");
+        }
+
+        totpChallengeStore.consume(request.tempToken());
+        loginAttemptTracker.recordSuccess(email);
+
+        UserPrincipal principal = UserPrincipal.fromUser(user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+
+        return completeSuccessfulLogin(authentication, user);
+    }
+
+    private AuthenticationResponse completeSuccessfulLogin(Authentication authentication, User user) {
+        refreshTokenService.revokeAllRefreshTokens(user.getId());
         String accessToken = refreshTokenService.generateAccessToken(authentication);
-        String refreshToken = refreshTokenService.createRefreshToken(principal.getUser());
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+        return buildAuthResponse((UserPrincipal) authentication.getPrincipal(), accessToken, refreshToken);
+    }
 
-        return buildAuthResponse(principal, accessToken, refreshToken);
+    private boolean isTotpCode(String code) {
+        if (code == null) return false;
+        String trimmed = code.trim();
+        return trimmed.length() == 6 && trimmed.chars().allMatch(Character::isDigit);
+    }
+
+    private boolean consumeRecoveryCode(Long userId, String code) {
+        String normalised = code == null ? "" : code.trim().toUpperCase();
+        String hash = TokenUtil.hash(normalised);
+        return recoveryCodeRepository
+                .findByUserIdAndCodeHashAndUsedFalse(userId, hash)
+                .map(rc -> {
+                    rc.setUsed(true);
+                    recoveryCodeRepository.save(rc);
+                    return true;
+                })
+                .orElse(false);
     }
 
     @Override
     @Transactional
     public AuthenticationResponse loginWithGoogle(String email, String firstName, String lastName) {
         if (!StringUtils.hasText(email)) {
-            throw new BadRequestException("Google account email is required");
+            throw new BadRequestException("error.auth.googleEmailRequired");
         }
 
         User user = userRepository.findByEmail(email)
@@ -111,7 +191,7 @@ public class AuthServiceImpl implements AuthService {
     public void register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new BadRequestException("Email already exists");
+            throw new BadRequestException("error.auth.emailExists");
         }
 
         User user = authMapper.toEntity(request);
@@ -160,6 +240,8 @@ public class AuthServiceImpl implements AuthService {
             .firstName(user.getFirstName())
             .lastName(user.getLastName())
             .role(roles.stream().findFirst().orElse(null))
+            .locale(user.getLocale())
+            .theme(user.getTheme())
             .roles(roles)
             .permissions(permissions)
             .rolePermissions(rolePermissions)
@@ -169,6 +251,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(TokenRequest request) {
         refreshTokenService.revokeRefreshToken(request.token());
+    }
+
+    @Override
+    public void logoutAllDevices() {
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder
+                        .getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new BadRequestException("error.auth.notAuthenticated");
+        }
+        refreshTokenService.revokeAllRefreshTokens(principal.getUser().getId());
     }
 
     @Override
@@ -274,6 +367,8 @@ public class AuthServiceImpl implements AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(roles.stream().findFirst().orElse(null))
+                .locale(user.getLocale())
+                .theme(user.getTheme())
                 .roles(roles)
                 .permissions(permissions)
                 .rolePermissions(rolePermissions)

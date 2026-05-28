@@ -35,7 +35,9 @@ import java.util.List;
         icon = "menu_groups",
         url = "/menu-groups",
         order = 1,
-        permission = "MENU_READ"
+        // See the matching note on Module.java — MENU_UPDATE is the manage
+        // gate, MENU_READ is the metadata-read gate granted to every role.
+        permission = "MENU_UPDATE"
 )
 @Searchable(fields = {"name", "description"})
 @AutoCrud(path = "module-groups")

@@ -4,7 +4,11 @@ import com.example.starter_project_2025.exception.error.ErrorResponse;
 import com.example.starter_project_2025.exception.error.ValidationErrorResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,28 +22,34 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final MessageSource messageSource;
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        log.warn("[404] ResourceNotFound: {}", ex.getMessage());
+        String message = resolve(ex);
+        log.warn("[404] ResourceNotFound: {}", message);
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
+                message,
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
-        log.warn("[400] BadRequest: {}", ex.getMessage());
+        String message = resolve(ex);
+        log.warn("[400] BadRequest: {}", message);
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
+                message,
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
@@ -48,17 +58,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Invalid email or password",
+                resolveKey("error.auth.invalidCredentials", null),
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
-        log.warn("[429] TooManyRequests: {}", ex.getMessage());
+        String message = resolve(ex);
+        log.warn("[429] TooManyRequests: {}", message);
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.TOO_MANY_REQUESTS.value(),
-                ex.getMessage(),
+                message,
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
     }
@@ -67,7 +78,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
-                "You don't have permission to access this resource",
+                resolveKey("error.accessDenied", null),
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
@@ -86,7 +97,7 @@ public class GlobalExceptionHandler {
         }
 
         ValidationErrorResponse response = new ValidationErrorResponse(
-                "Validation failed",
+                resolveKey("error.validationFailed", null),
                 errors
         );
 
@@ -107,7 +118,7 @@ public class GlobalExceptionHandler {
         }
 
         ValidationErrorResponse response =
-                new ValidationErrorResponse("Validation failed", errors);
+                new ValidationErrorResponse(resolveKey("error.validationFailed", null), errors);
 
         return ResponseEntity.badRequest().body(response);
     }
@@ -116,7 +127,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> handleBusiness(BusinessValidationException ex) {
 
         ValidationErrorResponse response =
-                new ValidationErrorResponse("Validation failed", ex.getErrors());
+                new ValidationErrorResponse(resolveKey("error.validationFailed", null), ex.getErrors());
 
         return ResponseEntity.badRequest().body(response);
     }
@@ -137,11 +148,36 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
         log.error("[500] Unhandled exception", ex);
-        String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+        String detail = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred: " + message,
+                resolveKey("error.unexpected", new Object[]{detail}),
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Resolve the message on an exception that may carry a translation key.
+     * Falls through to the raw {@code getMessage()} text when:
+     *   - the bundle key doesn't exist (MessageSource returns the key
+     *     unchanged because useCodeAsDefaultMessage=true);
+     *   - the exception's args are null (legacy raw-string call sites).
+     */
+    private String resolve(Throwable ex) {
+        String raw = ex.getMessage();
+        if (raw == null) return null;
+
+        Object[] args = ex instanceof LocalisedException le ? le.getMessageArgs() : null;
+        return resolveKey(raw, args);
+    }
+
+    private String resolveKey(String key, Object[] args) {
+        Locale locale = LocaleContextHolder.getLocale();
+        try {
+            return messageSource.getMessage(key, args, locale);
+        } catch (NoSuchMessageException ignored) {
+            // useCodeAsDefaultMessage=true should prevent this, but be defensive.
+            return key;
+        }
     }
 }

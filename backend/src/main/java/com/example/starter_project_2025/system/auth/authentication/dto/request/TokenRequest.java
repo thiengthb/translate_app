@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record TokenRequest(
 
-        @NotBlank(message = "Token cannot be blank")
+        @NotBlank(message = "{validation.token.blank}")
         String token
 ) {
 }

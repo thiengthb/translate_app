@@ -12,9 +12,14 @@ export interface BackendAuthResponse {
     firstName: string;
     lastName: string;
     role?: string;
+    locale?: string;
+    theme?: string;
     roles?: string[];
     permissions?: string[];
     rolePermissions?: Record<string, string[]>;
+    /** Backend signals 2FA challenge state — see auth.api.ts/login. */
+    requiresTotp?: boolean;
+    tempToken?: string;
 }
 
 export interface AuthData {
@@ -23,6 +28,8 @@ export interface AuthData {
     firstName: string;
     lastName: string;
     role: string;
+    locale: string;
+    theme: string;
     roles: string[];
     permissions: string[];
     rolePermissions: Record<string, string[]>;
@@ -34,6 +41,8 @@ const KEYS = [
     "firstName",
     "lastName",
     "role",
+    "locale",
+    "themePreference",
     "roles",
     "permissions",
     "rolePermissions",
@@ -68,7 +77,10 @@ const parseRolePermissions = (): Record<string, string[]> => {
 };
 
 /** Convert a backend response into FE-shaped auth data (normalised roles/perms). */
-export const mapAuthResponse = (data: BackendAuthResponse): AuthData => {
+export const mapAuthResponse = (data: BackendAuthResponse): AuthData & {
+    requiresTotp?: boolean;
+    tempToken?: string;
+} => {
     const normalised = normalizeAuthRolePayload({
         role: data.role,
         roles: data.roles,
@@ -76,14 +88,18 @@ export const mapAuthResponse = (data: BackendAuthResponse): AuthData => {
         rolePermissions: data.rolePermissions,
     });
     return {
-        token: data.accessToken,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        token: data.accessToken ?? "",
+        email: data.email ?? "",
+        firstName: data.firstName ?? "",
+        lastName: data.lastName ?? "",
         role: normalised.role,
+        locale: data.locale ?? "",
+        theme: data.theme ?? "",
         roles: normalised.roles,
         permissions: normalised.permissions,
         rolePermissions: normalised.rolePermissions,
+        requiresTotp: data.requiresTotp,
+        tempToken: data.tempToken,
     };
 };
 
@@ -105,6 +121,11 @@ export const authStorage = {
             firstName: localStorage.getItem("firstName") ?? "",
             lastName: localStorage.getItem("lastName") ?? "",
             role: normalised.role,
+            locale: localStorage.getItem("locale") ?? "",
+            // ToggleTheme stores raw preference under key "theme"; we mirror
+            // it into "themePreference" so the cleared keys can stay narrow
+            // (we don't blow away an anonymous user's theme preference on logout).
+            theme: localStorage.getItem("themePreference") ?? "",
             roles: normalised.roles,
             permissions: normalised.permissions,
             rolePermissions: normalised.rolePermissions,
@@ -119,6 +140,8 @@ export const authStorage = {
         localStorage.setItem("firstName", auth.firstName);
         localStorage.setItem("lastName", auth.lastName);
         localStorage.setItem("role", auth.role);
+        if (auth.locale) localStorage.setItem("locale", auth.locale);
+        if (auth.theme) localStorage.setItem("themePreference", auth.theme);
         localStorage.setItem("roles", JSON.stringify(auth.roles));
         localStorage.setItem("permissions", JSON.stringify(auth.permissions));
         localStorage.setItem("rolePermissions", JSON.stringify(auth.rolePermissions));

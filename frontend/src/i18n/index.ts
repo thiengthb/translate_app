@@ -1,7 +1,8 @@
 import { en, type MessageKey, type Messages } from "./messages/en";
+import { ja } from "./messages/ja";
 import { vi } from "./messages/vi";
 
-export const MESSAGES = { en, vi } as const;
+export const MESSAGES = { en, vi, ja } as const;
 
 export type Locale = keyof typeof MESSAGES;
 
@@ -17,6 +18,7 @@ export interface LocaleOption {
 export const LOCALES: readonly LocaleOption[] = [
     { code: "en", labelKey: "language.en", short: "EN", flag: "🇬🇧" },
     { code: "vi", labelKey: "language.vi", short: "VI", flag: "🇻🇳" },
+    { code: "ja", labelKey: "language.ja", short: "JA", flag: "🇯🇵" },
 ] as const;
 
 export const DEFAULT_LOCALE: Locale = "en";

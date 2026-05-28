@@ -30,6 +30,12 @@ export const Login: React.FC = () => {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // 2FA challenge state — set by step-1 response when the user has TOTP on.
+    const [tempToken, setTempToken] = useState<string | null>(null);
+    const [totpCode, setTotpCode] = useState("");
+    const [totpError, setTotpError] = useState("");
+
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
@@ -49,6 +55,13 @@ export const Login: React.FC = () => {
         const cleanPassword = password.trim();
         try {
             const res = await authApi.login({ email: cleanEmail, password: cleanPassword });
+            if (res.requiresTotp && res.tempToken) {
+                // Switch UI into 2FA challenge mode; don't dispatch setLogin yet.
+                setTempToken(res.tempToken);
+                setTotpCode("");
+                setTotpError("");
+                return;
+            }
             dispatch(setLogin(res));
             navigate(getHomePathByRole(res.role), { replace: true });
         } catch (err) {
@@ -63,6 +76,37 @@ export const Login: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleTotpSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tempToken) return;
+        setIsLoading(true);
+        setTotpError("");
+        try {
+            const res = await authApi.completeTwoFactor({
+                tempToken,
+                code: totpCode.trim(),
+            });
+            dispatch(setLogin(res));
+            navigate(getHomePathByRole(res.role), { replace: true });
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                const backendMsg = err.response?.data?.message;
+                setTotpError(backendMsg || t("auth.totp.failed"));
+            } else {
+                setTotpError(t("auth.totp.failed"));
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleBackToLogin = () => {
+        setTempToken(null);
+        setTotpCode("");
+        setTotpError("");
+        setError("");
     };
 
     const handleGoogleLogin = () => {
@@ -80,6 +124,65 @@ export const Login: React.FC = () => {
                 transition={{ duration: 1.0, ease: "easeOut" }}
                 className="max-w-md w-full border rounded-xl shadow-lg p-8 bg-card text-card-foreground"
             >
+                {tempToken ? (
+                    <>
+                        <div className="space-y-2 text-center mb-8">
+                            <h2 className="text-3xl font-bold tracking-tight">
+                                {t("auth.totp.title")}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                {t("auth.totp.subtitle")}
+                            </p>
+                        </div>
+
+                        {totpError && (
+                            <div className="mb-6 p-3 bg-destructive/15 border border-destructive/30 text-destructive text-sm rounded-md">
+                                {totpError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleTotpSubmit} className="space-y-5">
+                            <div className="space-y-2">
+                                <label htmlFor="totp-login-code" className="text-sm font-medium leading-none">
+                                    {t("auth.totp.codeLabel")}
+                                </label>
+                                <Input
+                                    id="totp-login-code"
+                                    value={totpCode}
+                                    onChange={(e) => setTotpCode(e.target.value)}
+                                    autoFocus
+                                    autoComplete="one-time-code"
+                                    placeholder={t("auth.totp.codePlaceholder")}
+                                    className="bg-background text-center text-lg tracking-[4px] font-mono"
+                                />
+                            </div>
+
+                            <Button type="submit" className="w-full" disabled={isLoading || totpCode.trim().length === 0}>
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        {t("common.processing")}
+                                    </span>
+                                ) : (
+                                    t("auth.totp.submit")
+                                )}
+                            </Button>
+
+                            <button
+                                type="button"
+                                onClick={handleBackToLogin}
+                                disabled={isLoading}
+                                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                ← {t("auth.totp.back")}
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <>
                 <div className="space-y-2 text-center mb-8">
                     <h2 className="text-3xl font-bold tracking-tight">{t("auth.login.title")}</h2>
                 </div>
@@ -205,6 +308,8 @@ export const Login: React.FC = () => {
                             </p>
                         </div>
                     </div>
+                )}
+                    </>
                 )}
             </motion.div>
         </div>

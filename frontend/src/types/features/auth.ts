@@ -9,9 +9,19 @@ export interface LoginResponse {
   firstName: string;
   lastName: string;
   role: string;
+  locale?: string;
+  theme?: string;
   roles: string[];
   permissions: string[];
   rolePermissions: Record<string, string[]>;
+  /** Set when the account has 2FA enabled — caller must show the challenge. */
+  requiresTotp?: boolean;
+  tempToken?: string;
+}
+
+export interface TwoFactorLoginRequest {
+  tempToken: string;
+  code: string;
 }
 
 export interface RegisterRequest {
@@ -44,6 +54,8 @@ export interface AuthState {
   firstName: string;
   lastName: string;
   role: string;
+  locale: string;
+  theme: string;
   roles: string[];
   permissions: string[];
   rolePermissions: Record<string, string[]>;

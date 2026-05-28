@@ -70,7 +70,7 @@ public class VerificationServiceImpl implements VerificationService {
         // Throttle check runs BEFORE the user lookup so cooldown semantics
         // are identical for known and unknown emails (anti-enumeration).
         if (!emailThrottle.tryConsume("verify:" + email)) {
-            throw new TooManyRequestsException("Please wait before requesting another email.");
+            throw new TooManyRequestsException("error.verify.throttle");
         }
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
@@ -104,7 +104,7 @@ public class VerificationServiceImpl implements VerificationService {
     @Override
     public void sendForgotPassword(String email) {
         if (!emailThrottle.tryConsume("reset:" + email)) {
-            throw new TooManyRequestsException("Please wait before requesting another email.");
+            throw new TooManyRequestsException("error.verify.throttle");
         }
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
