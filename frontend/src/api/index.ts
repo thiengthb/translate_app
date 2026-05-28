@@ -7,6 +7,8 @@ export * from "./features/library/tag.api";
 export * from "./features/library/flashcard.api";
 export * from "./features/library/deck_item.api";
 export * from "./features/library/ankiStudy.api";
+export * from "./features/library/srsAlgorithmConfig.api";
+export * from "./features/library/ankiSrsSetting.api";
 export * from "./features/file.api";
 export * from "./features/i18n.api";
 export * from "./features/menu/module.api";

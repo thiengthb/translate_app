@@ -1,4 +1,4 @@
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import { useState } from "react";
 import { useUnreadCount, useUnreadNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
 import { Badge } from "@/components/ui/badge";

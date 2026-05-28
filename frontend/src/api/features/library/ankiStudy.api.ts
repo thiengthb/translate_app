@@ -20,6 +20,11 @@ export interface AnkiStudyCard {
   reviewCount: number;
   lapses: number;
   nextReviewAt?: string;
+
+  againPreview?: string;
+  hardPreview?: string;
+  goodPreview?: string;
+  easyPreview?: string;
 }
 
 export interface AnkiStudyQueue {

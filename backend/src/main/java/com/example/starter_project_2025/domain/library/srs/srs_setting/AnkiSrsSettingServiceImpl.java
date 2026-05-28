@@ -53,7 +53,7 @@ public class AnkiSrsSettingServiceImpl
             return;
         }
 
-        if (request.getAlgorithmConfigId() != null) {
+        if (request.getAlgorithmConfigId() != null && request.getAlgorithmConfigId() > 0) {
             SrsAlgorithmConfig config = algorithmConfigRepository.findById(request.getAlgorithmConfigId()).orElse(null);
             if (config == null) { ctx.add("algorithmConfigId", "Algorithm config not found"); return; }
             entity.setAlgorithmConfig(config);
@@ -63,6 +63,10 @@ public class AnkiSrsSettingServiceImpl
     @Override
     protected void beforeUpdate(AnkiSrsSetting entity, AnkiSrsSettingDTO request, ValidationContext ctx) {
         if (request.getAlgorithmConfigId() != null) {
+            if (request.getAlgorithmConfigId() <= 0) {
+                entity.setAlgorithmConfig(null);
+                return;
+            }
             SrsAlgorithmConfig config = algorithmConfigRepository.findById(request.getAlgorithmConfigId()).orElse(null);
             if (config == null) { ctx.add("algorithmConfigId", "Algorithm config not found"); return; }
             entity.setAlgorithmConfig(config);
