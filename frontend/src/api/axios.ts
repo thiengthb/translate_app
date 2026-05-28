@@ -117,7 +117,9 @@ axiosInstance.interceptors.response.use(
             } catch (err) {
                 drainQueue(err);
                 store.dispatch(setLogout());
-                window.location.href = "/login";
+                if (!window.location.pathname.includes("/login")) {
+                    window.location.href = "/login";
+                }
                 return Promise.reject(err);
             } finally {
                 isRefreshing = false;
