@@ -5,7 +5,7 @@ import { ankiStudyApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api/features/library/ankiStudy.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, ChevronLeft, Pencil, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, ChevronLeft, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AnkiCardEditModal } from "./AnkiCardEditModal";
 
@@ -92,6 +92,7 @@ export default function AnkiStudyPage() {
   const [totalNew, setTotalNew] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
+  const [fullView, setFullView] = useState(false);
 
   /* ── Load queue ── */
   const loadQueue = (showSpinner = true) => {
@@ -119,6 +120,10 @@ export default function AnkiStudyPage() {
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && fullView) {
+        setFullView(false);
+        return;
+      }
       if (submitting || queue.length === 0) return;
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
@@ -133,7 +138,17 @@ export default function AnkiStudyPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [flipped, submitting, queue]);
+  }, [flipped, submitting, queue, fullView]);
+
+  /* ── Lock scroll while in full view ── */
+  useEffect(() => {
+    if (!fullView) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [fullView]);
 
   /* ── Rate current card ── */
   const handleRate = async (rating: AnkiRating) => {
@@ -184,37 +199,46 @@ export default function AnkiStudyPage() {
   const current = queue[0] ?? null;
   const remaining = queue.length + againQueue.length;
 
-  return (
-    <MainLayout
-      pathName={{
-        "/library": "Library",
-        [`/deck/${deckId}/anki`]: deckTitle || "Anki Study",
-      }}
-    >
-      <div className="max-w-3xl mx-auto w-full pb-16 space-y-6 pt-2">
+  const content = (
+      <div className={cn(
+        "w-full space-y-6",
+        fullView
+          ? "max-w-3xl mx-auto px-4 py-6 sm:py-10"
+          : "max-w-3xl mx-auto pb-16 pt-2"
+      )}>
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/library")}
+            onClick={() => (fullView ? setFullView(false) : navigate("/library"))}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="size-4" />
-            Back to library
+            {fullView ? "Exit full view" : "Back to library"}
           </button>
 
-          {!loading && !isDone && (
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-blue-500 inline-block" />
-                {totalNew} new
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-orange-400 inline-block" />
-                {totalDue} due
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {!loading && !isDone && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-blue-500 inline-block" />
+                  {totalNew} new
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-orange-400 inline-block" />
+                  {totalDue} due
+                </span>
+              </div>
+            )}
+            <button
+              onClick={() => setFullView((v) => !v)}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title={fullView ? "Exit full view (Esc)" : "Full view"}
+            >
+              {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              {fullView ? "Exit" : "Full view"}
+            </button>
+          </div>
         </div>
 
         {/* Deck title */}
@@ -295,7 +319,10 @@ export default function AnkiStudyPage() {
 
             {/* Flip card */}
             <div
-              className="relative h-64 cursor-pointer select-none"
+              className={cn(
+                "relative cursor-pointer select-none",
+                fullView ? "h-[60vh]" : "h-64"
+              )}
               onClick={() => !submitting && setFlipped((f) => !f)}
               style={{ perspective: 1200 }}
             >
@@ -323,7 +350,9 @@ export default function AnkiStudyPage() {
                           key={i}
                           className={cn(
                             "font-bold text-foreground text-center leading-snug w-full",
-                            i === 0 ? "text-2xl" : "text-base text-foreground/80"
+                            i === 0
+                              ? fullView ? "text-5xl" : "text-2xl"
+                              : fullView ? "text-xl text-foreground/80" : "text-base text-foreground/80"
                           )}
                         >
                           {line}
@@ -345,7 +374,10 @@ export default function AnkiStudyPage() {
                                 key={`img-${i}-${url}`}
                                 src={url}
                                 alt=""
-                                className="max-h-20 rounded-xl object-contain border border-border"
+                                className={cn(
+                                  "rounded-xl object-contain border border-border",
+                                  fullView ? "max-h-64" : "max-h-20"
+                                )}
                               />
                             ))}
                           </div>
@@ -357,13 +389,19 @@ export default function AnkiStudyPage() {
                                 key={`vid-${i}-${url}`}
                                 src={url}
                                 controls
-                                className="max-h-24 rounded-xl border border-border"
+                                className={cn(
+                                  "rounded-xl border border-border",
+                                  fullView ? "max-h-72" : "max-h-24"
+                                )}
                               />
                             ))}
                           </div>
                         )}
                         {audios.length > 0 && (
-                          <div className="mt-1 flex flex-col items-center gap-1 w-full max-w-xs">
+                          <div className={cn(
+                            "mt-1 flex flex-col items-center gap-1 w-full",
+                            fullView ? "max-w-md" : "max-w-xs"
+                          )}>
                             {audios.map((url, i) => (
                               <audio
                                 key={`aud-${i}-${url}`}
@@ -431,15 +469,35 @@ export default function AnkiStudyPage() {
           </>
         )}
       </div>
+  );
 
-      {current && (
-        <AnkiCardEditModal
-          flashcardId={current.flashcardId}
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-          onSaved={() => loadQueue(false)}
-        />
-      )}
+  const modal = current && (
+    <AnkiCardEditModal
+      flashcardId={current.flashcardId}
+      open={editOpen}
+      onClose={() => setEditOpen(false)}
+      onSaved={() => loadQueue(false)}
+    />
+  );
+
+  if (fullView) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        {content}
+        {modal}
+      </div>
+    );
+  }
+
+  return (
+    <MainLayout
+      pathName={{
+        "/library": "Library",
+        [`/deck/${deckId}/anki`]: deckTitle || "Anki Study",
+      }}
+    >
+      {content}
+      {modal}
     </MainLayout>
   );
 }
