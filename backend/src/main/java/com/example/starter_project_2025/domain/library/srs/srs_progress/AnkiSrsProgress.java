@@ -84,6 +84,10 @@ public class AnkiSrsProgress extends BaseEntity {
     Integer reviewCount = 0;
 
     @Builder.Default
+    @Column
+    Integer learningStepIndex = 0;
+
+    @Builder.Default
     @Column(nullable = false)
     @FieldMeta(label = "Lapses", type = "number", order = 6, group = "SRS")
     Integer lapses = 0;

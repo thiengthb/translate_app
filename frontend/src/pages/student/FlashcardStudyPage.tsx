@@ -108,8 +108,8 @@ export default function FlashcardStudyPage() {
         const fcMap = new Map(fcList.map((fc) => [fc.id, fc]));
         const sorted: CardEntry[] = items
           .map((it: any) => ({ orderIndex: it.orderIndex ?? 0, flashcard: fcMap.get(it.flashcardId) }))
-          .filter((e: any) => e.flashcard != null)
-          .sort((a: CardEntry, b: CardEntry) => a.orderIndex - b.orderIndex);
+          .filter((e: { orderIndex: number; flashcard?: FlashcardDTO }): e is CardEntry => e.flashcard != null)
+          .sort((a, b) => a.orderIndex - b.orderIndex);
 
         setAllCards(sorted);
         setSession(buildSession(sorted));

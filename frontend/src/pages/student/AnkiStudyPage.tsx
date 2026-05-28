@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { AnkiCardEditModal } from "./AnkiCardEditModal";
 
 /* ── SM2 preview: interval each button would produce (display only) ── */
-function previewDays(card: AnkiStudyCard, rating: AnkiRating): string {
+function fallbackPreview(card: AnkiStudyCard, rating: AnkiRating): string {
   if (rating === "AGAIN") return "< 1m";
 
   const quality = rating === "HARD" ? 3 : rating === "EASY" ? 5 : 4;
@@ -37,6 +37,17 @@ function previewDays(card: AnkiStudyCard, rating: AnkiRating): string {
   if (next < 30) return `${next}d`;
   const months = Math.round(next / 30);
   return `${months}mo`;
+}
+
+function ratingPreview(card: AnkiStudyCard, rating: AnkiRating): string {
+  const preview = {
+    AGAIN: card.againPreview,
+    HARD: card.hardPreview,
+    GOOD: card.goodPreview,
+    EASY: card.easyPreview,
+  }[rating];
+
+  return preview ?? fallbackPreview(card, rating);
 }
 
 const RATING_CONFIG: {
@@ -407,7 +418,7 @@ export default function AnkiStudyPage() {
                       )}
                     >
                       <span className="text-xs font-normal opacity-70">
-                        {previewDays(current, rating)}
+                        {ratingPreview(current, rating)}
                       </span>
                       <span>{label}</span>
                       <span className="text-[10px] opacity-50">[{shortcut}]</span>

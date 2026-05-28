@@ -35,6 +35,8 @@ public class AnkiSrsProgressDTO extends BaseDTO {
 
     Integer reviewCount;
 
+    Integer learningStepIndex;
+
     Integer lapses;
 
     String lastRating;

@@ -33,4 +33,9 @@ public class AnkiStudyCardDTO {
     Integer reviewCount;
     Integer lapses;
     LocalDateTime nextReviewAt;
+
+    String againPreview;
+    String hardPreview;
+    String goodPreview;
+    String easyPreview;
 }
