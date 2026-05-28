@@ -5,8 +5,9 @@ import { ankiStudyApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api/features/library/ankiStudy.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, ChevronLeft, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, ChevronLeft, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { AnkiCardEditModal } from "./AnkiCardEditModal";
 
 /* ── SM2 preview: interval each button would produce (display only) ── */
 function previewDays(card: AnkiStudyCard, rating: AnkiRating): string {
@@ -90,11 +91,12 @@ export default function AnkiStudyPage() {
   const [totalStudied, setTotalStudied] = useState(0);
   const [totalNew, setTotalNew] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
+  const [editOpen, setEditOpen] = useState(false);
 
   /* ── Load queue ── */
-  useEffect(() => {
+  const loadQueue = (showSpinner = true) => {
     if (!deckId) return;
-    setLoading(true);
+    if (showSpinner) setLoading(true);
     ankiStudyApi
       .getQueue(Number(deckId))
       .then((data) => {
@@ -104,7 +106,14 @@ export default function AnkiStudyPage() {
         setTotalDue(data.totalDue);
       })
       .catch(() => toast.error("Failed to load study queue."))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (showSpinner) setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
 
   /* ── Keyboard shortcuts ── */
@@ -266,7 +275,7 @@ export default function AnkiStudyPage() {
         {/* ── Study UI ── */}
         {!loading && current && !isDone && (
           <>
-            {/* State badge */}
+            {/* State badge + edit */}
             <div className="flex items-center gap-2">
               <StateBadge state={current.state} />
               {current.reviewCount > 0 && (
@@ -274,6 +283,14 @@ export default function AnkiStudyPage() {
                   Interval: {current.intervalDays}d · Reviews: {current.reviewCount}
                 </span>
               )}
+              <button
+                onClick={() => setEditOpen(true)}
+                className="ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                title="Edit this card"
+              >
+                <Pencil className="size-3.5" />
+                Edit card
+              </button>
             </div>
 
             {/* Flip card */}
@@ -414,6 +431,15 @@ export default function AnkiStudyPage() {
           </>
         )}
       </div>
+
+      {current && (
+        <AnkiCardEditModal
+          flashcardId={current.flashcardId}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => loadQueue(false)}
+        />
+      )}
     </MainLayout>
   );
 }
