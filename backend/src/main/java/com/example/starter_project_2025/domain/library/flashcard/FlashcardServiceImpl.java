@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -57,8 +59,50 @@ public class FlashcardServiceImpl
     @Override
     protected void beforeUpdate(Flashcard flashcard, FlashcardDTO request, ValidationContext ctx) {
         if (request.getSides() == null) return;
-        flashcard.getSides().clear();
-        flashcard.getSides().addAll(buildSidesFromRequest(flashcard, request));
+
+        // Build a lookup of currently persisted sides by their SideType
+        Map<SideType, FlashcardSide> existingBySideType = new HashMap<>();
+        for (FlashcardSide s : flashcard.getSides()) {
+            existingBySideType.put(s.getSide(), s);
+        }
+
+        // Determine which side types are present in the incoming request
+        Set<SideType> incomingTypes = new HashSet<>();
+        for (FlashcardDTO.SideDTO sideDto : request.getSides()) {
+            if (sideDto.getSide() != null) incomingTypes.add(sideDto.getSide());
+        }
+
+        // Drop sides that are no longer in the request (orphanRemoval handles the DELETE)
+        flashcard.getSides().removeIf(s -> !incomingTypes.contains(s.getSide()));
+
+        // Merge each requested side: reuse the existing entity if present, otherwise create a new one
+        for (FlashcardDTO.SideDTO sideDto : request.getSides()) {
+            FlashcardSide side = existingBySideType.get(sideDto.getSide());
+            if (side == null) {
+                side = FlashcardSide.builder()
+                        .flashcard(flashcard)
+                        .side(sideDto.getSide())
+                        .contents(new ArrayList<>())
+                        .build();
+                flashcard.getSides().add(side);
+            }
+
+            // Replace contents in-place (orphanRemoval on FlashcardSide.contents deletes old rows)
+            side.getContents().clear();
+            if (sideDto.getContents() != null) {
+                for (FlashcardDTO.ContentDTO contentDto : sideDto.getContents()) {
+                    side.getContents().add(FlashcardSideContent.builder()
+                            .side(side)
+                            .contentType(contentDto.getContentType())
+                            .contentValue(contentDto.getContentValue())
+                            .orderIndex(contentDto.getOrderIndex())
+                            .metadata(contentDto.getMetadata() != null
+                                    ? new HashMap<>(contentDto.getMetadata()) : null)
+                            .build());
+                }
+            }
+        }
+
         syncLegacyFields(flashcard, request);
     }
 
@@ -122,6 +166,8 @@ public class FlashcardServiceImpl
     protected FlashcardDTO afterRead(FlashcardDTO dto, Flashcard entity) {
         dto.setFront(extractSideText(entity, SideType.FRONT));
         dto.setBack(extractSideText(entity, SideType.BACK));
+        dto.setImageUrl(extractFirstMedia(entity, ContentType.IMAGE));
+        dto.setAudioUrl(extractFirstMedia(entity, ContentType.AUDIO));
         return dto;
     }
 
@@ -143,6 +189,20 @@ public class FlashcardServiceImpl
             if (side.getSide() == SideType.FRONT) flashcard.setFront(text);
             if (side.getSide() == SideType.BACK)  flashcard.setBack(text);
         }
+    }
+
+    /** First non-deleted content value of the given type across any side. */
+    private String extractFirstMedia(Flashcard flashcard, ContentType type) {
+        if (flashcard.getSides() == null) return null;
+        for (FlashcardSide side : flashcard.getSides()) {
+            if (side.getContents() == null) continue;
+            for (FlashcardSideContent c : side.getContents()) {
+                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
+                if (c.getContentType() == type && c.getContentValue() != null && !c.getContentValue().isBlank())
+                    return c.getContentValue();
+            }
+        }
+        return null;
     }
 
     /** Join all non-deleted TEXT/CLOZE values from a side (ordered), separated by newline. */

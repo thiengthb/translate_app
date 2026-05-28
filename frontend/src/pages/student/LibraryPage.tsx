@@ -336,7 +336,19 @@ function DeckRow({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
+          {deck.studyMode === "QUIZLET" && (
+            <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4255ff]/15 text-[#818cf8] border border-[#4255ff]/20">
+              Quizlet
+            </span>
+          )}
+          {deck.studyMode === "ANKI" && (
+            <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0ea5e9]/15 text-[#38bdf8] border border-[#0ea5e9]/20">
+              Anki
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 mt-0.5">
           <p className="text-xs text-muted-foreground">
             {deck.totalCards ?? 0} terms

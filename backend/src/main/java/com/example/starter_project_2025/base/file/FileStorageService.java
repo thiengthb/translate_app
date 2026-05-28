@@ -1,24 +1,20 @@
 package com.example.starter_project_2025.base.file;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.starter_project_2025.exception.BadRequestException;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -26,15 +22,10 @@ import java.util.UUID;
 @Slf4j
 public class FileStorageService {
 
-    @Value("${app.file.upload-dir:uploads}")
-    private String uploadDir;
-
     @Value("${app.file.max-size:10485760}")
     private long maxFileSize;
 
-    @Value("${app.backend-domain:http://localhost:8080}")
-    private String backendDomain;
-
+    private final Cloudinary cloudinary;
     private final FileAttachmentRepository fileAttachmentRepository;
 
     @Transactional
@@ -42,68 +33,53 @@ public class FileStorageService {
         if (file.isEmpty()) {
             throw new BadRequestException("File is empty");
         }
-
         if (file.getSize() > maxFileSize) {
             throw new BadRequestException("File size exceeds maximum allowed size");
         }
 
-        String originalName = StringUtils.cleanPath(file.getOriginalFilename() != null
-                ? file.getOriginalFilename() : "unnamed");
-
-        // Sanitize filename
+        String originalName = StringUtils.cleanPath(
+                file.getOriginalFilename() != null ? file.getOriginalFilename() : "unnamed");
         if (originalName.contains("..")) {
             throw new BadRequestException("Invalid file name");
         }
 
-        String extension = "";
-        int dotIndex = originalName.lastIndexOf('.');
-        if (dotIndex > 0) {
-            extension = originalName.substring(dotIndex);
-        }
-
-        String storedName = UUID.randomUUID() + extension;
-        Path targetDir = Paths.get(uploadDir, entityName);
+        String uuid = UUID.randomUUID().toString();
+        String folder = (entityName != null && !entityName.isBlank()) ? entityName : "uploads";
+        String publicId = folder + "/" + uuid;
 
         try {
-            Files.createDirectories(targetDir);
-            Path targetPath = targetDir.resolve(storedName);
-            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "public_id", publicId,
+                    "resource_type", "auto",
+                    "overwrite", false
+            ));
+
+            String secureUrl = (String) result.get("secure_url");
 
             FileAttachment attachment = FileAttachment.builder()
                     .originalName(originalName)
-                    .storedName(storedName)
+                    .storedName(uuid)
                     .contentType(file.getContentType())
                     .fileSize(file.getSize())
-                    .storagePath(targetPath.toString())
-                    .storageType("LOCAL")
+                    .storagePath(publicId)
+                    .storageType("CLOUDINARY")
                     .entityName(entityName)
                     .entityId(entityId)
                     .fieldName(fieldName)
-                    .url(backendDomain + "/api/files/" + storedName)
+                    .url(secureUrl)
                     .build();
 
             return fileAttachmentRepository.save(attachment);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new RuntimeException("Failed to upload file to Cloudinary", e);
         }
     }
 
-    public Resource download(String storedName) {
-        FileAttachment attachment = fileAttachmentRepository.findAll().stream()
+    public FileAttachment getByStoredName(String storedName) {
+        return fileAttachmentRepository.findAll().stream()
                 .filter(f -> f.getStoredName().equals(storedName))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("File not found"));
-
-        try {
-            Path filePath = Paths.get(attachment.getStoragePath());
-            Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            }
-            throw new ResourceNotFoundException("File not found on disk");
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("File path error", e);
-        }
     }
 
     public List<FileAttachment> getByEntity(String entityName, Long entityId) {
@@ -116,12 +92,21 @@ public class FileStorageService {
                 .orElseThrow(() -> new ResourceNotFoundException("File not found"));
 
         try {
-            Path filePath = Paths.get(attachment.getStoragePath());
-            Files.deleteIfExists(filePath);
+            cloudinary.uploader().destroy(
+                    attachment.getStoragePath(),
+                    ObjectUtils.asMap("resource_type", cloudinaryResourceType(attachment.getContentType()))
+            );
         } catch (IOException e) {
-            log.error("Failed to delete file from disk: {}", attachment.getStoragePath(), e);
+            log.error("Failed to delete file from Cloudinary: {}", attachment.getStoragePath(), e);
         }
 
         fileAttachmentRepository.delete(attachment);
+    }
+
+    private String cloudinaryResourceType(String mimeType) {
+        if (mimeType == null) return "raw";
+        if (mimeType.startsWith("image/")) return "image";
+        if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) return "video";
+        return "raw";
     }
 }

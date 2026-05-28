@@ -60,6 +60,14 @@ axiosInstance.interceptors.request.use(
     },
 );
 
+let isRefreshing = false;
+let pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+
+const drainQueue = (err: unknown, token: string | null = null) => {
+    pendingQueue.forEach((p) => (err ? p.reject(err) : p.resolve(token!)));
+    pendingQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -78,6 +86,18 @@ axiosInstance.interceptors.response.use(
             !requestUrl.includes("/auth/refresh")
         ) {
             originalReq._retry = true;
+
+            if (isRefreshing) {
+                // Queue this request until the in-flight refresh resolves
+                return new Promise<string>((resolve, reject) => {
+                    pendingQueue.push({ resolve, reject });
+                }).then((token) => {
+                    originalReq.headers = { ...originalReq.headers, Authorization: `Bearer ${token}` };
+                    return axiosInstance(originalReq);
+                });
+            }
+
+            isRefreshing = true;
             try {
                 const res = await axios.post<BackendAuthenticationResponse>(
                     `${API_BASE_URL}/auth/refresh`,
@@ -87,6 +107,7 @@ axiosInstance.interceptors.response.use(
                 const authData = mapAuthResponse(res.data);
 
                 store.dispatch(setLogin(authData));
+                drainQueue(null, authData.token);
                 originalReq.headers = {
                     ...originalReq.headers,
                     Authorization: `Bearer ${authData.token}`,
@@ -94,9 +115,12 @@ axiosInstance.interceptors.response.use(
 
                 return axiosInstance(originalReq);
             } catch (err) {
+                drainQueue(err);
                 store.dispatch(setLogout());
                 window.location.href = "/login";
                 return Promise.reject(err);
+            } finally {
+                isRefreshing = false;
             }
         }
 

@@ -31,6 +31,18 @@ function getSideImages(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
   }
   return fc.imageUrl ? [fc.imageUrl] : [];
 }
+
+function getSideAudio(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
+  const found = fc.sides?.find((s) => s.side === side);
+  if (found?.contents) {
+    const audios = found.contents
+      .filter((c) => c.contentType === "AUDIO")
+      .map((c) => c.contentValue)
+      .filter(Boolean) as string[];
+    if (audios.length > 0) return audios;
+  }
+  return fc.audioUrl ? [fc.audioUrl] : [];
+}
 import { BookOpen, Check, ChevronLeft, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -342,6 +354,16 @@ export default function FlashcardStudyPage() {
                     />
                   ))}
 
+                  {/* Audio */}
+                  {getSideAudio(current, flipped ? "BACK" : "FRONT").map((url, i) => (
+                    <audio
+                      key={i}
+                      src={url}
+                      controls
+                      className="mt-1 w-full max-w-xs h-8"
+                    />
+                  ))}
+
                   {!flipped && (
                     <p className="text-[10px] text-muted-foreground/50 mt-2">
                       Click to reveal · Space
@@ -389,6 +411,63 @@ export default function FlashcardStudyPage() {
               </p>
             )}
           </>
+        )}
+
+        {/* ── All terms list ── */}
+        {!loading && allCards.length > 0 && (
+          <div className="pt-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Terms in this set ({allCards.length})
+            </h2>
+            <div className="space-y-2">
+              {allCards.map(({ flashcard }, i) => (
+                <div
+                  key={flashcard.id ?? i}
+                  className="grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-border bg-border"
+                >
+                  {/* Front */}
+                  <div className="bg-card px-5 py-4 space-y-2">
+                    <div className="space-y-1">
+                      {getSideTextBlocks(flashcard, "FRONT").map((text, j) => (
+                        <p key={j} className={cn(
+                          "text-foreground leading-snug",
+                          j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+                        )}>
+                          {text}
+                        </p>
+                      ))}
+                    </div>
+                    {getSideImages(flashcard, "FRONT").map((url, j) => (
+                      <img key={j} src={url} alt="" className="max-h-16 rounded-lg object-contain border border-border" />
+                    ))}
+                    {getSideAudio(flashcard, "FRONT").map((url, j) => (
+                      <audio key={j} src={url} controls className="w-full h-7" />
+                    ))}
+                  </div>
+
+                  {/* Back */}
+                  <div className="bg-card px-5 py-4 space-y-2">
+                    <div className="space-y-1">
+                      {getSideTextBlocks(flashcard, "BACK").map((text, j) => (
+                        <p key={j} className={cn(
+                          "text-foreground leading-snug",
+                          j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+                        )}>
+                          {text}
+                        </p>
+                      ))}
+                    </div>
+                    {getSideImages(flashcard, "BACK").map((url, j) => (
+                      <img key={j} src={url} alt="" className="max-h-16 rounded-lg object-contain border border-border" />
+                    ))}
+                    {getSideAudio(flashcard, "BACK").map((url, j) => (
+                      <audio key={j} src={url} controls className="w-full h-7" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </MainLayout>

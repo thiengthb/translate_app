@@ -75,29 +75,32 @@ public class SecurityConfig {
             HttpSecurity http,
             OpenAPI customOpenAPI,
             OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-            OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler
-        ) throws Exception {
+            OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .headers(headers ->
-                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                )
-                .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                )
-                .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
-                    auth.anyRequest().authenticated();
-                })
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/login/**").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/h2-console/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)   // 401
-                        .accessDeniedHandler(jwtAccessDeniedHandler)             // 403
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 401
+                        .accessDeniedHandler(jwtAccessDeniedHandler) // 403
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler(oAuth2AuthenticationFailureHandler)
-                )
+                        .failureHandler(oAuth2AuthenticationFailureHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -33,6 +33,12 @@ public class FlashcardDTO extends BaseDTO {
     String front;
     String back;
 
+    /** First non-deleted IMAGE URL across all sides (derived, read-only). */
+    String imageUrl;
+
+    /** First non-deleted AUDIO URL across all sides (derived, read-only). */
+    String audioUrl;
+
     @Valid
     List<SideDTO> sides;
 

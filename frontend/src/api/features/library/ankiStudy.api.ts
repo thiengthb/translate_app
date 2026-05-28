@@ -5,6 +5,7 @@ export interface AnkiStudyCard {
   front: string;
   back: string;
   imageUrl?: string;
+  audioUrl?: string;
   progressId?: number;
   state: "NEW" | "LEARNING" | "REVIEW" | "RELEARNING";
   easeFactor: number;
