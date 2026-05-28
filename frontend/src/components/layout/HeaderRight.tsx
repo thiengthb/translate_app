@@ -2,6 +2,7 @@ import ToggleTheme from "@/components/ToggleTheme";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import NotificationCenter from "@/components/notification/NotificationCenter";
 import UserMenu from "@/components/layout/UserMenu";
+import { StreakBadge } from "@/components/streak/StreakBadge";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge.tsx";
 import type { RootState } from "@/store/store";
@@ -61,6 +62,7 @@ export default function HeaderRight() {
           {formatRoleLabel(currentRole)}
         </Badge>
 
+        <StreakBadge />
         <NotificationCenter />
         <LanguageSwitcher />
         <ToggleTheme />
@@ -145,6 +147,7 @@ export default function HeaderRight() {
         </Badge>
       )}
 
+      <StreakBadge />
       <NotificationCenter />
       <LanguageSwitcher />
       <ToggleTheme />

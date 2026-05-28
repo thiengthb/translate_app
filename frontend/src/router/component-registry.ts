@@ -10,6 +10,10 @@ import { Dashboard } from "@/pages/management/dashboard";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import StreakPage from "@/pages/streak/StreakPage";
+import UserDashboardPage from "@/pages/admin/userDashboard/UserDashboardPage";
+import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
+import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -27,6 +31,10 @@ export const routes: RouteConfig[] = [
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
+  { path: "/streak", component: StreakPage },
+  { path: "/admin/users-dashboard", component: UserDashboardPage, isModuleDriven: true },
+  { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
+  { path: "/users/:userId", component: PublicProfilePage },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   { path: "/login", component: Login, isPublic: true },

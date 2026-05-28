@@ -5,10 +5,11 @@ import { useTableMutations } from "./useTableMutations";
 import { useTablePermissions } from "./useTablePermissions";
 import { useTableQuery } from "./useTableQuery";
 import { useTableRelations } from "./useTableRelations";
+import { useTableUrlSync } from "./useTableUrlSync";
 
 /**
- * Facade composing five focused sub-hooks. Returns the same shape as the
- * previous monolithic implementation so ProTable and Toolbar don't change.
+ * Facade composing focused sub-hooks. Returns the same shape as the previous
+ * monolithic implementation so ProTable and Toolbar don't change.
  *
  * Sub-hooks (test / reuse them in isolation if you only need part of the
  * ProTable behavior):
@@ -17,8 +18,11 @@ import { useTableRelations } from "./useTableRelations";
  *   useTableMutations    create / update / delete / patchField / bulkDelete + fieldErrors
  *   useTableRelations    pre-fetched dropdown options + audit-user lookup
  *   useTableDataIO       import / export blob handling
+ *   useTableUrlSync      two-way sync table state ↔ URL search params
  */
-export function useProTable(api: any, schema: EntitySchema) {
+export function useProTable(api: any, schema: EntitySchema, options?: { urlSync?: boolean }) {
+    const urlSyncEnabled = options?.urlSync !== false;
+
     const permission = useTablePermissions(schema.entityName);
     const queryParts = useTableQuery({ api, schema, enabled: permission.canRead });
     const { relationOptions } = useTableRelations({ schema, enabled: permission.canRead });
@@ -40,6 +44,23 @@ export function useProTable(api: any, schema: EntitySchema) {
 
     const dataIO = useTableDataIO({ api, entityName: schema.entityName, permission });
 
+    // ─── URL state sync ─────────────────────────────────────────────────────
+    // Pulls page/size/sort/search/filters from URL on mount; writes back on
+    // change so refresh + share-link preserve the view.
+    useTableUrlSync({
+        entityName: schema.entityName,
+        page: queryParts.page,
+        size: queryParts.size,
+        search: queryParts.search,
+        sortState: queryParts.sortState,
+        filters: queryParts.filters,
+        setPage: urlSyncEnabled ? queryParts.setPage : () => {},
+        setSize: urlSyncEnabled ? queryParts.setSize : () => {},
+        setSearch: urlSyncEnabled ? queryParts.setSearch : () => {},
+        setSortState: urlSyncEnabled ? queryParts.setSortState : () => {},
+        setFilters: urlSyncEnabled ? queryParts.setFilters : () => {},
+    });
+
     const openCreate = () => {
         if (!permission.canCreate) return;
         setEditingRow(null);
@@ -56,8 +77,42 @@ export function useProTable(api: any, schema: EntitySchema) {
 
     const bulkDelete = () => {
         if (!permission.canDelete || selected.length === 0) return;
-        mutations.bulkDelete(selected);
+        // Snapshot the selected rows so we can re-create them on Undo.
+        const snapshot = queryParts.data.filter((r: any) =>
+            selected.includes(r[schema.idField]),
+        );
+        mutations.bulkDelete(selected, snapshot);
         setSelected([]);
+    };
+
+    const bulkUpdate = async (patch: Record<string, any>) => {
+        if (!permission.canUpdate || selected.length === 0) return;
+        await mutations.bulkUpdate(selected, patch, queryParts.data);
+        setSelected([]);
+    };
+
+    const clearSelection = () => setSelected([]);
+
+    const selectAllOnPage = () => {
+        const ids = (queryParts.data || []).map((r: any) => r[schema.idField]);
+        setSelected(ids);
+    };
+
+    const applyView = (state: {
+        search?: string;
+        sortState?: any[];
+        filters?: Record<string, any>;
+        columnVisibility?: Record<string, boolean>;
+    }) => {
+        if (state.search !== undefined) queryParts.setSearch(state.search);
+        if (state.sortState !== undefined) queryParts.setSortState(state.sortState);
+        if (state.filters !== undefined) queryParts.setFilters(state.filters);
+        if (state.columnVisibility !== undefined) {
+            for (const [name, visible] of Object.entries(state.columnVisibility)) {
+                queryParts.toggleFieldVisibility(name, visible);
+            }
+        }
+        queryParts.setPage(0);
     };
 
     return {
@@ -67,6 +122,12 @@ export function useProTable(api: any, schema: EntitySchema) {
         total: queryParts.total,
         loading: queryParts.loading,
         isFetching: queryParts.isFetching,
+        isError: queryParts.isError,
+        error: queryParts.error,
+        refetch: queryParts.refetch,
+        lastUpdated: queryParts.lastUpdated,
+        isSearchPending: queryParts.isSearchPending,
+
         page: queryParts.page,
         size: queryParts.size,
         setPage: queryParts.setPage,
@@ -77,6 +138,7 @@ export function useProTable(api: any, schema: EntitySchema) {
         filters: queryParts.filters,
         setFilters: queryParts.setFilters,
         clearFilters: queryParts.clearFilters,
+        removeFilter: queryParts.removeFilter,
         search: queryParts.search,
         setSearch: queryParts.setSearch,
         columnVisibility: queryParts.columnVisibility,
@@ -97,6 +159,10 @@ export function useProTable(api: any, schema: EntitySchema) {
         patchField: (id: any, fieldName: string, value: any) =>
             mutations.patchField(id, fieldName, value, queryParts.data),
         bulkDelete,
+        bulkUpdate,
+        clearSelection,
+        selectAllOnPage,
+        applyView,
         isSubmitting: mutations.isSubmitting,
         fieldErrors: mutations.fieldErrors,
         setFieldErrors: mutations.setFieldErrors,
