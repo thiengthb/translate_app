@@ -2,12 +2,16 @@ package com.example.starter_project_2025.system.menu.module;
 
 import com.example.starter_project_2025.base.crud.service.BaseCrudServiceImpl;
 import com.example.starter_project_2025.base.crud.validation.ValidationContext;
+import com.example.starter_project_2025.base.i18n.I18nResolver;
 import com.example.starter_project_2025.system.menu.module_groups.ModuleGroup;
 import com.example.starter_project_2025.system.menu.module_groups.ModuleGroupRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +21,34 @@ public class ModuleServiceImpl
 
     ModuleRepository moduleRepository;
     ModuleGroupRepository moduleGroupRepository;
+    I18nResolver i18nResolver;
+
+    @Override
+    @Transactional(readOnly = true)
+    public ModuleDTO getById(Long id) {
+        return localise(super.getById(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ModuleDTO> getAll(Pageable pageable, String search, ModuleFilter filter) {
+        Page<ModuleDTO> page = super.getAll(pageable, search, filter);
+        page.forEach(this::localise);
+        return page;
+    }
+
+    /**
+     * Apply the current-request locale to display fields. Falls back to the
+     * stored value if no translation row exists (see Translation entity).
+     */
+    private ModuleDTO localise(ModuleDTO dto) {
+        if (dto == null) return null;
+        if (dto.getUrl() != null) {
+            String key = "module." + dto.getUrl() + ".title";
+            dto.setTitle(i18nResolver.resolve(key, dto.getTitle()));
+        }
+        return dto;
+    }
 
     @Override
     protected void beforeCreate(Module module, ModuleDTO dto, ValidationContext ctx) {

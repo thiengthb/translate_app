@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Loader2, Lock } from "lucide-react";
+import { KeyRound, Loader2, Lock, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
     Form,
     FormControl,
@@ -16,6 +18,9 @@ import {
 
 import { passwordSchema, type PasswordFormValues } from "../schemas";
 import { PasswordField } from "./PasswordField";
+import { authApi } from "@/api/features/auth.api";
+import { useTranslation } from "@/contexts/I18nContext";
+import { useLogout } from "@/hooks/useLogout";
 
 interface Props {
     onChangePassword: (values: PasswordFormValues) => Promise<boolean>;
@@ -23,6 +28,9 @@ interface Props {
 
 export function SecurityCard({ onChangePassword }: Props) {
     const [saving, setSaving] = useState(false);
+    const [signingOutEverywhere, setSigningOutEverywhere] = useState(false);
+    const { t } = useTranslation();
+    const logout = useLogout();
 
     const form = useForm<PasswordFormValues>({
         resolver: zodResolver(passwordSchema),
@@ -36,18 +44,30 @@ export function SecurityCard({ onChangePassword }: Props) {
         if (ok) form.reset();
     };
 
+    const handleLogoutEverywhere = async () => {
+        if (!window.confirm(t("profile.security.logoutAllConfirm"))) return;
+        setSigningOutEverywhere(true);
+        try {
+            await authApi.logoutAllDevices();
+            toast.success(t("profile.security.logoutAllSuccess"));
+        } catch {
+            // fall through — useLogout still clears local state below
+        } finally {
+            setSigningOutEverywhere(false);
+            await logout();
+        }
+    };
+
     return (
         <Card>
             <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                     <KeyRound size={16} className="text-primary" />
-                    Bảo mật
+                    {t("profile.security.title")}
                 </CardTitle>
-                <CardDescription>
-                    Đổi mật khẩu để bảo vệ tài khoản (tối thiểu 8 ký tự)
-                </CardDescription>
+                <CardDescription>{t("profile.security.description")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
@@ -55,7 +75,7 @@ export function SecurityCard({ onChangePassword }: Props) {
                             name="currentPassword"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Mật khẩu hiện tại</FormLabel>
+                                    <FormLabel>{t("profile.security.currentPassword")}</FormLabel>
                                     <FormControl>
                                         <PasswordField field={field} placeholder="••••••••" />
                                     </FormControl>
@@ -70,11 +90,11 @@ export function SecurityCard({ onChangePassword }: Props) {
                                 name="newPassword"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Mật khẩu mới</FormLabel>
+                                        <FormLabel>{t("profile.security.newPassword")}</FormLabel>
                                         <FormControl>
                                             <PasswordField
                                                 field={field}
-                                                placeholder="Tối thiểu 8 ký tự"
+                                                placeholder={t("profile.security.newPasswordPlaceholder")}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -86,9 +106,12 @@ export function SecurityCard({ onChangePassword }: Props) {
                                 name="confirmPassword"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Xác nhận</FormLabel>
+                                        <FormLabel>{t("profile.security.confirmPassword")}</FormLabel>
                                         <FormControl>
-                                            <PasswordField field={field} placeholder="Nhập lại" />
+                                            <PasswordField
+                                                field={field}
+                                                placeholder={t("profile.security.confirmPlaceholder")}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -102,10 +125,36 @@ export function SecurityCard({ onChangePassword }: Props) {
                             ) : (
                                 <Lock size={14} />
                             )}
-                            Đổi mật khẩu
+                            {t("profile.security.changePassword")}
                         </Button>
                     </form>
                 </Form>
+
+                <Separator />
+
+                <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t("profile.security.dangerZone")}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        {t("profile.security.logoutAllDescription")}
+                    </p>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={signingOutEverywhere}
+                        onClick={handleLogoutEverywhere}
+                        className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                        {signingOutEverywhere ? (
+                            <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                            <LogOut size={14} />
+                        )}
+                        {t("profile.security.logoutAll")}
+                    </Button>
+                </div>
             </CardContent>
         </Card>
     );

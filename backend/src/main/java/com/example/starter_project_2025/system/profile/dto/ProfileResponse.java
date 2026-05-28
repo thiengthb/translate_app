@@ -11,6 +11,8 @@ public record ProfileResponse(
         String phone,
         String bio,
         String avatarUrl,
+        String locale,
+        String theme,
         Set<String> roles,
         LocalDateTime createdAt
 ) {}

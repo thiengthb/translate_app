@@ -11,6 +11,8 @@ const initialState: AuthState = {
     firstName: hydrated.firstName,
     lastName: hydrated.lastName,
     role: hydrated.role,
+    locale: hydrated.locale,
+    theme: hydrated.theme,
     roles: hydrated.roles,
     permissions: hydrated.permissions,
     rolePermissions: hydrated.rolePermissions,
@@ -31,6 +33,8 @@ const authSlice = createSlice({
                 firstName = "",
                 lastName = "",
                 role,
+                locale = "",
+                theme = "",
             } = action.payload;
 
             const normalized = normalizeAuthRolePayload({
@@ -46,6 +50,8 @@ const authSlice = createSlice({
             state.firstName = firstName;
             state.lastName = lastName;
             state.role = normalized.role;
+            state.locale = locale;
+            state.theme = theme;
             state.roles = normalized.roles;
             state.rolePermissions = normalized.rolePermissions;
             state.isAuthenticated = !!token;
@@ -56,10 +62,24 @@ const authSlice = createSlice({
                 firstName,
                 lastName,
                 role: normalized.role,
+                locale,
+                theme,
                 roles: normalized.roles,
                 permissions: normalized.permissions,
                 rolePermissions: normalized.rolePermissions,
             });
+        },
+        setLocale: (state, action: PayloadAction<string>) => {
+            state.locale = action.payload;
+            if (action.payload) {
+                localStorage.setItem("locale", action.payload);
+            }
+        },
+        setTheme: (state, action: PayloadAction<string>) => {
+            state.theme = action.payload;
+            if (action.payload) {
+                localStorage.setItem("themePreference", action.payload);
+            }
         },
         updateProfile: (state, action: PayloadAction<{ firstName: string; lastName?: string }>) => {
             const { firstName, lastName } = action.payload;
@@ -74,6 +94,8 @@ const authSlice = createSlice({
             state.firstName = "";
             state.lastName = "";
             state.role = "";
+            state.locale = "";
+            state.theme = "";
             state.roles = [];
             state.permissions = [];
             state.rolePermissions = {};
@@ -83,5 +105,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { setLogin, setLogout, updateProfile } = authSlice.actions;
+export const { setLogin, setLogout, setLocale, setTheme, updateProfile } = authSlice.actions;
 export default authSlice.reducer;

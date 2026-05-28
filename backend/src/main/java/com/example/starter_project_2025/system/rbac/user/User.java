@@ -69,6 +69,24 @@ public class User extends BaseEntity {
     @Column(length = 512)
     String avatarUrl;
 
+    @Column(length = 10)
+    String locale;
+
+    @Column(length = 10)
+    String theme;
+
+    /** Base32-encoded TOTP secret. Null until the user enrolls in 2FA. */
+    @Column(length = 64)
+    String totpSecret;
+
+    /**
+     * Set to true only after the user confirms their first TOTP code.
+     * Nullable in DB so existing rows from before this migration default to
+     * "not enrolled" without a backfill.
+     */
+    @Column
+    Boolean totpEnabled;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @ExportField(name = "Roles", relation = true, path = "name")

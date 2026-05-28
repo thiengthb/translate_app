@@ -4,9 +4,11 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
     DEFAULT_LOCALE,
@@ -17,6 +19,10 @@ import {
     type LocaleOption,
     type MessageKey,
 } from "@/i18n";
+import { profileApi } from "@/api/features/profile.api";
+import { setLocale as setLocaleAction } from "@/store/slices/auth/authSlice";
+import { logger } from "@/lib/logger";
+import type { RootState } from "@/store/store";
 
 const STORAGE_KEY = "app-locale";
 
@@ -62,14 +68,28 @@ function interpolate(template: string, params?: TranslationValues): string {
 export function I18nProvider({ children }: { children: ReactNode }) {
     const [locale, setLocaleState] = useState<Locale>(loadInitialLocale);
 
-    const setLocale = useCallback((next: Locale) => {
-        setLocaleState(next);
+    const dispatch = useDispatch();
+    const { isAuthenticated, locale: authLocale } = useSelector(
+        (state: RootState) => state.auth,
+    );
+
+    // Tracks the locale we last pushed to the BE so we don't echo a value the
+    // server just told us about (login response → setLocale here → PATCH back).
+    const lastSyncedRef = useRef<Locale | null>(null);
+
+    // Apply locale coming from the BE (login / refresh) when it differs.
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        if (!isLocale(authLocale)) return;
+        if (authLocale === locale) return;
+        setLocaleState(authLocale);
+        lastSyncedRef.current = authLocale;
         try {
-            localStorage.setItem(STORAGE_KEY, next);
+            localStorage.setItem(STORAGE_KEY, authLocale);
         } catch {
-            // ignore quota / private-mode errors
+            /* ignore */
         }
-    }, []);
+    }, [isAuthenticated, authLocale, locale]);
 
     // Keep `<html lang>` in sync so screen readers + browser features know.
     useEffect(() => {
@@ -77,6 +97,28 @@ export function I18nProvider({ children }: { children: ReactNode }) {
             document.documentElement.lang = locale;
         }
     }, [locale]);
+
+    const setLocale = useCallback(
+        (next: Locale) => {
+            setLocaleState(next);
+            try {
+                localStorage.setItem(STORAGE_KEY, next);
+            } catch {
+                /* ignore quota / private-mode errors */
+            }
+
+            if (isAuthenticated && lastSyncedRef.current !== next) {
+                lastSyncedRef.current = next;
+                dispatch(setLocaleAction(next));
+                profileApi.updateLocale({ locale: next }).catch((err) => {
+                    // Roll back the "synced" marker so a retry can replay.
+                    lastSyncedRef.current = null;
+                    logger.warn("Failed to persist locale to profile", err);
+                });
+            }
+        },
+        [dispatch, isAuthenticated],
+    );
 
     const t = useCallback(
         (key: MessageKey, params?: TranslationValues) => {

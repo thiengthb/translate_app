@@ -31,8 +31,7 @@ public class LoginAttemptTracker {
         Instant now = Instant.now();
         if (rec.lockedUntil.isAfter(now)) {
             long secondsLeft = Math.max(1, Duration.between(now, rec.lockedUntil).toSeconds());
-            throw new TooManyRequestsException(
-                    "Too many failed attempts. Try again in " + secondsLeft + " seconds.");
+            throw new TooManyRequestsException("error.auth.tooManyAttempts", secondsLeft);
         }
     }
 

@@ -30,7 +30,12 @@ import lombok.experimental.SuperBuilder;
         icon = "menus",
         url = "/menus",
         order = 2,
-        permission = "MENU_READ"
+        // Reads of menu metadata are needed by every authenticated user to
+        // render the nav, so MENU_READ is granted broadly (see
+        // RoleDataInitializer). Gating the management UI with MENU_UPDATE
+        // keeps non-admin users out of the CRUD pages while still letting
+        // them fetch their own nav data.
+        permission = "MENU_UPDATE"
 )
 @Searchable(fields = {"title", "url", "description"})
 @AutoCrud(path = "modules")

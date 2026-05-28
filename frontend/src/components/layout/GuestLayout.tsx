@@ -42,12 +42,12 @@ const AUTH_PATHS = new Set([
     "/not-found-page",
 ]);
 
-// Groups that should never appear in a non-admin user's navbar.
-// STUDENT/TEACHER are granted MENU_READ so the FE can fetch menu metadata,
-// but that same permission also passes the gate for the System/RBAC CRUD
-// pages — so we filter those groups out explicitly here.
+// Defensive belt for groups that should never appear in a non-admin user's
+// navbar even if their entity permissions accidentally leak in. The system
+// menu (Module / ModuleGroup) is now gated by MENU_UPDATE at the BE so the
+// permission filter excludes it on its own, but we keep this guard for
+// future entities that grab the same group name.
 const ADMIN_ONLY_GROUP_NAMES = new Set([
-    "system management",
     "rbac management",
     "dashboard",
 ]);

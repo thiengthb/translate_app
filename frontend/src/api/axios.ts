@@ -22,6 +22,14 @@ axiosInstance.interceptors.request.use(
         if (token && !isAuthRequest) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Send the user's active locale so the BE can localise dynamic content
+        // (module titles, validation messages, email subjects...). Sourced from
+        // localStorage rather than Redux to avoid coupling axios to the store.
+        const locale = localStorage.getItem("app-locale") || localStorage.getItem("locale");
+        if (locale) {
+            config.headers["Accept-Language"] = locale;
+        }
         return config;
     },
     (error) => Promise.reject(error),

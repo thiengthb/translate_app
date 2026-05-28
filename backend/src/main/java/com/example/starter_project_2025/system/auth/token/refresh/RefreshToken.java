@@ -39,6 +39,18 @@ public class RefreshToken {
 
     boolean revoked;
 
+    /** Truncated User-Agent string captured at issue time (for the sessions UI). */
+    @Column(length = 256)
+    String userAgent;
+
+    /** IP that requested the token. Best-effort only — see RateLimitFilter for trust caveats. */
+    @Column(length = 64)
+    String ipAddress;
+
+    /** Updated every time this token is used to mint an access token. */
+    @Column
+    Instant lastUsedAt;
+
     @CreationTimestamp
     @Column(updatable = false, nullable = false)
     protected LocalDateTime createdAt;
