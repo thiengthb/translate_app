@@ -75,6 +75,8 @@ public class FlashcardDTO extends BaseDTO {
 
         Long id;
 
+        String label;
+
         @NotNull(message = "Content type is required")
         ContentType contentType;
 

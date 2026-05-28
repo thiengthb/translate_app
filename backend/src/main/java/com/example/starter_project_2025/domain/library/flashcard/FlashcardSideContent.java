@@ -31,6 +31,9 @@ public class FlashcardSideContent extends BaseEntity {
     @JoinColumn(name = "side_id", nullable = false)
     FlashcardSide side;
 
+    @Column(name = "label")
+    String label;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "content_type", nullable = false, length = 20)
     ContentType contentType;
