@@ -145,3 +145,20 @@ export interface WordSuggestion {
   meaningText?: string;
   levelCode?: string;
 }
+
+export interface DictionaryKanjiWordInfo {
+  word: string;
+  reading?: string;
+  meaningText?: string;
+}
+
+export interface DictionaryKanjiDetail {
+  character: string;
+  meaning?: string;
+  onyomi?: string;
+  kunyomi?: string;
+  stroke?: number;
+  radical?: string;
+  jlptLevel?: string;
+  words: DictionaryKanjiWordInfo[];
+}

@@ -65,7 +65,7 @@ export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
                 type="button"
                 onClick={listening ? stop : start}
                 title={listening ? "Dừng ghi âm" : "Tìm kiếm bằng giọng nói (tiếng Nhật)"}
-                className={`h-11 w-11 flex items-center justify-center rounded-lg transition-all ${
+                className={`h-9 w-9 flex items-center justify-center rounded-lg transition-all ${
                     listening
                         ? "bg-red-500 text-white shadow-md"
                         : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-950/40"

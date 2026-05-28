@@ -191,7 +191,7 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
             <button
                 onClick={() => setIsOpen((v) => !v)}
                 title="Viết tay kanji"
-                className={`h-11 w-11 flex items-center justify-center rounded-lg transition-all ${
+                className={`h-9 w-9 flex items-center justify-center rounded-lg transition-all ${
                     isOpen
                         ? "bg-blue-600 text-white shadow-md"
                         : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-950/40"

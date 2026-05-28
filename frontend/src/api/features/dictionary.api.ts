@@ -1,5 +1,5 @@
 import axiosInstance from "../axios";
-import type { WordSearchResult, WordSuggestion } from "@/types";
+import type { WordSearchResult, WordSuggestion, DictionaryKanjiDetail } from "@/types";
 
 export const dictionaryApi = {
     search: async (q: string, limit = 20): Promise<WordSearchResult[]> => {
@@ -11,6 +11,13 @@ export const dictionaryApi = {
 
     suggest: async (q: string, limit = 8): Promise<WordSuggestion[]> => {
         const response = await axiosInstance.get<WordSuggestion[]>("/dictionary/suggest", {
+            params: { q: q.trim(), limit },
+        });
+        return response.data;
+    },
+
+    kanjiSearch: async (q: string, limit = 10): Promise<DictionaryKanjiDetail[]> => {
+        const response = await axiosInstance.get<DictionaryKanjiDetail[]>("/dictionary/kanji-search", {
             params: { q: q.trim(), limit },
         });
         return response.data;
