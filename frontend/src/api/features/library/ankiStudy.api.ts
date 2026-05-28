@@ -4,8 +4,15 @@ export interface AnkiStudyCard {
   flashcardId: number;
   front: string;
   back: string;
-  imageUrl?: string;
-  audioUrl?: string;
+
+  frontImages?: string[];
+  frontAudios?: string[];
+  frontVideos?: string[];
+
+  backImages?: string[];
+  backAudios?: string[];
+  backVideos?: string[];
+
   progressId?: number;
   state: "NEW" | "LEARNING" | "REVIEW" | "RELEARNING";
   easeFactor: number;

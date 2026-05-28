@@ -224,8 +224,12 @@ public class AnkiStudyController {
                 .flashcardId(fc.getId())
                 .front(extractText(fc, SideType.FRONT))
                 .back(extractText(fc, SideType.BACK))
-                .imageUrl(extractFirstMedia(fc, ContentType.IMAGE))
-                .audioUrl(extractFirstMedia(fc, ContentType.AUDIO))
+                .frontImages(extractMediaListFromSide(fc, SideType.FRONT, ContentType.IMAGE))
+                .frontAudios(extractMediaListFromSide(fc, SideType.FRONT, ContentType.AUDIO))
+                .frontVideos(extractMediaListFromSide(fc, SideType.FRONT, ContentType.VIDEO))
+                .backImages(extractMediaListFromSide(fc, SideType.BACK, ContentType.IMAGE))
+                .backAudios(extractMediaListFromSide(fc, SideType.BACK, ContentType.AUDIO))
+                .backVideos(extractMediaListFromSide(fc, SideType.BACK, ContentType.VIDEO))
                 .progressId(p != null ? p.getId() : null)
                 .state(p != null ? p.getState() : "NEW")
                 .easeFactor(p != null ? p.getEaseFactor() : 2.5)
@@ -234,6 +238,22 @@ public class AnkiStudyController {
                 .lapses(p != null ? p.getLapses() : 0)
                 .nextReviewAt(p != null ? p.getNextReviewAt() : null)
                 .build();
+    }
+
+    /* ── All non-deleted contents of the given type on a specific side, ordered ── */
+    private List<String> extractMediaListFromSide(Flashcard fc, SideType sideType, ContentType type) {
+        if (fc.getSides() == null) return List.of();
+        for (FlashcardSide side : fc.getSides()) {
+            if (side.getSide() != sideType || side.getContents() == null) continue;
+            return side.getContents().stream()
+                    .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
+                    .filter(c -> c.getContentType() == type)
+                    .filter(c -> c.getContentValue() != null && !c.getContentValue().isBlank())
+                    .sorted(java.util.Comparator.comparingInt(FlashcardSideContent::getOrderIndex))
+                    .map(FlashcardSideContent::getContentValue)
+                    .toList();
+        }
+        return List.of();
     }
 
     /* ── All non-deleted TEXT/CLOZE blocks from a side, joined with newline ── */
@@ -254,17 +274,4 @@ public class AnkiStudyController {
         return null;
     }
 
-    /* ── First non-deleted content of the given type across any side ── */
-    private String extractFirstMedia(Flashcard fc, ContentType type) {
-        if (fc.getSides() == null) return null;
-        for (FlashcardSide side : fc.getSides()) {
-            if (side.getContents() == null) continue;
-            for (FlashcardSideContent c : side.getContents()) {
-                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
-                if (c.getContentType() == type && c.getContentValue() != null && !c.getContentValue().isBlank())
-                    return c.getContentValue();
-            }
-        }
-        return null;
-    }
 }

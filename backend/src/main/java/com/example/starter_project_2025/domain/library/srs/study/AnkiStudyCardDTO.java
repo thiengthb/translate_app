@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,8 +17,14 @@ public class AnkiStudyCardDTO {
     Long flashcardId;
     String front;
     String back;
-    String imageUrl;
-    String audioUrl;
+
+    List<String> frontImages;
+    List<String> frontAudios;
+    List<String> frontVideos;
+
+    List<String> backImages;
+    List<String> backAudios;
+    List<String> backVideos;
 
     Long progressId;
     String state;

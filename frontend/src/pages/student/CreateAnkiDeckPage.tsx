@@ -18,6 +18,7 @@ import {
   Square,
   Trash2,
   Type,
+  Video,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -69,6 +70,7 @@ const CONTENT_TYPES: {
   { value: "TEXT", label: "Text", icon: <Type className="size-3.5" /> },
   { value: "IMAGE", label: "Image", icon: <ImageIcon className="size-3.5" /> },
   { value: "AUDIO", label: "Audio", icon: <Mic className="size-3.5" /> },
+  { value: "VIDEO", label: "Video", icon: <Video className="size-3.5" /> },
   { value: "CLOZE", label: "Cloze", icon: <Square className="size-3.5" /> },
 ];
 
@@ -249,14 +251,20 @@ export default function CreateAnkiDeckPage() {
             const co = side.contents[order];
 
             let value = co.contentValue;
-            if ((co.contentType === "IMAGE" || co.contentType === "AUDIO") && co.file) {
+            if (
+              (co.contentType === "IMAGE" ||
+                co.contentType === "AUDIO" ||
+                co.contentType === "VIDEO") &&
+              co.file
+            ) {
               try {
-                const attachment = await fileApi.upload(
-                  co.file,
-                  "flashcard",
-                  0,
-                  co.contentType === "IMAGE" ? "imageUrl" : "audioUrl"
-                );
+                const fieldName =
+                  co.contentType === "IMAGE"
+                    ? "imageUrl"
+                    : co.contentType === "AUDIO"
+                      ? "audioUrl"
+                      : "videoUrl";
+                const attachment = await fileApi.upload(co.file, "flashcard", 0, fieldName);
                 value = attachment.url;
               } catch {
                 toast.error(`Failed to upload ${co.contentType.toLowerCase()} on card ${i + 1}.`);
@@ -715,7 +723,13 @@ function ContentRow({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const accept =
-    content.contentType === "IMAGE" ? "image/*" : content.contentType === "AUDIO" ? "audio/*" : undefined;
+    content.contentType === "IMAGE"
+      ? "image/*"
+      : content.contentType === "AUDIO"
+        ? "audio/*"
+        : content.contentType === "VIDEO"
+          ? "video/*"
+          : undefined;
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -749,18 +763,28 @@ function ContentRow({
           />
         )}
 
-        {(content.contentType === "IMAGE" || content.contentType === "AUDIO") && (
+        {(content.contentType === "IMAGE" ||
+          content.contentType === "AUDIO" ||
+          content.contentType === "VIDEO") && (
           <div className="flex items-center gap-3">
             {content.contentValue ? (
               <div className="flex-1 flex items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
-                {content.contentType === "IMAGE" ? (
+                {content.contentType === "IMAGE" && (
                   <img
                     src={content.contentValue}
                     alt=""
                     className="size-12 object-cover rounded border border-border"
                   />
-                ) : (
+                )}
+                {content.contentType === "AUDIO" && (
                   <audio src={content.contentValue} controls className="h-8 max-w-full" />
+                )}
+                {content.contentType === "VIDEO" && (
+                  <video
+                    src={content.contentValue}
+                    controls
+                    className="h-16 rounded border border-border"
+                  />
                 )}
                 <span className="text-xs text-muted-foreground truncate flex-1">
                   {content.file?.name ?? content.contentValue.split("/").pop() ?? "Attached"}
@@ -778,11 +802,9 @@ function ContentRow({
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-2 text-sm px-3 py-2 rounded-md border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
               >
-                {content.contentType === "IMAGE" ? (
-                  <ImageIcon className="size-4" />
-                ) : (
-                  <Mic className="size-4" />
-                )}
+                {content.contentType === "IMAGE" && <ImageIcon className="size-4" />}
+                {content.contentType === "AUDIO" && <Mic className="size-4" />}
+                {content.contentType === "VIDEO" && <Video className="size-4" />}
                 Upload {content.contentType.toLowerCase()}
               </button>
             )}
