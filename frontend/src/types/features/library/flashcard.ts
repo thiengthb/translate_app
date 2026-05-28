@@ -5,6 +5,7 @@ export type FlashcardContentType = "TEXT" | "IMAGE" | "AUDIO" | "VIDEO" | "CLOZE
 
 export interface FlashcardSideContentDTO {
   id?: number;
+  label?: string;
   contentType: FlashcardContentType;
   contentValue: string;
   orderIndex: number;

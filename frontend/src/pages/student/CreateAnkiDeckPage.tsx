@@ -34,6 +34,7 @@ import type {
 ───────────────────────────────────────── */
 interface ContentDraft {
   uid: string;
+  label?: string;
   contentType: FlashcardContentType;
   /** For TEXT/CLOZE: raw text. For IMAGE/AUDIO: blob URL preview before upload. */
   contentValue: string;
@@ -275,6 +276,7 @@ export default function CreateAnkiDeckPage() {
             if (!value.trim()) continue;
 
             builtContents.push({
+              label: co.label?.trim() || undefined,
               contentType: co.contentType,
               contentValue: value,
               orderIndex: order,
@@ -748,7 +750,14 @@ function ContentRow({
         {typeIcon}
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <input
+          value={content.label ?? ""}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Label (optional, e.g. Example, Reading…)"
+          className="w-full text-xs rounded-md border border-input bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+
         {(content.contentType === "TEXT" || content.contentType === "CLOZE") && (
           <textarea
             value={content.contentValue}
