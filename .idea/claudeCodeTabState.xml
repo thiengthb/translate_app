@@ -10,8 +10,8 @@
               <option name="sessionId" value="1be1421b-d001-438f-8fd9-1d0327b70edc" />
               <option name="cwd" value="$PROJECT_DIR$" />
               <option name="model" value="claude-haiku-4-5" />
-              <option name="permissionMode" value="bypassPermissions" />
-              <option name="reasoningEffort" value="medium" />
+              <option name="permissionMode" value="plan" />
+              <option name="reasoningEffort" value="high" />
             </TabSessionState>
           </value>
         </entry>
