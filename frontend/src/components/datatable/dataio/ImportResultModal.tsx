@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import type { ImportResult } from "@/types";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 
@@ -112,9 +113,13 @@ export function ImportResultModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 min-h-0 overflow-y-auto py-4">
+            <ScrollHintContainer
+              axis="vertical"
+              className="flex-1 min-h-0"
+              viewportClassName="py-4"
+            >
               <ImportResultContent result={result} />
-            </div>
+            </ScrollHintContainer>
 
             <DialogFooter>
               <div className="flex-1 flex justify-between gap-2">

@@ -1,154 +1,104 @@
-import ToggleTheme from "@/components/ToggleTheme";
+import { useSelector } from "react-redux";
+
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import NotificationCenter from "@/components/notification/NotificationCenter";
-import UserMenu from "@/components/layout/UserMenu";
-import { useEffect, useRef, useState } from "react";
+import ToggleTheme from "@/components/ToggleTheme";
+import { StreakBadge } from "@/components/streak/StreakBadge";
 import { Badge } from "@/components/ui/badge.tsx";
-import type { RootState } from "@/store/store";
-import { useSelector } from "react-redux";
+import { Separator } from "@/components/ui/separator";
+
+import { MoreMenu } from "@/components/layout/header/MoreMenu";
+import { RoleSwitcher } from "@/components/layout/header/RoleSwitcher";
+import { UserDropdownMenu } from "@/components/layout/UserDropdownMenu";
+
 import { useRoleSwitch } from "@/contexts/RoleSwitchContext";
-import { ChevronDown, ShieldCheck, GraduationCap } from "lucide-react";
-import {
-  formatRoleLabel,
-  getHomePathByRole,
-  normalizeRole,
-  uniqueRoles,
-} from "@/utils/rbac.utils";
-import { useNavigate } from "react-router-dom";
+import { useMyStreak } from "@/hooks/useStreak";
+import type { RootState } from "@/store/store";
 
-export default function HeaderRight() {
-  const { role, roles } = useSelector((state: RootState) => state.auth);
-  const { activeRole, availableRoles, isPreviewMode, setViewRole } = useRoleSwitch();
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+interface HeaderRightProps {
+    /** Forwarded into the user dropdown menu so the "Phím tắt" entry
+     *  is wired to the global shortcuts dialog. */
+    onOpenShortcuts?: () => void;
+}
 
-  const primaryRole = normalizeRole(role);
-  const assignedRoles = uniqueRoles(roles, primaryRole);
-  const canSwitchRole = availableRoles.length > 1;
-  const currentRole = activeRole ?? primaryRole;
-  const isStudentRole = currentRole === "STUDENT";
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  if (!role) {
-    return (
-      <div className="flex items-center gap-3">
-        <LanguageSwitcher />
-        <ToggleTheme />
-      </div>
+/**
+ * Authenticated-user header actions, right-aligned in the top bar.
+ *
+ *   Desktop (md+):
+ *     [Role ▾]  [Preview]  [🔥 Streak]  │  [🔔]  [👤 ▾]
+ *                                              │
+ *                                              ├─ Trang cá nhân
+ *                                              ├─ Phím tắt
+ *                                              ├─ TÙY CHỈNH  [🌐] [🌗]
+ *                                              └─ Đăng xuất
+ *
+ *   Mobile (< md):
+ *     [Role ▾]                            [🔔] [⋯] [👤 ▾]
+ *                                               └─ Streak count
+ *
+ * Why language / theme / shortcuts moved into the avatar:
+ *   - Reduces icon-button noise in the bar (was 5+ standalone buttons).
+ *   - Pairs settings-like actions with the identity dropdown — natural
+ *     mental model: "this is where I configure ME".
+ *   - One canonical location works for both header and sidebar footer.
+ *
+ * Unauthenticated state falls through to minimal lang + theme toggles,
+ * since the user has no avatar to hide them behind yet.
+ */
+export default function HeaderRight({ onOpenShortcuts }: HeaderRightProps = {}) {
+    const { isAuthenticated, role, roles } = useSelector(
+        (state: RootState) => state.auth,
     );
-  }
+    const { isPreviewMode } = useRoleSwitch();
+    const { data: streak } = useMyStreak(isAuthenticated);
 
-  if (!canSwitchRole) {
+    // Unauthenticated → minimal chrome. Used by GuestLayout's auth pages.
+    if (!role) {
+        return (
+            <div className="flex items-center gap-1">
+                <LanguageSwitcher />
+                <ToggleTheme />
+            </div>
+        );
+    }
+
     return (
-      <div className="flex items-center gap-3">
-        <Badge
-          variant="secondary"
-          className="text-sm text-primary bg-primary/15"
-        >
-          {formatRoleLabel(currentRole)}
-        </Badge>
+        <div className="flex items-center gap-1 sm:gap-1.5">
+            <RoleSwitcher primaryRole={role} roles={roles} />
 
-        <NotificationCenter />
-        <LanguageSwitcher />
-        <ToggleTheme />
-        <UserMenu />
-      </div>
-    );
-  }
-
-  const switchRole = (nextRole: string) => {
-    const normalizedRole = normalizeRole(nextRole);
-    setViewRole(normalizedRole === primaryRole ? null : normalizedRole);
-    setOpen(false);
-    navigate(getHomePathByRole(normalizedRole));
-  };
-
-  return (
-    <div className="flex items-center gap-3" ref={dropdownRef}>
-      <div className="relative">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer ${isStudentRole
-            ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-            : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15"
-            }`}
-        >
-          {isStudentRole ? (
-            <GraduationCap size={14} />
-          ) : (
-            <ShieldCheck size={14} />
-          )}
-          <span>{formatRoleLabel(currentRole)} View</span>
-          <ChevronDown
-            size={13}
-            className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {open && (
-          <div className="absolute right-0 top-full mt-1.5 w-44 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
-            {availableRoles.map((availableRole) => {
-              const selected = normalizeRole(availableRole) === currentRole;
-              const isAssignedRole = assignedRoles.includes(normalizeRole(availableRole));
-              const studentRow = normalizeRole(availableRole) === "STUDENT";
-
-              return (
-                <button
-                  key={availableRole}
-                  onClick={() => switchRole(availableRole)}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-accent transition-colors cursor-pointer ${selected
-                    ? studentRow
-                      ? "text-green-700 font-medium bg-green-50"
-                      : "text-primary font-medium bg-primary/10"
-                    : "text-foreground"
-                    }`}
+            {isPreviewMode && (
+                <Badge
+                    variant="secondary"
+                    className="hidden sm:inline-flex text-[10px] uppercase tracking-wide"
                 >
-                  {studentRow ? <GraduationCap size={15} /> : <ShieldCheck size={15} />}
-                  {formatRoleLabel(availableRole)} View
-                  {(selected || !isAssignedRole) && (
-                    <span className="ml-auto flex items-center gap-2">
-                      {selected && (
-                        <span className={`text-xs ${studentRow ? "text-green-500" : "text-primary"}`}>
-                          ●
-                        </span>
-                      )}
-                      {!isAssignedRole && (
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          Preview
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                    Preview
+                </Badge>
+            )}
 
-      {isPreviewMode && (
-        <Badge variant="secondary" className="text-[11px] uppercase tracking-wide">
-          Preview
-        </Badge>
-      )}
+            <Separator
+                orientation="vertical"
+                className="!h-5 mx-1 hidden sm:block"
+            />
 
-      <NotificationCenter />
-      <LanguageSwitcher />
-      <ToggleTheme />
-      <UserMenu />
-    </div >
-  );
+            {/* Desktop-only quick stat */}
+            <div className="hidden md:flex items-center gap-0.5">
+                <StreakBadge />
+            </div>
+
+            {/* Always-visible inbox */}
+            <NotificationCenter />
+
+            {/* Mobile: streak collapses into MoreMenu */}
+            <div className="md:hidden">
+                <MoreMenu streakCount={streak?.currentStreak} />
+            </div>
+
+            {/* Settings + identity + logout — one consolidated dropdown */}
+            <UserDropdownMenu
+                variant="compact"
+                side="bottom"
+                onOpenShortcuts={onOpenShortcuts}
+            />
+        </div>
+    );
 }

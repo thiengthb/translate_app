@@ -32,10 +32,9 @@ import java.util.Set;
  * registers REST endpoints programmatically for entities annotated with
  * {@link AutoCrud}.
  *
- * Registration is skipped when an explicit {@code @RestController} already
- * exposes the target path — so existing controllers (User, Role, …) continue
- * to work and an entity becomes auto-registered the moment its custom
- * controller is removed.
+ * Explicit controllers can keep custom sub-routes under the same resource.
+ * Only the exact HTTP method + normalized path pair is skipped when it is
+ * already mapped.
  */
 @Slf4j
 @Component
@@ -71,18 +70,18 @@ public class AutoCrudEndpointRegistrar {
         if (registered) return;
         registered = true;
 
-        Set<String> existingPaths = collectExistingPaths();
+        Set<RouteKey> existingRoutes = collectExistingRoutes();
 
         Map<String, BaseCrudServiceImpl> services =
                 applicationContext.getBeansOfType(BaseCrudServiceImpl.class);
 
         for (BaseCrudServiceImpl service : services.values()) {
-            registerServiceIfEligible(service, existingPaths);
+            registerServiceIfEligible(service, existingRoutes);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void registerServiceIfEligible(BaseCrudServiceImpl service, Set<String> existingPaths) throws Exception {
+    private void registerServiceIfEligible(BaseCrudServiceImpl service, Set<RouteKey> existingRoutes) throws Exception {
         Class<?> entityClass;
         Class<? extends BaseDTO> dtoClass;
         Class<? extends BaseFilter> filterClass;
@@ -100,7 +99,7 @@ public class AutoCrudEndpointRegistrar {
         AutoCrud autoCrud = AnnotationUtils.findAnnotation(entityClass, AutoCrud.class);
         if (autoCrud == null) return;
         if (!autoCrud.autoRegister()) {
-            log.info("AutoCrud: skipping {} — autoRegister=false", entityClass.getSimpleName());
+            log.info("AutoCrud: skipping {} because autoRegister=false", entityClass.getSimpleName());
             return;
         }
 
@@ -110,12 +109,6 @@ public class AutoCrudEndpointRegistrar {
                         : autoCrud.path()
         );
 
-        if (pathAlreadyMapped(basePath, existingPaths)) {
-            log.info("AutoCrud: skipping {} — explicit controller already serves {}",
-                    entityClass.getSimpleName(), basePath);
-            return;
-        }
-
         JpaRepository<?, ?> repository = findRepository(entityClass);
 
         GenericCrudHandler handler = new GenericCrudHandler(
@@ -124,44 +117,58 @@ public class AutoCrudEndpointRegistrar {
                 validator, objectMapper
         );
 
-        registerMapping(handler, basePath, RequestMethod.GET, "getAll", null);
-        registerMapping(handler, basePath + "/{id}", RequestMethod.GET, "getById", null);
-        registerMapping(handler, basePath, RequestMethod.POST, "create", "application/json");
-        registerMapping(handler, basePath + "/{id}", RequestMethod.PUT, "update", "application/json");
-        registerMapping(handler, basePath + "/{id}", RequestMethod.DELETE, "delete", null);
+        boolean registeredAny = false;
+
+        registeredAny |= registerMappingIfAbsent(handler, basePath, RequestMethod.GET, "getAll", null, existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.GET, "getById", null, existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath, RequestMethod.POST, "create", "application/json", existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.PUT, "update", "application/json", existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.DELETE, "delete", null, existingRoutes);
 
         if (autoCrud.enableBulkDelete()) {
-            registerMapping(handler, basePath + "/bulk-delete", RequestMethod.POST, "bulkDelete", "application/json");
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/bulk-delete", RequestMethod.POST, "bulkDelete", "application/json", existingRoutes);
         }
         if (autoCrud.enableExport()) {
-            registerMapping(handler, basePath + "/export", RequestMethod.GET, "exportFile", null);
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/export", RequestMethod.GET, "exportFile", null, existingRoutes);
         }
         if (autoCrud.enableImport()) {
-            registerMapping(handler, basePath + "/import", RequestMethod.POST, "importFile", "multipart/form-data");
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/import", RequestMethod.POST, "importFile", "multipart/form-data", existingRoutes);
         }
 
-        log.info("AutoCrud: registered endpoints for {} at {}", entityClass.getSimpleName(), basePath);
+        if (registeredAny) {
+            log.info("AutoCrud: registered endpoints for {} at {}", entityClass.getSimpleName(), basePath);
+        } else {
+            log.info("AutoCrud: no endpoints registered for {} because explicit mappings already cover {}",
+                    entityClass.getSimpleName(), basePath);
+        }
     }
 
-    private Set<String> collectExistingPaths() {
-        Set<String> paths = new HashSet<>();
+    private Set<RouteKey> collectExistingRoutes() {
+        Set<RouteKey> routes = new HashSet<>();
         for (RequestMappingInfo info : handlerMapping.getHandlerMethods().keySet()) {
+            Set<RequestMethod> methods = info.getMethodsCondition().getMethods();
+            if (methods.isEmpty()) {
+                methods = Set.of(RequestMethod.values());
+            }
+
             if (info.getPathPatternsCondition() != null) {
-                info.getPathPatternsCondition().getPatternValues().forEach(paths::add);
+                for (String path : info.getPathPatternsCondition().getPatternValues()) {
+                    addRoutes(routes, path, methods);
+                }
             } else if (info.getPatternsCondition() != null) {
-                paths.addAll(info.getPatternsCondition().getPatterns());
+                for (String path : info.getPatternsCondition().getPatterns()) {
+                    addRoutes(routes, path, methods);
+                }
             }
         }
-        return paths;
+        return routes;
     }
 
-    private boolean pathAlreadyMapped(String basePath, Set<String> existingPaths) {
-        for (String existing : existingPaths) {
-            if (existing.equals(basePath) || existing.startsWith(basePath + "/")) {
-                return true;
-            }
+    private void addRoutes(Set<RouteKey> routes, String path, Set<RequestMethod> methods) {
+        String normalizedPath = normalizePath(path);
+        for (RequestMethod method : methods) {
+            routes.add(new RouteKey(normalizedPath, method));
         }
-        return false;
     }
 
     private JpaRepository<?, ?> findRepository(Class<?> entityClass) {
@@ -194,6 +201,20 @@ public class AutoCrudEndpointRegistrar {
         handlerMapping.registerMapping(builder.build(), handler, targetMethod);
     }
 
+    private boolean registerMappingIfAbsent(Object handler, String path, RequestMethod method,
+                                            String methodName, String consumes,
+                                            Set<RouteKey> existingRoutes) throws NoSuchMethodException {
+        RouteKey routeKey = new RouteKey(normalizePath(path), method);
+        if (existingRoutes.contains(routeKey)) {
+            log.info("AutoCrud: skipping {} {} because an explicit mapping already exists", method, path);
+            return false;
+        }
+
+        registerMapping(handler, path, method, methodName, consumes);
+        existingRoutes.add(routeKey);
+        return true;
+    }
+
     private Method findMethod(Class<?> clazz, String name) throws NoSuchMethodException {
         for (Method m : clazz.getDeclaredMethods()) {
             if (m.getName().equals(name)) {
@@ -205,5 +226,12 @@ public class AutoCrudEndpointRegistrar {
 
     private String stripLeadingSlash(String s) {
         return s.startsWith("/") ? s.substring(1) : s;
+    }
+
+    private String normalizePath(String path) {
+        return path.replaceAll("\\{[^/]+}", "{}");
+    }
+
+    private record RouteKey(String path, RequestMethod method) {
     }
 }

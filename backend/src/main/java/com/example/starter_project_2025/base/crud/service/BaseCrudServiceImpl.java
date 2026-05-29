@@ -154,6 +154,9 @@ public abstract class BaseCrudServiceImpl<
     protected void beforeDelete(E entity) {}
     protected void afterDelete(E entity) {}
 
+    /** Called after each entity is mapped to a DTO. Override to enrich or derive fields. */
+    protected D afterRead(D dto, E entity) { return dto; }
+
     protected void checkPermission(CrudAction action) {
 
         String permission = buildPermission(action);
@@ -192,7 +195,7 @@ public abstract class BaseCrudServiceImpl<
         // Domain event
         eventPublisher.publishEvent(new EntityEvent<>(saved, EntityEvent.EventType.CREATED));
 
-        return getMapper().toResponse(saved);
+        return afterRead(getMapper().toResponse(saved), saved);
     }
 
     @Override
@@ -224,7 +227,7 @@ public abstract class BaseCrudServiceImpl<
         // Domain event
         eventPublisher.publishEvent(new EntityEvent<>(saved, EntityEvent.EventType.UPDATED));
 
-        return getMapper().toResponse(saved);
+        return afterRead(getMapper().toResponse(saved), saved);
     }
 
     @Override
@@ -267,9 +270,9 @@ public abstract class BaseCrudServiceImpl<
 
         checkPermission(CrudAction.READ);
 
-        return getRepository().findById(id)
-                .map(getMapper()::toResponse)
+        E entity = getRepository().findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
+        return afterRead(getMapper().toResponse(entity), entity);
     }
 
     @Override
@@ -300,7 +303,7 @@ public abstract class BaseCrudServiceImpl<
         if (searchSpec != null) spec = spec.and(searchSpec);
 
         return getRepository().findAll(spec, pageable)
-                .map(getMapper()::toResponse);
+                .map(entity -> afterRead(getMapper().toResponse(entity), entity));
     }
 
     private boolean isSoftDeleteEnabled() {
@@ -430,6 +433,14 @@ public abstract class BaseCrudServiceImpl<
 
             return cb.or(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    protected Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
     }
 
     /**

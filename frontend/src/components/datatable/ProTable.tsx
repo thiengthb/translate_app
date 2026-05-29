@@ -1,67 +1,60 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAutoPageSize } from "@/components/datatable/hook/useAutoPageSize";
+import { useMemo, useState } from "react";
+
 import { logger } from "@/lib/logger";
-import { ChevronRight } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+
+import { ROW_CLICK_GUARD_SELECTOR } from "./constants";
+import type { TableInstance } from "./types";
+import { useAutoPageSize } from "./hook/useAutoPageSize";
+import { useColumnLayout } from "./hook/useColumnLayout";
+import { useColumnPinning } from "./hook/useColumnPinning";
+import { useColumnResize } from "./hook/useColumnResize";
+import { useDateFormats } from "./hook/useDateFormats";
+import { useDensity } from "./hook/useDensity";
+import { useProTableModals } from "./hook/useProTableModals";
+import { useRowExpansion } from "./hook/useRowExpansion";
+import { useTableKeyboard } from "./hook/useTableKeyboard";
+import { useTableLayoutMetrics } from "./hook/useTableLayoutMetrics";
+
 import Loading from "./common/Loading";
 import NoResult from "./common/NoResult";
+import { BulkEditModal } from "./modal/BulkEditModal";
 import { ConfirmDeleteModal } from "./modal/ConfirmDeleteModal";
 import { DetailModal } from "./modal/DetailModal";
 import { FormModal } from "./modal/form/FormModal";
 import { CardView } from "./table/card/CardView";
-import { CellRenderer, DATE_FORMAT_CYCLE, type DateFormatKey } from "./table/cell/CellRenderer";
+import { CellRenderer } from "./table/cell/CellRenderer";
+import { ChartView } from "./table/chart/ChartView";
 import { Pagination } from "./table/Pagination";
 import { RowActions } from "./table/RowActions";
-import { RowSelection } from "./table/RowSelection";
-import { SelectAllCheckbox } from "./table/SelectAllCheckbox";
-import { SortableHeader } from "./table/SortableHeader";
+import { TableView } from "./table/TableView";
+import { BulkActionBar } from "./toolbar/BulkActionBar";
 import { Toolbar } from "./toolbar/Toolbar";
 import type { ViewMode } from "./toolbar/Toolbar";
 
 /**
- * ProTable: Reusable data table component with sensible defaults
+ * ProTable: Reusable data table component with sensible defaults.
  *
- * Architecture: Default + Override Pattern
+ * Architecture: Default + Override Pattern.
  *
  * Default behavior (zero config):
- * - Internal modal CRUD system (create/edit/delete)
+ * - Internal modal CRUD system (create / edit / delete)
  * - Default row actions (view, edit, delete)
  * - Default create button
  *
  * Optional overrides (for complex entities):
- * - headerActions: Override default create button
- * - renderRowActions: Complete override of row actions (full control)
- * - onView/onEdit/onDelete: Individual action overrides (keeps other defaults)
- * - renderFormModal: Override default form modal
- *
- * Benefits:
- * - Simple entities: zero config, just works
- * - Complex entities: full control via overrides
- * - Partial overrides: customize one action, keep others default
- * - No prop explosion
- * - Backward compatible
- * - Separation of concerns
+ * - headerActions          override default create button
+ * - renderRowActions       complete override of row actions
+ * - onView / onEdit / onDelete   individual action overrides
+ * - renderFormModal        override default form modal
  */
 interface ProTableProps<TData = any> {
-    /** Table instance from useTable hook */
-    table: any;
-
-    /** Optional: Override default create button. If not provided, shows default "Create" button */
+    /** Table instance from useProTable. */
+    table: TableInstance<TData>;
     headerActions?: React.ReactNode;
-
-    /** Optional: Complete override of row actions. If provided, you have full control */
     renderRowActions?: (row: TData) => React.ReactNode;
-
-    /** Optional: Override default view action. If not provided, uses internal modal view */
     onView?: (row: TData) => void;
-
-    /** Optional: Override default edit action. If not provided, uses internal modal edit */
     onEdit?: (row: TData) => void;
-
-    /** Optional: Override default delete action. If not provided, uses internal modal delete */
     onDelete?: (row: TData) => void;
-
-    /** Optional: Override default form modal. If not provided, uses internal FormModal */
     renderFormModal?: (props: {
         open: boolean;
         onClose: (open: boolean) => void;
@@ -69,27 +62,15 @@ interface ProTableProps<TData = any> {
         initial: TData | null;
         onSubmit: (data: any) => void;
     }) => React.ReactNode;
-
-    /** Optional: Handle row click */
     onRowClick?: (row: TData) => void;
-
-    /** Enable/disable auto page size calculation */
     autoPageSize?: boolean;
-
-    /** Row height for auto page size calculation */
     rowHeight?: number;
-
-    /** Hide default actions completely (for display-only tables) */
     hideActions?: boolean;
-
     /**
-     * Optional: Expandable row configuration.
-     * Expansion is auto-enabled when any field in the schema has `expandable: true`.
-     * Use `renderExpandedRow` to customise the expanded content; if omitted,
-     * the expandable field's value is rendered automatically via CellRenderer.
+     * Expandable row configuration. Auto-enabled when any field has
+     * `expandable: true`; pass `renderExpandedRow` to override content.
      */
     expandable?: {
-        /** Custom renderer for the expanded content below a row */
         renderExpandedRow?: (row: TData) => React.ReactNode;
     };
 }
@@ -104,14 +85,21 @@ export function ProTable<TData = any>({
     renderFormModal,
     onRowClick,
     autoPageSize = true,
-    rowHeight = 49,
+    rowHeight: rowHeightProp,
     hideActions = false,
     expandable,
 }: ProTableProps<TData>) {
     const { schema } = table;
 
-    // Auto-detect expandable from schema — true when any field is marked expandable: true
-    const isExpandable: boolean = schema.fields.some((f: any) => f.expandable === true);
+    // ─── Density (compact / normal / comfortable) ───────────────────────────
+    const [density, setDensity, densityCfg] = useDensity(schema.entityName);
+    const rowHeight = rowHeightProp ?? densityCfg.rowHeight;
+
+    // Auto-detect expandable from schema
+    const isExpandable = useMemo<boolean>(
+        () => schema.fields.some((f: any) => f.expandable === true),
+        [schema.fields],
+    );
 
     const [isAutoSize, setIsAutoSize] = useState(autoPageSize);
 
@@ -120,82 +108,128 @@ export function ProTable<TData = any>({
         onSizeChange: isAutoSize ? table.setSize : undefined,
     });
 
-    // Expandable row state
-    const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
-    const toggleExpand = useCallback((id: string | number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setExpandedRows((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    }, []);
+    // ─── Expand state ───────────────────────────────────────────────────────
+    const { expanded: expandedRows, toggle: toggleExpand } = useRowExpansion();
 
-    // Internal modal state (used when overrides are not provided)
-    const [deleteItem, setDeleteItem] = useState<TData | null>(null);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [detailRow, setDetailRow] = useState<TData | null>(null);
+    // ─── Internal modal state (used when overrides are not provided) ────────
+    const {
+        deleteItem,
+        setDeleteItem,
+        deleteLoading,
+        setDeleteLoading,
+        detailRow,
+        setDetailRow,
+        bulkEditOpen,
+        setBulkEditOpen,
+        bulkDeleteOpen,
+        setBulkDeleteOpen,
+        bulkDeleteLoading,
+        setBulkDeleteLoading,
+    } = useProTableModals<TData>();
     const [viewMode, setViewMode] = useState<ViewMode>("table");
 
-    // Date format cycling per date-type column
-    const [dateFormats, setDateFormats] = useState<Record<string, DateFormatKey>>({});
-    const cycleDateFormat = useCallback((fieldName: string) => {
-        setDateFormats((prev) => {
-            const current = prev[fieldName] ?? "datetime";
-            const idx = DATE_FORMAT_CYCLE.indexOf(current);
-            const next = DATE_FORMAT_CYCLE[(idx + 1) % DATE_FORMAT_CYCLE.length];
-            return { ...prev, [fieldName]: next };
-        });
-    }, []);
+    // ─── Detail prev/next derived from current page ─────────────────────────
+    const detailIndex = useMemo(() => {
+        if (!detailRow || !table.data) return -1;
+        const id = (detailRow as any)[schema.idField];
+        return table.data.findIndex((r: any) => r[schema.idField] === id);
+    }, [detailRow, table.data, schema.idField]);
 
-    // Column widths state for resizing
-    const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-        const widths: Record<string, number> = {};
-        schema.fields.forEach((f: any) => {
-            widths[f.name] = f.width || 150;
-        });
-        return widths;
+    const goToDetail = (i: number) => {
+        if (!table.data || i < 0 || i >= table.data.length) return;
+        setDetailRow(table.data[i]);
+    };
+
+    // ─── Per-column date format cycling ─────────────────────────────────────
+    const { formats: dateFormats, cycle: cycleDateFormat } = useDateFormats();
+
+    // ─── Column layout (order + pinning) ────────────────────────────────────
+    const columnLayout = useColumnLayout(schema.entityName, table.visibleFields);
+
+    // ─── Column widths + resize ─────────────────────────────────────────────
+    const {
+        widths: columnWidths,
+        onResizeStart,
+    } = useColumnResize({ fields: schema.fields });
+
+    // ─── Permissions / column visibility ────────────────────────────────────
+    const canViewRow = table.permission?.canRead ?? true;
+    const canEditRow = table.permission?.canUpdate ?? true;
+    const canDeleteRow = table.permission?.canDelete ?? true;
+    const hasRowActions = canViewRow || canEditRow || canDeleteRow;
+    const showActionsColumn = !hideActions && hasRowActions;
+
+    // ─── Sticky offsets + total width math ──────────────────────────────────
+    const {
+        expandLeft,
+        selectLeft,
+        indexLeft,
+        leadingOffset,
+        trailingOffset,
+        totalTableWidth,
+    } = useTableLayoutMetrics({
+        arrangedFields: columnLayout.arrangedFields,
+        columnWidths,
+        isExpandable,
+        showActionsColumn,
     });
 
-    const resizingRef = useRef<{ field: string; startX: number; startWidth: number } | null>(null);
+    const { pinStyles, pinSides } = useColumnPinning({
+        arrangedFields: columnLayout.arrangedFields,
+        leftPinned: columnLayout.leftPinned,
+        rightPinned: columnLayout.rightPinned,
+        columnWidths,
+        leadingOffset,
+        trailingOffset,
+    });
 
-    const onResizeStart = useCallback(
-        (fieldName: string, e: React.MouseEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const startX = e.clientX;
-            const startWidth = columnWidths[fieldName] || 150;
-            resizingRef.current = { field: fieldName, startX, startWidth };
-
-            const onMouseMove = (ev: MouseEvent) => {
-                if (!resizingRef.current) return;
-                const { field, startX, startWidth } = resizingRef.current;
-                const diff = ev.clientX - startX;
-                const minW = schema.fields.find((f: any) => f.name === field)?.minWidth || 60;
-                const newWidth = Math.max(minW, startWidth + diff);
-                setColumnWidths((prev) => ({ ...prev, [field]: newWidth }));
-            };
-
-            const onMouseUp = () => {
-                resizingRef.current = null;
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup", onMouseUp);
-            };
-
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
+    // ─── Keyboard navigation ────────────────────────────────────────────────
+    const focusedRowIndex = useTableKeyboard({
+        enabled: viewMode === "table",
+        rowCount: table.data?.length ?? 0,
+        onActivate: (i) => {
+            const row = table.data?.[i];
+            if (row) {
+                if (onView) onView(row);
+                else setDetailRow(row);
+            }
         },
-        [columnWidths, schema.fields],
-    );
+        onDelete: (i) => {
+            const row = table.data?.[i];
+            if (row && (table.permission?.canDelete ?? true)) {
+                if (onDelete) onDelete(row);
+                else setDeleteItem(row);
+            }
+        },
+        onFocusSearch: () => {
+            const input = document.querySelector<HTMLInputElement>(
+                'input[placeholder="Tìm kiếm..."]',
+            );
+            input?.focus();
+            input?.select();
+        },
+        onSelectAll: () => table.selectAllOnPage?.(),
+        onEscape: () => table.clearSelection?.(),
+        onToggleSelectRow: (i) => {
+            const row = table.data?.[i];
+            if (!row) return;
+            const id = (row as any)[schema.idField];
+            table.setSelected((prev: any[]) =>
+                prev.includes(id)
+                    ? prev.filter((x) => x !== id)
+                    : [...prev, id],
+            );
+        },
+        onCreate: () => {
+            if (table.permission?.canCreate ?? true) table.openCreate?.();
+        },
+        onRefresh: () => table.refetch?.(),
+    });
 
+    // ─── Delete confirmation ────────────────────────────────────────────────
     const handleDeleteConfirm = async () => {
         if (!deleteItem) return;
         if (!table.permission?.canDelete) return;
-
         try {
             setDeleteLoading(true);
             await table.remove((deleteItem as any)[schema.idField]);
@@ -205,16 +239,7 @@ export function ProTable<TData = any>({
         }
     };
 
-    // Determine if we should show actions column
-    const canViewRow = table.permission?.canRead ?? true;
-    const canEditRow = table.permission?.canUpdate ?? true;
-    const canDeleteRow = table.permission?.canDelete ?? true;
-    const hasRowActions = canViewRow || canEditRow || canDeleteRow;
-
-    const showActionsColumn = !hideActions && hasRowActions;
-    const ACTION_COLUMN_WIDTH = 132;
-
-    // Default row actions renderer (uses internal modal system or custom overrides)
+    // ─── Row action renderer ────────────────────────────────────────────────
     const defaultRenderRowActions = (row: TData) => (
         <RowActions
             row={row}
@@ -226,226 +251,142 @@ export function ProTable<TData = any>({
             deletePermission={table.permission?.keys?.delete}
         />
     );
-
-    // Use provided renderer or default (with individual overrides support)
     const finalRenderRowActions = renderRowActions || defaultRenderRowActions;
 
+    // ─── Expanded-row content builder ───────────────────────────────────────
+    const buildExpandedRowContent = (row: any) => {
+        if (expandable?.renderExpandedRow) return expandable.renderExpandedRow(row);
+        const canUpdate = table.permission?.canUpdate ?? true;
+        return schema.fields
+            .filter((f: any) => f.expandable)
+            .map((f: any) =>
+                f.renderExpanded ? (
+                    f.renderExpanded(row[f.name], row)
+                ) : (
+                    <div key={f.name} className="p-3">
+                        <CellRenderer
+                            field={f}
+                            value={row[f.name]}
+                            relationOptions={table.relationOptions}
+                            disableBooleanToggle={!canUpdate}
+                            onBooleanToggle={(fieldName, newValue) => {
+                                if (!canUpdate) return;
+                                table.patchField(row[schema.idField], fieldName, newValue);
+                            }}
+                            dateFormat={
+                                f.type === "date"
+                                    ? (dateFormats[f.name] ?? "datetime")
+                                    : undefined
+                            }
+                        />
+                    </div>
+                ),
+            );
+    };
+
+    // ─── Empty / error state classification ─────────────────────────────────
+    const hasActiveFilters =
+        (table.search && table.search !== "") ||
+        Object.values(table.filters || {}).some((v) =>
+            Array.isArray(v) ? v.length > 0 : v !== undefined && v !== "" && v !== null,
+        );
+
+    const renderEmptyState = () => {
+        if (table.loading) return <Loading />;
+        if (table.isError) {
+            return (
+                <NoResult
+                    variant="error"
+                    onAction={() => table.refetch?.()}
+                    actionLabel="Thử lại"
+                />
+            );
+        }
+        if (hasActiveFilters) {
+            return (
+                <NoResult
+                    variant="filtered"
+                    onAction={() => {
+                        table.clearFilters();
+                        table.setSearch("");
+                    }}
+                />
+            );
+        }
+        return (
+            <NoResult
+                variant="empty"
+                onAction={
+                    table.permission?.canCreate ? () => table.openCreate() : undefined
+                }
+            />
+        );
+    };
+
+    const handleRowClick = (e: React.MouseEvent, row: TData) => {
+        if (!onRowClick) return;
+        try {
+            const target = e.target as HTMLElement | null;
+            if (target && target.closest(ROW_CLICK_GUARD_SELECTOR)) return;
+        } catch (err) {
+            logger.error("Error checking click target:", err);
+        }
+        onRowClick(row);
+    };
+
+    // ─── Render ─────────────────────────────────────────────────────────────
+    const showSkeleton = table.loading && (!table.data || table.data.length === 0);
+    const hasRows = !showSkeleton && table.data?.length > 0;
+
     return (
-        <div className="grid gap-4 h-full font-inter grid-rows-[auto_1fr_auto]">
-            <Toolbar table={table} headerActions={headerActions} viewMode={viewMode} onViewModeChange={setViewMode} />
+        <div className="grid gap-3 sm:gap-4 h-full font-inter grid-rows-[auto_1fr_auto] min-w-0 w-full max-w-full">
+            <Toolbar
+                table={table}
+                headerActions={headerActions}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                density={density}
+                onDensityChange={setDensity}
+            />
 
             <div
                 ref={containerRef}
-                className="h-full rounded-md border bg-card text-foreground flex flex-col overflow-hidden w-full"
+                className="h-full rounded-lg border bg-card text-foreground flex flex-col w-full min-w-0 max-w-full overflow-hidden"
             >
                 {viewMode === "table" ? (
+                    <TableView
+                        table={table}
+                        densityCfg={densityCfg}
+                        arrangedFields={columnLayout.arrangedFields}
+                        columnWidths={columnWidths}
+                        pinStyles={pinStyles}
+                        pinSides={pinSides}
+                        onPin={(name, side) => columnLayout.setPin(name, side)}
+                        onReorder={(activeId, overId) =>
+                            columnLayout.reorder(activeId, overId)
+                        }
+                        onResizeStart={onResizeStart}
+                        expandLeft={expandLeft}
+                        selectLeft={selectLeft}
+                        indexLeft={indexLeft}
+                        totalTableWidth={totalTableWidth}
+                        isExpandable={isExpandable}
+                        showActionsColumn={showActionsColumn}
+                        expandedRows={expandedRows}
+                        onToggleExpand={toggleExpand}
+                        expandedRowContent={buildExpandedRowContent}
+                        renderRowActions={finalRenderRowActions}
+                        dateFormats={dateFormats}
+                        onDateFormatCycle={cycleDateFormat}
+                        showSkeleton={showSkeleton}
+                        hasRows={hasRows}
+                        renderEmptyState={renderEmptyState}
+                        focusedRowIndex={focusedRowIndex}
+                        onRowClick={handleRowClick}
+                    />
+                ) : viewMode === "card" ? (
                     <>
-                        <Table className="table-fixed">
-                            <colgroup>
-                                {isExpandable && <col style={{ width: 40 }} />}
-                                <col style={{ width: 20 }} />
-                                <col style={{ width: 50 }} />
-                                {table.visibleFields.map((f: any) => (
-                                    <col key={f.name} style={{ width: columnWidths[f.name] || 150 }} />
-                                ))}
-                                {showActionsColumn && <col style={{ width: ACTION_COLUMN_WIDTH }} />}
-                            </colgroup>
-                            <TableHeader className="bg-background z-10 sticky top-0 shadow-xs">
-                                <TableRow>
-                                    {isExpandable && <TableHead style={{ width: 40 }} />}
-                                    <TableHead style={{ width: 20 }}>
-                                        <SelectAllCheckbox table={table} idField={schema.idField} />
-                                    </TableHead>
-                                    <TableHead style={{ width: 50 }} className="text-center">
-                                        #
-                                    </TableHead>
-                                    {table.visibleFields.map((f: any) => (
-                                        <SortableHeader
-                                            key={f.name}
-                                            field={f}
-                                            sortState={table.sortState}
-                                            onToggleSort={table.toggleSort}
-                                            width={columnWidths[f.name] || 150}
-                                            onResizeStart={(e) => onResizeStart(f.name, e)}
-                                            dateFormat={dateFormats[f.name]}
-                                            onDateFormatCycle={f.type === "date" ? cycleDateFormat : undefined}
-                                        />
-                                    ))}
-                                    {showActionsColumn && (
-                                        <TableHead
-                                            style={{ width: ACTION_COLUMN_WIDTH }}
-                                            className="sticky right-0 z-30 bg-background border-l border-border/70 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.45)]"
-                                        >
-                                            Actions
-                                        </TableHead>
-                                    )}
-                                </TableRow>
-                            </TableHeader>
-
-                            {table.data?.length > 0 && (
-                                <TableBody
-                                    className={
-                                        table.isFetching ? "opacity-50 transition-opacity" : "transition-opacity"
-                                    }
-                                >
-                                    {table.data.map((row: any, index: number) => {
-                                        const id = row[schema.idField];
-                                        const isExpanded = isExpandable && expandedRows.has(id);
-                                        const expandColSpan =
-                                            (isExpandable ? 1 : 0) +
-                                            1 +
-                                            1 +
-                                            table.visibleFields.length +
-                                            (showActionsColumn ? 1 : 0);
-
-                                        return (
-                                            <>
-                                                <TableRow
-                                                    key={id}
-                                                    className="group w-full odd:bg-accent even:bg-background"
-                                                    onClick={(e) => {
-                                                        try {
-                                                            const target = e.target as HTMLElement | null;
-                                                            if (target && target.closest("button, a, input, label"))
-                                                                return;
-                                                        } catch (err) {
-                                                            logger.error("Error checking click target:", err);
-                                                        }
-                                                        if (onRowClick) onRowClick(row);
-                                                    }}
-                                                >
-                                                    {isExpandable && (
-                                                        <TableCell className="p-0 text-center">
-                                                            <button
-                                                                className="flex items-center justify-center w-full h-full p-2 text-muted-foreground hover:text-foreground transition-colors"
-                                                                onClick={(e) => toggleExpand(id, e)}
-                                                                aria-label={isExpanded ? "Collapse row" : "Expand row"}
-                                                            >
-                                                                <ChevronRight
-                                                                    className="h-4 w-4 transition-transform duration-200"
-                                                                    style={{
-                                                                        transform: isExpanded
-                                                                            ? "rotate(90deg)"
-                                                                            : "rotate(0deg)",
-                                                                    }}
-                                                                />
-                                                            </button>
-                                                        </TableCell>
-                                                    )}
-
-                                                    <TableCell>
-                                                        <RowSelection id={id} table={table} />
-                                                    </TableCell>
-
-                                                    <TableCell className="text-center text-muted-foreground">
-                                                        {(table.page || 0) * (table.size || 10) + index + 1}
-                                                    </TableCell>
-
-                                                    {table.visibleFields.map((f: any) => (
-                                                        <CellRenderer
-                                                            key={f.name}
-                                                            field={f}
-                                                            value={row[f.name]}
-                                                            relationOptions={table.relationOptions}
-                                                            disableBooleanToggle={!(table.permission?.canUpdate ?? true)}
-                                                            onBooleanToggle={(fieldName, newValue) => {
-                                                                if (!(table.permission?.canUpdate ?? true)) return;
-                                                                table.patchField(id, fieldName, newValue);
-                                                            }}
-                                                            dateFormat={
-                                                                f.type === "date"
-                                                                    ? (dateFormats[f.name] ?? "datetime")
-                                                                    : undefined
-                                                            }
-                                                        />
-                                                    ))}
-
-                                                    {showActionsColumn && (
-                                                        <TableCell
-                                                            style={{ width: ACTION_COLUMN_WIDTH }}
-                                                            className={`sticky right-0 z-20 border-l border-border/70 ${
-                                                                index % 2 === 0 ? "bg-accent" : "bg-background"
-                                                            } group-hover:bg-muted/50 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.35)]`}
-                                                        >
-                                                            <div className="flex items-center gap-1 overflow-hidden">
-                                                                {finalRenderRowActions(row)}
-                                                            </div>
-                                                        </TableCell>
-                                                    )}
-                                                </TableRow>
-
-                                                {isExpanded && (
-                                                    <TableRow
-                                                        key={`${id}-expanded`}
-                                                        className="bg-background hover:bg-background"
-                                                    >
-                                                        <TableCell colSpan={expandColSpan} className="p-0 border-b">
-                                                            {expandable?.renderExpandedRow
-                                                                ? expandable.renderExpandedRow(row)
-                                                                : schema.fields
-                                                                      .filter((f: any) => f.expandable)
-                                                                      .map((f: any) =>
-                                                                          f.renderExpanded ? (
-                                                                              f.renderExpanded(row[f.name], row)
-                                                                          ) : (
-                                                                              <div key={f.name} className="p-3">
-                                                                                  <CellRenderer
-                                                                                      field={f}
-                                                                                      value={row[f.name]}
-                                                                                      relationOptions={
-                                                                                          table.relationOptions
-                                                                                      }
-                                                                                      disableBooleanToggle={
-                                                                                          !(table.permission?.canUpdate ??
-                                                                                              true)
-                                                                                      }
-                                                                                      onBooleanToggle={(
-                                                                                          fieldName,
-                                                                                          newValue,
-                                                                                      ) => {
-                                                                                          if (
-                                                                                              !(table.permission?.canUpdate ??
-                                                                                                  true)
-                                                                                          ) {
-                                                                                              return;
-                                                                                          }
-
-                                                                                          table.patchField(
-                                                                                              id,
-                                                                                              fieldName,
-                                                                                              newValue,
-                                                                                          );
-                                                                                      }
-                                                                                      }
-                                                                                      dateFormat={
-                                                                                          f.type === "date"
-                                                                                              ? (dateFormats[f.name] ??
-                                                                                                "datetime")
-                                                                                              : undefined
-                                                                                      }
-                                                                                  />
-                                                                              </div>
-                                                                          ),
-                                                                      )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </>
-                                        );
-                                    })}
-                                </TableBody>
-                            )}
-                        </Table>
-
-                        {!table.data?.length && (
-                            <div className="flex-1 flex items-center justify-center">
-                                {table.loading ? <Loading /> : <NoResult />}
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        {table.data?.length > 0 ? (
+                        {hasRows ? (
                             <CardView
                                 table={table}
                                 onRowClick={onRowClick}
@@ -462,10 +403,19 @@ export function ProTable<TData = any>({
                             />
                         ) : (
                             <div className="flex-1 flex items-center justify-center">
-                                {table.loading ? <Loading /> : <NoResult />}
+                                {renderEmptyState()}
                             </div>
                         )}
                     </>
+                ) : (
+                    // viewMode === "chart"
+                    hasRows ? (
+                        <ChartView table={table} />
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                            {renderEmptyState()}
+                        </div>
+                    )
                 )}
             </div>
 
@@ -485,7 +435,7 @@ export function ProTable<TData = any>({
                 }}
             />
 
-            {/* Form Modal: Use custom renderer if provided, otherwise use default */}
+            {/* Form Modal: custom renderer or default */}
             {renderFormModal ? (
                 renderFormModal({
                     open: table.isFormOpen,
@@ -497,7 +447,7 @@ export function ProTable<TData = any>({
                     initial: table.editingRow,
                     onSubmit: (data) => {
                         if (table.editingRow) {
-                            table.update({ id: table.editingRow[schema.idField], data });
+                            table.update({ id: (table.editingRow as any)[schema.idField], data });
                         } else {
                             table.create(data);
                         }
@@ -518,7 +468,7 @@ export function ProTable<TData = any>({
                     fieldErrors={table.fieldErrors}
                     onSubmit={(data) => {
                         if (table.editingRow) {
-                            table.update({ id: table.editingRow[schema.idField], data });
+                            table.update({ id: (table.editingRow as any)[schema.idField], data });
                         } else {
                             table.create(data);
                         }
@@ -526,7 +476,6 @@ export function ProTable<TData = any>({
                 />
             )}
 
-            {/* Delete Confirmation Modal: Always use internal system */}
             <ConfirmDeleteModal
                 open={!!deleteItem}
                 onOpenChange={(open) => !open && setDeleteItem(null)}
@@ -534,13 +483,68 @@ export function ProTable<TData = any>({
                 loading={deleteLoading}
             />
 
-            {/* Detail View Modal: Always use internal system */}
             <DetailModal
                 open={!!detailRow}
                 onClose={(open) => !open && setDetailRow(null)}
                 schema={schema}
                 row={detailRow}
                 relationOptions={table.relationOptions}
+                onPrev={detailIndex > 0 ? () => goToDetail(detailIndex - 1) : undefined}
+                onNext={
+                    detailIndex >= 0 && detailIndex < (table.data?.length ?? 0) - 1
+                        ? () => goToDetail(detailIndex + 1)
+                        : undefined
+                }
+                position={
+                    detailIndex >= 0
+                        ? { current: detailIndex + 1, total: table.data?.length ?? 0 }
+                        : undefined
+                }
+            />
+
+            {/* ─── Sticky bulk action bar ─────────────────────────────── */}
+            <BulkActionBar
+                selectedCount={table.selected?.length ?? 0}
+                total={table.data?.length ?? 0}
+                onClearSelection={() => table.clearSelection?.()}
+                onBulkDelete={
+                    table.permission?.canDelete ? () => setBulkDeleteOpen(true) : undefined
+                }
+                onBulkEdit={
+                    table.permission?.canUpdate ? () => setBulkEditOpen(true) : undefined
+                }
+                deletePermission={table.permission?.keys?.delete}
+                editPermission={table.permission?.keys?.update}
+            />
+
+            <BulkEditModal
+                open={bulkEditOpen}
+                onOpenChange={setBulkEditOpen}
+                schema={schema}
+                selectedCount={table.selected?.length ?? 0}
+                relationOptions={table.relationOptions}
+                onApply={async (patch) => {
+                    await table.bulkUpdate?.(patch);
+                }}
+            />
+
+            <ConfirmDeleteModal
+                open={bulkDeleteOpen}
+                onOpenChange={setBulkDeleteOpen}
+                onConfirm={async () => {
+                    try {
+                        setBulkDeleteLoading(true);
+                        await table.bulkDelete?.();
+                        setBulkDeleteOpen(false);
+                    } finally {
+                        setBulkDeleteLoading(false);
+                    }
+                }}
+                loading={bulkDeleteLoading}
+                title="Xóa các mục đã chọn"
+                description={`Bạn có chắc muốn xóa ${
+                    table.selected?.length ?? 0
+                } mục đã chọn? Hành động này không thể hoàn tác.`}
             />
         </div>
     );
