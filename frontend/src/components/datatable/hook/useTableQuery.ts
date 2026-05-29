@@ -102,8 +102,8 @@ export function useTableQuery({ api, schema, enabled }: Options) {
         refetch: query.refetch,
         lastUpdated,
 
-        page: pagination.page,
-        size: pagination.size,
+        page: pagination.page ?? 0,
+        size: pagination.size ?? 10,
         setPage: (page: number) => setPagination((prev) => ({ ...prev, page })),
         setSize: (size: number) => setPagination((prev) => ({ ...prev, size })),
 

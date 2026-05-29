@@ -1,38 +1,33 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAutoPageSize } from "@/components/datatable/hook/useAutoPageSize";
-import { useTableKeyboard } from "@/components/datatable/hook/useTableKeyboard";
-import { useDensity } from "@/components/datatable/hook/useDensity";
-import { useColumnLayout } from "@/components/datatable/hook/useColumnLayout";
-import { useColumnPinning } from "@/components/datatable/hook/useColumnPinning";
-import { useTableVirtualization } from "@/components/datatable/hook/useTableVirtualization";
+import { useMemo, useState } from "react";
+
 import { logger } from "@/lib/logger";
-import { ChevronRight } from "lucide-react";
-import { Fragment, useCallback, useMemo, useRef, useState } from "react";
-import {
-    DndContext,
-    PointerSensor,
-    closestCenter,
-    useSensor,
-    useSensors,
-    type DragEndEvent,
-} from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+
+import { ROW_CLICK_GUARD_SELECTOR } from "./constants";
+import type { TableInstance } from "./types";
+import { useAutoPageSize } from "./hook/useAutoPageSize";
+import { useColumnLayout } from "./hook/useColumnLayout";
+import { useColumnPinning } from "./hook/useColumnPinning";
+import { useColumnResize } from "./hook/useColumnResize";
+import { useDateFormats } from "./hook/useDateFormats";
+import { useDensity } from "./hook/useDensity";
+import { useProTableModals } from "./hook/useProTableModals";
+import { useRowExpansion } from "./hook/useRowExpansion";
+import { useTableKeyboard } from "./hook/useTableKeyboard";
+import { useTableLayoutMetrics } from "./hook/useTableLayoutMetrics";
+
 import Loading from "./common/Loading";
 import NoResult from "./common/NoResult";
-import { TableSkeleton } from "./common/TableSkeleton";
-import { BulkActionBar } from "./toolbar/BulkActionBar";
 import { BulkEditModal } from "./modal/BulkEditModal";
 import { ConfirmDeleteModal } from "./modal/ConfirmDeleteModal";
 import { DetailModal } from "./modal/DetailModal";
 import { FormModal } from "./modal/form/FormModal";
 import { CardView } from "./table/card/CardView";
+import { CellRenderer } from "./table/cell/CellRenderer";
 import { ChartView } from "./table/chart/ChartView";
-import { CellRenderer, DATE_FORMAT_CYCLE, type DateFormatKey } from "./table/cell/CellRenderer";
 import { Pagination } from "./table/Pagination";
 import { RowActions } from "./table/RowActions";
-import { RowSelection } from "./table/RowSelection";
-import { SelectAllCheckbox } from "./table/SelectAllCheckbox";
-import { SortableHeader } from "./table/SortableHeader";
+import { TableView } from "./table/TableView";
+import { BulkActionBar } from "./toolbar/BulkActionBar";
 import { Toolbar } from "./toolbar/Toolbar";
 import type { ViewMode } from "./toolbar/Toolbar";
 
@@ -54,7 +49,7 @@ import type { ViewMode } from "./toolbar/Toolbar";
  */
 interface ProTableProps<TData = any> {
     /** Table instance from useProTable. */
-    table: any;
+    table: TableInstance<TData>;
     headerActions?: React.ReactNode;
     renderRowActions?: (row: TData) => React.ReactNode;
     onView?: (row: TData) => void;
@@ -78,27 +73,7 @@ interface ProTableProps<TData = any> {
     expandable?: {
         renderExpandedRow?: (row: TData) => React.ReactNode;
     };
-    /** Row count threshold at which virtualization kicks in (default 100). Set 0 to always virtualize, Infinity to disable. */
-    virtualizeThreshold?: number;
 }
-
-const ACTION_COLUMN_WIDTH = 132;
-
-// Elements that should NOT trigger a row click when clicked. Add
-// `data-no-row-click` to any custom interactive element you embed.
-const ROW_CLICK_GUARD_SELECTOR = [
-    "button",
-    "a",
-    "input",
-    "label",
-    "select",
-    "textarea",
-    "[role='button']",
-    "[role='menuitem']",
-    "[role='checkbox']",
-    "[data-no-row-click]",
-    "[data-state='open']",
-].join(", ");
 
 export function ProTable<TData = any>({
     table,
@@ -113,7 +88,6 @@ export function ProTable<TData = any>({
     rowHeight: rowHeightProp,
     hideActions = false,
     expandable,
-    virtualizeThreshold = 100,
 }: ProTableProps<TData>) {
     const { schema } = table;
 
@@ -135,25 +109,24 @@ export function ProTable<TData = any>({
     });
 
     // ─── Expand state ───────────────────────────────────────────────────────
-    const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
-    const toggleExpand = useCallback((id: string | number, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setExpandedRows((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    }, []);
+    const { expanded: expandedRows, toggle: toggleExpand } = useRowExpansion();
 
     // ─── Internal modal state (used when overrides are not provided) ────────
-    const [deleteItem, setDeleteItem] = useState<TData | null>(null);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [detailRow, setDetailRow] = useState<TData | null>(null);
+    const {
+        deleteItem,
+        setDeleteItem,
+        deleteLoading,
+        setDeleteLoading,
+        detailRow,
+        setDetailRow,
+        bulkEditOpen,
+        setBulkEditOpen,
+        bulkDeleteOpen,
+        setBulkDeleteOpen,
+        bulkDeleteLoading,
+        setBulkDeleteLoading,
+    } = useProTableModals<TData>();
     const [viewMode, setViewMode] = useState<ViewMode>("table");
-    const [bulkEditOpen, setBulkEditOpen] = useState(false);
-    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-    const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
     // ─── Detail prev/next derived from current page ─────────────────────────
     const detailIndex = useMemo(() => {
@@ -168,31 +141,38 @@ export function ProTable<TData = any>({
     };
 
     // ─── Per-column date format cycling ─────────────────────────────────────
-    const [dateFormats, setDateFormats] = useState<Record<string, DateFormatKey>>({});
-    const cycleDateFormat = useCallback((fieldName: string) => {
-        setDateFormats((prev) => {
-            const current = prev[fieldName] ?? "datetime";
-            const idx = DATE_FORMAT_CYCLE.indexOf(current);
-            const next = DATE_FORMAT_CYCLE[(idx + 1) % DATE_FORMAT_CYCLE.length];
-            return { ...prev, [fieldName]: next };
-        });
-    }, []);
+    const { formats: dateFormats, cycle: cycleDateFormat } = useDateFormats();
 
     // ─── Column layout (order + pinning) ────────────────────────────────────
     const columnLayout = useColumnLayout(schema.entityName, table.visibleFields);
 
     // ─── Column widths + resize ─────────────────────────────────────────────
-    const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-        const widths: Record<string, number> = {};
-        schema.fields.forEach((f: any) => {
-            widths[f.name] = f.width || 150;
-        });
-        return widths;
-    });
+    const {
+        widths: columnWidths,
+        onResizeStart,
+    } = useColumnResize({ fields: schema.fields });
 
-    // Leading offset = expand col (40) + selection (20) + index (50)
-    const leadingOffset =
-        (isExpandable ? 40 : 0) + 20 + 50;
+    // ─── Permissions / column visibility ────────────────────────────────────
+    const canViewRow = table.permission?.canRead ?? true;
+    const canEditRow = table.permission?.canUpdate ?? true;
+    const canDeleteRow = table.permission?.canDelete ?? true;
+    const hasRowActions = canViewRow || canEditRow || canDeleteRow;
+    const showActionsColumn = !hideActions && hasRowActions;
+
+    // ─── Sticky offsets + total width math ──────────────────────────────────
+    const {
+        expandLeft,
+        selectLeft,
+        indexLeft,
+        leadingOffset,
+        trailingOffset,
+        totalTableWidth,
+    } = useTableLayoutMetrics({
+        arrangedFields: columnLayout.arrangedFields,
+        columnWidths,
+        isExpandable,
+        showActionsColumn,
+    });
 
     const { pinStyles, pinSides } = useColumnPinning({
         arrangedFields: columnLayout.arrangedFields,
@@ -200,51 +180,8 @@ export function ProTable<TData = any>({
         rightPinned: columnLayout.rightPinned,
         columnWidths,
         leadingOffset,
+        trailingOffset,
     });
-
-    // ─── Drag-and-drop sensors ──────────────────────────────────────────────
-    const dndSensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    );
-
-    const handleDragEnd = (e: DragEndEvent) => {
-        const { active, over } = e;
-        if (!over || active.id === over.id) return;
-        columnLayout.reorder(String(active.id), String(over.id));
-    };
-
-    const resizingRef = useRef<{ field: string; startX: number; startWidth: number } | null>(null);
-
-    const onResizeStart = useCallback(
-        (fieldName: string, e: React.MouseEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const startX = e.clientX;
-            const startWidth = columnWidths[fieldName] || 150;
-            resizingRef.current = { field: fieldName, startX, startWidth };
-
-            const onMouseMove = (ev: MouseEvent) => {
-                if (!resizingRef.current) return;
-                const { field, startX, startWidth } = resizingRef.current;
-                const diff = ev.clientX - startX;
-                const minW = schema.fields.find((f: any) => f.name === field)?.minWidth || 60;
-                const newWidth = Math.max(minW, startWidth + diff);
-                setColumnWidths((prev) => ({ ...prev, [field]: newWidth }));
-            };
-
-            const onMouseUp = () => {
-                resizingRef.current = null;
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup", onMouseUp);
-                document.body.style.userSelect = "";
-            };
-
-            document.body.style.userSelect = "none";
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
-        },
-        [columnWidths, schema.fields],
-    );
 
     // ─── Keyboard navigation ────────────────────────────────────────────────
     const focusedRowIndex = useTableKeyboard({
@@ -273,22 +210,21 @@ export function ProTable<TData = any>({
         },
         onSelectAll: () => table.selectAllOnPage?.(),
         onEscape: () => table.clearSelection?.(),
+        onToggleSelectRow: (i) => {
+            const row = table.data?.[i];
+            if (!row) return;
+            const id = (row as any)[schema.idField];
+            table.setSelected((prev: any[]) =>
+                prev.includes(id)
+                    ? prev.filter((x) => x !== id)
+                    : [...prev, id],
+            );
+        },
+        onCreate: () => {
+            if (table.permission?.canCreate ?? true) table.openCreate?.();
+        },
+        onRefresh: () => table.refetch?.(),
     });
-
-    // ─── Permissions / column visibility ────────────────────────────────────
-    const canViewRow = table.permission?.canRead ?? true;
-    const canEditRow = table.permission?.canUpdate ?? true;
-    const canDeleteRow = table.permission?.canDelete ?? true;
-    const hasRowActions = canViewRow || canEditRow || canDeleteRow;
-    const showActionsColumn = !hideActions && hasRowActions;
-
-    // ─── Computed: colspan for expanded row, hoisted out of map ─────────────
-    const expandColSpan =
-        (isExpandable ? 1 : 0) +
-        1 + // selection
-        1 + // index
-        columnLayout.arrangedFields.length +
-        (showActionsColumn ? 1 : 0);
 
     // ─── Delete confirmation ────────────────────────────────────────────────
     const handleDeleteConfirm = async () => {
@@ -316,6 +252,37 @@ export function ProTable<TData = any>({
         />
     );
     const finalRenderRowActions = renderRowActions || defaultRenderRowActions;
+
+    // ─── Expanded-row content builder ───────────────────────────────────────
+    const buildExpandedRowContent = (row: any) => {
+        if (expandable?.renderExpandedRow) return expandable.renderExpandedRow(row);
+        const canUpdate = table.permission?.canUpdate ?? true;
+        return schema.fields
+            .filter((f: any) => f.expandable)
+            .map((f: any) =>
+                f.renderExpanded ? (
+                    f.renderExpanded(row[f.name], row)
+                ) : (
+                    <div key={f.name} className="p-3">
+                        <CellRenderer
+                            field={f}
+                            value={row[f.name]}
+                            relationOptions={table.relationOptions}
+                            disableBooleanToggle={!canUpdate}
+                            onBooleanToggle={(fieldName, newValue) => {
+                                if (!canUpdate) return;
+                                table.patchField(row[schema.idField], fieldName, newValue);
+                            }}
+                            dateFormat={
+                                f.type === "date"
+                                    ? (dateFormats[f.name] ?? "datetime")
+                                    : undefined
+                            }
+                        />
+                    </div>
+                ),
+            );
+    };
 
     // ─── Empty / error state classification ─────────────────────────────────
     const hasActiveFilters =
@@ -387,243 +354,36 @@ export function ProTable<TData = any>({
                 className="h-full rounded-lg border bg-card text-foreground flex flex-col w-full min-w-0 max-w-full overflow-hidden"
             >
                 {viewMode === "table" ? (
-                    <div className="flex-1 min-h-0 flex flex-col">
-                        <div className="flex-1 min-h-0 overflow-auto">
-                        {/*
-                          DndContext + SortableContext MUST live outside <table>:
-                          they render hidden live-region <div>s for a11y, and a
-                          <div> inside <tr> is invalid HTML — browsers move it
-                          out and the column count gets misaligned (Actions header
-                          ends up one column to the right of the action buttons).
-                        */}
-                        <DndContext
-                            sensors={dndSensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={columnLayout.arrangedFields.map((f: any) => f.name)}
-                                strategy={horizontalListSortingStrategy}
-                            >
-                        <Table className="table-fixed">
-                            <colgroup>
-                                {isExpandable && <col style={{ width: 36 }} />}
-                                <col style={{ width: 36 }} />
-                                <col style={{ width: 44 }} />
-                                {columnLayout.arrangedFields.map((f: any) => (
-                                    <col key={f.name} style={{ width: columnWidths[f.name] || 150 }} />
-                                ))}
-                                {showActionsColumn && <col style={{ width: ACTION_COLUMN_WIDTH }} />}
-                            </colgroup>
-                            <TableHeader className="bg-muted/40 z-10 sticky top-0 shadow-sm [&_th]:font-semibold [&_th]:text-foreground [&_th]:h-11 [&_th]:bg-muted/40">
-                                <TableRow>
-                                    {isExpandable && <TableHead className="!p-0" />}
-                                    <TableHead className="!px-1 text-center">
-                                        <SelectAllCheckbox table={table} idField={schema.idField} />
-                                    </TableHead>
-                                    <TableHead className="!px-1 text-center text-muted-foreground">
-                                        #
-                                    </TableHead>
-                                    {columnLayout.arrangedFields.map((f: any) => (
-                                        <SortableHeader
-                                            key={f.name}
-                                            field={f}
-                                            sortState={table.sortState}
-                                            onToggleSort={table.toggleSort}
-                                            width={columnWidths[f.name] || 150}
-                                            onResizeStart={(e) => onResizeStart(f.name, e)}
-                                            dateFormat={dateFormats[f.name]}
-                                            onDateFormatCycle={
-                                                f.type === "date" ? cycleDateFormat : undefined
-                                            }
-                                            draggable
-                                            pinSide={pinSides[f.name] ?? null}
-                                            onPin={(side) => columnLayout.setPin(f.name, side)}
-                                            pinStyle={pinStyles[f.name]?.style}
-                                            pinClassName={pinStyles[f.name]?.className}
-                                        />
-                                    ))}
-                                    {showActionsColumn && (
-                                        <TableHead
-                                            style={{ width: ACTION_COLUMN_WIDTH }}
-                                            className="sticky right-0 z-30 !bg-muted/40 border-l border-border/70 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.35)]"
-                                        >
-                                            Actions
-                                        </TableHead>
-                                    )}
-                                </TableRow>
-                            </TableHeader>
-
-                            {showSkeleton ? (
-                                <TableSkeleton
-                                    rows={Math.min(table.size || 10, 10)}
-                                    columns={columnLayout.arrangedFields.length}
-                                    showExpand={isExpandable}
-                                    showActions={showActionsColumn}
-                                />
-                            ) : (
-                                hasRows && (
-                                    <TableBody
-                                        className={
-                                            table.isFetching
-                                                ? "opacity-60 transition-opacity"
-                                                : "transition-opacity"
-                                        }
-                                    >
-                                        {table.data.map((row: any, index: number) => {
-                                            const id = row[schema.idField];
-                                            const isExpanded = isExpandable && expandedRows.has(id);
-
-                                            return (
-                                                <Fragment key={id}>
-                                                    <TableRow
-                                                        data-focused={focusedRowIndex === index || undefined}
-                                                        className={`group w-full odd:bg-muted/20 even:bg-card hover:bg-accent/40 border-b border-border/40 ${densityCfg.rowClassName} ${
-                                                            focusedRowIndex === index
-                                                                ? "outline outline-2 outline-primary outline-offset-[-2px] !bg-primary/5"
-                                                                : ""
-                                                        }`}
-                                                        onClick={(e) => handleRowClick(e, row)}
-                                                    >
-                                                        {isExpandable && (
-                                                            <TableCell className="!p-0 text-center">
-                                                                <button
-                                                                    type="button"
-                                                                    className="flex items-center justify-center w-full h-full p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                                                    onClick={(e) => toggleExpand(id, e)}
-                                                                    aria-label={
-                                                                        isExpanded ? "Collapse row" : "Expand row"
-                                                                    }
-                                                                    data-no-row-click
-                                                                >
-                                                                    <ChevronRight
-                                                                        className="h-4 w-4 transition-transform duration-200"
-                                                                        style={{
-                                                                            transform: isExpanded
-                                                                                ? "rotate(90deg)"
-                                                                                : "rotate(0deg)",
-                                                                        }}
-                                                                    />
-                                                                </button>
-                                                            </TableCell>
-                                                        )}
-
-                                                        <TableCell data-no-row-click className="!px-1 text-center">
-                                                            <RowSelection id={id} table={table} />
-                                                        </TableCell>
-
-                                                        <TableCell className="!px-1 text-center text-muted-foreground text-xs tabular-nums">
-                                                            {(table.page || 0) * (table.size || 10) + index + 1}
-                                                        </TableCell>
-
-                                                        {columnLayout.arrangedFields.map((f: any) => {
-                                                            const pin = pinStyles[f.name];
-                                                            const cellPinClassName = pin
-                                                                ? `${pin.className} ${
-                                                                      index % 2 === 0
-                                                                          ? "!bg-muted/20"
-                                                                          : "!bg-card"
-                                                                  } group-hover:!bg-accent/40`
-                                                                : "";
-                                                            return (
-                                                                <CellRenderer
-                                                                    key={f.name}
-                                                                    field={f}
-                                                                    value={row[f.name]}
-                                                                    relationOptions={table.relationOptions}
-                                                                    disableBooleanToggle={!(table.permission?.canUpdate ?? true)}
-                                                                    onBooleanToggle={(fieldName, newValue) => {
-                                                                        if (!(table.permission?.canUpdate ?? true)) return;
-                                                                        table.patchField(id, fieldName, newValue);
-                                                                    }}
-                                                                    onInlineEdit={
-                                                                        (table.permission?.canUpdate ?? true)
-                                                                            ? (fieldName, newValue) =>
-                                                                                  table.patchField(id, fieldName, newValue)
-                                                                            : undefined
-                                                                    }
-                                                                    dateFormat={
-                                                                        f.type === "date"
-                                                                            ? (dateFormats[f.name] ?? "datetime")
-                                                                            : undefined
-                                                                    }
-                                                                    pinStyle={pin?.style}
-                                                                    pinClassName={cellPinClassName}
-                                                                />
-                                                            );
-                                                        })}
-
-                                                        {showActionsColumn && (
-                                                            <TableCell
-                                                                style={{ width: ACTION_COLUMN_WIDTH }}
-                                                                className={`sticky right-0 z-20 border-l border-border/70 ${
-                                                                    index % 2 === 0 ? "bg-muted/20" : "bg-card"
-                                                                } group-hover:bg-accent/40 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.35)]`}
-                                                                data-no-row-click
-                                                            >
-                                                                <div className="flex items-center gap-1 overflow-hidden">
-                                                                    {finalRenderRowActions(row)}
-                                                                </div>
-                                                            </TableCell>
-                                                        )}
-                                                    </TableRow>
-
-                                                    {isExpanded && (
-                                                        <TableRow className="bg-background hover:bg-background">
-                                                            <TableCell colSpan={expandColSpan} className="p-0 border-b">
-                                                                {expandable?.renderExpandedRow
-                                                                    ? expandable.renderExpandedRow(row)
-                                                                    : schema.fields
-                                                                          .filter((f: any) => f.expandable)
-                                                                          .map((f: any) =>
-                                                                              f.renderExpanded ? (
-                                                                                  f.renderExpanded(row[f.name], row)
-                                                                              ) : (
-                                                                                  <div key={f.name} className="p-3">
-                                                                                      <CellRenderer
-                                                                                          field={f}
-                                                                                          value={row[f.name]}
-                                                                                          relationOptions={table.relationOptions}
-                                                                                          disableBooleanToggle={
-                                                                                              !(table.permission?.canUpdate ?? true)
-                                                                                          }
-                                                                                          onBooleanToggle={(fieldName, newValue) => {
-                                                                                              if (
-                                                                                                  !(table.permission?.canUpdate ?? true)
-                                                                                              ) {
-                                                                                                  return;
-                                                                                              }
-                                                                                              table.patchField(id, fieldName, newValue);
-                                                                                          }}
-                                                                                          dateFormat={
-                                                                                              f.type === "date"
-                                                                                                  ? (dateFormats[f.name] ?? "datetime")
-                                                                                                  : undefined
-                                                                                          }
-                                                                                      />
-                                                                                  </div>
-                                                                              ),
-                                                                          )}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                </Fragment>
-                                            );
-                                        })}
-                                    </TableBody>
-                                )
-                            )}
-                        </Table>
-                            </SortableContext>
-                        </DndContext>
-                        </div>
-
-                        {!showSkeleton && !hasRows && (
-                            <div className="flex-1 flex items-center justify-center">
-                                {renderEmptyState()}
-                            </div>
-                        )}
-                    </div>
+                    <TableView
+                        table={table}
+                        densityCfg={densityCfg}
+                        arrangedFields={columnLayout.arrangedFields}
+                        columnWidths={columnWidths}
+                        pinStyles={pinStyles}
+                        pinSides={pinSides}
+                        onPin={(name, side) => columnLayout.setPin(name, side)}
+                        onReorder={(activeId, overId) =>
+                            columnLayout.reorder(activeId, overId)
+                        }
+                        onResizeStart={onResizeStart}
+                        expandLeft={expandLeft}
+                        selectLeft={selectLeft}
+                        indexLeft={indexLeft}
+                        totalTableWidth={totalTableWidth}
+                        isExpandable={isExpandable}
+                        showActionsColumn={showActionsColumn}
+                        expandedRows={expandedRows}
+                        onToggleExpand={toggleExpand}
+                        expandedRowContent={buildExpandedRowContent}
+                        renderRowActions={finalRenderRowActions}
+                        dateFormats={dateFormats}
+                        onDateFormatCycle={cycleDateFormat}
+                        showSkeleton={showSkeleton}
+                        hasRows={hasRows}
+                        renderEmptyState={renderEmptyState}
+                        focusedRowIndex={focusedRowIndex}
+                        onRowClick={handleRowClick}
+                    />
                 ) : viewMode === "card" ? (
                     <>
                         {hasRows ? (
@@ -687,7 +447,7 @@ export function ProTable<TData = any>({
                     initial: table.editingRow,
                     onSubmit: (data) => {
                         if (table.editingRow) {
-                            table.update({ id: table.editingRow[schema.idField], data });
+                            table.update({ id: (table.editingRow as any)[schema.idField], data });
                         } else {
                             table.create(data);
                         }
@@ -708,7 +468,7 @@ export function ProTable<TData = any>({
                     fieldErrors={table.fieldErrors}
                     onSubmit={(data) => {
                         if (table.editingRow) {
-                            table.update({ id: table.editingRow[schema.idField], data });
+                            table.update({ id: (table.editingRow as any)[schema.idField], data });
                         } else {
                             table.create(data);
                         }

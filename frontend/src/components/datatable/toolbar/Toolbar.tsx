@@ -1,17 +1,17 @@
-import { ColumnToggle } from "./ColumnToggle";
-import { FilterPopover } from "./filter/FilterPopover";
-import { SearchInput } from "./SearchInput";
-import { ToolbarActions } from "./ToolbarActions";
-import { ActiveFilterChips } from "./ActiveFilterChips";
-import { SavedViewsMenu } from "./SavedViewsMenu";
-import { DensityToggle } from "./DensityToggle";
-import { ViewModeToggle, type ViewMode } from "./ViewModeToggle";
-import { RefreshIndicator } from "./RefreshIndicator";
+import { ArrowUpDown, Plus } from "lucide-react";
+
 import ActionButton from "../common/ActionButton";
-import { ArrowUpDown } from "lucide-react";
+import { PermissionGate } from "@/components/PermissionGate";
+import { ActiveFilterChips } from "./ActiveFilterChips";
+import { DataIOMenu } from "./DataIOMenu";
+import { DisplayOptionsMenu } from "./DisplayOptionsMenu";
+import { FilterPopover } from "./filter/FilterPopover";
+import { RefreshIndicator } from "./RefreshIndicator";
+import { SearchInput } from "./SearchInput";
+import type { ViewMode } from "./DisplayOptionsMenu";
 import type { Density } from "@/components/datatable/hook/useDensity";
 
-export type { ViewMode } from "./ViewModeToggle";
+export type { ViewMode } from "./DisplayOptionsMenu";
 
 interface ToolbarProps {
     table: any;
@@ -23,13 +23,12 @@ interface ToolbarProps {
 }
 
 /**
- * Single-row toolbar:
+ * Compact toolbar layout:
  *
- *   [Cols][Filter][Views][Sort?] | [ViewMode][Density][Refresh] [── Search ──] [Import][Export][Print][Create]
+ *   [Display ▾][Refresh][── Search ──][Filter] | [Sort?][Data I/O ▾][Create]
  *
- * All controls are h-9 icon-only with tooltips. Search grows to fill space.
- * On very narrow screens, controls wrap thanks to flex-wrap, but height
- * stays uniform.
+ * Display dropdown groups: column visibility, density, saved views, view mode.
+ * Data I/O dropdown groups: import, export, print.
  */
 export function Toolbar({
     table,
@@ -48,55 +47,31 @@ export function Toolbar({
     const activeFilterCount = activeFilterEntries.length;
 
     const hasSorts = table.sortState?.length > 0;
+    const showRefresh =
+        table.lastUpdated !== undefined && typeof table.refetch === "function";
 
     return (
         <div className="flex flex-col gap-2 w-full min-w-0" data-protable-toolbar>
             <div className="flex items-center gap-1.5 flex-wrap min-w-0 w-full">
-                <ColumnToggle
+                <DisplayOptionsMenu
                     schema={schema}
                     columnVisibility={table.columnVisibility}
                     toggleFieldVisibility={table.toggleFieldVisibility}
+                    viewMode={viewMode}
+                    onViewModeChange={onViewModeChange}
+                    density={density}
+                    onDensityChange={onDensityChange}
+                    entityName={schema.entityName}
+                    savedViewState={{
+                        search: table.search,
+                        sortState: table.sortState,
+                        filters: table.filters,
+                        columnVisibility: table.columnVisibility,
+                    }}
+                    onApplyView={table.applyView}
                 />
 
-                <FilterPopover
-                    table={table}
-                    hasFilters={hasFilters}
-                    activeFilterCount={activeFilterCount}
-                />
-
-                {table.applyView && (
-                    <SavedViewsMenu
-                        entityName={schema.entityName}
-                        currentState={{
-                            search: table.search,
-                            sortState: table.sortState,
-                            filters: table.filters,
-                            columnVisibility: table.columnVisibility,
-                        }}
-                        onApply={table.applyView}
-                    />
-                )}
-
-                {hasSorts && (
-                    <ActionButton
-                        onClick={() => table.clearSort()}
-                        tooltip={`Xóa ${table.sortState.length} sắp xếp`}
-                        variant="outline"
-                        icon={<ArrowUpDown size={15} />}
-                    />
-                )}
-
-                <span className="mx-0.5 h-6 w-px bg-border" aria-hidden />
-
-                {onViewModeChange && (
-                    <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
-                )}
-
-                {density && onDensityChange && (
-                    <DensityToggle density={density} onChange={onDensityChange} />
-                )}
-
-                {table.lastUpdated !== undefined && table.refetch && (
+                {showRefresh && (
                     <RefreshIndicator
                         lastUpdated={table.lastUpdated}
                         isFetching={table.isFetching}
@@ -112,7 +87,35 @@ export function Toolbar({
                     />
                 </div>
 
-                <ToolbarActions table={table} headerActions={headerActions} />
+                <FilterPopover
+                    table={table}
+                    hasFilters={hasFilters}
+                    activeFilterCount={activeFilterCount}
+                />
+
+                <span className="mx-0.5 h-6 w-px bg-border" aria-hidden />
+
+                {hasSorts && (
+                    <ActionButton
+                        onClick={() => table.clearSort()}
+                        tooltip={`Xóa ${table.sortState.length} sắp xếp`}
+                        variant="outline"
+                        icon={<ArrowUpDown size={15} />}
+                    />
+                )}
+
+                <DataIOMenu table={table} />
+
+                {headerActions || (
+                    <PermissionGate permission={table.permission?.keys?.create}>
+                        <ActionButton
+                            onClick={() => table.openCreate()}
+                            tooltip="Tạo mới"
+                            variant="default"
+                            icon={<Plus size={15} />}
+                        />
+                    </PermissionGate>
+                )}
             </div>
 
             {activeFilterCount > 0 && (

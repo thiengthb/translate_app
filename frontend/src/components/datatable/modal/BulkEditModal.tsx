@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { toast } from "sonner";
 import type { EntitySchema } from "@/types";
 
@@ -114,7 +115,11 @@ export function BulkEditModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="max-h-[420px] overflow-y-auto -mx-6 px-6 space-y-3">
+                <ScrollHintContainer
+                    axis="vertical"
+                    className="max-h-[420px] -mx-6"
+                    viewportClassName="px-6 space-y-3"
+                >
                     {editableFields.map((f) => {
                         const isEnabled = !!enabled[f.name];
                         return (
@@ -148,7 +153,7 @@ export function BulkEditModal({
                             </div>
                         );
                     })}
-                </div>
+                </ScrollHintContainer>
 
                 <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={handleClose} disabled={submitting}>

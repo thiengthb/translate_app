@@ -1,3 +1,4 @@
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import type { FieldSchema } from "@/types/common/datatable";
 import { CardItem } from "./CardItem";
 import { CardSelectAllBar } from "./CardSelectAllBar";
@@ -63,9 +64,10 @@ export function CardView({
         onToggleSelectAll={toggleSelectAll}
       />
 
-      <div
-        className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-3 overflow-y-auto flex-1 transition-opacity ${table.isFetching ? "opacity-50" : ""
-          }`}
+      <ScrollHintContainer
+        axis="vertical"
+        className={`flex-1 transition-opacity ${table.isFetching ? "opacity-50" : ""}`}
+        viewportClassName="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-3"
       >
         {table.data?.map((row: any, idx: number) => {
           const id = row[schema.idField];
@@ -90,7 +92,7 @@ export function CardView({
             />
           );
         })}
-      </div>
+      </ScrollHintContainer>
     </div>
   );
 }

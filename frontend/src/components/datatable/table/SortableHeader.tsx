@@ -1,30 +1,15 @@
+import { ArrowDown, ArrowUp, GripVertical, Pin } from "lucide-react";
+
 import { TableHead } from "@/components/ui/table";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import {
-    ArrowDown,
-    ArrowDownAZ,
-    ArrowUp,
-    ArrowUpAZ,
-    ArrowUpDown,
-    CalendarClock,
-    GripVertical,
-    MoreVertical,
-    Pin,
-    PinOff,
-} from "lucide-react";
 import type { FieldSchema, SortEntry } from "@/types";
-import { DATE_FORMAT_LABELS, type DateFormatKey } from "./cell/CellRenderer";
-import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
 import type { PinSide } from "@/components/datatable/hook/useColumnLayout";
+import type { DateFormatKey } from "./cell/CellRenderer";
+import { DateFormatButton } from "./header/DateFormatButton";
+import { HeaderMenu } from "./header/HeaderMenu";
 
 interface SortableHeaderProps {
     field: FieldSchema;
@@ -34,18 +19,23 @@ interface SortableHeaderProps {
     onResizeStart?: (e: React.MouseEvent) => void;
     dateFormat?: DateFormatKey;
     onDateFormatCycle?: (fieldName: string) => void;
-    /** Current pin side for this column (null = not pinned). */
     pinSide?: PinSide;
-    /** Pin this column to a side (or unpin). */
     onPin?: (side: PinSide) => void;
-    /** Sticky positioning offsets when this column is pinned. */
     pinStyle?: React.CSSProperties;
-    /** Extra classes for pinned columns (shadow, background, etc.). */
     pinClassName?: string;
-    /** Enable drag-and-drop reorder. */
+    /** When true, the whole <th> becomes the column-reorder drag handle. */
     draggable?: boolean;
 }
 
+/**
+ * A data column header. Compact layout:
+ *
+ *   [📌? Label ↑? ⋮?]                       │ resize-grip
+ *
+ * Sticky-pin + sort + date-format controls live in the right-aligned "⋮"
+ * dropdown (see `HeaderMenu`). Hover anywhere else on the header to grab
+ * and reorder the column (when `draggable`).
+ */
 export function SortableHeader({
     field,
     sortState,
@@ -60,21 +50,10 @@ export function SortableHeader({
     pinClassName,
     draggable,
 }: SortableHeaderProps) {
-    const isSortable = field.sortable === true;
-    const isDate = field.type === "date";
     const sortIndex = sortState.findIndex((s) => s.field === field.name);
     const entry = sortIndex !== -1 ? sortState[sortIndex] : null;
+    const isDate = field.type === "date";
 
-    const SortIcon =
-        entry?.direction === "asc"
-            ? ArrowUp
-            : entry?.direction === "desc"
-                ? ArrowDown
-                : ArrowUpDown;
-
-    const currentFormatLabel = DATE_FORMAT_LABELS[dateFormat ?? "datetime"];
-
-    // dnd-kit sortable hook — always called to keep hook order stable
     const {
         attributes,
         listeners,
@@ -91,32 +70,27 @@ export function SortableHeader({
         zIndex: isDragging ? 30 : undefined,
     };
 
+    // Children that should be clickable need to swallow pointerdown so
+    // the header-wide drag listener doesn't initiate a column reorder
+    // when the user just meant to click a button.
+    const stopDragPointer = (e: React.PointerEvent) => e.stopPropagation();
+
     return (
         <TableHead
             ref={setNodeRef}
+            {...(draggable ? attributes : {})}
+            {...(draggable ? listeners : {})}
             className={cn(
-                "relative group/header",
-                isSortable && "cursor-pointer select-none hover:bg-muted/50",
+                "relative group/header select-none",
+                draggable &&
+                    (isDragging
+                        ? "cursor-grabbing"
+                        : "hover:bg-muted/40 hover:cursor-grab"),
                 pinClassName,
             )}
             style={{ width, ...dragStyle, ...pinStyle }}
-            onClick={() => isSortable && onToggleSort(field.name)}
         >
             <div className="flex items-center gap-1 overflow-hidden pr-3">
-                {draggable && (
-                    <button
-                        type="button"
-                        {...attributes}
-                        {...listeners}
-                        onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 inline-flex items-center justify-center h-5 w-4 -ml-1 text-muted-foreground/40 hover:text-foreground cursor-grab active:cursor-grabbing opacity-0 group-hover/header:opacity-100 transition-opacity"
-                        aria-label="Drag to reorder"
-                        data-no-row-click
-                    >
-                        <GripVertical size={12} />
-                    </button>
-                )}
-
                 {pinSide && (
                     <Pin
                         size={11}
@@ -129,16 +103,15 @@ export function SortableHeader({
 
                 <span className="truncate">{field.label}</span>
 
-                {isSortable && (
-                    <span className="inline-flex items-center gap-0.5 shrink-0">
-                        <SortIcon
-                            className={cn(
-                                "h-4 w-4",
-                                entry ? "text-primary" : "text-muted-foreground/50",
-                            )}
-                        />
-                        {entry && sortState.length > 1 && (
-                            <span className="text-[10px] font-semibold leading-none text-primary min-w-[12px] text-center">
+                {entry && (
+                    <span className="inline-flex items-center gap-0.5 shrink-0 text-primary">
+                        {entry.direction === "asc" ? (
+                            <ArrowUp className="h-4 w-4" />
+                        ) : (
+                            <ArrowDown className="h-4 w-4" />
+                        )}
+                        {sortState.length > 1 && (
+                            <span className="text-[10px] font-semibold leading-none min-w-[12px] text-center">
                                 {sortIndex + 1}
                             </span>
                         )}
@@ -146,79 +119,28 @@ export function SortableHeader({
                 )}
 
                 {isDate && onDateFormatCycle && (
-                    <TooltipWrapper content={`Định dạng: ${currentFormatLabel} — Click để đổi`}>
-                        <button
-                            type="button"
-                            className="inline-flex items-center shrink-0 rounded p-0.5 text-muted-foreground/50 opacity-0 group-hover/header:opacity-100 hover:text-foreground hover:bg-muted transition-all"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDateFormatCycle(field.name);
-                            }}
-                            data-no-row-click
-                        >
-                            <CalendarClock className="h-3.5 w-3.5" />
-                        </button>
-                    </TooltipWrapper>
+                    <DateFormatButton
+                        fieldName={field.name}
+                        dateFormat={dateFormat ?? "datetime"}
+                        onCycle={onDateFormatCycle}
+                        onPointerDownCapture={stopDragPointer}
+                    />
                 )}
 
-                {onPin && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                type="button"
-                                onClick={(e) => e.stopPropagation()}
-                                className="ml-auto inline-flex items-center shrink-0 rounded p-0.5 text-muted-foreground/40 opacity-0 group-hover/header:opacity-100 hover:text-foreground hover:bg-muted transition-all"
-                                aria-label="Column options"
-                                data-no-row-click
-                            >
-                                <MoreVertical size={13} />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                            {isSortable && (
-                                <>
-                                    <DropdownMenuItem
-                                        onSelect={() => onToggleSort(field.name)}
-                                        className="gap-2 text-sm"
-                                    >
-                                        {entry?.direction === "asc" ? (
-                                            <ArrowDownAZ size={13} />
-                                        ) : (
-                                            <ArrowUpAZ size={13} />
-                                        )}
-                                        Sắp xếp
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                </>
-                            )}
-                            <DropdownMenuItem
-                                onSelect={() => onPin(pinSide === "left" ? null : "left")}
-                                className="gap-2 text-sm"
-                            >
-                                <Pin size={13} />
-                                {pinSide === "left" ? "Bỏ ghim trái" : "Ghim trái"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onSelect={() => onPin(pinSide === "right" ? null : "right")}
-                                className="gap-2 text-sm"
-                            >
-                                <Pin size={13} className="rotate-90" />
-                                {pinSide === "right" ? "Bỏ ghim phải" : "Ghim phải"}
-                            </DropdownMenuItem>
-                            {pinSide && (
-                                <DropdownMenuItem onSelect={() => onPin(null)} className="gap-2 text-sm">
-                                    <PinOff size={13} />
-                                    Bỏ ghim
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                <HeaderMenu
+                    field={field}
+                    sortState={sortState}
+                    onToggleSort={onToggleSort}
+                    pinSide={pinSide}
+                    onPin={onPin}
+                    onPointerDownCapture={stopDragPointer}
+                />
             </div>
 
             {onResizeStart && (
                 <div
                     className="absolute -right-2 top-0 h-full w-5 cursor-col-resize z-10 flex items-center justify-center group/resize"
+                    onPointerDown={stopDragPointer}
                     onMouseDown={onResizeStart}
                     onClick={(e) => e.stopPropagation()}
                     data-no-row-click

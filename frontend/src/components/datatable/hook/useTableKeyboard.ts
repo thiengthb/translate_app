@@ -13,6 +13,12 @@ interface Options {
     onSelectAll?: () => void;
     /** Esc → clear focus / cancel. */
     onEscape?: () => void;
+    /** Space → toggle selection of the focused row. */
+    onToggleSelectRow?: (rowIndex: number) => void;
+    /** N → create a new entity. */
+    onCreate?: () => void;
+    /** R → refresh data. */
+    onRefresh?: () => void;
 }
 
 const TYPING_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
@@ -29,9 +35,15 @@ function isTypingInField(target: EventTarget | null): boolean {
  *   ↑ / ↓        move focused row
  *   Enter        activate focused row (view / open)
  *   Delete       request delete
+ *   Space        toggle selection of focused row
+ *   N            create new
+ *   R            refresh data
  *   ⌘/Ctrl + F   focus search
  *   ⌘/Ctrl + A   select all on this page
  *   Esc          blur / cancel
+ *
+ * Single-letter shortcuts (Space / N / R) only fire when the user is
+ * NOT typing in an input — same convention as Gmail / GitHub.
  *
  * Returns the index of the currently focused row, or `null`.
  */
@@ -43,6 +55,9 @@ export function useTableKeyboard({
     onFocusSearch,
     onSelectAll,
     onEscape,
+    onToggleSelectRow,
+    onCreate,
+    onRefresh,
 }: Options): number | null {
     const [focused, setFocused] = useState<number | null>(null);
 
@@ -106,16 +121,56 @@ export function useTableKeyboard({
                     }
                     break;
 
+                case " ":
+                    // Space toggles selection of the focused row. Only when
+                    // a row is focused — otherwise let the default action
+                    // (scroll page) through, since Space-without-focus is
+                    // usually a misclick away from row navigation.
+                    if (focused !== null && onToggleSelectRow) {
+                        e.preventDefault();
+                        onToggleSelectRow(focused);
+                    }
+                    break;
+
                 case "Escape":
                     setFocused(null);
                     onEscape?.();
+                    break;
+
+                default:
+                    // Single-letter shortcuts: only when no modifier — Ctrl+N,
+                    // Cmd+N etc. are reserved by the OS / browser.
+                    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) break;
+                    if (e.key === "n" || e.key === "N") {
+                        if (onCreate) {
+                            e.preventDefault();
+                            onCreate();
+                        }
+                    } else if (e.key === "r" || e.key === "R") {
+                        if (onRefresh) {
+                            e.preventDefault();
+                            onRefresh();
+                        }
+                    }
                     break;
             }
         };
 
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-    }, [enabled, rowCount, focused, onActivate, onDelete, onFocusSearch, onSelectAll, onEscape]);
+    }, [
+        enabled,
+        rowCount,
+        focused,
+        onActivate,
+        onDelete,
+        onFocusSearch,
+        onSelectAll,
+        onEscape,
+        onToggleSelectRow,
+        onCreate,
+        onRefresh,
+    ]);
 
     // Reset focus if row count shrinks below current focus
     useEffect(() => {

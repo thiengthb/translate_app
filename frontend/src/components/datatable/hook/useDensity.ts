@@ -15,7 +15,7 @@ export const DENSITY_CONFIG: Record<Density, DensityConfig> = {
         cellClassName: "py-1.5 text-[13px]",
     },
     normal: {
-        rowHeight: 49,
+        rowHeight: 48,
         rowClassName: "h-12",
         cellClassName: "py-2.5 text-sm",
     },

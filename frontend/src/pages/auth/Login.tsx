@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,67 @@ import { GuestLayout } from "@/components/layout/GuestLayout";
 import { useTranslation } from "@/contexts/I18nContext";
 import type { MessageKey } from "@/i18n";
 import axios from "axios";
-import { Eye, EyeOff } from "lucide-react";
+import {
+    BookOpen,
+    Eye,
+    EyeOff,
+    GraduationCap,
+    ShieldCheck,
+    Zap,
+    type LucideIcon,
+} from "lucide-react";
 import { getHomePathByRole } from "@/utils/rbac.utils";
+
+/**
+ * Seed accounts for the dev-only quick login row.
+ *
+ * Each entry maps to a button + a `Ctrl+Shift+<key>` keyboard shortcut.
+ * Matches the seed users created by `UserDataInitializer` in the
+ * backend — keep in sync if those creds rotate.
+ *
+ * Stripped from production bundles via the `import.meta.env.DEV` guard
+ * around the button row + the keyboard listener.
+ */
+interface DevAccount {
+    label: string;
+    email: string;
+    password: string;
+    icon: LucideIcon;
+    /** Single letter for `Ctrl+Shift+<letter>` shortcut. */
+    shortcutKey: string;
+    /** Tailwind classes for the button — colour-code each role. */
+    buttonClass: string;
+}
+
+const DEV_ACCOUNTS: DevAccount[] = [
+    {
+        label: "Admin",
+        email: "admin@example.com",
+        password: "password123",
+        icon: ShieldCheck,
+        shortcutKey: "a",
+        buttonClass:
+            "border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500/60 hover:text-amber-700 dark:hover:text-amber-400",
+    },
+    {
+        label: "Student",
+        email: "student@example.com",
+        password: "password123",
+        icon: GraduationCap,
+        shortcutKey: "s",
+        buttonClass:
+            "border-green-500/40 hover:bg-green-500/10 hover:border-green-500/60 hover:text-green-700 dark:hover:text-green-400",
+    },
+    {
+        label: "Teacher",
+        email: "teacher@example.com",
+        password: "password123",
+        icon: BookOpen,
+        shortcutKey: "t",
+        buttonClass:
+            "border-blue-500/40 hover:bg-blue-500/10 hover:border-blue-500/60 hover:text-blue-700 dark:hover:text-blue-400",
+    },
+];
 
 const URL_LOGIN_WITH_GOOGLE =
     import.meta.env.VITE_API_URL_FOR_GOOGLE || "http://localhost:8080/oauth2/authorization/google";
@@ -114,6 +173,70 @@ export const Login: React.FC = () => {
         setError("");
         window.location.href = URL_LOGIN_WITH_GOOGLE;
     };
+
+    // ─── Dev-only quick login ───────────────────────────────────────────────
+    // Generic handler: same API contract as a real form submit so 2FA / TOTP
+    // gating still works (if a seed account somehow has 2FA on, the user
+    // bumps into the TOTP screen as expected).
+    const loginAsDevAccount = useCallback(
+        async (account: DevAccount) => {
+            if (!import.meta.env.DEV) return; // belt-and-braces — also gated by render
+            setError("");
+            setIsLoading(true);
+            try {
+                const res = await authApi.login({
+                    email: account.email,
+                    password: account.password,
+                });
+                if (res.requiresTotp && res.tempToken) {
+                    setTempToken(res.tempToken);
+                    setTotpCode("");
+                    setTotpError("");
+                    return;
+                }
+                dispatch(setLogin(res));
+                navigate(getHomePathByRole(res.role), { replace: true });
+            } catch (err) {
+                if (axios.isAxiosError(err)) {
+                    const backendMsg = err.response?.data?.message;
+                    setError(backendMsg || t("auth.login.invalidCredentials"));
+                } else if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError(t("auth.login.unexpectedError"));
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [dispatch, navigate, t],
+    );
+
+    // Keyboard shortcuts: Ctrl+Shift+A/S/T → admin / student / teacher.
+    // Only registered in DEV. Skips when typing in any input so the user
+    // can still type those letters in form fields normally.
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (!e.ctrlKey || !e.shiftKey) return;
+            const target = e.target as HTMLElement | null;
+            if (
+                target?.tagName === "INPUT" ||
+                target?.tagName === "TEXTAREA" ||
+                target?.isContentEditable
+            ) {
+                return;
+            }
+            const key = e.key.toLowerCase();
+            const account = DEV_ACCOUNTS.find((a) => a.shortcutKey === key);
+            if (account) {
+                e.preventDefault();
+                void loginAsDevAccount(account);
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [loginAsDevAccount]);
 
     return (
         <GuestLayout>
@@ -291,22 +414,51 @@ export const Login: React.FC = () => {
                 </div>
 
                 {import.meta.env.DEV && (
-                    <div className="mt-8 pt-6 border-t border-dashed">
-                        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">{t("auth.login.testCredsTitle")}</p>
-                        <div className="space-y-2 text-sm bg-muted/50 p-3 rounded-lg border">
-                            <p className="flex justify-between">
-                                <span className="text-muted-foreground font-mono text-[11px]">ADMIN:</span>
-                                <span className="font-medium">admin@example.com / password123</span>
-                            </p>
-                            <p className="flex justify-between">
-                                <span className="text-muted-foreground font-mono text-[11px]">STUDENT:</span>
-                                <span className="font-medium">student@example.com / password123</span>
-                            </p>
-                            <p className="flex justify-between">
-                                <span className="text-muted-foreground font-mono text-[11px]">TEACHER:</span>
-                                <span className="font-medium">teacher@example.com / password123</span>
-                            </p>
+                    <div className="mt-8 pt-5 border-t border-dashed border-amber-500/30">
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <div className="flex items-center gap-2">
+                                <Zap size={12} className="text-amber-600" />
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-500">
+                                    Dev only — Đăng nhập nhanh
+                                </p>
+                            </div>
                         </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {DEV_ACCOUNTS.map((account) => {
+                                const Icon = account.icon;
+                                const shortcutLabel = `Ctrl+Shift+${account.shortcutKey.toUpperCase()}`;
+                                return (
+                                    <Button
+                                        key={account.email}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isLoading}
+                                        onClick={() => loginAsDevAccount(account)}
+                                        title={shortcutLabel}
+                                        className={`flex-col h-auto gap-1 py-2.5 ${account.buttonClass}`}
+                                    >
+                                        <Icon size={16} />
+                                        <span className="text-xs font-medium">
+                                            {account.label}
+                                        </span>
+                                        <kbd className="text-[9px] text-muted-foreground tabular-nums">
+                                            ⇧+
+                                            {account.shortcutKey.toUpperCase()}
+                                        </kbd>
+                                    </Button>
+                                );
+                            })}
+                        </div>
+                        <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground/80">
+                            Chỉ hiển thị ở chế độ phát triển. Nút và phím tắt{" "}
+                            <kbd className="font-mono">Ctrl+Shift+A/S/T</kbd> tự
+                            động bị loại bỏ khỏi production build qua guard{" "}
+                            <code className="font-mono text-[10px]">
+                                import.meta.env.DEV
+                            </code>
+                            .
+                        </p>
                     </div>
                 )}
                     </>

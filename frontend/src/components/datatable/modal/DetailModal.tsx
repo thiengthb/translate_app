@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { iconMap } from "@/components/datatable/iconMap";
 import type { EntitySchema, FieldSchema } from "@/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -235,7 +236,11 @@ export function DetailModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2">
+        <ScrollHintContainer
+          axis="vertical"
+          className="flex-1"
+          viewportClassName="px-4 py-2"
+        >
           <div className="grid gap-3">
             {schema.fields.filter((f) => f.type !== "password").map((field, index) => (
               <div key={field.name}>
@@ -251,7 +256,7 @@ export function DetailModal({
               </div>
             ))}
           </div>
-        </div>
+        </ScrollHintContainer>
       </SheetContent>
     </Sheet>
   );

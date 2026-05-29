@@ -7,6 +7,7 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
+import KeyboardShortcutsPage from "@/pages/help/KeyboardShortcutsPage";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
@@ -32,6 +33,7 @@ export const routes: RouteConfig[] = [
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/streak", component: StreakPage },
+  { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/admin/users-dashboard", component: UserDashboardPage, isModuleDriven: true },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
   { path: "/users/:userId", component: PublicProfilePage },

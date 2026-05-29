@@ -16,6 +16,7 @@ import { BarChart3, PieChart as PieIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
     Select,
     SelectContent,
@@ -99,7 +100,11 @@ export function ChartView({ table }: ChartViewProps) {
     }
 
     return (
-        <div className="p-4 sm:p-6 overflow-y-auto h-full">
+        <ScrollHintContainer
+            axis="vertical"
+            className="h-full"
+            viewportClassName="p-4 sm:p-6"
+        >
             <Card>
                 <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
                     <div className="space-y-1">
@@ -239,7 +244,7 @@ export function ChartView({ table }: ChartViewProps) {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </ScrollHintContainer>
     );
 }
 
