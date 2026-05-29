@@ -12,10 +12,14 @@ public interface MeaningMapper extends BaseCrudMapper<Meaning, MeaningDTO> {
     @Override
     @IgnoreAuditFields
     @Mapping(target = "language.id", source = "languageId")
+    @Mapping(target = "word.id", source = "wordId")
     Meaning toEntity(MeaningDTO dto);
 
     @Override
     @Mapping(target = "languageId", source = "language.id")
     @Mapping(target = "languageName", source = "language.name")
+    @Mapping(target = "languageCode", source = "language.code")
+    @Mapping(target = "wordId", source = "word.id")
+    @Mapping(target = "wordText", source = "word.word")
     MeaningDTO toResponse(Meaning entity);
 }

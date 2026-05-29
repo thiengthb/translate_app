@@ -17,6 +17,9 @@ public class MeaningFilter extends BaseFilter {
     @FilterField(entityField = "language.id", operator = FilterOperator.EQUAL)
     Long languageId;
 
+    @FilterField(entityField = "word.id", operator = FilterOperator.EQUAL)
+    Long wordId;
+
     @FilterField(operator = FilterOperator.LIKE)
     String name;
 }

@@ -20,9 +20,6 @@ public class WordFilter extends BaseFilter {
     @FilterField(entityField = "representation.id", operator = FilterOperator.EQUAL)
     Long representationId;
 
-    @FilterField(entityField = "meaning.id", operator = FilterOperator.EQUAL)
-    Long meaningId;
-
     @FilterField(operator = FilterOperator.LIKE)
     String wordType;
 }

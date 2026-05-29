@@ -5,6 +5,8 @@ export interface EntityConfig {
     path: string;
     api: any;
     schema: EntitySchema;
+    /** Nếu set, nút "Tạo" sẽ điều hướng tới route này thay vì mở modal tạo mặc định. */
+    createRoute?: string;
 }
 
 const registry: EntityConfig[] = [];

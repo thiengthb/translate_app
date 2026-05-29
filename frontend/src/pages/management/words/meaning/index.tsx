@@ -1,4 +1,4 @@
-import { languageApi, meaningApi } from "@/api";
+import { languageApi, meaningApi, wordApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -10,6 +10,18 @@ const meaningSchema: EntitySchema = {
   entityName: "meaning",
   idField: "id",
   fields: [
+    {
+      name: "wordId",
+      label: "Word",
+      type: "relation",
+      sortable: false,
+      relation: {
+        api: wordApi,
+        valueField: "id",
+        labelField: "word",
+        multiple: false,
+      },
+    },
     {
       name: "languageId",
       label: "Language",

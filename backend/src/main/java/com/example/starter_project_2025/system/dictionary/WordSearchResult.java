@@ -27,8 +27,21 @@ public class WordSearchResult {
     String levelCode;
     String levelName;
 
+    List<MeaningInfo> meanings;
     List<KanjiInfo> kanjis;
     List<ExampleInfo> examples;
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class MeaningInfo {
+        String name;
+        String languageCode;
+        String languageName;
+    }
 
     @Getter
     @Setter

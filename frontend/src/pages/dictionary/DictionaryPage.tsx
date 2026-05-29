@@ -641,9 +641,20 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
 
             <Separator />
 
-            {/* Meaning */}
+            {/* Meaning(s) */}
             <div className="px-5 py-3">
-                <p className="text-sm font-medium text-foreground leading-snug">{word.meaningText}</p>
+                {word.meanings && word.meanings.length > 0 ? (
+                    <div className="space-y-1.5">
+                        {word.meanings.map((m, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                                <MeaningLangBadge code={m.languageCode} name={m.languageName} />
+                                <p className="text-sm font-medium text-foreground leading-snug flex-1">{m.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm font-medium text-foreground leading-snug">{word.meaningText}</p>
+                )}
             </div>
 
             {/* Kanji breakdown */}
@@ -989,6 +1000,28 @@ const TATOEBA_LANG: Record<string, { label: string; className: string }> = {
     vie: { label: "VI", className: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
     eng: { label: "EN", className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
 };
+
+// Badge mã ngôn ngữ cho từng nghĩa (vi, en, ja...)
+const MEANING_LANG: Record<string, { label: string; className: string }> = {
+    vi:  { label: "VI", className: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
+    vie: { label: "VI", className: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
+    en:  { label: "EN", className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+    eng: { label: "EN", className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+    ja:  { label: "JA", className: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
+    jpn: { label: "JA", className: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
+};
+
+function MeaningLangBadge({ code, name }: { code?: string; name?: string }) {
+    const key = code?.toLowerCase() ?? "";
+    const meta = MEANING_LANG[key];
+    const label = meta?.label ?? (code ? code.toUpperCase() : (name ?? "?"));
+    const className = meta?.className ?? "bg-muted text-muted-foreground border-border";
+    return (
+        <Badge variant="outline" className={`text-[9px] font-bold px-1 py-0 h-4 shrink-0 mt-0.5 ${className}`}>
+            {label}
+        </Badge>
+    );
+}
 
 function TatoebaRow({ example }: { example: TatoebaExample }) {
     const lang = TATOEBA_LANG[example.translationLang];

@@ -9,8 +9,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 @Entity
 @Getter
 @Setter
@@ -27,9 +25,11 @@ public class Meaning extends BaseEntity {
             foreignKey = @ForeignKey(name = "fk_meanings_language"))
     Language language;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "word_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_meanings_word"))
+    Word word;
+
     @Column(name = "name", nullable = false, columnDefinition = "text")
     String name;
-
-    @OneToMany(mappedBy = "meaning", fetch = FetchType.LAZY)
-    List<Word> words;
 }

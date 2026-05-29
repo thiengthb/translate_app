@@ -2,11 +2,14 @@ package com.example.starter_project_2025.system.words.word;
 
 import com.example.starter_project_2025.base.crud.dto.BaseDTO;
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
+import com.example.starter_project_2025.system.words.mean.MeaningDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 
@@ -24,11 +27,11 @@ public class WordDTO extends BaseDTO {
     @JsonProperty(access = READ_ONLY)
     String representationName;
 
-    @NotNull(groups = OnCreate.class, message = "Meaning is required")
-    Long meaningId;
+    @JsonProperty(access = READ_ONLY)
+    String meaningText;
 
     @JsonProperty(access = READ_ONLY)
-    String meaningName;
+    List<MeaningDTO> meanings;
 
     @NotNull(groups = OnCreate.class, message = "Level is required")
     Long levelId;

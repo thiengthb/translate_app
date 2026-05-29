@@ -7,6 +7,8 @@ import com.example.starter_project_2025.base.crud.validation.ValidationContext;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.system.words.language.Language;
 import com.example.starter_project_2025.system.words.language.LanguageRepository;
+import com.example.starter_project_2025.system.words.word.Word;
+import com.example.starter_project_2025.system.words.word.WordRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +26,7 @@ public class MeaningServiceImpl
     MeaningMapper meaningMapper;
     MeaningRepository meaningRepository;
     LanguageRepository languageRepository;
+    WordRepository wordRepository;
 
     @Override
     protected BaseCrudRepository<Meaning, Long> getRepository() {
@@ -42,19 +45,24 @@ public class MeaningServiceImpl
 
     @Override
     protected void beforeCreate(Meaning entity, MeaningDTO request, ValidationContext ctx) {
+        resolveRelations(entity, request);
+    }
+
+    @Override
+    protected void beforeUpdate(Meaning entity, MeaningDTO request, ValidationContext ctx) {
+        resolveRelations(entity, request);
+    }
+
+    private void resolveRelations(Meaning entity, MeaningDTO request) {
         if (request.getLanguageId() != null) {
             Language language = languageRepository.findById(request.getLanguageId())
                     .orElseThrow(() -> new ResourceNotFoundException("Language not found"));
             entity.setLanguage(language);
         }
-    }
-
-    @Override
-    protected void beforeUpdate(Meaning entity, MeaningDTO request, ValidationContext ctx) {
-        if (request.getLanguageId() != null) {
-            Language language = languageRepository.findById(request.getLanguageId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Language not found"));
-            entity.setLanguage(language);
+        if (request.getWordId() != null) {
+            Word word = wordRepository.findById(request.getWordId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Word not found"));
+            entity.setWord(word);
         }
     }
 }

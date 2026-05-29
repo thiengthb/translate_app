@@ -1,4 +1,4 @@
-import { wordApi, representationApi, meaningApi, levelApi } from "@/api";
+import { wordApi, representationApi, levelApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -49,15 +49,11 @@ const wordSchema: EntitySchema = {
       },
     },
     {
-      name: "meaningId",
+      name: "meaningText",
       label: "Meaning",
-      type: "relation",
-      relation: {
-        api: meaningApi,
-        valueField: "id",
-        labelField: "name",
-        multiple: false,
-      },
+      type: "text",
+      sortable: false,
+      editable: false,
     },
     {
       name: "levelId",
@@ -79,4 +75,5 @@ export const entityConfig: EntityConfig = {
   path: "/words",
   api: wordApi,
   schema: wordSchema,
+  createRoute: "/words/create",
 };

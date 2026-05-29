@@ -28,19 +28,23 @@ export interface RepresentationFilter extends BaseFilter {}
 export interface MeaningDTO extends BaseDTO {
   languageId?: number;
   languageName?: string;
+  languageCode?: string;
+  wordId?: number;
+  wordText?: string;
   name?: string;
 }
 
 export interface MeaningFilter extends BaseFilter {
   languageId?: number;
+  wordId?: number;
 }
 
 // ── Word ───────────────────────────────────────────────────────────────
 export interface WordDTO extends BaseDTO {
   representationId?: number;
   representationName?: string;
-  meaningId?: number;
-  meaningName?: string;
+  meaningText?: string;
+  meanings?: MeaningDTO[];
   levelId?: number;
   levelName?: string;
   word?: string;
@@ -52,8 +56,31 @@ export interface WordDTO extends BaseDTO {
 export interface WordFilter extends BaseFilter {
   levelId?: number;
   representationId?: number;
-  meaningId?: number;
   wordType?: string;
+}
+
+// ── Word create (composite: word + meanings + examples) ─────────────────
+export interface WordMeaningInput {
+  languageId?: number;
+  name?: string;
+}
+
+export interface WordExampleInput {
+  rootLanguageId?: number;
+  toLanguageId?: number;
+  rootExample?: string;
+  toExample?: string;
+}
+
+export interface WordCreateRequest {
+  word: string;
+  reading?: string;
+  wordType?: string;
+  frequency?: number;
+  representationId?: number;
+  levelId?: number;
+  meanings: WordMeaningInput[];
+  examples: WordExampleInput[];
 }
 
 // ── Kanji ──────────────────────────────────────────────────────────────
@@ -123,6 +150,12 @@ export interface DictionaryExampleInfo {
   toLanguageName?: string;
 }
 
+export interface DictionaryMeaningInfo {
+  name?: string;
+  languageCode?: string;
+  languageName?: string;
+}
+
 export interface WordSearchResult {
   id: number;
   word: string;
@@ -132,6 +165,7 @@ export interface WordSearchResult {
   representationCode?: string;
   representationName?: string;
   meaningText?: string;
+  meanings?: DictionaryMeaningInfo[];
   levelCode?: string;
   levelName?: string;
   kanjis: DictionaryKanjiInfo[];

@@ -3,6 +3,7 @@ package com.example.starter_project_2025.system.dictionary;
 import com.example.starter_project_2025.system.words.example.Example;
 import com.example.starter_project_2025.system.words.kanji.Kanji;
 import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
+import com.example.starter_project_2025.system.words.mean.Meaning;
 import com.example.starter_project_2025.system.words.word.Word;
 import com.example.starter_project_2025.system.words.word_kanji.WordKanji;
 import com.example.starter_project_2025.system.words.word_kanji.WordKanjiRepository;
@@ -128,7 +129,7 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .map(wk -> KanjiSearchResult.WordInfo.builder()
                         .word(wk.getWord().getWord())
                         .reading(wk.getWord().getReading())
-                        .meaningText(wk.getWord().getMeaning().getName())
+                        .meaningText(primaryMeaningText(wk.getWord()))
                         .build())
                 .toList();
 
@@ -144,12 +145,30 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .build();
     }
 
+    /** Nghĩa hiển thị chính: ưu tiên tiếng Việt, ngược lại lấy nghĩa đầu tiên. */
+    private static String primaryMeaningText(Word word) {
+        List<Meaning> meanings = word.getMeanings();
+        if (meanings == null || meanings.isEmpty()) {
+            return null;
+        }
+        return meanings.stream()
+                .filter(DictionaryServiceImpl::isVietnamese)
+                .map(Meaning::getName)
+                .findFirst()
+                .orElse(meanings.get(0).getName());
+    }
+
+    private static boolean isVietnamese(Meaning m) {
+        String code = m.getLanguage() != null ? m.getLanguage().getCode() : null;
+        return code != null && ("vi".equalsIgnoreCase(code) || "vie".equalsIgnoreCase(code));
+    }
+
     private WordSuggestion toSuggestion(Word word) {
         return WordSuggestion.builder()
                 .id(word.getId())
                 .word(word.getWord())
                 .reading(word.getReading())
-                .meaningText(word.getMeaning().getName())
+                .meaningText(primaryMeaningText(word))
                 .levelCode(word.getLevel().getCode())
                 .build();
     }
@@ -169,6 +188,13 @@ public class DictionaryServiceImpl implements DictionaryService {
                         .map(this::toExampleInfo)
                         .toList();
 
+        List<WordSearchResult.MeaningInfo> meanings = word.getMeanings() == null
+                ? List.of()
+                : word.getMeanings().stream()
+                        .filter(m -> Boolean.FALSE.equals(m.getIsDeleted()))
+                        .map(this::toMeaningInfo)
+                        .toList();
+
         return WordSearchResult.builder()
                 .id(word.getId())
                 .word(word.getWord())
@@ -177,11 +203,20 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .frequency(word.getFrequency())
                 .representationCode(word.getRepresentation().getCode())
                 .representationName(word.getRepresentation().getName())
-                .meaningText(word.getMeaning().getName())
+                .meaningText(primaryMeaningText(word))
+                .meanings(meanings)
                 .levelCode(word.getLevel().getCode())
                 .levelName(word.getLevel().getName())
                 .kanjis(kanjis)
                 .examples(examples)
+                .build();
+    }
+
+    private WordSearchResult.MeaningInfo toMeaningInfo(Meaning m) {
+        return WordSearchResult.MeaningInfo.builder()
+                .name(m.getName())
+                .languageCode(m.getLanguage() != null ? m.getLanguage().getCode() : null)
+                .languageName(m.getLanguage() != null ? m.getLanguage().getName() : null)
                 .build();
     }
 

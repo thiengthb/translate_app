@@ -14,7 +14,6 @@ public interface WordKanjiRepository extends BaseCrudRepository<WordKanji, Long>
     @Query("""
             SELECT wk FROM WordKanji wk
             JOIN FETCH wk.word w
-            JOIN FETCH w.meaning m
             WHERE wk.character = :character
             AND wk.isDeleted = false
             AND w.isDeleted = false

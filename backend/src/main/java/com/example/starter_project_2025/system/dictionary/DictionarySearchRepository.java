@@ -14,7 +14,7 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
 
     @Query("""
             SELECT DISTINCT w FROM Word w
-            JOIN FETCH w.meaning m
+            JOIN w.meanings m
             JOIN FETCH w.level l
             JOIN FETCH w.representation r
             WHERE w.isDeleted = false
@@ -32,7 +32,7 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
 
     @Query("""
             SELECT DISTINCT w FROM Word w
-            JOIN FETCH w.meaning m
+            JOIN w.meanings m
             JOIN FETCH w.level l
             WHERE w.isDeleted = false
             AND w.isActive = true
@@ -47,7 +47,6 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
 
     @Query("""
             SELECT w FROM Word w
-            JOIN FETCH w.meaning m
             JOIN FETCH w.level l
             JOIN FETCH w.representation r
             WHERE w.isDeleted = false AND w.isActive = true

@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.List;
 
@@ -29,11 +30,6 @@ public class Word extends BaseEntity {
     @JoinColumn(name = "representation_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_words_representation"))
     Representation representation;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meaning_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_words_meaning"))
-    Meaning meaning;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id", nullable = false,
@@ -55,6 +51,10 @@ public class Word extends BaseEntity {
     @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<WordKanji> wordKanjis;
 
-    @OneToMany(mappedBy = "word", fetch = FetchType.LAZY)
+    @BatchSize(size = 30)
+    @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    List<Meaning> meanings;
+
+    @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     List<Example> examples;
 }

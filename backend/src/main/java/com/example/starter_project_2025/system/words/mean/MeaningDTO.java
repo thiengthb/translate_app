@@ -24,6 +24,15 @@ public class MeaningDTO extends BaseDTO {
     @JsonProperty(access = READ_ONLY)
     String languageName;
 
+    @JsonProperty(access = READ_ONLY)
+    String languageCode;
+
+    @NotNull(groups = OnCreate.class, message = "Word is required")
+    Long wordId;
+
+    @JsonProperty(access = READ_ONLY)
+    String wordText;
+
     @NotBlank(groups = OnCreate.class, message = "Name is required")
     String name;
 }
