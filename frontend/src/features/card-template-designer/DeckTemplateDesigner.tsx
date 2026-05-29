@@ -38,7 +38,6 @@ import {
   RotateCcw,
   Rows3,
   Save,
-  Trash2,
   Type,
   Underline,
   Video,
@@ -207,10 +206,10 @@ export function DeckTemplateDesigner({
               size="sm"
               onClick={onRemoveTemplate}
               disabled={saving || removing}
-              className="text-destructive hover:text-destructive"
+              title="Remove this template and fall back to the default card layout"
             >
-              {removing ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-              Remove
+              {removing ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+              Back to default
             </Button>
           )}
           <Button variant="ghost" onClick={onCancel} disabled={saving || removing}>

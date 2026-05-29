@@ -6,9 +6,17 @@ import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { FlashcardSettingsModal } from "@/pages/student/FlashcardSettingsModal";
 import { PaginationBar } from "@/components/common/PaginationBar";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { cn } from "@/lib/utils";
 
 const DECKS_PER_PAGE = 12;
+
+/* Directional horizontal slide for page changes (next → slide left, prev → slide right). */
+const pageSlideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
+};
 import {
   BookOpen, Brain, Check, LayoutGrid, List,
   MoreHorizontal, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
@@ -61,6 +69,7 @@ export default function LibraryPage() {
   const [openDeckMenu, setOpenDeckMenu] = useState<number | null>(null);
   const [settingsDeck, setSettingsDeck] = useState<DeckDTO | null>(null);
   const [page, setPage] = useState(1); // 1-based
+  const [pageDir, setPageDir] = useState(0); // 1 = next, -1 = prev (drives slide direction)
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "list"; } catch { return "list"; }
   });
@@ -105,8 +114,14 @@ export default function LibraryPage() {
 
   // Reset to the first page whenever the filtered set changes.
   useEffect(() => {
+    setPageDir(-1);
     setPage(1);
   }, [selectedTagId, searchQuery]);
+
+  const handlePageChange = (next: number) => {
+    setPageDir(next >= safePage ? 1 : -1);
+    setPage(next);
+  };
 
   /* ── Actions ── */
   const changeViewMode = (mode: ViewMode) => {
@@ -250,7 +265,7 @@ export default function LibraryPage() {
         </div>
 
         {/* ════════ CONTENT ════════ */}
-        <div className="flex-1 overflow-y-auto px-6 min-h-0">
+        <ScrollHintContainer axis="vertical" viewportClassName="px-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
               <div className="size-5 border-2 border-border border-t-foreground rounded-full animate-spin" />
@@ -270,48 +285,49 @@ export default function LibraryPage() {
                   : "No decks yet — create one!"}
               </p>
             </motion.div>
-          ) : viewMode === "list" ? (
-            /* ─── LIST VIEW (Quizlet-style) ─── */
-            <ul className="space-y-1 py-2 pb-6">
-              <AnimatePresence initial={false} mode="popLayout">
-                {pagedDecks.map((deck, i) => (
-                  <motion.li
-                    key={deck.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{ duration: 0.14, delay: Math.min(i * 0.025, 0.18) }}
-                    className="relative"
-                    style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                  >
-                    <DeckRow {...itemProps(deck)} />
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
           ) : (
-            /* ─── GRID VIEW (Mazii-style) ─── */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
-              <AnimatePresence initial={false} mode="popLayout">
-                {pagedDecks.map((deck, i) => (
-                  <motion.div
-                    key={deck.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.92, y: 14 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.88 }}
-                    transition={{ duration: 0.18, delay: Math.min(i * 0.04, 0.24) }}
-                    className="relative"
-                    style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                  >
-                    <DeckCard {...itemProps(deck)} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+            /* ─── Sliding page container (direction follows next/prev) ─── */
+            <AnimatePresence mode="wait" custom={pageDir} initial={false}>
+              <motion.div
+                key={safePage}
+                custom={pageDir}
+                variants={pageSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {viewMode === "list" ? (
+                  /* ─── LIST VIEW (Quizlet-style) ─── */
+                  <ul className="space-y-1 py-2 pb-6">
+                    {pagedDecks.map((deck) => (
+                      <li
+                        key={deck.id}
+                        className="relative"
+                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
+                      >
+                        <DeckRow {...itemProps(deck)} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  /* ─── GRID VIEW (Mazii-style) ─── */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
+                    {pagedDecks.map((deck) => (
+                      <div
+                        key={deck.id}
+                        className="relative"
+                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
+                      >
+                        <DeckCard {...itemProps(deck)} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
-        </div>
+        </ScrollHintContainer>
 
         {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
         {!isLoading && totalPages > 1 && (
@@ -319,7 +335,7 @@ export default function LibraryPage() {
             <PaginationBar
               currentPage={safePage}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
               totalItems={filteredDecks.length}
             />
           </div>

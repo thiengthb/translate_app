@@ -5,6 +5,7 @@ import { deckApi, favoriteDeckApi } from "@/api";
 import type { DeckDTO, FavoriteDeckDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PaginationBar } from "@/components/common/PaginationBar";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -46,6 +47,13 @@ type SortKey = "newest" | "mostSaved" | "mostFavorited" | "mostViewed";
 
 const DECKS_PER_PAGE = 12;
 
+/* Directional horizontal slide for page changes (next → slide left, prev → slide right). */
+const pageSlideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
+};
+
 interface SortOption {
   key: SortKey;
   label: string;
@@ -79,6 +87,7 @@ export default function CommunityPage() {
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [sortOpen, setSortOpen] = useState(false);
   const [page, setPage] = useState(1); // 1-based
+  const [pageDir, setPageDir] = useState(0); // 1 = next, -1 = prev (drives slide direction)
 
   /* Debounce search input */
   useEffect(() => {
@@ -150,8 +159,14 @@ export default function CommunityPage() {
 
   // Reset to the first page whenever the visible set changes.
   useEffect(() => {
+    setPageDir(-1);
     setPage(1);
   }, [tab, mode, sortKey, debouncedSearch]);
+
+  const handlePageChange = (next: number) => {
+    setPageDir(next >= safePage ? 1 : -1);
+    setPage(next);
+  };
 
   /* Actions */
   const handleClone = useCallback(
@@ -300,7 +315,7 @@ export default function CommunityPage() {
         </div>
 
         {/* ════════ CONTENT ════════ */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+        <ScrollHintContainer axis="vertical" viewportClassName="px-6 py-4">
           {loading ? (
             <div className="flex items-center justify-center h-60">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -308,32 +323,33 @@ export default function CommunityPage() {
           ) : visibleDecks.length === 0 ? (
             <EmptyState tab={tab} hasSearch={!!debouncedSearch} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
-              <AnimatePresence initial={false} mode="popLayout">
-                {pagedDecks.map((deck, i) => (
-                  <motion.div
+            <AnimatePresence mode="wait" custom={pageDir} initial={false}>
+              <motion.div
+                key={safePage}
+                custom={pageDir}
+                variants={pageSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-6"
+              >
+                {pagedDecks.map((deck) => (
+                  <CommunityDeckCard
                     key={deck.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.92, y: 14 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.88 }}
-                    transition={{ duration: 0.18, delay: Math.min(i * 0.04, 0.24) }}
-                  >
-                    <CommunityDeckCard
-                      deck={deck}
-                      favorited={deck.id != null && favoriteByDeckId.has(deck.id)}
-                      cloning={cloning === deck.id}
-                      togglingFav={togglingFav === deck.id}
-                      onPreview={() => navigate(`/deck/${deck.id}/preview`)}
-                      onClone={() => handleClone(deck)}
-                      onToggleFavorite={() => handleToggleFavorite(deck)}
-                    />
-                  </motion.div>
+                    deck={deck}
+                    favorited={deck.id != null && favoriteByDeckId.has(deck.id)}
+                    cloning={cloning === deck.id}
+                    togglingFav={togglingFav === deck.id}
+                    onPreview={() => navigate(`/deck/${deck.id}/preview`)}
+                    onClone={() => handleClone(deck)}
+                    onToggleFavorite={() => handleToggleFavorite(deck)}
+                  />
                 ))}
-              </AnimatePresence>
-            </div>
+              </motion.div>
+            </AnimatePresence>
           )}
-        </div>
+        </ScrollHintContainer>
 
         {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
         {!loading && totalPages > 1 && (
@@ -341,7 +357,7 @@ export default function CommunityPage() {
             <PaginationBar
               currentPage={safePage}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
               totalItems={visibleDecks.length}
             />
           </div>

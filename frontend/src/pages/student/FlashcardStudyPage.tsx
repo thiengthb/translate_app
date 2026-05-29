@@ -46,6 +46,9 @@ function getSideAudio(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
 import { BookOpen, Check, ChevronLeft, Maximize2, Minimize2, RotateCcw, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { RevealMore } from "@/components/common/RevealMore";
+
+const TERMS_INITIAL_VISIBLE = 30;
 
 interface CardEntry {
   orderIndex: number;
@@ -97,6 +100,7 @@ export default function FlashcardStudyPage() {
   const [loading, setLoading] = useState(true);
   const [fullView, setFullView] = useState(false);
   const [shuffled, setShuffled] = useState(false);
+  const [visibleTerms, setVisibleTerms] = useState(TERMS_INITIAL_VISIBLE);
 
   /* ── Load deck + cards ── */
   useEffect(() => {
@@ -125,6 +129,7 @@ export default function FlashcardStudyPage() {
 
         setAllCards(sorted);
         setSession(buildSession(sorted));
+        setVisibleTerms(TERMS_INITIAL_VISIBLE);
       } finally {
         setLoading(false);
       }
@@ -519,7 +524,7 @@ export default function FlashcardStudyPage() {
               Terms in this set ({allCards.length})
             </h2>
             <div className="space-y-2">
-              {allCards.map(({ flashcard }, i) => (
+              {allCards.slice(0, visibleTerms).map(({ flashcard }, i) => (
                 <div
                   key={flashcard.id ?? i}
                   className="grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-border bg-border"
@@ -566,6 +571,12 @@ export default function FlashcardStudyPage() {
                 </div>
               ))}
             </div>
+
+            <RevealMore
+              total={allCards.length}
+              visibleCount={visibleTerms}
+              onChange={setVisibleTerms}
+            />
           </div>
         )}
       </div>

@@ -287,18 +287,6 @@ export default function AnkiStudyPage() {
           )}
 
           <div className="flex items-center gap-3">
-            {!loading && !isDone && (
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-blue-500 inline-block" />
-                  {totalNew} new
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-orange-400 inline-block" />
-                  {totalDue} due
-                </span>
-              </div>
-            )}
             <button
               onClick={() => setFullView((v) => !v)}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -317,9 +305,21 @@ export default function AnkiStudyPage() {
             {deckTitle || "Loading…"}
           </h1>
           {!loading && !isDone && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {remaining} card{remaining !== 1 ? "s" : ""} remaining
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span>
+                {remaining} card{remaining !== 1 ? "s" : ""} remaining
+              </span>
+              <span className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-blue-500 inline-block" />
+                  {totalNew} new
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-orange-400 inline-block" />
+                  {totalDue} due
+                </span>
+              </span>
+            </div>
           )}
         </div>
 
@@ -394,31 +394,32 @@ export default function AnkiStudyPage() {
               </button>
             </div>
 
-            {/* Flip card — grows with content, min-height keeps it visually stable */}
+            {/* Open field — content shows directly on the page (no card chrome).
+               Switching sides uses a "deck shuffle" depth motion: the current
+               side pushes back into the stack while the new side comes forward. */}
             <div
               className={cn(
                 "relative cursor-pointer select-none",
                 fullView ? "min-h-[60vh]" : "min-h-64"
               )}
               onClick={() => !submitting && setFlipped((f) => !f)}
-              style={{ perspective: 1200 }}
+              style={{ perspective: 1400 }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${current.flashcardId}-${flipped}`}
-                  initial={{ rotateY: 90, opacity: 0 }}
-                  animate={{ rotateY: 0, opacity: 1 }}
-                  exit={{ rotateY: -90, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={cn(
-                    "rounded-2xl border border-border shadow-md overflow-hidden p-0",
-                    flipped ? "bg-primary/5" : "bg-card"
-                  )}
+                  initial={{ opacity: 0, scale: 0.9, y: 28, z: -160 }}
+                  animate={{ opacity: 1, scale: 1, y: 0, z: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -28, z: -160 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transformStyle: "preserve-3d" }}
+                  className="p-0"
                 >
                   <div className="flex flex-col">
-                    <span className="shrink-0 pt-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <span className="shrink-0 pt-1 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       {flipped ? "Answer" : "Question"}
                     </span>
+                    <span className="mx-auto mt-2 mb-1 h-px w-12 bg-border/70" />
 
                     {hasTemplateRender(renderData, flipped) ? (
                       <TemplateSideRender
