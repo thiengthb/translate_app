@@ -316,7 +316,7 @@ export default function CreateAnkiDeckPage() {
 
   return (
     <MainLayout pathName={{ "/create-deck/anki": "Anki deck" }}>
-      <div className="max-w-4xl mx-auto w-full pb-32 space-y-5">
+      <div className="w-full pb-32 space-y-5">
         {/* Back */}
         <button
           onClick={() => navigate("/create-deck")}

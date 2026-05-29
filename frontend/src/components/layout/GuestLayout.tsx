@@ -20,9 +20,6 @@ const AUTH_PATHS = new Set([
 
 interface GuestLayoutProps {
     children: React.ReactNode;
-    /** Forwarded into the action row's avatar dropdown (only rendered
-     *  if the guest manages to authenticate without yet reloading). */
-    onOpenShortcuts?: () => void;
 }
 
 /**
@@ -44,7 +41,7 @@ interface GuestLayoutProps {
  * permission-gated lives behind login and shows up in the sidebar
  * after authentication.
  */
-export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
+export function GuestLayout({ children }: GuestLayoutProps) {
     const location = useLocation();
     const isAuthPage = AUTH_PATHS.has(location.pathname);
 
@@ -99,10 +96,7 @@ export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
 
                     <div className="flex-1" />
 
-                    <GuestActionsRow
-                        isAuthPage={isAuthPage}
-                        onOpenShortcuts={onOpenShortcuts}
-                    />
+                    <GuestActionsRow isAuthPage={isAuthPage} />
                 </div>
             </header>
 

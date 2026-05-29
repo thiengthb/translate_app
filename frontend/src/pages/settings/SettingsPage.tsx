@@ -9,7 +9,14 @@ import {
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card } from "@/components/ui/card";
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
 import { useTranslation } from "@/contexts/I18nContext";
 import { useColorPreset } from "@/hooks/useColorPreset";
@@ -35,10 +42,9 @@ const THEME_MODES: Array<{
 /**
  * Settings page — `/settings`.
  *
- * Layout strategy: the page consumes the full width of the main layout
- * (no centered `max-w-*` constraint) and arranges sections in a
- * responsive grid so high-resolution monitors don't waste horizontal
- * space.
+ * Mirrors the Profile page shell: a full-width column with `gap-6`
+ * between Cards (same `Card` / `CardHeader` / `CardTitle` /
+ * `CardDescription` primitives) so the two pages feel like siblings.
  *
  *   Row 1 (lg+):  ┌── Giao diện ──────────┬── Ngôn ngữ ──┐
  *                 │  3 buttons             │  N buttons   │
@@ -56,11 +62,11 @@ const THEME_MODES: Array<{
 export default function SettingsPage() {
     return (
         <MainLayout pathName={{ "/settings": "Cài đặt" }}>
-            <div className="w-full flex flex-col gap-4 pb-6">
+            <div className="w-full flex flex-col gap-3">
                 {/* Theme + Language paired at the top — they share the
                     "small switcher" pattern and pack neatly side-by-side
                     on wide screens. */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
                     <div className="lg:col-span-3">
                         <ThemeModeSection />
                     </div>
@@ -82,11 +88,11 @@ function ThemeModeSection() {
 
     return (
         <SectionCard
-            icon={<Sun size={16} />}
+            icon={<Sun size={16} className="text-primary" />}
             title="Giao diện"
             description="Sáng, tối, hoặc theo hệ điều hành."
         >
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
                 {THEME_MODES.map(({ value, label, Icon }) => {
                     const active = themePreference === value;
                     return (
@@ -94,19 +100,19 @@ function ThemeModeSection() {
                             key={value}
                             active={active}
                             onClick={() => setThemePreference(value)}
-                            className="flex-col items-center text-center py-4"
+                            className="flex-col items-center text-center py-2.5 gap-1.5"
                         >
                             <span
                                 className={cn(
-                                    "inline-flex h-9 w-9 items-center justify-center rounded-full",
+                                    "inline-flex h-8 w-8 items-center justify-center rounded-full",
                                     active
                                         ? "bg-primary/10 text-primary"
                                         : "bg-muted text-muted-foreground",
                                 )}
                             >
-                                <Icon size={16} />
+                                <Icon size={15} />
                             </span>
-                            <span className="text-sm font-medium">{label}</span>
+                            <span className="text-xs font-medium">{label}</span>
                         </SelectCard>
                     );
                 })}
@@ -121,11 +127,11 @@ function ColorPresetSection() {
 
     return (
         <SectionCard
-            icon={<Palette size={16} />}
+            icon={<Palette size={16} className="text-primary" />}
             title="Màu chủ đạo"
             description="Tông màu chính của toàn ứng dụng."
         >
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1.5">
                 {COLOR_PRESETS.map((p) => {
                     const active = presetId === p.id;
                     return (
@@ -134,17 +140,17 @@ function ColorPresetSection() {
                             active={active}
                             onClick={() => setPreset(p.id)}
                             title={p.description}
-                            className="flex-col items-center text-center py-3 gap-2"
+                            className="flex-col items-center text-center py-2 gap-1.5"
                         >
                             {/* Swatch with a subtle inner ring to give
                                 light-colored swatches (Amber) edges
                                 against a white card. */}
                             <span
-                                className="h-9 w-9 rounded-full shrink-0 shadow-inner ring-1 ring-black/10 dark:ring-white/10"
+                                className="h-7 w-7 rounded-full shrink-0 shadow-inner ring-1 ring-black/10 dark:ring-white/10"
                                 style={{ backgroundColor: p.swatch }}
                                 aria-hidden
                             />
-                            <span className="text-xs font-medium leading-tight">
+                            <span className="text-[11px] font-medium leading-tight truncate w-full">
                                 {p.name}
                             </span>
                         </SelectCard>
@@ -162,7 +168,7 @@ function TypographySection() {
 
     return (
         <SectionCard
-            icon={<Type size={16} />}
+            icon={<Type size={16} className="text-primary" />}
             title="Kiểu chữ"
             description="Font và mật độ — áp dụng toàn ứng dụng."
             actions={
@@ -177,7 +183,7 @@ function TypographySection() {
                 />
             }
         >
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1.5">
                 {families.map((f) => {
                     const active = familyId === f.id;
                     return (
@@ -186,27 +192,18 @@ function TypographySection() {
                             active={active}
                             onClick={() => setFamily(f.id)}
                             title={f.description}
-                            className="flex-col items-stretch text-center py-3 gap-1.5"
+                            className="flex-col items-stretch text-center py-2 gap-0.5"
                         >
                             {/* Live preview rendered in the actual font so
                                 users can compare typefaces side-by-side
-                                without flipping the global setting.
-                                "Aa" exercises Latin shapes; the
-                                Vietnamese sample shows diacritic
-                                rendering. */}
+                                without flipping the global setting. */}
                             <span
-                                className="text-2xl leading-none font-semibold tracking-tight"
+                                className="text-xl leading-none font-semibold tracking-tight"
                                 style={{ fontFamily: f.family }}
                             >
                                 Aa
                             </span>
-                            <span
-                                className="text-[11px] leading-tight text-muted-foreground truncate"
-                                style={{ fontFamily: f.family }}
-                            >
-                                Đường Sáng
-                            </span>
-                            <span className="text-xs font-medium truncate mt-0.5">
+                            <span className="text-[11px] font-medium truncate">
                                 {f.name}
                             </span>
                         </SelectCard>
@@ -223,13 +220,13 @@ function LanguageSection() {
 
     return (
         <SectionCard
-            icon={<Languages size={16} />}
+            icon={<Languages size={16} className="text-primary" />}
             title="Ngôn ngữ"
             description="Ngôn ngữ hiển thị."
         >
             <div
                 className={cn(
-                    "grid gap-2",
+                    "grid gap-1.5",
                     locales.length <= 2
                         ? "grid-cols-2"
                         : "grid-cols-2 sm:grid-cols-3",
@@ -242,12 +239,23 @@ function LanguageSection() {
                             key={l.code}
                             active={active}
                             onClick={() => setLocale(l.code as Locale)}
-                            className="flex-col items-center text-center py-4 gap-1.5"
+                            className="flex-col items-center text-center py-2.5 gap-1.5"
                         >
-                            <span className="text-2xl leading-none" aria-hidden>
+                            {/* Flag inside a circle mirrors the theme cards'
+                                icon chip so language + theme items share the
+                                exact same height. */}
+                            <span
+                                className={cn(
+                                    "inline-flex h-8 w-8 items-center justify-center rounded-full text-base leading-none",
+                                    active
+                                        ? "bg-primary/10"
+                                        : "bg-muted",
+                                )}
+                                aria-hidden
+                            >
                                 {l.flag}
                             </span>
-                            <span className="text-sm font-medium leading-tight">
+                            <span className="text-xs font-medium leading-tight">
                                 {t(l.labelKey)}
                             </span>
                         </SelectCard>
@@ -284,7 +292,7 @@ function SelectCard({
             onClick={onClick}
             title={title}
             className={cn(
-                "relative flex items-center gap-2 rounded-lg border p-2.5 transition-all cursor-pointer",
+                "relative flex items-center gap-2 rounded-lg border p-2 transition-all cursor-pointer",
                 "hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                 active
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
@@ -295,9 +303,9 @@ function SelectCard({
             {children}
             {active && (
                 <Check
-                    size={12}
+                    size={11}
                     strokeWidth={3}
-                    className="absolute top-1.5 right-1.5 text-primary"
+                    className="absolute top-1 right-1 text-primary"
                 />
             )}
         </button>
@@ -344,9 +352,10 @@ function SegmentedControl({
 }
 
 /**
- * Section card shell with icon header + optional right-aligned actions
- * slot (used by Typography to surface the density segmented control
- * inline with the title).
+ * Section card shell — mirrors the Profile page's cards (shadcn
+ * `Card`/`CardHeader`/`CardTitle`/`CardDescription`) with an icon header
+ * and an optional right-aligned action slot (used by Typography to dock
+ * the density segmented control inline with the title).
  */
 function SectionCard({
     icon,
@@ -362,24 +371,16 @@ function SectionCard({
     children: React.ReactNode;
 }) {
     return (
-        <Card className="p-4 sm:p-5 gap-3 sm:gap-4 h-full">
-            <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-                <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                        {icon}
-                    </span>
-                    <div className="min-w-0">
-                        <h2 className="text-sm font-semibold text-foreground leading-tight">
-                            {title}
-                        </h2>
-                        <p className="text-xs text-muted-foreground truncate">
-                            {description}
-                        </p>
-                    </div>
-                </div>
-                {actions}
-            </div>
-            {children}
+        <Card className="h-full gap-3 py-4">
+            <CardHeader className="px-4 gap-0.5">
+                <CardTitle className="text-sm flex items-center gap-2">
+                    {icon}
+                    {title}
+                </CardTitle>
+                <CardDescription className="text-xs">{description}</CardDescription>
+                {actions && <CardAction className="self-center">{actions}</CardAction>}
+            </CardHeader>
+            <CardContent className="px-4">{children}</CardContent>
         </Card>
     );
 }

@@ -29,7 +29,7 @@ export function UserAnalyticsContent() {
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
             <SummaryCards summary={data.summary} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

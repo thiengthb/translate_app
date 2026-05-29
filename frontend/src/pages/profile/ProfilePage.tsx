@@ -25,7 +25,7 @@ export default function ProfilePage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-7xl mx-auto">
+            <div className="w-full">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <IdentityCard profile={profile} onAvatarChange={setAvatarUrl} />
                     <PersonalInfoCard profile={profile} onSave={saveInfo} />

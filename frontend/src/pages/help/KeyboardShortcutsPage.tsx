@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Keyboard, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Kbd } from "@/components/common/KeyboardShortcutsDialog";
@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
-    IS_MAC,
-    MOD_KEY,
     SHORTCUT_GROUPS,
     type ShortcutGroup,
 } from "@/lib/keyboard-shortcuts";
@@ -45,34 +43,7 @@ export default function KeyboardShortcutsPage() {
 
     return (
         <MainLayout pathName={{ "/help/shortcuts": "Phím tắt" }}>
-            <div className="max-w-4xl mx-auto w-full space-y-6">
-                {/* ─── Header ──────────────────────────────────────────── */}
-                <header className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                            <Keyboard size={20} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight">
-                                Phím tắt
-                            </h1>
-                            <p className="text-sm text-muted-foreground">
-                                Mọi phím tắt được hỗ trợ trong ứng dụng. Bấm{" "}
-                                <Kbd>?</Kbd> ở bất kỳ đâu để mở popup tham khảo nhanh.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="text-xs text-muted-foreground">
-                        Hệ điều hành phát hiện:{" "}
-                        <span className="font-medium text-foreground">
-                            {IS_MAC ? "macOS" : "Windows / Linux"}
-                        </span>{" "}
-                        — phím modifier hiển thị là{" "}
-                        <Kbd>{MOD_KEY}</Kbd>.
-                    </div>
-                </header>
-
+            <div className="w-full space-y-6">
                 {/* ─── Search ──────────────────────────────────────────── */}
                 <div className="relative">
                     <Search

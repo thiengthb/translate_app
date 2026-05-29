@@ -58,7 +58,7 @@ export default function PublicProfilePage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-5xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 <Button
                     variant="ghost"
                     size="sm"

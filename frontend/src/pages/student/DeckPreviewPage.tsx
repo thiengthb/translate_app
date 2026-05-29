@@ -168,7 +168,7 @@ export default function DeckPreviewPage() {
         [`/deck/${deckId}/preview`]: deck?.title ?? "Deck preview",
       }}
     >
-      <div className="max-w-4xl mx-auto w-full pb-16 space-y-6 pt-2">
+      <div className="w-full pb-16 space-y-6 pt-2">
 
         {/* Back link */}
         <button
