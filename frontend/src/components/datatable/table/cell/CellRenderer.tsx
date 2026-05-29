@@ -31,6 +31,16 @@ interface CellRendererProps {
 /** Field types that support click-to-edit inline. */
 const INLINE_EDITABLE_TYPES = new Set(["string", "text", "number", "relation"]);
 
+/**
+ * Image fields store URLs as strings. `String(null)` would render as
+ * "null" → broken image; this helper normalizes to a clean URL or null.
+ */
+function coerceImageUrl(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  const s = String(value).trim();
+  return s ? s : null;
+}
+
 export function CellRenderer({
   field,
   value,
@@ -42,6 +52,39 @@ export function CellRenderer({
   pinStyle,
   pinClassName,
 }: CellRendererProps) {
+  if (field.type === "image") {
+    const url = coerceImageUrl(value);
+    return (
+      <TableCell style={pinStyle} className={pinClassName}>
+        {url ? (
+          <TooltipWrapper content={url}>
+            {/* Compact 32px thumbnail with rounded border — sized to
+                fit the default row height without bloating it. */}
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 w-8 overflow-hidden rounded-md border bg-muted shrink-0 hover:ring-2 hover:ring-primary/40 transition"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={url}
+                alt={field.label}
+                loading="lazy"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </a>
+          </TooltipWrapper>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
+    );
+  }
+
   if (field.type === "boolean") {
     const labels = field.booleanLabels || { true: "Yes", false: "No" };
     const label = value ? labels.true : labels.false;

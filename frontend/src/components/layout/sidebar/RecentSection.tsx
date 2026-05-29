@@ -1,4 +1,4 @@
-import { Clock, XSquare } from "lucide-react";
+import { Clock, X } from "lucide-react";
 
 import {
     SidebarGroup,
@@ -39,11 +39,15 @@ export function RecentSection({
     if (items.length === 0) return null;
 
     return (
-        <SidebarGroup className="py-1">
+        <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
+            {/* Header mirrors PinnedSection exactly — same label
+                typography + primary-tinted icon. The right-side
+                clear-all button is the only visual difference, since
+                Recent has a list to manage and Pin doesn't. */}
             <div className="flex items-center justify-between pr-1">
                 <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Clock size={11} className="text-muted-foreground" />
-                    Gần đây
+                    <Clock size={11} className="text-primary" />
+                    Recent
                 </SidebarGroupLabel>
                 <TooltipWrapper content="Xóa tất cả">
                     <button
@@ -52,7 +56,7 @@ export function RecentSection({
                         aria-label="Xóa tất cả mục gần đây"
                         className="p-1 rounded text-muted-foreground/60 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                     >
-                        <XSquare size={12} />
+                        <X size={12} />
                     </button>
                 </TooltipWrapper>
             </div>
@@ -62,7 +66,7 @@ export function RecentSection({
                         key={item.key}
                         item={item}
                         variant="top"
-                        tone="secondary"
+                        activeAppearance="soft"
                         onRemove={{
                             tooltip: "Xóa khỏi gần đây",
                             onRemove: () => onRemoveItem(item.key),

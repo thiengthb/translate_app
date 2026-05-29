@@ -46,6 +46,15 @@
 
 :root {
   --radius: 0.625rem;
+  /* Typography defaults — overridden at runtime by useTypography. The
+     defaults keep the OS-native system stack so first paint never waits
+     on Google Fonts (the user can opt into a web font in /settings). */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --app-font-size: 16px;
   --background: oklch(0.985 0.006 78);
   --foreground: oklch(0.145 0.012 55);
   --card: oklch(0.992 0.004 78);
@@ -117,8 +126,23 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Root font-size drives Tailwind's rem-based scale. Bumping
+     --app-font-size proportionally enlarges text + spacing for the
+     "comfortable" density preset; lowering it gives "compact". */
+  html {
+    font-size: var(--app-font-size);
+  }
   body {
+    font-family: var(--font-sans);
     @apply bg-background text-foreground;
+  }
+  /* Monospace context — code, kbd, pre — uses its own var so
+     selecting JetBrains Mono only affects code, not the whole UI. */
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
   }
 }
 

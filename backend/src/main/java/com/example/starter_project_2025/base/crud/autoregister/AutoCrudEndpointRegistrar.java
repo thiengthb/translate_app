@@ -155,9 +155,30 @@ public class AutoCrudEndpointRegistrar {
         return paths;
     }
 
+    /**
+     * Detect whether an explicit {@code @RestController} already owns the
+     * entity's standard CRUD surface — in which case we skip auto
+     * registration so the manual controller wins.
+     *
+     * <p>Ownership is determined by checking for the <strong>canonical
+     * CRUD path patterns</strong>:
+     * <ul>
+     *   <li>{@code basePath} itself (list / create endpoint)</li>
+     *   <li>{@code basePath + "/{id}"} (detail / update / delete endpoint)</li>
+     * </ul>
+     *
+     * <p>An ancillary sub-endpoint like {@code /api/users/{userId}/public-profile}
+     * does <strong>not</strong> indicate the controller owns the entity —
+     * it's a feature endpoint built on top of the user URL space.
+     * Previously this method used {@code startsWith(basePath + "/")}
+     * which incorrectly treated such feature endpoints as ownership
+     * markers and silently disabled User CRUD when a Leaderboard
+     * controller defined {@code GET /api/users/{userId}/public-profile}.
+     */
     private boolean pathAlreadyMapped(String basePath, Set<String> existingPaths) {
+        String detailPath = basePath + "/{id}";
         for (String existing : existingPaths) {
-            if (existing.equals(basePath) || existing.startsWith(basePath + "/")) {
+            if (existing.equals(basePath) || existing.equals(detailPath)) {
                 return true;
             }
         }

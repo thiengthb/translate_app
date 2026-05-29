@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
 import { ROW_CLICK_GUARD_SELECTOR } from "./constants";
@@ -14,6 +15,7 @@ import { useProTableModals } from "./hook/useProTableModals";
 import { useRowExpansion } from "./hook/useRowExpansion";
 import { useTableKeyboard } from "./hook/useTableKeyboard";
 import { useTableLayoutMetrics } from "./hook/useTableLayoutMetrics";
+import { useViewMode } from "./hook/useViewMode";
 
 import Loading from "./common/Loading";
 import NoResult from "./common/NoResult";
@@ -21,7 +23,9 @@ import { BulkEditModal } from "./modal/BulkEditModal";
 import { ConfirmDeleteModal } from "./modal/ConfirmDeleteModal";
 import { DetailModal } from "./modal/DetailModal";
 import { FormModal } from "./modal/form/FormModal";
+import { CardLayoutEditor } from "./table/card/CardLayoutEditor";
 import { CardView } from "./table/card/CardView";
+import { useCardLayout } from "./table/card/useCardLayout";
 import { CellRenderer } from "./table/cell/CellRenderer";
 import { ChartView } from "./table/chart/ChartView";
 import { Pagination } from "./table/Pagination";
@@ -29,7 +33,6 @@ import { RowActions } from "./table/RowActions";
 import { TableView } from "./table/TableView";
 import { BulkActionBar } from "./toolbar/BulkActionBar";
 import { Toolbar } from "./toolbar/Toolbar";
-import type { ViewMode } from "./toolbar/Toolbar";
 
 /**
  * ProTable: Reusable data table component with sensible defaults.
@@ -126,7 +129,53 @@ export function ProTable<TData = any>({
         bulkDeleteLoading,
         setBulkDeleteLoading,
     } = useProTableModals<TData>();
-    const [viewMode, setViewMode] = useState<ViewMode>("table");
+    // View mode (table/card/chart) is persisted globally so it survives
+    // reloads AND navigation to another module — see useViewMode.
+    const [viewMode, setViewMode] = useViewMode();
+    const [cardLayoutEditorOpen, setCardLayoutEditorOpen] = useState(false);
+
+    // ─── Catalog mode ───────────────────────────────────────────────────────
+    // When the viewer has no write permissions (no create AND no update AND
+    // no delete), ProTable shifts into a "browse-only" personality:
+    //   - view mode is locked to card (the natural medium for browsing)
+    //   - the view-mode picker, create button, bulk bar, checkboxes, and
+    //     row action buttons all disappear
+    //   - the card-layout seed flips to a gallery-friendly preset
+    // The intent is to make the page read as a catalog, not a stripped-down
+    // admin grid. The viewer still gets search, filter, sort, pagination,
+    // and the detail modal on click — everything they need to consume the
+    // data, nothing more.
+    const perm = table.permission;
+    const isReadOnly = perm
+        ? !perm.canCreate && !perm.canUpdate && !perm.canDelete
+        : false;
+    const effectiveViewMode = isReadOnly ? "card" : viewMode;
+
+    // ─── Card-view layout customization ─────────────────────────────────────
+    // Mounted at this level so the toolbar's "Tùy chỉnh card layout" button
+    // and the CardView itself share one source of truth — and changes from
+    // the editor live-update the cards behind the dialog.
+    // Catalog mode seeds with the "Product" preset when images are
+    // available, "Compact" otherwise — gives read-only viewers a
+    // polished landing layout instead of the bare schema defaults.
+    const hasImageCandidate = useMemo<boolean>(
+        () =>
+            (table.visibleFields as any[]).some(
+                (f: any) =>
+                    f.type === "image" ||
+                    /(image|avatar|photo|thumbnail|picture|logo|cover|banner)/i.test(
+                        f.name,
+                    ),
+            ),
+        [table.visibleFields],
+    );
+    const cardLayout = useCardLayout(
+        schema.entityName,
+        table.visibleFields as any,
+        isReadOnly
+            ? { defaultPresetId: hasImageCandidate ? "product" : "compact" }
+            : undefined,
+    );
 
     // ─── Detail prev/next derived from current page ─────────────────────────
     const detailIndex = useMemo(() => {
@@ -343,17 +392,33 @@ export function ProTable<TData = any>({
             <Toolbar
                 table={table}
                 headerActions={headerActions}
-                viewMode={viewMode}
+                viewMode={effectiveViewMode}
                 onViewModeChange={setViewMode}
                 density={density}
                 onDensityChange={setDensity}
+                /* Card layout editing is admin-only. Catalog viewers
+                   get whatever layout the admin chose for the entity —
+                   no entry point exposed to them. */
+                onOpenCardLayout={
+                    !isReadOnly && effectiveViewMode === "card"
+                        ? () => setCardLayoutEditorOpen(true)
+                        : undefined
+                }
+                readOnly={isReadOnly}
             />
 
             <div
                 ref={containerRef}
-                className="h-full rounded-lg border bg-card text-foreground flex flex-col w-full min-w-0 max-w-full overflow-hidden"
+                className={cn(
+                    "h-full text-foreground flex flex-col w-full min-w-0 max-w-full overflow-hidden",
+                    // Workspace mode keeps the bordered card surface
+                    // — gives the data-grid a clear container. Catalog
+                    // mode drops it so cards float on the page
+                    // background like a gallery, no admin-grid chrome.
+                    !isReadOnly && "rounded-lg border bg-card",
+                )}
             >
-                {viewMode === "table" ? (
+                {effectiveViewMode === "table" ? (
                     <TableView
                         table={table}
                         densityCfg={densityCfg}
@@ -384,12 +449,22 @@ export function ProTable<TData = any>({
                         focusedRowIndex={focusedRowIndex}
                         onRowClick={handleRowClick}
                     />
-                ) : viewMode === "card" ? (
+                ) : effectiveViewMode === "card" ? (
                     <>
                         {hasRows ? (
                             <CardView
                                 table={table}
-                                onRowClick={onRowClick}
+                                /* Catalog mode: clicking a card opens
+                                   the detail modal as the default
+                                   drill-in. Outside catalog mode we
+                                   stay opt-in so existing pages keep
+                                   their own onRowClick semantics. */
+                                onRowClick={
+                                    onRowClick ??
+                                    (isReadOnly
+                                        ? (row) => setDetailRow(row)
+                                        : undefined)
+                                }
                                 showActions={showActionsColumn}
                                 renderRowActions={showActionsColumn ? finalRenderRowActions : undefined}
                                 onView={onView || setDetailRow}
@@ -400,6 +475,8 @@ export function ProTable<TData = any>({
                                     if (!(table.permission?.canUpdate ?? true)) return;
                                     table.patchField(id, fieldName, newValue);
                                 }}
+                                layout={cardLayout.config}
+                                readOnly={isReadOnly}
                             />
                         ) : (
                             <div className="flex-1 flex items-center justify-center">
@@ -408,7 +485,7 @@ export function ProTable<TData = any>({
                         )}
                     </>
                 ) : (
-                    // viewMode === "chart"
+                    // effectiveViewMode === "chart"
                     hasRows ? (
                         <ChartView table={table} />
                     ) : (
@@ -433,6 +510,7 @@ export function ProTable<TData = any>({
                     }
                     table.setPage(0);
                 }}
+                readOnly={isReadOnly}
             />
 
             {/* Form Modal: custom renderer or default */}
@@ -502,20 +580,28 @@ export function ProTable<TData = any>({
                 }
             />
 
-            {/* ─── Sticky bulk action bar ─────────────────────────────── */}
-            <BulkActionBar
-                selectedCount={table.selected?.length ?? 0}
-                total={table.data?.length ?? 0}
-                onClearSelection={() => table.clearSelection?.()}
-                onBulkDelete={
-                    table.permission?.canDelete ? () => setBulkDeleteOpen(true) : undefined
-                }
-                onBulkEdit={
-                    table.permission?.canUpdate ? () => setBulkEditOpen(true) : undefined
-                }
-                deletePermission={table.permission?.keys?.delete}
-                editPermission={table.permission?.keys?.update}
-            />
+            {/* ─── Sticky bulk action bar ──────────────────────────────
+                Catalog mode never shows this — selection itself is
+                hidden, so the bulk bar would have nothing to act on. */}
+            {!isReadOnly && (
+                <BulkActionBar
+                    selectedCount={table.selected?.length ?? 0}
+                    total={table.data?.length ?? 0}
+                    onClearSelection={() => table.clearSelection?.()}
+                    onBulkDelete={
+                        table.permission?.canDelete
+                            ? () => setBulkDeleteOpen(true)
+                            : undefined
+                    }
+                    onBulkEdit={
+                        table.permission?.canUpdate
+                            ? () => setBulkEditOpen(true)
+                            : undefined
+                    }
+                    deletePermission={table.permission?.keys?.delete}
+                    editPermission={table.permission?.keys?.update}
+                />
+            )}
 
             <BulkEditModal
                 open={bulkEditOpen}
@@ -546,6 +632,20 @@ export function ProTable<TData = any>({
                     table.selected?.length ?? 0
                 } mục đã chọn? Hành động này không thể hoàn tác.`}
             />
+
+            {/* Card layout editor — a non-modal side sheet. The cards
+                behind stay fully visible AND interactive so the editor
+                IS the live preview against real data.
+                Skipped entirely for catalog viewers (no permission to
+                edit the layout — that's an admin tool). */}
+            {!isReadOnly && (
+                <CardLayoutEditor
+                    open={cardLayoutEditorOpen}
+                    onOpenChange={setCardLayoutEditorOpen}
+                    cardLayout={cardLayout}
+                    visibleFields={table.visibleFields as any}
+                />
+            )}
         </div>
     );
 }

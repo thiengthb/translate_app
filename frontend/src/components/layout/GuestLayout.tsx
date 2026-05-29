@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
 
-import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
 import { usePublicModules } from "@/hooks/usePublicModules";
-import { ADMIN_ROLE, normalizeRole } from "@/utils/rbac.utils";
-import type { RootState } from "@/store/store";
 
 import { GuestActionsRow } from "./guest/GuestActionsRow";
 import { GuestLogo } from "./guest/GuestLogo";
@@ -22,68 +18,37 @@ const AUTH_PATHS = new Set([
     "/not-found-page",
 ]);
 
-/**
- * Defensive belt for groups that should never appear in a non-admin
- * user's navbar even if their entity permissions accidentally leak in.
- * The system menu (Module / ModuleGroup) is now gated by `MENU_UPDATE`
- * at the BE so the permission filter excludes it on its own — kept here
- * for future entities that happen to share these group names.
- */
-const ADMIN_ONLY_GROUP_NAMES = new Set(["rbac management", "dashboard"]);
-const isAdminOnlyGroup = (name?: string | null): boolean =>
-    !!name && ADMIN_ONLY_GROUP_NAMES.has(name.trim().toLowerCase());
+interface GuestLayoutProps {
+    children: React.ReactNode;
+    /** Forwarded into the action row's avatar dropdown (only rendered
+     *  if the guest manages to authenticate without yet reloading). */
+    onOpenShortcuts?: () => void;
+}
 
 /**
- * Header + footer shell for everyone who isn't in the admin sidebar
- * shell — guests, students, teachers, and any auth-flow pages.
+ * Landing-style header + footer for **unauthenticated visitors only**.
+ * Authenticated users (admin, student, teacher) get the sidebar shell
+ * via `AppShell` in MainLayout — no longer use this layout.
  *
  *   ┌──────────────────────────────────────────────────────────────┐
- *   │ [☰] [Logo] [── desktop nav ──]    [actions row]    [User]    │ sticky header
+ *   │ [☰] [Logo] [── public nav ──]              [actions row]     │ sticky
  *   ├──────────────────────────────────────────────────────────────┤
  *   │                                                              │
  *   │                     {children}                               │ main
  *   │                                                              │
  *   ├──────────────────────────────────────────────────────────────┤
- *   │ © 2026 RBAC System            Powered by Spring + React      │ footer
+ *   │ © 2026 Gengo                  Powered by Spring + React      │ footer
  *   └──────────────────────────────────────────────────────────────┘
  *
- * Responsibilities at this level:
- *   - decide which nav variant to render (public flat vs module groups)
- *   - compose Logo + Nav + MobileMenu + Actions in a sticky `<header>`
- *   - render scroll-aware shadow when the page is scrolled
- *
- * Everything else (logo link, action collapse, mobile menu drawer,
- * search filter) lives in the sub-components in `./guest/`.
+ * Nav content is just the public (no-auth) module list — anything
+ * permission-gated lives behind login and shows up in the sidebar
+ * after authentication.
  */
-interface GuestLayoutProps {
-    children: React.ReactNode;
-    /** Forwarded into the authenticated user's avatar dropdown so its
-     *  "Phím tắt" entry opens the same global dialog the admin shell uses. */
-    onOpenShortcuts?: () => void;
-}
-
 export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
     const location = useLocation();
-    const { isAuthenticated, role } = useSelector(
-        (state: RootState) => state.auth,
-    );
-    const isAdmin = normalizeRole(role) === ADMIN_ROLE;
     const isAuthPage = AUTH_PATHS.has(location.pathname);
 
     const { data: publicModules = [] } = usePublicModules();
-    // Only fetch personal module groups for non-admin auth users — admin
-    // has the sidebar already.
-    const { data: moduleGroups = [] } = useActiveModuleGroups(
-        isAuthenticated && !isAdmin,
-    );
-
-    // Layout decisions:
-    //   - non-admin authenticated user  → module group dropdowns
-    //     (their accessible modules already include the public ones, so
-    //     we skip the flat public list).
-    //   - guest / admin browsing public → flat list of public modules.
-    const showModuleGroups = isAuthenticated && !isAdmin && !isAuthPage;
-    const showPublicFlat = !showModuleGroups && !isAuthPage;
 
     const publicItems: GuestNavItem[] = publicModules
         .filter((m) => !!m.url)
@@ -93,10 +58,6 @@ export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
             title: m.title ?? m.url ?? "",
             icon: m.icon,
         }));
-
-    const visibleModuleGroups = showModuleGroups
-        ? moduleGroups.filter((g) => !isAdminOnlyGroup(g.name))
-        : [];
 
     // Scroll-aware shadow: subtle border-bottom shadow appears after the
     // user has scrolled past the header threshold. Replaces the always-on
@@ -122,10 +83,7 @@ export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
                 <div className="w-full flex h-16 items-center gap-2 sm:gap-4 px-3 sm:px-6 lg:px-8">
                     {!isAuthPage && (
                         <GuestMobileMenu
-                            publicItems={showPublicFlat ? publicItems : []}
-                            moduleGroups={
-                                showModuleGroups ? visibleModuleGroups : []
-                            }
+                            publicItems={publicItems}
                             currentPath={location.pathname}
                         />
                     )}
@@ -134,10 +92,7 @@ export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
 
                     {!isAuthPage && (
                         <GuestNavLinks
-                            publicItems={showPublicFlat ? publicItems : []}
-                            moduleGroups={
-                                showModuleGroups ? visibleModuleGroups : []
-                            }
+                            publicItems={publicItems}
                             currentPath={location.pathname}
                         />
                     )}
@@ -155,7 +110,7 @@ export function GuestLayout({ children, onOpenShortcuts }: GuestLayoutProps) {
 
             <footer className="border-t bg-muted/30 py-6 mt-auto">
                 <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground">
-                    <span>© {new Date().getFullYear()} RBAC System</span>
+                    <span>© {new Date().getFullYear()} Gengo</span>
                     <span className="text-xs">
                         Powered by Spring Boot + React
                     </span>

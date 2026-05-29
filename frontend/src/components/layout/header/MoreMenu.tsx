@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Flame, MoreHorizontal } from "lucide-react";
 
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
@@ -35,6 +37,7 @@ interface MoreMenuProps {
  * never both visible at once.
  */
 export function MoreMenu({ streakCount }: MoreMenuProps) {
+    const navigate = useNavigate();
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -58,13 +61,19 @@ export function MoreMenu({ streakCount }: MoreMenuProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
                 {showStreak && (
-                    <DropdownMenuLabel className="flex items-center gap-2">
+                    /* Clickable item — desktop has StreakBadge in header,
+                       but mobile users would otherwise have no entry into
+                       /streak. Navigate on tap. */
+                    <DropdownMenuItem
+                        onSelect={() => navigate("/streak")}
+                        className="gap-2 text-sm cursor-pointer"
+                    >
                         <Flame size={14} className="text-orange-500" />
-                        <span className="flex-1 text-sm">Streak</span>
+                        <span className="flex-1">Streak</span>
                         <span className="text-xs font-semibold tabular-nums text-orange-600">
                             {streakCount}
                         </span>
-                    </DropdownMenuLabel>
+                    </DropdownMenuItem>
                 )}
 
                 {showStreak && showGuestPrefs && <DropdownMenuSeparator />}

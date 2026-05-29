@@ -143,6 +143,13 @@ export function FormModal({
   const hasError = (fieldName: string) =>
     fieldErrors[fieldName] && fieldErrors[fieldName].length > 0;
 
+  // For edit flows, the entity ID is whatever the BE returns as
+  // `schema.idField`. Forwarded to image uploads so the file row is
+  // linked to this entity. Undefined for create flows is fine — BE
+  // accepts orphan uploads and can backfill later.
+  const entityId =
+    initial && schema?.idField ? (initial as any)[schema.idField] : undefined;
+
   const renderField = (field: FieldSchema) => (
     <FormFieldRenderer
       key={field.name}
@@ -155,6 +162,8 @@ export function FormModal({
       }
       fieldErrors={fieldErrors[field.name]}
       relationOptions={relationOptions}
+      entityName={schema?.entityName}
+      entityId={typeof entityId === "number" ? entityId : undefined}
       onChange={updateField}
     />
   );

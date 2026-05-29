@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Pin } from "lucide-react";
 
 import {
     SidebarGroup,
@@ -16,33 +16,38 @@ interface PinnedSectionProps {
 }
 
 /**
- * "Favorites" pill section at the top of the sidebar. Hidden when no
- * items are pinned (zero-config — user sees it after first pin).
+ * "Pin" section at the top of the sidebar — modules the user has
+ * pinned for quick access.
  *
- * Collapsed mode: renders as icon-only stack so the user still has
- * 1-click access to their pinned items.
+ * Hidden when:
+ *   - no items are pinned (zero-config — user sees it after first pin)
+ *   - the sidebar is collapsed (matches RecentSection behavior — the
+ *     pinned modules already live in their groups below, so duplicating
+ *     them as icons in collapsed mode just doubles the icon column)
  */
 export function PinnedSection({ items, favoriteFor }: PinnedSectionProps) {
     const { state } = useSidebar();
+    if (state !== "expanded") return null;
     if (items.length === 0) return null;
-    const isCollapsed = state !== "expanded";
 
     return (
         <SidebarGroup className="py-1">
-            {!isCollapsed && (
-                <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Star size={11} className="text-amber-500 fill-amber-500" />
-                    Yêu thích
-                </SidebarGroupLabel>
-            )}
+            {/* Header treatment mirrors RecentSection — same tiny
+                uppercase label + primary-tinted icon — so the two
+                "secondary" sections read as a coherent block above
+                the module-group list. */}
+            <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Pin size={11} className="text-primary fill-primary/40 rotate-45" />
+                Pinned
+            </SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <NavItem
                         key={item.key}
                         item={item}
                         variant="top"
-                        collapsed={isCollapsed}
-                        favorite={!isCollapsed ? favoriteFor(item.key) : undefined}
+                        activeAppearance="soft"
+                        favorite={favoriteFor(item.key)}
                     />
                 ))}
             </SidebarMenu>

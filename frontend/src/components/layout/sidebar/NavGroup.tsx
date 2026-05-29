@@ -10,6 +10,7 @@ import {
     SidebarMenuItem,
     SidebarMenuSub,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 import { NavItem } from "./NavItem";
 import type { SidebarNavGroup } from "./types";
@@ -67,15 +68,44 @@ export function NavGroup({
         >
             <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
+                    {/*
+                     * Group header. Visual rule:
+                     *   - Selected sub-item inside the group → tiny
+                     *     primary dot to the left of the name.
+                     *   - No solid background or text recoloring on the
+                     *     header itself — the canonical active state
+                     *     belongs to the sub-item row (or, when the
+                     *     group is closed, the dot is the cue).
+                     *
+                     * `aria-current="true"` exposes the same signal to
+                     * assistive tech without painting the row.
+                     */}
                     <SidebarMenuButton
                         tooltip={group.name}
-                        isActive={groupActive}
-                        className="
-                            data-[active=true]:data-[state=closed]:bg-primary
-                            data-[active=true]:data-[state=closed]:text-primary-foreground
-                        "
+                        aria-current={groupActive ? "true" : undefined}
                     >
-                        <span className="truncate">{group.name}</span>
+                        {/* Dot indicator. Always rendered (transparent
+                            when inactive) so the title doesn't shift
+                            horizontally when activeness flips. The
+                            `transition-colors` makes the swap feel
+                            intentional rather than abrupt. */}
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "h-1.5 w-1.5 shrink-0 rounded-full transition-colors",
+                                groupActive
+                                    ? "bg-primary shadow-[0_0_6px_color-mix(in_oklch,var(--primary)_60%,transparent)]"
+                                    : "bg-transparent",
+                            )}
+                        />
+                        <span
+                            className={cn(
+                                "truncate transition-colors",
+                                groupActive && "text-foreground font-medium",
+                            )}
+                        >
+                            {group.name}
+                        </span>
                         <ChevronRight
                             className="
                                 ml-auto transition-transform duration-200

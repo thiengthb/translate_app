@@ -73,7 +73,7 @@ export default function NotificationCenter() {
             <div className="max-h-80 overflow-y-auto">
               {!notifications?.content?.length ? (
                 <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                  No new notifications
+                  Không có thông báo mới
                 </div>
               ) : (
                 notifications.content.map((n) => (
@@ -110,6 +110,19 @@ export default function NotificationCenter() {
                 ))
               )}
             </div>
+
+            {/* Footer: deep-link to the full inbox so users can browse
+                past notifications, filter unread, mark-all etc. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                navigate("/notifications");
+              }}
+              className="w-full border-t px-4 py-2.5 text-xs font-medium text-center text-primary hover:bg-accent transition-colors cursor-pointer"
+            >
+              Xem tất cả thông báo →
+            </button>
           </div>
         </>
       )}
