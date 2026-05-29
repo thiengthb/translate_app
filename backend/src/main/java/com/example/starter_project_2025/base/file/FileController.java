@@ -1,9 +1,8 @@
 package com.example.starter_project_2025.base.file;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,13 +26,11 @@ public class FileController {
     }
 
     @GetMapping("/{storedName}")
-    public ResponseEntity<Resource> download(@PathVariable String storedName) {
-        Resource resource = fileStorageService.download(storedName);
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+    public ResponseEntity<Void> download(@PathVariable String storedName) {
+        FileAttachment attachment = fileStorageService.getByStoredName(storedName);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, attachment.getUrl())
+                .build();
     }
 
     @GetMapping("/entity/{entityName}/{entityId}")

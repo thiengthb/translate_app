@@ -110,6 +110,18 @@ export const normalizeAuthRolePayload = (payload: AuthRolePayload) => {
   };
 };
 
+/**
+ * Returns the permissions that should be active given the currently selected
+ * role.
+ *
+ * Trust order:
+ *  1. If the BE sent {@code rolePermissions[role]} for this role → use it.
+ *     This is the canonical source — RoleDataInitializer + JWT claims drive it.
+ *  2. Otherwise → fall back to the user's full permission set. This handles
+ *     the case where ADMIN preview-switches to a role the BE didn't ship
+ *     permissions for; the UI degrades to "show all" rather than silently
+ *     hiding everything.
+ */
 export const resolveEffectivePermissions = (
   activeRole: string | null,
   rolePermissions: RolePermissionsMap,
@@ -119,29 +131,6 @@ export const resolveEffectivePermissions = (
 
   if (role && rolePermissions[role]?.length) {
     return uniquePermissions(rolePermissions[role]);
-  }
-
-  if (role === STUDENT_ROLE) {
-    return uniquePermissions(
-      allPermissions.filter(
-        (permission) =>
-          permission.endsWith("_READ") || permission === "ENROLL_COURSE",
-      ),
-    );
-  }
-
-  if (role === TEACHER_ROLE) {
-    const teacherDefaults = new Set([
-      "MENU_READ",
-      "BOOK_CREATE",
-      "BOOK_READ",
-      "BOOK_UPDATE",
-      "BOOK_DELETE",
-    ]);
-
-    return uniquePermissions(
-      allPermissions.filter((permission) => teacherDefaults.has(permission)),
-    );
   }
 
   return uniquePermissions(allPermissions);

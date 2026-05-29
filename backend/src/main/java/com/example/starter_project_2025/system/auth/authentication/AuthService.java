@@ -7,6 +7,8 @@ public interface AuthService {
 
     AuthenticationResponse login(LoginRequest request);
 
+    AuthenticationResponse completeTwoFactor(TwoFactorLoginRequest request);
+
     AuthenticationResponse loginWithGoogle(String email, String firstName, String lastName);
 
     void register(RegisterRequest request);
@@ -14,6 +16,8 @@ public interface AuthService {
     AuthenticationResponse refresh(TokenRequest request);
 
     void logout(TokenRequest request);
+
+    void logoutAllDevices();
 
     void resetPassword(ResetPasswordRequest request);
 

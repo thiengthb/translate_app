@@ -1,5 +1,6 @@
 package com.example.starter_project_2025.base.audit;
 
+import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ResourcePermission("AUDIT")
 public class AuditLog {
 
     @Id

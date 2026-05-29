@@ -1,0 +1,63 @@
+package com.example.starter_project_2025.domain.library.deck;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import lombok.Data;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/decks")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Tag(name = "Deck", description = "APIs for managing study decks")
+public class DeckController {
+
+    DeckService deckService;
+
+    /* ─────────────────────────────────────────
+       Template wiring: 1 template per deck
+    ───────────────────────────────────────── */
+
+    @PutMapping("/{deckId}/template")
+    public ResponseEntity<DeckDTO> applyTemplate(
+            @PathVariable Long deckId,
+            @RequestBody ApplyTemplateRequest body
+    ) {
+        return ResponseEntity.ok(deckService.applyTemplate(deckId, body.getTemplateId()));
+    }
+
+    @DeleteMapping("/{deckId}/template")
+    public ResponseEntity<DeckDTO> removeTemplate(@PathVariable Long deckId) {
+        return ResponseEntity.ok(deckService.removeTemplate(deckId));
+    }
+
+    /* ─────────────────────────────────────────
+       Community: clone a public deck into the current user's library
+    ───────────────────────────────────────── */
+    @PostMapping("/{deckId}/clone")
+    public ResponseEntity<DeckDTO> clone(@PathVariable Long deckId) {
+        return ResponseEntity.ok(deckService.cloneDeck(deckId));
+    }
+
+    /** Community: increment the deck's view count (fire-and-forget). */
+    @PostMapping("/{deckId}/view")
+    public ResponseEntity<Void> view(@PathVariable Long deckId) {
+        deckService.incrementView(deckId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Data
+    public static class ApplyTemplateRequest {
+        private Long templateId;
+    }
+}

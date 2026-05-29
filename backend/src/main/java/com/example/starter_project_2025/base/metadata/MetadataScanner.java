@@ -39,7 +39,14 @@ public class MetadataScanner {
     }
 
     public Optional<EntityMetadataDTO> getMetadata(String entityName) {
-        return Optional.ofNullable(metadataCache.get(entityName));
+        if (entityName == null) return Optional.empty();
+        // Direct hit first (preserves expected camel case), else case-insensitive scan.
+        EntityMetadataDTO direct = metadataCache.get(entityName);
+        if (direct != null) return Optional.of(direct);
+        return metadataCache.entrySet().stream()
+                .filter(e -> e.getKey().equalsIgnoreCase(entityName))
+                .map(Map.Entry::getValue)
+                .findFirst();
     }
 
     private EntityMetadataDTO buildMetadata(Class<?> entityClass) {

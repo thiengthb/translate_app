@@ -8,6 +8,8 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.core.Ordered;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,6 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -60,7 +63,6 @@ public class SecurityConfig {
             "/login/oauth2/**",
             "/verify/**",
             "/api/auth/**",
-            "/api/meta/**",
             "/api/i18n/**",
             "/api/files/**",
             "/api/public/**",
@@ -72,29 +74,32 @@ public class SecurityConfig {
             HttpSecurity http,
             OpenAPI customOpenAPI,
             OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-            OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler
-        ) throws Exception {
+            OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .headers(headers ->
-                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                )
-                .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                )
-                .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
-                    auth.anyRequest().authenticated();
-                })
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/login/**").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/h2-console/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)   // 401
-                        .accessDeniedHandler(jwtAccessDeniedHandler)             // 403
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 401
+                        .accessDeniedHandler(jwtAccessDeniedHandler) // 403
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2AuthenticationSuccessHandler)
-                        .failureHandler(oAuth2AuthenticationFailureHandler)
-                )
+                        .failureHandler(oAuth2AuthenticationFailureHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -111,6 +116,14 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(
+                new CorsFilter(corsConfigurationSource()));
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return bean;
     }
 
     @Bean
