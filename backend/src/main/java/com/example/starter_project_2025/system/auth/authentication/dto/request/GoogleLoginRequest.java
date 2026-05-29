@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record GoogleLoginRequest(
 
-        @NotBlank(message = "ID token is required")
+        @NotBlank(message = "{validation.idToken.required}")
         String idToken
 ) {
 }

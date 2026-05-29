@@ -60,7 +60,6 @@ public class SecurityConfig {
             "/login/oauth2/**",
             "/verify/**",
             "/api/auth/**",
-            "/api/meta/**",
             "/api/i18n/**",
             "/api/files/**",
             "/api/public/**",

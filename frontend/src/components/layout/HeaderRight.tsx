@@ -1,4 +1,5 @@
 import ToggleTheme from "@/components/ToggleTheme";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import NotificationCenter from "@/components/notification/NotificationCenter";
 import UserMenu from "@/components/layout/UserMenu";
 import { useEffect, useRef, useState } from "react";
@@ -44,6 +45,7 @@ export default function HeaderRight() {
   if (!role) {
     return (
       <div className="flex items-center gap-3">
+        <LanguageSwitcher />
         <ToggleTheme />
       </div>
     );
@@ -60,6 +62,7 @@ export default function HeaderRight() {
         </Badge>
 
         <NotificationCenter />
+        <LanguageSwitcher />
         <ToggleTheme />
         <UserMenu />
       </div>
@@ -143,6 +146,7 @@ export default function HeaderRight() {
       )}
 
       <NotificationCenter />
+      <LanguageSwitcher />
       <ToggleTheme />
       <UserMenu />
     </div >

@@ -22,7 +22,19 @@ public class AuthenticationResponse {
     String firstName;
     String lastName;
     String role;
+    String locale;
+    String theme;
     Set<String> roles;
     Set<String> permissions;
     Map<String, Set<String>> rolePermissions;
+
+    /**
+     * Set to true on a /login response when the user has 2FA enabled and must
+     * complete the TOTP challenge. In that case {@link #accessToken} and
+     * {@link #refreshToken} are null and {@link #tempToken} carries the
+     * partial-session handle for the follow-up /login/2fa call.
+     */
+    Boolean requiresTotp;
+
+    String tempToken;
 }

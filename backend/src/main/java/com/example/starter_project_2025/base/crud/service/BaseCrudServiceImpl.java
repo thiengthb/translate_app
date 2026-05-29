@@ -1,5 +1,6 @@
 package com.example.starter_project_2025.base.crud.service;
 
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.annotation.SoftDelete;
 import com.example.starter_project_2025.base.annotation.TenantScoped;
 import com.example.starter_project_2025.base.audit.AuditLogService;
@@ -17,18 +18,22 @@ import com.example.starter_project_2025.base.crud.CrudAction;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.security.UserPrincipal;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Transactional
 public abstract class BaseCrudServiceImpl<
@@ -38,7 +43,7 @@ public abstract class BaseCrudServiceImpl<
         F extends BaseFilter> implements BaseCrudService<I, D, F> {
 
     @Autowired
-    protected  AutoSpecBuilder autoSpecBuilder;
+    protected AutoSpecBuilder autoSpecBuilder;
 
     @Autowired
     protected AuditLogService auditLogService;
@@ -46,9 +51,99 @@ public abstract class BaseCrudServiceImpl<
     @Autowired
     protected org.springframework.context.ApplicationEventPublisher eventPublisher;
 
-    protected abstract BaseCrudRepository<E, I> getRepository();
-    protected abstract BaseCrudMapper<E, D> getMapper();
-    protected abstract String[] searchableFields();
+    @Autowired
+    protected ApplicationContext applicationContext;
+
+    // Cached lookups — populated lazily once Spring has wired the context.
+    private volatile BaseCrudRepository<E, I> resolvedRepository;
+    private volatile BaseCrudMapper<E, D> resolvedMapper;
+    private volatile String[] resolvedSearchableFields;
+
+    /**
+     * Default: lookup a {@link BaseCrudRepository} bean. Strategy:
+     *   1. Convention name {@code <entity>Repository} / {@code <entity>RepositoryImpl}
+     *   2. Fallback: scan all beans by generic type — works for MapStruct-
+     *      generated impls and Spring Data proxies that preserve generics.
+     * Subclasses can override to inject a specific bean.
+     */
+    @SuppressWarnings("unchecked")
+    protected BaseCrudRepository<E, I> getRepository() {
+        if (resolvedRepository != null) return resolvedRepository;
+        Class<?> entityClass = getEntityClass();
+
+        BaseCrudRepository<E, I> byName = lookupByConvention("Repository", BaseCrudRepository.class, entityClass);
+        if (byName != null) {
+            resolvedRepository = byName;
+            return resolvedRepository;
+        }
+
+        Map<String, BaseCrudRepository> beans = applicationContext.getBeansOfType(BaseCrudRepository.class);
+        for (BaseCrudRepository repo : beans.values()) {
+            Class<?>[] generics = GenericTypeResolver.resolveTypeArguments(repo.getClass(), BaseCrudRepository.class);
+            if (generics != null && generics.length >= 1 && entityClass.equals(generics[0])) {
+                resolvedRepository = (BaseCrudRepository<E, I>) repo;
+                return resolvedRepository;
+            }
+        }
+        throw new IllegalStateException("No BaseCrudRepository found for entity " + entityClass.getName());
+    }
+
+    /**
+     * Default: lookup a {@link BaseCrudMapper} bean. Strategy:
+     *   1. Convention name {@code <entity>Mapper} / {@code <entity>MapperImpl}
+     *      — works for both user MapStruct interfaces and runtime-registered
+     *      {@link com.example.starter_project_2025.base.crud.mapper.DefaultCrudMapper}.
+     *   2. Fallback: scan by generic type — covers MapStruct-generated impls.
+     * Subclasses can override.
+     */
+    @SuppressWarnings("unchecked")
+    protected BaseCrudMapper<E, D> getMapper() {
+        if (resolvedMapper != null) return resolvedMapper;
+        Class<?> entityClass = getEntityClass();
+
+        BaseCrudMapper<E, D> byName = lookupByConvention("Mapper", BaseCrudMapper.class, entityClass);
+        if (byName != null) {
+            resolvedMapper = byName;
+            return resolvedMapper;
+        }
+
+        Map<String, BaseCrudMapper> beans = applicationContext.getBeansOfType(BaseCrudMapper.class);
+        for (BaseCrudMapper mapper : beans.values()) {
+            Class<?>[] generics = GenericTypeResolver.resolveTypeArguments(mapper.getClass(), BaseCrudMapper.class);
+            if (generics != null && generics.length >= 1 && entityClass.equals(generics[0])) {
+                resolvedMapper = (BaseCrudMapper<E, D>) mapper;
+                return resolvedMapper;
+            }
+        }
+        throw new IllegalStateException("No BaseCrudMapper found for entity " + entityClass.getName());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T lookupByConvention(String suffix, Class<T> requiredType, Class<?> entityClass) {
+        String camel = Character.toLowerCase(entityClass.getSimpleName().charAt(0))
+                + entityClass.getSimpleName().substring(1);
+        for (String name : new String[]{ camel + suffix, camel + suffix + "Impl" }) {
+            if (applicationContext.containsBean(name)) {
+                Object bean = applicationContext.getBean(name);
+                if (requiredType.isInstance(bean)) {
+                    return (T) bean;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Default: read {@link Searchable @Searchable(fields)} from the entity
+     * class. Override to provide a hard-coded list if you don't want the
+     * annotation.
+     */
+    protected String[] searchableFields() {
+        if (resolvedSearchableFields != null) return resolvedSearchableFields;
+        Searchable searchable = getEntityClass().getAnnotation(Searchable.class);
+        resolvedSearchableFields = searchable != null ? searchable.fields() : new String[0];
+        return resolvedSearchableFields;
+    }
 
     protected void beforeCreate(E entity, D request, ValidationContext ctx) {}
     protected void afterCreate(E entity, D request) {}
@@ -159,6 +254,15 @@ public abstract class BaseCrudServiceImpl<
     }
 
     @Override
+    public void deleteAll(Collection<I> ids) {
+        if (ids == null) return;
+        for (I id : ids) {
+            delete(id);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public D getById(I id) {
 
         checkPermission(CrudAction.READ);
@@ -169,6 +273,7 @@ public abstract class BaseCrudServiceImpl<
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<D> getAll(Pageable pageable, String search, F filter) {
 
         checkPermission(CrudAction.READ);
@@ -225,12 +330,44 @@ public abstract class BaseCrudServiceImpl<
     }
 
     @SuppressWarnings("unchecked")
-    private Class<E> getEntityClass() {
+    public Class<E> getEntityClass() {
+        return (Class<E>) resolveGenericArg(0);
+    }
 
-        ParameterizedType type =
-                (ParameterizedType) getClass().getGenericSuperclass();
+    @SuppressWarnings("unchecked")
+    public Class<D> getDtoClass() {
+        return (Class<D>) resolveGenericArg(2);
+    }
 
-        return (Class<E>) type.getActualTypeArguments()[0];
+    @SuppressWarnings("unchecked")
+    public Class<F> getFilterClass() {
+        return (Class<F>) resolveGenericArg(3);
+    }
+
+    /**
+     * Walks the class hierarchy until it finds the concrete parameterization
+     * of {@link BaseCrudServiceImpl} (e.g. on {@code BookServiceImpl}) and
+     * returns the {@code index}-th type argument.
+     *
+     * Subclasses constructed without concrete type parameters (e.g.
+     * {@code DefaultCrudServiceImpl} which is itself generic) MUST override
+     * the three public getters above and return their stored classes instead.
+     */
+    private Class<?> resolveGenericArg(int index) {
+        Class<?> current = getClass();
+        while (current != null && current != Object.class) {
+            if (current.getSuperclass() == BaseCrudServiceImpl.class
+                    && current.getGenericSuperclass() instanceof ParameterizedType pt
+                    && pt.getActualTypeArguments()[index] instanceof Class<?> c) {
+                return c;
+            }
+            current = current.getSuperclass();
+        }
+        throw new IllegalStateException(
+                "Cannot resolve generic type arg #" + index
+                        + " for " + getClass().getName()
+                        + ". Override the public getter explicitly."
+        );
     }
 
     public void check(String permission) {
@@ -295,14 +432,19 @@ public abstract class BaseCrudServiceImpl<
         };
     }
 
+    /**
+     * Shallow-copy the entity to a fresh instance so the AUDIT "before"
+     * snapshot is not mutated by subsequent mapper.update / save.
+     * BeanUtils.copyProperties skips lazy-loaded relation proxies safely
+     * (former Jackson-roundtrip approach would crash on uninitialized
+     * collections / cycles).
+     */
     @SuppressWarnings("unchecked")
     private E cloneEntity(E entity) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-            om.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-            om.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            String json = om.writeValueAsString(entity);
-            return (E) om.readValue(json, entity.getClass());
+            E clone = (E) entity.getClass().getDeclaredConstructor().newInstance();
+            org.springframework.beans.BeanUtils.copyProperties(entity, clone);
+            return clone;
         } catch (Exception e) {
             return entity;
         }

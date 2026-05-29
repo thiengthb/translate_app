@@ -1,73 +1,44 @@
 import axiosInstance from "../axios";
-import { normalizeAuthRolePayload } from "@/utils/rbac.utils";
+import { authStorage, mapAuthResponse, type BackendAuthResponse } from "@/lib/auth-storage";
 import {
     type ForgotPasswordEmailRequest,
     type ForgotPasswordRequest,
     type LoginRequest,
     type LoginResponse,
     type RegisterRequest,
+    type TwoFactorLoginRequest,
 } from "../../types/features/auth";
-
-interface BackendAuthenticationResponse {
-    accessToken: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role?: string;
-    roles?: string[];
-    permissions?: string[];
-    rolePermissions?: Record<string, string[]>;
-}
-
-const AUTH_STORAGE_KEYS = [
-    "token",
-    "email",
-    "firstName",
-    "lastName",
-    "role",
-    "roles",
-    "permissions",
-    "rolePermissions",
-];
-
-const mapAuthResponse = (data: BackendAuthenticationResponse): LoginResponse => {
-    const normalized = normalizeAuthRolePayload({
-        role: data.role,
-        roles: data.roles,
-        permissions: data.permissions,
-        rolePermissions: data.rolePermissions,
-    });
-
-    return {
-        token: data.accessToken,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: normalized.role,
-        roles: normalized.roles,
-        permissions: normalized.permissions,
-        rolePermissions: normalized.rolePermissions,
-    };
-};
-
-const clearAuthStorage = () => {
-    AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-};
 
 export const authApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-        const response = await axiosInstance.post<BackendAuthenticationResponse>("/auth/login", {
+        const response = await axiosInstance.post<BackendAuthResponse>("/auth/login", {
             email: credentials.email,
             password: credentials.password,
         });
-        return mapAuthResponse(response.data);
+        return mapAuthResponse(response.data) as LoginResponse;
+    },
+
+    completeTwoFactor: async (req: TwoFactorLoginRequest): Promise<LoginResponse> => {
+        const response = await axiosInstance.post<BackendAuthResponse>(
+            "/auth/login/2fa",
+            req,
+        );
+        return mapAuthResponse(response.data) as LoginResponse;
     },
 
     logout: async () => {
         try {
             await axiosInstance.post("/auth/logout");
         } finally {
-            clearAuthStorage();
+            authStorage.clear();
+        }
+    },
+
+    logoutAllDevices: async () => {
+        try {
+            await axiosInstance.post("/auth/logout-all");
+        } finally {
+            authStorage.clear();
         }
     },
 
@@ -76,9 +47,7 @@ export const authApi = {
     },
 
     resendVerification: async (email: string): Promise<void> => {
-        await axiosInstance.post("/auth/resend-verification", null, {
-            params: { email },
-        });
+        await axiosInstance.post("/auth/resend-verification", null, { params: { email } });
     },
 
     forgotPassword: async (data: ForgotPasswordEmailRequest): Promise<void> => {

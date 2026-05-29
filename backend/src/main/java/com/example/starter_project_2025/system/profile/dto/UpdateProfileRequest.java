@@ -5,16 +5,16 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateProfileRequest(
 
-        @NotBlank(message = "First name is required")
-        @Size(min = 2, max = 100, message = "First name must be between 2 and 100 characters")
+        @NotBlank(message = "{validation.firstName.required}")
+        @Size(min = 2, max = 100, message = "{validation.firstName.size}")
         String firstName,
 
-        @Size(max = 100, message = "Last name must be at most 100 characters")
+        @Size(max = 100, message = "{validation.lastName.max}")
         String lastName,
 
-        @Size(max = 20, message = "Phone must be at most 20 characters")
+        @Size(max = 20, message = "{validation.phone.max}")
         String phone,
 
-        @Size(max = 500, message = "Bio must be at most 500 characters")
+        @Size(max = 500, message = "{validation.bio.max}")
         String bio
 ) {}

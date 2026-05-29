@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 
 import type { RootState } from "@/store/store";
-import { authApi } from "@/api/features/auth.api";
 import { profileApi } from "@/api/features/profile.api";
+import { useLogout } from "@/hooks/useLogout";
+import { useTranslation } from "@/contexts/I18nContext";
 
 export default function UserMenu() {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function UserMenu() {
     const [open, setOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
     const ref = useRef<HTMLDivElement>(null);
+    const { t } = useTranslation();
 
     const initials = [firstName?.charAt(0), lastName?.charAt(0)]
         .filter(Boolean)
@@ -45,13 +47,7 @@ export default function UserMenu() {
         };
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await authApi.logout();
-        } finally {
-            navigate("/login");
-        }
-    };
+    const handleLogout = useLogout();
 
     return (
         <div ref={ref} className="relative">
@@ -107,7 +103,7 @@ export default function UserMenu() {
                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors cursor-pointer"
                         >
                             <UserIcon size={15} className="opacity-70" />
-                            <span>Hồ sơ cá nhân</span>
+                            <span>{t("nav.profile")}</span>
                         </button>
                         <button
                             onClick={() => {
@@ -117,7 +113,7 @@ export default function UserMenu() {
                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
                         >
                             <LogOut size={15} />
-                            <span>Đăng xuất</span>
+                            <span>{t("nav.logout")}</span>
                         </button>
                     </div>
                 </div>

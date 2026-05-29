@@ -5,6 +5,7 @@ import com.example.starter_project_2025.system.auth.authentication.dto.request.L
 import com.example.starter_project_2025.system.auth.authentication.dto.request.RegisterRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.request.ResetPasswordRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.request.TokenRequest;
+import com.example.starter_project_2025.system.auth.authentication.dto.request.TwoFactorLoginRequest;
 import com.example.starter_project_2025.system.auth.authentication.dto.response.AuthenticationResponse;
 import com.example.starter_project_2025.system.auth.util.CookieUtil;
 import com.example.starter_project_2025.system.auth.verify.VerificationService;
@@ -36,6 +37,23 @@ public class AuthController {
             HttpServletResponse response
     ) {
         AuthenticationResponse authenticationResponse = authService.login(request);
+
+        // 2FA-enabled accounts come back with requiresTotp=true and no tokens
+        // — don't set the cookie until step 2 succeeds.
+        if (authenticationResponse.getAccessToken() != null) {
+            cookieUtil.setRefreshTokenCookie(response, authenticationResponse.getRefreshToken());
+            authenticationResponse.setRefreshToken(null);
+        }
+
+        return ResponseEntity.ok(authenticationResponse);
+    }
+
+    @PostMapping("/login/2fa")
+    public ResponseEntity<AuthenticationResponse> completeTwoFactor(
+            @Valid @RequestBody TwoFactorLoginRequest request,
+            HttpServletResponse response
+    ) {
+        AuthenticationResponse authenticationResponse = authService.completeTwoFactor(request);
 
         cookieUtil.setRefreshTokenCookie(response, authenticationResponse.getRefreshToken());
         authenticationResponse.setRefreshToken(null);
@@ -85,6 +103,13 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/logout-all")
+    public ResponseEntity<Void> logoutAllDevices(HttpServletResponse response) {
+        authService.logoutAllDevices();
+        cookieUtil.clearRefreshTokenCookie(response);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
@@ -105,7 +130,7 @@ public class AuthController {
 
     @PatchMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(
-            @RequestBody ResetPasswordRequest request
+            @Valid @RequestBody ResetPasswordRequest request
     ) {
         authService.resetPassword(request);
         return ResponseEntity.noContent().build();

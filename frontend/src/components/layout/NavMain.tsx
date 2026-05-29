@@ -1,5 +1,6 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
     Collapsible,
@@ -86,8 +87,8 @@ export function NavMain({
                             data-[active=true]:!text-primary-foreground
                         "
                         >
-                            <a
-                                href={item.url}
+                            <Link
+                                to={item.url}
                                 className="
                                 flex
                                 h-9
@@ -99,7 +100,7 @@ export function NavMain({
                             "
                             >
                                 <item.icon className="h-5 w-5" />
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
@@ -152,13 +153,13 @@ export function NavMain({
                                         data-[active=true]:text-primary-foreground
                                     "
                                 >
-                                    <a
-                                        href={subItem.url}
+                                    <Link
+                                        to={subItem.url}
                                         className="flex items-center gap-2"
                                     >
                                         <subItem.icon className="h-4 w-4 group-data-[active=true]:text-primary-foreground" />
                                         <span>{subItem.title}</span>
-                                    </a>
+                                    </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                         ))}

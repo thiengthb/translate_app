@@ -1,5 +1,6 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
+import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import { Login } from "@/pages/auth/Login";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -35,6 +36,7 @@ export const routes: RouteConfig[] = [
   { path: "/login", component: Login, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
   { path: "/register", component: RegisterPage, isPublic: true },
+  { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},
   { path: "/unauthorized", component: Unauthorized, isPublic: true },

@@ -4,6 +4,7 @@ import HeaderRight from "@/components/layout/HeaderRight";
 import { SidebarMenu } from "@/components/layout/Sidebar.tsx";
 import DynamicBreadcrumbs from "@/components/layout/DynamicBreadcrumbs.tsx";
 import { GuestLayout } from "@/components/layout/GuestLayout";
+import { ADMIN_ROLE, normalizeRole } from "@/utils/rbac.utils";
 import type { RootState } from "@/store/store";
 
 export function MainLayout({
@@ -13,10 +14,16 @@ export function MainLayout({
     children: React.ReactNode;
     pathName?: Record<string, string>;
 }) {
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, role } = useSelector((state: RootState) => state.auth);
+    // Layout follows the user's PRIMARY role (auth.role), not activeRole.
+    // Preview-mode role switches should change content/permissions, not the
+    // chrome around the page — otherwise an admin who previewed STUDENT and
+    // then refreshed would lose the sidebar.
+    const isAdmin = normalizeRole(role) === ADMIN_ROLE;
 
-    // Guests visiting public modules use the guest layout
-    if (!isAuthenticated) {
+    // Sidebar is reserved for ADMIN. Everyone else — guest or non-admin user —
+    // uses the horizontal navbar in GuestLayout.
+    if (!isAuthenticated || !isAdmin) {
         return (
             <GuestLayout>
                 <div className="flex-1 px-6 pb-6 pt-6">{children}</div>
