@@ -39,6 +39,8 @@ import java.util.stream.IntStream;
 public class DictionaryController {
 
     DictionaryService dictionaryService;
+    TatoebaClient     tatoebaClient;
+    ForvoClient       forvoClient;
 
     private static final String GOOGLE_HWR_URL =
             "https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8";
@@ -84,6 +86,28 @@ public class DictionaryController {
         return ResponseEntity.ok(dictionaryService.featured(
                 Math.min(wordLimit, 20),
                 Math.min(kanjiLimit, 30)));
+    }
+
+    @GetMapping("/examples")
+    @Operation(summary = "Lấy câu ví dụ thực tế từ Tatoeba (ưu tiên tiếng Việt, fallback tiếng Anh)")
+    public ResponseEntity<List<TatoebaExample>> examples(
+            @RequestParam String word,
+            @RequestParam(defaultValue = "6") int limit) {
+        if (word == null || word.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(tatoebaClient.fetch(word.trim(), Math.min(limit, 20)));
+    }
+
+    @GetMapping("/audio")
+    @Operation(summary = "Lấy URL audio phát âm từ Forvo (rỗng nếu không có → frontend dùng TTS)")
+    public ResponseEntity<WordAudio> audio(@RequestParam String word) {
+        if (word == null || word.isBlank()) {
+            return ResponseEntity.noContent().build();
+        }
+        return forvoClient.fetch(word.trim())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/handwriting")

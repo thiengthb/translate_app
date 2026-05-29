@@ -2,13 +2,14 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
     Pen, Loader2, Volume2, Bookmark, BookmarkCheck, X, Star, GitBranch,
-    Sparkles, Trash2, AlertCircle,
+    Sparkles, Trash2, AlertCircle, Languages,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type {
     WordSearchResult, WordSuggestion, DictionaryKanjiInfo,
     DictionaryExampleInfo, DictionaryKanjiDetail, FeaturedResult,
+    TatoebaExample,
 } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -561,6 +562,9 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
 }) {
     const [showEx, setShowEx] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [showTatoeba, setShowTatoeba]       = useState(false);
+    const [tatoeba, setTatoeba]               = useState<TatoebaExample[] | null>(null);
+    const [tatoebaLoading, setTatoebaLoading] = useState(false);
     const jlpt = JLPT[word.levelCode ?? ""];
     const rep  = REP_LABELS[word.representationCode ?? ""];
     const typeLabel = word.wordType ? (WORD_TYPE_LABELS[word.wordType] ?? word.wordType) : null;
@@ -569,6 +573,17 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
         navigator.clipboard.writeText(word.word);
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
+    };
+
+    const toggleTatoeba = async () => {
+        const next = !showTatoeba;
+        setShowTatoeba(next);
+        if (next && tatoeba === null && !tatoebaLoading) {
+            setTatoebaLoading(true);
+            try { setTatoeba(await dictionaryApi.examples(word.word)); }
+            catch { setTatoeba([]); }
+            finally { setTatoebaLoading(false); }
+        }
     };
 
     return (
@@ -613,7 +628,7 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
                         </div>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
-                        <SpeakButton text={word.reading || word.word} />
+                        <SpeakButton text={word.reading || word.word} lookupWord={word.word} />
                         <BookmarkButton saved={savedIds.has(word.id)} onToggle={() => onToggleSave(word)} />
                         <Button size="sm" variant="ghost" onClick={copy} className="h-8 px-2 text-xs">
                             {copied
@@ -674,6 +689,44 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
                     )}
                 </>
             )}
+
+            {/* Tatoeba — ví dụ thực tế (lazy-load) */}
+            <Separator />
+            <button
+                onClick={toggleTatoeba}
+                className="w-full px-5 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted/50 flex items-center justify-between transition-colors"
+            >
+                <span className="flex items-center gap-1.5">
+                    <Languages className="h-3 w-3" />
+                    Ví dụ thực tế
+                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-normal">Tatoeba</Badge>
+                    {tatoeba && tatoeba.length > 0 && (
+                        <span className="text-[10px] font-medium text-muted-foreground/70">({tatoeba.length})</span>
+                    )}
+                </span>
+                {tatoebaLoading
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showTatoeba ? "rotate-180" : ""}`} />}
+            </button>
+            {showTatoeba && (
+                <>
+                    <Separator />
+                    <div className="divide-y bg-muted/30">
+                        {tatoebaLoading ? (
+                            <div className="px-5 py-4 flex items-center gap-2 text-xs text-muted-foreground">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Đang tải ví dụ từ Tatoeba...
+                            </div>
+                        ) : tatoeba && tatoeba.length > 0 ? (
+                            tatoeba.map((ex, i) => <TatoebaRow key={ex.sentenceId ?? i} example={ex} />)
+                        ) : (
+                            <div className="px-5 py-4 text-xs text-muted-foreground text-center">
+                                Không tìm thấy ví dụ thực tế cho từ này.
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </Card>
     );
 }
@@ -712,7 +765,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                             {kanji.character}
                         </span>
                         <div className="flex gap-1">
-                            <SpeakButton text={kanji.character} />
+                            <SpeakButton text={kanji.character} lookupWord={kanji.character} />
                             <BookmarkButton saved={savedChars.has(kanji.character)} onToggle={() => onToggleSave(kanji)} />
                         </div>
                     </div>
@@ -930,6 +983,38 @@ function ExampleRow({ example, index }: { example: DictionaryExampleInfo; index:
 }
 
 // ══════════════════════════════════════════════════════════════════════
+// Tatoeba example row
+// ══════════════════════════════════════════════════════════════════════
+const TATOEBA_LANG: Record<string, { label: string; className: string }> = {
+    vie: { label: "VI", className: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30" },
+    eng: { label: "EN", className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+};
+
+function TatoebaRow({ example }: { example: TatoebaExample }) {
+    const lang = TATOEBA_LANG[example.translationLang];
+    return (
+        <div className="flex gap-3 px-5 py-3">
+            <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-2">
+                    <p className="font-medium text-foreground text-sm leading-snug flex-1">{example.japanese}</p>
+                    <div className="shrink-0 -mt-1 -mr-1">
+                        <SpeakButton text={example.japanese} />
+                    </div>
+                </div>
+                <div className="flex items-start gap-1.5 mt-0.5">
+                    {lang && (
+                        <Badge variant="outline" className={`text-[9px] font-bold px-1 py-0 h-4 shrink-0 mt-0.5 ${lang.className}`}>
+                            {lang.label}
+                        </Badge>
+                    )}
+                    <p className="text-sm text-primary leading-snug">{example.translation}</p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // Featured section
 // ══════════════════════════════════════════════════════════════════════
 function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
@@ -1036,26 +1121,68 @@ function FeaturedKanjiChip({ kanji, onClick }: { kanji: DictionaryKanjiDetail; o
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// Speak button
+// Speak button — thử audio người thật (Forvo) trước, fallback Web Speech (TTS)
 // ══════════════════════════════════════════════════════════════════════
-function SpeakButton({ text }: { text: string }) {
-    const [speaking, setSpeaking] = useState(false);
+function pickJapaneseVoice(): SpeechSynthesisVoice | null {
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find((v) => v.lang === "ja-JP")
+        ?? voices.find((v) => v.lang.toLowerCase().startsWith("ja"))
+        ?? null;
+}
 
-    const speak = () => {
-        if (!window.speechSynthesis) return;
-        if (speaking) {
-            window.speechSynthesis.cancel();
-            setSpeaking(false);
-            return;
+function SpeakButton({ text, lookupWord }: { text: string; lookupWord?: string }) {
+    const [speaking, setSpeaking] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    // Cache kết quả tra Forvo theo từ: undefined = chưa tra, null = đã tra & không có.
+    const forvoCache = useRef<{ word?: string; url?: string | null }>({});
+
+    const stop = () => {
+        window.speechSynthesis?.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
         }
+        setSpeaking(false);
+    };
+
+    const playTts = () => {
+        if (!window.speechSynthesis) { setSpeaking(false); return; }
         window.speechSynthesis.cancel();
         const utt = new SpeechSynthesisUtterance(text);
         utt.lang = "ja-JP";
         utt.rate = 0.85;
+        const voice = pickJapaneseVoice();
+        if (voice) utt.voice = voice;
         utt.onstart = () => setSpeaking(true);
         utt.onend   = () => setSpeaking(false);
         utt.onerror = () => setSpeaking(false);
         window.speechSynthesis.speak(utt);
+    };
+
+    const playAudio = (url: string) => {
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => setSpeaking(false);
+        audio.onerror = () => { audioRef.current = null; playTts(); };
+        setSpeaking(true);
+        audio.play().catch(() => { audioRef.current = null; playTts(); });
+    };
+
+    const speak = async () => {
+        if (speaking) { stop(); return; }
+
+        if (lookupWord) {
+            let url = forvoCache.current.word === lookupWord ? forvoCache.current.url : undefined;
+            if (url === undefined) {
+                setSpeaking(true); // phản hồi tức thì trong lúc chờ mạng
+                try { url = (await dictionaryApi.audio(lookupWord))?.url ?? null; }
+                catch { url = null; }
+                forvoCache.current = { word: lookupWord, url };
+            }
+            if (url) { playAudio(url); return; }
+        }
+        playTts();
     };
 
     return (

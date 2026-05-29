@@ -167,3 +167,19 @@ export interface FeaturedResult {
   words: WordSearchResult[];
   kanjis: DictionaryKanjiDetail[];
 }
+
+// ── Tatoeba example sentences ──────────────────────────────────────────
+export interface TatoebaExample {
+  sentenceId?: number;
+  japanese: string;
+  reading?: string;
+  translation: string;
+  translationLang: string; // "vie" | "eng"
+  source: string;
+}
+
+// ── Audio pronunciation ────────────────────────────────────────────────
+export interface WordAudio {
+  url: string;
+  source: string; // "forvo"
+}
