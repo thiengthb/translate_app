@@ -15,6 +15,8 @@ import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import AnalyzePage from "@/pages/analyze/AnalyzePage";
+import ProductionPage from "@/pages/production/ProductionPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -38,6 +40,8 @@ export const routes: RouteConfig[] = [
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
+  { path: "/analyze", component: AnalyzePage },
+  { path: "/production", component: ProductionPage },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   { path: "/login", component: Login, isPublic: true },
