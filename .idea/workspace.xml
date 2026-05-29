@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,7 +249,7 @@
       <workItem from="1780035901607" duration="2450000" />
       <workItem from="1780046527102" duration="10243000" />
       <workItem from="1780060394353" duration="476000" />
-      <workItem from="1780061099939" duration="6244000" />
+      <workItem from="1780061099939" duration="6777000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -366,7 +364,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/kuromoji(test_merge_early)" />
+                        <option value="origin/feature/translator" />
                       </list>
                     </value>
                   </entry>
@@ -391,7 +389,8 @@
     <MESSAGE value="feat(dictionary): add word" />
     <MESSAGE value="fix merge" />
     <MESSAGE value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
+    <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
