@@ -9,10 +9,12 @@ import com.example.starter_project_2025.domain.production.grammar.ReferenceSente
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
 import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.llm.JudgeResult;
+import com.example.starter_project_2025.domain.production.llm.OllamaClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptCacheRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GradingService {
@@ -31,6 +34,7 @@ public class GradingService {
     private final GrammarMarkerRepository markerRepository;
     private final DetectorRegistry detectorRegistry;
     private final GeminiClient geminiClient;
+    private final OllamaClient ollamaClient;
     private final JudgeVerdictCacheRepository judgeCacheRepository;
     private final TranslationAttemptRepository attemptRepository;
 
@@ -88,39 +92,39 @@ public class GradingService {
     }
 
     private JudgeResult judgeWithCache(ReferenceSentence reference, String answer, GrammarSubUse subUse) {
-        if (!geminiClient.isAvailable()) {
-            return null;
-        }
-        String hash = sha256(normalize(answer));
+        if (geminiClient.isAvailable()) {
+            String hash = sha256(normalize(answer));
 
-        JudgeVerdictCache cached = judgeCacheRepository
-                .findByReferenceSentenceIdAndLearnerAnswerHash(reference.getId(), hash)
-                .orElse(null);
-        if (cached != null) {
-            return JudgeResult.builder()
-                    .meaningScore(cached.getScore() == null ? 0 : cached.getScore())
-                    .pointUsed(false)
-                    .grammarOk(false)
-                    .verdict(cached.getVerdict())
-                    .feedback(cached.getFeedback())
-                    .build();
+            JudgeVerdictCache cached = judgeCacheRepository
+                    .findByReferenceSentenceIdAndLearnerAnswerHash(reference.getId(), hash)
+                    .orElse(null);
+            if (cached != null) {
+                return JudgeResult.builder()
+                        .meaningScore(cached.getScore() == null ? 0 : cached.getScore())
+                        .pointUsed(false)
+                        .grammarOk(false)
+                        .verdict(cached.getVerdict())
+                        .feedback(cached.getFeedback())
+                        .build();
+            }
+
+            JudgeResult judge = geminiClient.judge(
+                    reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
+            if (judge != null) {
+                judgeCacheRepository.save(JudgeVerdictCache.builder()
+                        .referenceSentence(reference)
+                        .learnerAnswerHash(hash)
+                        .verdict(judge.getVerdict())
+                        .score(judge.getMeaningScore())
+                        .feedback(judge.getFeedback())
+                        .build());
+                return judge;
+            }
+            log.warn("Gemini returned null (quota/network error) — falling back to Ollama");
         }
 
-        JudgeResult judge = geminiClient.judge(
+        return ollamaClient.judge(
                 reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
-        if (judge == null) {
-            return null;
-        }
-
-        judgeCacheRepository.save(JudgeVerdictCache.builder()
-                .referenceSentence(reference)
-                .learnerAnswerHash(hash)
-                .verdict(judge.getVerdict())
-                .score(judge.getMeaningScore())
-                .feedback(judge.getFeedback())
-                .build());
-
-        return judge;
     }
 
     private GrammarMarker resolveMarker(Long subUseId, String markerPattern) {
