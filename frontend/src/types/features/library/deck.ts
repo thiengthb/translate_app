@@ -13,6 +13,9 @@ export interface DeckDTO extends BaseDTO {
   sourceLanguage?: string;
   targetLanguage?: string;
   totalCards?: number;
+  cloneCount?: number;
+  favoriteCount?: number;
+  viewCount?: number;
   templateId?: number | null;
 }
 
@@ -21,6 +24,7 @@ export interface DeckFilter extends BaseFilter {
   folderId?: number;
   title?: string;
   visibility?: string;
+  studyMode?: "QUIZLET" | "ANKI";
 }
 
 export interface ApplyTemplateRequest {

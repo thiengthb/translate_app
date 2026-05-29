@@ -36,8 +36,8 @@ import java.util.Set;
 @EntityLabel(name = "Deck", plural = "Decks", description = "Study deck management")
 @AutoCrud(path = "decks")
 @Searchable(fields = {"title", "description"})
-@Filterable(fields = {"title", "visibility", "isActive"})
-@Sortable(fields = {"title", "createdAt", "updatedAt"})
+@Filterable(fields = {"title", "visibility", "studyMode", "isActive"})
+@Sortable(fields = {"title", "createdAt", "updatedAt", "cloneCount", "favoriteCount", "viewCount", "totalCards"})
 @SoftDelete
 @AuditEnabled
 public class Deck extends BaseEntity {
@@ -90,6 +90,19 @@ public class Deck extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     int totalCards = 0;
+
+    /* ── Community counters (denormalized so we can sort by them) ── */
+    @Builder.Default
+    @Column(name = "clone_count", nullable = false, columnDefinition = "INT NOT NULL DEFAULT 0")
+    int cloneCount = 0;
+
+    @Builder.Default
+    @Column(name = "favorite_count", nullable = false, columnDefinition = "INT NOT NULL DEFAULT 0")
+    int favoriteCount = 0;
+
+    @Builder.Default
+    @Column(name = "view_count", nullable = false, columnDefinition = "INT NOT NULL DEFAULT 0")
+    int viewCount = 0;
 
     @Column(name = "template_id")
     Long templateId;

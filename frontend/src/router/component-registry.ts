@@ -8,6 +8,8 @@ import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import LibraryPage from "@/pages/student/LibraryPage";
+import CommunityPage from "@/pages/student/CommunityPage";
+import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
@@ -30,6 +32,8 @@ export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
+  { path: "/community", component: CommunityPage, isModuleDriven: true },
+  { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },

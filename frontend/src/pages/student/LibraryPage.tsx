@@ -72,9 +72,14 @@ export default function LibraryPage() {
   }, []);
 
   useEffect(() => {
+    const userId = getCurrentUserId();
+    if (userId == null) {
+      setDecks([]);
+      return;
+    }
     setIsLoading(true);
     deckApi
-      .getPage({ page: 0, size: 100 }, searchQuery)
+      .getPage({ page: 0, size: 100 }, searchQuery, { userId } as never)
       .then((r) => setDecks(r.content ?? (r as any).items ?? []))
       .finally(() => setIsLoading(false));
   }, [searchQuery]);

@@ -43,5 +43,11 @@ public class DeckDTO extends BaseDTO {
 
     Integer totalCards;
 
+    Integer cloneCount;
+
+    Integer favoriteCount;
+
+    Integer viewCount;
+
     Long templateId;
 }

@@ -20,4 +20,19 @@ export const deckApi = {
     const res = await axiosInstance.delete<DeckDTO>(`/decks/${deckId}/template`);
     return res.data;
   },
+
+  /** Deep-copy a public deck (and all its flashcards) into the current user's library. */
+  clone: async (deckId: number): Promise<DeckDTO> => {
+    const res = await axiosInstance.post<DeckDTO>(`/decks/${deckId}/clone`);
+    return res.data;
+  },
+
+  /** Increment the deck's view count (fire-and-forget). */
+  incrementView: async (deckId: number): Promise<void> => {
+    try {
+      await axiosInstance.post(`/decks/${deckId}/view`);
+    } catch {
+      // Non-fatal — viewing a deck shouldn't break the page
+    }
+  },
 };

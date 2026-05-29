@@ -91,4 +91,25 @@ public class FavoriteDeckServiceImpl
             ctx.add("deckId", "Deck is already in favorites");
         }
     }
+
+    /* ─────────────────────────────────────────
+       Maintain deck.favoriteCount for community sort
+    ───────────────────────────────────────── */
+    @Override
+    protected void afterCreate(FavoriteDeck entity, FavoriteDeckDTO request) {
+        adjustFavoriteCount(entity, +1);
+    }
+
+    @Override
+    protected void afterDelete(FavoriteDeck entity) {
+        adjustFavoriteCount(entity, -1);
+    }
+
+    private void adjustFavoriteCount(FavoriteDeck entity, int delta) {
+        if (entity == null || entity.getDeck() == null) return;
+        Deck deck = entity.getDeck();
+        int current = deck.getFavoriteCount();
+        deck.setFavoriteCount(Math.max(0, current + delta));
+        deckRepository.save(deck);
+    }
 }
