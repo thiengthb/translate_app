@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -14,26 +14,16 @@ interface SidebarSearchProps {
 }
 
 /**
- * Inline filter input shown only when the sidebar is expanded. Pressing
- * `/` anywhere on the page focuses it — same convention as GitHub /
- * Vercel / Linear. Escape clears + blurs.
+ * Inline filter input shown only when the sidebar is expanded. Escape
+ * clears + blurs.
+ *
+ * Note: the `/` global shortcut now focuses the table search (see
+ * `useTableKeyboard`) — sidebar filter is reached by clicking the
+ * field directly.
  */
 export function SidebarSearch({ value, onChange, actions }: SidebarSearchProps) {
     const { state } = useSidebar();
     const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== "/") return;
-            const target = e.target as HTMLElement | null;
-            if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA") return;
-            if (target?.isContentEditable) return;
-            e.preventDefault();
-            inputRef.current?.focus();
-        };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, []);
 
     if (state !== "expanded") return null;
 
@@ -58,7 +48,7 @@ export function SidebarSearch({ value, onChange, actions }: SidebarSearchProps) 
                     placeholder="Tìm trong menu…"
                     className="h-8 pl-8 pr-7 text-xs bg-sidebar-accent/40 border-transparent focus-visible:border-input"
                 />
-                {value ? (
+                {value && (
                     <button
                         type="button"
                         onClick={() => onChange("")}
@@ -67,10 +57,6 @@ export function SidebarSearch({ value, onChange, actions }: SidebarSearchProps) 
                     >
                         <X size={12} />
                     </button>
-                ) : (
-                    <kbd className="absolute right-1.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center rounded border bg-muted px-1 text-[10px] text-muted-foreground pointer-events-none">
-                        /
-                    </kbd>
                 )}
             </div>
             {actions}

@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
+import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
@@ -21,11 +22,25 @@ const componentRegistry: Record<string, React.ComponentType> = Object.fromEntrie
 );
 const staticRoutes = routes.filter((r) => !r.isModuleDriven);
 
+/**
+ * Paths owned by `staticRoutes` (e.g. `/streak`, `/notifications`,
+ * `/audit-logs`). The BE may return a Module row whose URL hits one of
+ * these — when it does we let the static route handle it instead of
+ * letting the module-driven block shadow it with a 404 redirect
+ * (such paths have no entry in `componentRegistry` by design).
+ */
+const staticRoutePaths = new Set(staticRoutes.map((r) => r.path));
+
 function AppRoutes() {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const { activeRole } = usePermissions();
     const { data: moduleGroups = [] } = useActiveModuleGroups(isAuthenticated);
     const { data: publicModules = [] } = usePublicModules();
+
+    // Keep `document.title` in sync with the active route. Mounted here
+    // (inside BrowserRouter, alongside the moduleGroups query) so module
+    // titles from the BE feed the title resolver directly.
+    useAppMeta();
 
     // Authenticated users go to role home, guests stay on landing page
     const rootElement = isAuthenticated ? (
@@ -69,17 +84,22 @@ function AppRoutes() {
                 group.modules.map((m) => {
                     if (!m.url) return null;
                     if (publicModuleUrls.has(m.url)) return null; // already registered above
+
+                    // A static route owns this path — DON'T register a
+                    // module-driven Route for it, the static block
+                    // below will handle it (otherwise a route with
+                    // identical path would shadow ours with a 404
+                    // redirect for non-AutoCrud pages like /streak,
+                    // /notifications, /audit-logs).
+                    if (staticRoutePaths.has(m.url)) return null;
+
                     const Component = componentRegistry[m.url];
 
-                    if (!Component) {
-                        return (
-                            <Route
-                                key={`missing-${m.id ?? m.url}`}
-                                path={m.url}
-                                element={<Navigate to="/not-found-page" replace />}
-                            />
-                        );
-                    }
+                    // No Component → fall back to metadata-driven CRUD
+                    // UI. The BE side ships @AutoCrud + @ResourceMenu
+                    // without a matching FE entityConfig (e.g. Tag,
+                    // Translation); MetadataDrivenCrudPage builds the
+                    // table at runtime from `/api/meta/entities/<Name>`.
                     const element = Component ? (
                         <Component />
                     ) : (

@@ -57,25 +57,25 @@ export function RoleSwitcher({ primaryRole, roles }: RoleSwitcherProps) {
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
+                    title={`${formatRoleLabel(currentRole)} view — click để đổi`}
                     className={cn(
-                        "flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-full text-xs sm:text-sm font-medium border transition-colors cursor-pointer max-w-[160px]",
+                        "flex items-center gap-1 h-7 px-2 rounded-full text-xs font-medium border transition-colors cursor-pointer max-w-[120px]",
                         isStudentRole
                             ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/30"
                             : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15",
                     )}
                 >
                     {isStudentRole ? (
-                        <GraduationCap size={14} className="shrink-0" />
+                        <GraduationCap size={12} className="shrink-0" />
                     ) : (
-                        <ShieldCheck size={14} className="shrink-0" />
+                        <ShieldCheck size={12} className="shrink-0" />
                     )}
                     <span className="truncate">
                         {formatRoleLabel(currentRole)}
-                        <span className="hidden sm:inline"> View</span>
                     </span>
                     <ChevronDown
-                        size={13}
-                        className="shrink-0 opacity-70 data-[state=open]:rotate-180 transition-transform"
+                        size={11}
+                        className="shrink-0 opacity-60 data-[state=open]:rotate-180 transition-transform"
                     />
                 </button>
             </DropdownMenuTrigger>

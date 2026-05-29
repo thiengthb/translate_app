@@ -55,8 +55,7 @@ public class AutoCrudEndpointRegistrar {
             ExportService exportService,
             ImportService importService,
             SmartValidator validator,
-            ObjectMapper objectMapper
-    ) {
+            ObjectMapper objectMapper) {
         this.applicationContext = applicationContext;
         this.handlerMapping = handlerMapping;
         this.exportService = exportService;
@@ -67,13 +66,13 @@ public class AutoCrudEndpointRegistrar {
 
     @EventListener(ContextRefreshedEvent.class)
     public void registerAutoCrudEndpoints() throws Exception {
-        if (registered) return;
+        if (registered)
+            return;
         registered = true;
 
         Set<RouteKey> existingRoutes = collectExistingRoutes();
 
-        Map<String, BaseCrudServiceImpl> services =
-                applicationContext.getBeansOfType(BaseCrudServiceImpl.class);
+        Map<String, BaseCrudServiceImpl> services = applicationContext.getBeansOfType(BaseCrudServiceImpl.class);
 
         for (BaseCrudServiceImpl service : services.values()) {
             registerServiceIfEligible(service, existingRoutes);
@@ -97,7 +96,8 @@ public class AutoCrudEndpointRegistrar {
         }
 
         AutoCrud autoCrud = AnnotationUtils.findAnnotation(entityClass, AutoCrud.class);
-        if (autoCrud == null) return;
+        if (autoCrud == null)
+            return;
         if (!autoCrud.autoRegister()) {
             log.info("AutoCrud: skipping {} because autoRegister=false", entityClass.getSimpleName());
             return;
@@ -106,33 +106,38 @@ public class AutoCrudEndpointRegistrar {
         String basePath = "/api/" + stripLeadingSlash(
                 autoCrud.path().isEmpty()
                         ? entityClass.getSimpleName().toLowerCase() + "s"
-                        : autoCrud.path()
-        );
+                        : autoCrud.path());
 
         JpaRepository<?, ?> repository = findRepository(entityClass);
 
         GenericCrudHandler handler = new GenericCrudHandler(
                 service, repository, exportService, importService,
                 entityClass, dtoClass, filterClass,
-                validator, objectMapper
-        );
+                validator, objectMapper);
 
         boolean registeredAny = false;
 
         registeredAny |= registerMappingIfAbsent(handler, basePath, RequestMethod.GET, "getAll", null, existingRoutes);
-        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.GET, "getById", null, existingRoutes);
-        registeredAny |= registerMappingIfAbsent(handler, basePath, RequestMethod.POST, "create", "application/json", existingRoutes);
-        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.PUT, "update", "application/json", existingRoutes);
-        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.DELETE, "delete", null, existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.GET, "getById", null,
+                existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath, RequestMethod.POST, "create", "application/json",
+                existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.PUT, "update",
+                "application/json", existingRoutes);
+        registeredAny |= registerMappingIfAbsent(handler, basePath + "/{id}", RequestMethod.DELETE, "delete", null,
+                existingRoutes);
 
         if (autoCrud.enableBulkDelete()) {
-            registeredAny |= registerMappingIfAbsent(handler, basePath + "/bulk-delete", RequestMethod.POST, "bulkDelete", "application/json", existingRoutes);
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/bulk-delete", RequestMethod.POST,
+                    "bulkDelete", "application/json", existingRoutes);
         }
         if (autoCrud.enableExport()) {
-            registeredAny |= registerMappingIfAbsent(handler, basePath + "/export", RequestMethod.GET, "exportFile", null, existingRoutes);
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/export", RequestMethod.GET, "exportFile",
+                    null, existingRoutes);
         }
         if (autoCrud.enableImport()) {
-            registeredAny |= registerMappingIfAbsent(handler, basePath + "/import", RequestMethod.POST, "importFile", "multipart/form-data", existingRoutes);
+            registeredAny |= registerMappingIfAbsent(handler, basePath + "/import", RequestMethod.POST, "importFile",
+                    "multipart/form-data", existingRoutes);
         }
 
         if (registeredAny) {
@@ -171,11 +176,44 @@ public class AutoCrudEndpointRegistrar {
         }
     }
 
+    /**
+     * Detect whether an explicit {@code @RestController} already owns the
+     * entity's standard CRUD surface — in which case we skip auto
+     * registration so the manual controller wins.
+     *
+     * <p>
+     * Ownership is determined by checking for the <strong>canonical
+     * CRUD path patterns</strong>:
+     * <ul>
+     * <li>{@code basePath} itself (list / create endpoint)</li>
+     * <li>{@code basePath + "/{id}"} (detail / update / delete endpoint)</li>
+     * </ul>
+     *
+     * <p>
+     * An ancillary sub-endpoint like {@code /api/users/{userId}/public-profile}
+     * does <strong>not</strong> indicate the controller owns the entity —
+     * it's a feature endpoint built on top of the user URL space.
+     * Previously this method used {@code startsWith(basePath + "/")}
+     * which incorrectly treated such feature endpoints as ownership
+     * markers and silently disabled User CRUD when a Leaderboard
+     * controller defined {@code GET /api/users/{userId}/public-profile}.
+     */
+    private boolean pathAlreadyMapped(String basePath, Set<String> existingPaths) {
+        String detailPath = basePath + "/{id}";
+        for (String existing : existingPaths) {
+            if (existing.equals(basePath) || existing.equals(detailPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private JpaRepository<?, ?> findRepository(Class<?> entityClass) {
         String[] beanNames = applicationContext.getBeanNamesForType(JpaRepository.class);
         for (String name : beanNames) {
             Class<?> beanType = applicationContext.getType(name);
-            if (beanType == null) continue;
+            if (beanType == null)
+                continue;
 
             Class<?>[] generics = GenericTypeResolver.resolveTypeArguments(beanType, JpaRepository.class);
             if (generics != null && generics.length >= 1 && entityClass.equals(generics[0])) {
@@ -186,7 +224,7 @@ public class AutoCrudEndpointRegistrar {
     }
 
     private void registerMapping(Object handler, String path, RequestMethod method,
-                                 String methodName, String consumes) throws NoSuchMethodException {
+            String methodName, String consumes) throws NoSuchMethodException {
 
         Method targetMethod = findMethod(handler.getClass(), methodName);
 
@@ -202,8 +240,8 @@ public class AutoCrudEndpointRegistrar {
     }
 
     private boolean registerMappingIfAbsent(Object handler, String path, RequestMethod method,
-                                            String methodName, String consumes,
-                                            Set<RouteKey> existingRoutes) throws NoSuchMethodException {
+            String methodName, String consumes,
+            Set<RouteKey> existingRoutes) throws NoSuchMethodException {
         RouteKey routeKey = new RouteKey(normalizePath(path), method);
         if (existingRoutes.contains(routeKey)) {
             log.info("AutoCrud: skipping {} {} because an explicit mapping already exists", method, path);

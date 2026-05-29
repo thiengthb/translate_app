@@ -1,4 +1,4 @@
-import { Star, X } from "lucide-react";
+import { Pin, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,18 @@ interface NavItemProps {
     /** Visual tone for the item background — Recent rows use "secondary" to
      *  separate them from default-tone module-group items. */
     tone?: "default" | "secondary";
+    /**
+     * Active-state appearance:
+     *   "soft"  (default)  — logo-like soft tint: bg-primary/10 +
+     *                        text-primary + 1px primary border.
+     *                        Subtle, elegant, used everywhere in
+     *                        expanded mode so the whole sidebar shares
+     *                        one consistent "you are here" idiom.
+     *   "solid"            — bold bg-primary fill. Reserved for the
+     *                        collapsed icon-only column where a quiet
+     *                        tint reads as "not selected" at a glance.
+     */
+    activeAppearance?: "soft" | "solid";
     /** When provided, show a star toggle. `true` = filled (already pinned). */
     favorite?: {
         isFavorite: boolean;
@@ -34,6 +46,26 @@ interface NavItemProps {
         onRemove: () => void;
     };
 }
+
+/**
+ * Active-state class set per appearance mode.
+ *
+ * Soft mode uses `border border-transparent` as a baseline so the row
+ * height stays stable when active flips on — without the transparent
+ * border the row would shift 1px when picking up `border-primary/30`.
+ */
+const ACTIVE_CLASSES: Record<NonNullable<NavItemProps["activeAppearance"]>, string> =
+    {
+        soft:
+            "border border-transparent " +
+            "data-[active=true]:!bg-primary/10 " +
+            "data-[active=true]:!text-primary " +
+            "data-[active=true]:!border-primary/30 " +
+            "data-[active=true]:font-medium",
+        solid:
+            "data-[active=true]:!bg-primary " +
+            "data-[active=true]:!text-primary-foreground",
+    };
 
 function badgeVariantToClass(variant: SidebarBadge["variant"]): string {
     switch (variant) {
@@ -64,6 +96,7 @@ export function NavItem({
     variant,
     collapsed,
     tone = "default",
+    activeAppearance = "soft",
     favorite,
     onRemove,
 }: NavItemProps) {
@@ -76,8 +109,14 @@ export function NavItem({
         tone === "secondary" && !item.isActive
             ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             : "";
+    const activeClass = ACTIVE_CLASSES[activeAppearance];
 
     if (collapsed) {
+        // Collapsed icon-only mode intentionally keeps the SOLID primary
+        // fill regardless of `activeAppearance`. At 32px without any
+        // text label, the soft tint reads as "subtle background tweak"
+        // rather than "selected" — solid is the only visually
+        // unambiguous indicator here.
         return (
             <SidebarMenuItem className="flex justify-center">
                 <SidebarMenuButton
@@ -109,7 +148,13 @@ export function NavItem({
             <Icon
                 className={cn(
                     "h-4 w-4 shrink-0",
-                    active && "text-primary-foreground",
+                    // Icon color follows the active appearance:
+                    //   soft  → primary tint (matches the soft text)
+                    //   solid → primary-foreground (against the bold fill)
+                    active &&
+                        (activeAppearance === "soft"
+                            ? "text-primary"
+                            : "text-primary-foreground"),
                 )}
             />
             <span className="flex-1 truncate">{item.title}</span>
@@ -132,16 +177,22 @@ export function NavItem({
                         favorite.onToggle();
                     }}
                     aria-label={favorite.isFavorite ? "Unpin" : "Pin"}
+                    title={favorite.isFavorite ? "Bỏ pin" : "Pin"}
                     className={cn(
                         "shrink-0 p-0.5 rounded transition-all hover:bg-muted",
                         favorite.isFavorite
-                            ? "text-amber-500 opacity-100"
-                            : "text-muted-foreground/50 opacity-0 group-hover/navitem:opacity-100 hover:text-amber-500",
+                            ? "text-primary opacity-100"
+                            : "text-muted-foreground/50 opacity-0 group-hover/navitem:opacity-100 hover:text-primary",
                     )}
                 >
-                    <Star
+                    {/* Rotate 45° + fill khi đã pin → visual "stuck in"
+                        rõ ràng. Khi chưa pin: icon outline, hover-reveal. */}
+                    <Pin
                         size={12}
-                        className={favorite.isFavorite ? "fill-current" : ""}
+                        className={cn(
+                            "transition-transform",
+                            favorite.isFavorite && "rotate-45 fill-current",
+                        )}
                     />
                 </button>
             )}
@@ -172,11 +223,7 @@ export function NavItem({
                 <SidebarMenuSubButton
                     asChild
                     isActive={item.isActive}
-                    className={cn(
-                        "group",
-                        "data-[active=true]:bg-primary data-[active=true]:text-primary-foreground",
-                        toneClass,
-                    )}
+                    className={cn("group", activeClass, toneClass)}
                 >
                     {renderInner(item.isActive)}
                 </SidebarMenuSubButton>
@@ -190,10 +237,7 @@ export function NavItem({
                 asChild
                 isActive={item.isActive}
                 tooltip={item.title}
-                className={cn(
-                    "data-[active=true]:bg-primary data-[active=true]:text-primary-foreground",
-                    toneClass,
-                )}
+                className={cn(activeClass, toneClass)}
             >
                 {renderInner(item.isActive)}
             </SidebarMenuButton>

@@ -17,6 +17,14 @@ interface PaginationProps {
     isAutoSize?: boolean;
     autoSize?: number;
     onPageSizeChange?: (value: string) => void;
+    /**
+     * Catalog mode — drops the left-side counter block (total items +
+     * selected count) so the viewer sees a clean page navigator and
+     * nothing else. Selected count isn't applicable anyway since
+     * checkboxes are hidden upstream; explicit suppression keeps the
+     * pagination strip visually balanced.
+     */
+    readOnly?: boolean;
 }
 
 /**
@@ -30,6 +38,7 @@ export function Pagination({
     isAutoSize = true,
     autoSize,
     onPageSizeChange,
+    readOnly = false,
 }: PaginationProps) {
     const totalPages = Math.ceil(table.total / table.size) || 1;
     const currentPage = table.page + 1;
@@ -50,25 +59,38 @@ export function Pagination({
             className="flex items-center justify-between gap-2 w-full min-w-0 text-xs"
             data-protable-pagination
         >
-            <div className="flex items-center gap-2 text-muted-foreground min-w-0 shrink overflow-hidden">
-                {table.selected?.length > 0 ? (
-                    <span className="whitespace-nowrap">
-                        <span className="font-semibold text-foreground tabular-nums">
-                            {table.selected.length}
+            {/* Counter block (selected count + total items). Suppressed
+                entirely in catalog mode — read-only viewers don't
+                select rows, and showing "Tổng: N" would be the only
+                visible chrome on the left, looking lopsided. The page
+                navigator on the right is enough wayfinding. */}
+            {readOnly ? (
+                <div className="min-w-0 shrink" aria-hidden />
+            ) : (
+                <div className="flex items-center gap-2 text-muted-foreground min-w-0 shrink overflow-hidden">
+                    {table.selected?.length > 0 ? (
+                        <span className="whitespace-nowrap">
+                            <span className="font-semibold text-foreground tabular-nums">
+                                {table.selected.length}
+                            </span>
+                            <span className="hidden sm:inline">
+                                {" / "}
+                                <span className="tabular-nums">
+                                    {table.total ?? 0}
+                                </span>
+                                {" đã chọn"}
+                            </span>
                         </span>
-                        <span className="hidden sm:inline">
-                            {" / "}
-                            <span className="tabular-nums">{table.total ?? 0}</span>
-                            {" đã chọn"}
+                    ) : (
+                        <span className="hidden md:inline whitespace-nowrap tabular-nums">
+                            Tổng:{" "}
+                            <span className="font-semibold text-foreground">
+                                {table.total ?? 0}
+                            </span>
                         </span>
-                    </span>
-                ) : (
-                    <span className="hidden md:inline whitespace-nowrap tabular-nums">
-                        Tổng:{" "}
-                        <span className="font-semibold text-foreground">{table.total ?? 0}</span>
-                    </span>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex items-center gap-1.5 sm:gap-2">
                 <Select value={currentSelectValue} onValueChange={onPageSizeChange}>

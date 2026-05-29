@@ -7,7 +7,8 @@ export type FieldType =
   | "icon"
   | "select"
   | "boolean"
-  | "relation";
+  | "relation"
+  | "image";
 
 export type FilterType =
   | "text"

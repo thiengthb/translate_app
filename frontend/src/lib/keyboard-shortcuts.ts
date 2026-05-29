@@ -70,20 +70,13 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
         id: "sidebar",
         title: "Sidebar",
         icon: PanelLeftClose,
-        description:
-            "Điều hướng nhanh trong sidebar admin — tìm kiếm, ẩn / hiện sidebar.",
+        description: "Ẩn / hiện sidebar nhanh.",
         items: [
             {
                 label: "Đóng / mở sidebar",
                 keys: [MOD_KEY, "B"],
                 description:
-                    "Toggle giữa trạng thái mở rộng và icon-only của sidebar.",
-            },
-            {
-                label: "Focus thanh tìm kiếm sidebar",
-                keys: ["/"],
-                description:
-                    "Đặt con trỏ vào ô tìm kiếm sidebar để lọc menu nhanh.",
+                    "Toggle giữa trạng thái mở rộng và icon-only của sidebar. Trạng thái được lưu cookie nên load lại trang giữ nguyên.",
             },
         ],
     },
@@ -124,7 +117,9 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
             },
             {
                 label: "Focus thanh tìm kiếm bảng",
-                keys: [MOD_KEY, "F"],
+                keys: ["/"],
+                description:
+                    "Convention quen thuộc của GitHub / Vercel / Linear. `Ctrl/⌘+F` cũng hoạt động.",
             },
             {
                 label: "Chọn tất cả dòng trên trang",

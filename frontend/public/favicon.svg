@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 32 32" width="32" height="32">
+  <!-- Brand background — rounded square in the default sunset primary.
+       Light-mode browsers see this directly. Dark-mode browsers that
+       support `prefers-color-scheme` inside SVG get a slightly brighter
+       variant for visibility on dark tab bars. -->
+  <style>
+    .bg { fill: #d97757; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #e89378; }
+    }
+  </style>
+  <rect class="bg" x="-4" y="-4" width="32" height="32" rx="7"/>
+  <!-- Lucide Box icon in white — matches the SidebarBranding logo so
+       tab favicon and in-app logo read as the same brand mark. -->
+  <g fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+    <path d="m3.3 7 8.7 5 8.7-5"/>
+    <path d="M12 22V12"/>
+  </g>
+</svg>

@@ -198,17 +198,17 @@ export function TableView({
                                 )}
                             </colgroup>
 
-                            <TableHeader className="bg-muted/40 z-10 sticky top-0 shadow-sm [&_th]:font-semibold [&_th]:text-foreground [&_th]:h-11 [&_th]:bg-muted/40">
+                            <TableHeader className="bg-muted z-30 sticky top-0 shadow-sm [&_th]:font-semibold [&_th]:text-foreground [&_th]:h-11 [&_th]:bg-muted">
                                 <TableRow>
                                     {isExpandable && (
                                         <TableHead
                                             style={{ left: expandLeft }}
-                                            className="sticky z-30 !p-0 !bg-muted/40"
+                                            className="sticky z-40 !p-0 !bg-muted"
                                         />
                                     )}
                                     <TableHead
                                         style={{ left: selectLeft }}
-                                        className="sticky z-30 !px-0 text-center !bg-muted/40"
+                                        className="sticky z-40 !px-0 text-center !bg-muted"
                                     >
                                         <div className="flex items-center justify-center">
                                             <SelectAllCheckbox
@@ -219,7 +219,7 @@ export function TableView({
                                     </TableHead>
                                     <TableHead
                                         style={{ left: indexLeft }}
-                                        className="sticky z-30 !px-1 text-center text-muted-foreground text-xs !bg-muted/40 border-r border-border/70 shadow-[8px_0_10px_-10px_rgba(0,0,0,0.35)]"
+                                        className="sticky z-40 !px-1 text-center text-muted-foreground text-xs !bg-muted border-r border-border/70 shadow-[8px_0_10px_-10px_rgba(0,0,0,0.35)]"
                                     >
                                         #
                                     </TableHead>
@@ -258,7 +258,7 @@ export function TableView({
                                             style={{
                                                 width: ACTION_COLUMN_WIDTH,
                                             }}
-                                            className="sticky right-0 z-30 !bg-muted/40 border-l border-border/70 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.35)] !px-1 text-center"
+                                            className="sticky right-0 z-40 !bg-muted border-l border-border/70 shadow-[-8px_0_10px_-10px_rgba(0,0,0,0.35)] !px-1 text-center"
                                         >
                                             Action
                                         </TableHead>

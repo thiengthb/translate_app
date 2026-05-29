@@ -1,17 +1,16 @@
 package com.example.starter_project_2025.system.dashboard.user.dto;
 
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
-
 import java.util.List;
 
-@ResourceMenu(
-        title = "User Analytics",
-        group = "Dashboard",
-        icon = "users",
-        url = "/admin/users-dashboard",
-        order = 2,
-        permission = "USER_READ"
-)
+/**
+ * Response DTO for {@code GET /api/dashboard/users/analytics}.
+ *
+ * <p>No {@link com.example.starter_project_2025.init.annotation.ResourceMenu}
+ * annotation: the analytics view is now folded into the {@code /users}
+ * page as the "Analytic" tab, so a separate sidebar entry would be
+ * duplicate. The HTTP endpoint stays — the User page's tab calls it via
+ * the same {@code useUserAnalytics} hook.
+ */
 public record UserAnalyticsResponse(
         Summary summary,
         List<RoleDistribution> roleDistribution,

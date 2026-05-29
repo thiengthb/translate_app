@@ -1,8 +1,10 @@
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { TruncatedText } from "@/components/datatable/common/TruncatedText";
 import { BadgeList } from "@/components/datatable/common/BadgeList";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { iconMap } from "@/components/datatable/iconMap";
+import { cn } from "@/lib/utils";
 import type { FieldSchema } from "@/types";
 
 interface CardFieldValueProps {
@@ -22,14 +24,62 @@ export function CardFieldValue({
   onBooleanToggle,
   disableBooleanToggle = false,
 }: CardFieldValueProps) {
+  if (field.type === "image") {
+    const url =
+      value === null || value === undefined || value === ""
+        ? null
+        : String(value).trim() || null;
+    if (!url) return <span className="text-xs text-muted-foreground">—</span>;
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-14 w-14 overflow-hidden rounded-md border bg-muted hover:ring-2 hover:ring-primary/40 transition"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={url}
+          alt={field.label}
+          loading="lazy"
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      </a>
+    );
+  }
+
   if (field.type === "boolean") {
     const labels = field.booleanLabels || { true: "Yes", false: "No" };
     const label = value ? labels.true : labels.false;
+
+    // When the toggle isn't actionable (catalog viewers, locked views),
+    // a Switch is misleading — it looks tappable but does nothing.
+    // Render as a Badge instead so the state reads as a *fact*, not an
+    // *affordance*. Matches the convention used in DetailModal.
+    const isInert = disableBooleanToggle || !onBooleanToggle;
+    if (isInert) {
+      const colorClass = value
+        ? labels.trueColor || "bg-emerald-500 text-white border-transparent"
+        : labels.falseColor || "bg-slate-400 text-white border-transparent";
+      return (
+        <Badge
+          className={cn(
+            "text-[10px] font-medium px-2 py-0.5 rounded-full",
+            colorClass,
+          )}
+        >
+          {label}
+        </Badge>
+      );
+    }
+
     return (
       <div className="flex items-center gap-2">
         <Switch
           checked={!!value}
-          disabled={disableBooleanToggle || !onBooleanToggle}
           onCheckedChange={(checked) => onBooleanToggle?.(field.name, checked)}
           className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-primary/40 scale-90"
         />

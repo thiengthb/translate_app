@@ -1,4 +1,4 @@
-import { ArrowUpDown, Plus } from "lucide-react";
+import { ArrowUpDown, LayoutPanelTop, Plus } from "lucide-react";
 
 import ActionButton from "../common/ActionButton";
 import { PermissionGate } from "@/components/PermissionGate";
@@ -20,6 +20,18 @@ interface ToolbarProps {
     onViewModeChange?: (mode: ViewMode) => void;
     density?: Density;
     onDensityChange?: (density: Density) => void;
+    /**
+     * When provided AND the view is in card mode, render a button that
+     * opens the card-layout editor. Undefined hides the button — wired
+     * conditionally by ProTable so the entry point only appears when
+     * the editor actually makes sense.
+     */
+    onOpenCardLayout?: () => void;
+    /**
+     * Catalog mode — the viewer is read-only on this entity. Drops the
+     * Create button + view-mode picker. Search becomes the hero.
+     */
+    readOnly?: boolean;
 }
 
 /**
@@ -37,6 +49,8 @@ export function Toolbar({
     onViewModeChange,
     density,
     onDensityChange,
+    onOpenCardLayout,
+    readOnly = false,
 }: ToolbarProps) {
     const { schema } = table;
 
@@ -53,25 +67,34 @@ export function Toolbar({
     return (
         <div className="flex flex-col gap-2 w-full min-w-0" data-protable-toolbar>
             <div className="flex items-center gap-1.5 flex-wrap min-w-0 w-full">
-                <DisplayOptionsMenu
-                    schema={schema}
-                    columnVisibility={table.columnVisibility}
-                    toggleFieldVisibility={table.toggleFieldVisibility}
-                    viewMode={viewMode}
-                    onViewModeChange={onViewModeChange}
-                    density={density}
-                    onDensityChange={onDensityChange}
-                    entityName={schema.entityName}
-                    savedViewState={{
-                        search: table.search,
-                        sortState: table.sortState,
-                        filters: table.filters,
-                        columnVisibility: table.columnVisibility,
-                    }}
-                    onApplyView={table.applyView}
-                />
+                {/* Catalog mode (`readOnly`) collapses the toolbar to
+                    the bare essentials — only search + filter remain.
+                    Everything else (display options, refresh, sort
+                    clear, card layout editor, data I/O, create) is
+                    workspace-only chrome and would either do nothing
+                    useful or actively confuse a browse-only viewer. */}
+                {!readOnly && (
+                    <DisplayOptionsMenu
+                        schema={schema}
+                        columnVisibility={table.columnVisibility}
+                        toggleFieldVisibility={table.toggleFieldVisibility}
+                        viewMode={viewMode}
+                        onViewModeChange={onViewModeChange}
+                        density={density}
+                        onDensityChange={onDensityChange}
+                        entityName={schema.entityName}
+                        savedViewState={{
+                            search: table.search,
+                            sortState: table.sortState,
+                            filters: table.filters,
+                            columnVisibility: table.columnVisibility,
+                        }}
+                        onApplyView={table.applyView}
+                        readOnly={readOnly}
+                    />
+                )}
 
-                {showRefresh && (
+                {!readOnly && showRefresh && (
                     <RefreshIndicator
                         lastUpdated={table.lastUpdated}
                         isFetching={table.isFetching}
@@ -93,28 +116,43 @@ export function Toolbar({
                     activeFilterCount={activeFilterCount}
                 />
 
-                <span className="mx-0.5 h-6 w-px bg-border" aria-hidden />
+                {!readOnly && (
+                    <>
+                        <span className="mx-0.5 h-6 w-px bg-border" aria-hidden />
 
-                {hasSorts && (
-                    <ActionButton
-                        onClick={() => table.clearSort()}
-                        tooltip={`Xóa ${table.sortState.length} sắp xếp`}
-                        variant="outline"
-                        icon={<ArrowUpDown size={15} />}
-                    />
-                )}
+                        {hasSorts && (
+                            <ActionButton
+                                onClick={() => table.clearSort()}
+                                tooltip={`Xóa ${table.sortState.length} sắp xếp`}
+                                variant="outline"
+                                icon={<ArrowUpDown size={15} />}
+                            />
+                        )}
 
-                <DataIOMenu table={table} />
+                        {onOpenCardLayout && viewMode === "card" && (
+                            <ActionButton
+                                onClick={onOpenCardLayout}
+                                tooltip="Tùy chỉnh card layout"
+                                variant="outline"
+                                icon={<LayoutPanelTop size={15} />}
+                            />
+                        )}
 
-                {headerActions || (
-                    <PermissionGate permission={table.permission?.keys?.create}>
-                        <ActionButton
-                            onClick={() => table.openCreate()}
-                            tooltip="Tạo mới"
-                            variant="default"
-                            icon={<Plus size={15} />}
-                        />
-                    </PermissionGate>
+                        <DataIOMenu table={table} />
+
+                        {headerActions || (
+                            <PermissionGate
+                                permission={table.permission?.keys?.create}
+                            >
+                                <ActionButton
+                                    onClick={() => table.openCreate()}
+                                    tooltip="Tạo mới"
+                                    variant="default"
+                                    icon={<Plus size={15} />}
+                                />
+                            </PermissionGate>
+                        )}
+                    </>
                 )}
             </div>
 

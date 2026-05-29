@@ -76,6 +76,17 @@ export function useTableKeyboard({
                 return;
             }
 
+            // `/` → focus search (only when not typing — preserves the
+            // ability to type a literal "/" in any form field). Convention
+            // borrowed from GitHub / Vercel / Linear.
+            if (e.key === "/" && !typing) {
+                if (onFocusSearch) {
+                    e.preventDefault();
+                    onFocusSearch();
+                }
+                return;
+            }
+
             // Cmd/Ctrl + A → select all (only when not typing)
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a" && !typing) {
                 if (onSelectAll) {

@@ -6,6 +6,7 @@ import {
     Keyboard,
     LogOut,
     Settings,
+    Settings2,
     User as UserIcon,
 } from "lucide-react";
 
@@ -187,7 +188,17 @@ export function UserDropdownMenu({
                     </DropdownMenuItem>
                 )}
 
-                {/* ── Single "Settings" submenu — replaces inline lang+theme row ── */}
+                {/* Full settings page — palette + theme + language with
+                    more room to choose than the quick submenu below. */}
+                <DropdownMenuItem
+                    onSelect={() => navigate("/settings")}
+                    className="gap-2 text-sm cursor-pointer"
+                >
+                    <Settings2 size={14} className="opacity-70" />
+                    <span className="flex-1">Cài đặt</span>
+                </DropdownMenuItem>
+
+                {/* Quick palette + theme + language toggle (compact). */}
                 <PreferencesSubMenu />
 
                 <DropdownMenuSeparator />

@@ -49,6 +49,10 @@ interface DisplayOptionsMenuProps {
     entityName?: string;
     savedViewState?: SavedView["state"];
     onApplyView?: (state: SavedView["state"]) => void;
+    /** Catalog mode — suppress the view-mode picker since the viewer
+     *  is locked to card view (their permissions don't justify the
+     *  table or chart density). */
+    readOnly?: boolean;
 }
 
 const VIEW_MODES: {
@@ -82,11 +86,15 @@ export function DisplayOptionsMenu({
     entityName,
     savedViewState,
     onApplyView,
+    readOnly = false,
 }: DisplayOptionsMenuProps) {
     const hideableFields = schema.fields.filter(
         (f: any) => f.hideable !== false,
     );
-    const showViewMode = !!onViewModeChange;
+    // View mode picker is suppressed in catalog mode — the viewer is
+    // locked to cards by design, so showing a picker that does nothing
+    // (or worse, lies about what they can switch to) is bad UX.
+    const showViewMode = !readOnly && !!onViewModeChange;
     const showDensity = !!density && !!onDensityChange;
     const showColumns = hideableFields.length > 0;
     const showSavedViews = !!entityName && !!onApplyView;

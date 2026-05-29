@@ -7,7 +7,9 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
+import AuditLogPage from "@/pages/auditLog/AuditLogPage";
 import KeyboardShortcutsPage from "@/pages/help/KeyboardShortcutsPage";
+import NotificationsPage from "@/pages/notifications/NotificationsPage";
 import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
@@ -19,8 +21,9 @@ import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 import StreakPage from "@/pages/streak/StreakPage";
-import UserDashboardPage from "@/pages/admin/userDashboard/UserDashboardPage";
+import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
@@ -50,10 +53,17 @@ export const routes: RouteConfig[] = [
   { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
+  { path: "/settings", component: SettingsPage },
   { path: "/streak", component: StreakPage },
   { path: "/help/shortcuts", component: KeyboardShortcutsPage },
-  { path: "/admin/users-dashboard", component: UserDashboardPage, isModuleDriven: true },
+  { path: "/notifications", component: NotificationsPage },
+  { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
+  // /users overrides the buildEntityRoutes AutoCrudPage default — wraps
+  // it in a tabbed page that also exposes User Analytics. Static (not
+  // module-driven) so App.tsx routes via staticRoutePaths short-circuit
+  // and skips the module-driven AutoCrudPage for the same URL.
+  { path: "/users", component: UsersPage, requiredPermission: "USER_READ" },
   { path: "/users/:userId", component: PublicProfilePage },
   { path: "/analyze", component: AnalyzePage },
   { path: "/production", component: ProductionPage },

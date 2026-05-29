@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ChevronsDownUp, ChevronsUpDown, Search as SearchIcon } from "lucide-react";
 
@@ -228,27 +228,43 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                     )}
 
                     {filteredGroups.map((group, idx) => (
-                        <SidebarGroup key={group.id} className="py-1">
-                            {/* Note: no SidebarGroupLabel here — NavGroup's
-                                CollapsibleTrigger already renders the group
-                                name as a clickable header row. Showing both
-                                produced duplicate labels for single-item
-                                groups. */}
+                        <Fragment key={group.id}>
+                            {/* Inter-group separator. Placed OUTSIDE the
+                                SidebarGroup wrapper so its `mx-2` margin
+                                doesn't compound with the group's own
+                                `px-2` padding — keeps the separator
+                                aligned with sibling icons when the
+                                sidebar is collapsed (48px wide). */}
                             {isCollapsed && idx > 0 && (
                                 <SidebarSeparator className="mx-2 my-1" />
                             )}
-                            <SidebarMenuList>
-                                <NavGroup
-                                    group={group}
-                                    collapsed={isCollapsed}
-                                    isOpen={isGroupOpen(group.name)}
-                                    onOpenChange={(open) =>
-                                        setGroupOpen(group.name, open)
-                                    }
-                                    favoriteFor={favoriteFor}
-                                />
-                            </SidebarMenuList>
-                        </SidebarGroup>
+                            <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
+                                {/* `px-0` when collapsed: remove the
+                                    horizontal padding so the icon
+                                    buttons (32x32) sit centered in the
+                                    full 48px sidebar width — otherwise
+                                    the base `p-2` shrinks the inner
+                                    area to 32px and the buttons fill
+                                    edge-to-edge like rows. */}
+                                {/* Note: no SidebarGroupLabel here —
+                                    NavGroup's CollapsibleTrigger already
+                                    renders the group name as a clickable
+                                    header row. Showing both produced
+                                    duplicate labels for single-item
+                                    groups. */}
+                                <SidebarMenuList>
+                                    <NavGroup
+                                        group={group}
+                                        collapsed={isCollapsed}
+                                        isOpen={isGroupOpen(group.name)}
+                                        onOpenChange={(open) =>
+                                            setGroupOpen(group.name, open)
+                                        }
+                                        favoriteFor={favoriteFor}
+                                    />
+                                </SidebarMenuList>
+                            </SidebarGroup>
+                        </Fragment>
                     ))}
                 </ScrollHintContainer>
             </SidebarContent>

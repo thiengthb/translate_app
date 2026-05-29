@@ -77,6 +77,36 @@ export function DetailModal({
     }
 
     switch (field.type) {
+      case "image": {
+        const url =
+          value === null || value === undefined || value === ""
+            ? null
+            : String(value).trim() || null;
+        if (!url) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        // Detail modal has more vertical room than table/card — show
+        // a larger preview that's still bounded so a very tall image
+        // doesn't push the rest of the detail layout offscreen.
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-md overflow-hidden border bg-muted hover:ring-2 hover:ring-primary/40 transition"
+          >
+            <img
+              src={url}
+              alt={field.label}
+              className="max-h-48 max-w-full object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </a>
+        );
+      }
+
       case "boolean": {
         const labels = field.booleanLabels || { true: "Yes", false: "No" };
         const colorClass = value
