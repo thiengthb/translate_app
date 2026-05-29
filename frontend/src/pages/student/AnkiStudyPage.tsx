@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ankiStudyApi, flashcardApi } from "@/api";
@@ -132,9 +132,29 @@ export default function AnkiStudyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
 
-  /* ── Keyboard shortcuts ── */
+  /* ── Keyboard shortcuts — disabled while a modal is open or while editing a field ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Don't capture shortcuts while a dialog is open — the user might be typing
+      // template/CSS code, card text, etc. and {1,2,3,4} or Space would otherwise
+      // accidentally rate the current card and end the session.
+      if (editOpen || templateEditorOpen) return;
+
+      // Also skip if focus is inside any editable element (defensive, in case a
+      // non-Dialog editor opens later).
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+
       if (e.key === "Escape" && fullView) {
         setFullView(false);
         return;
@@ -153,7 +173,7 @@ export default function AnkiStudyPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [flipped, submitting, queue, fullView]);
+  }, [flipped, submitting, queue, fullView, editOpen, templateEditorOpen]);
 
   /* ── Lock scroll while in full view ── */
   useEffect(() => {
@@ -370,11 +390,11 @@ export default function AnkiStudyPage() {
               </button>
             </div>
 
-            {/* Flip card */}
+            {/* Flip card — grows with content, min-height keeps it visually stable */}
             <div
               className={cn(
                 "relative cursor-pointer select-none",
-                fullView ? "h-[60vh]" : "h-64"
+                fullView ? "min-h-[60vh]" : "min-h-64"
               )}
               onClick={() => !submitting && setFlipped((f) => !f)}
               style={{ perspective: 1200 }}
@@ -387,11 +407,11 @@ export default function AnkiStudyPage() {
                   exit={{ rotateY: -90, opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className={cn(
-                    "absolute inset-0 rounded-2xl border border-border shadow-md overflow-hidden p-0",
+                    "rounded-2xl border border-border shadow-md overflow-hidden p-0",
                     flipped ? "bg-primary/5" : "bg-card"
                   )}
                 >
-                  <div className="flex flex-col h-full">
+                  <div className="flex flex-col">
                     <span className="shrink-0 pt-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       {flipped ? "Answer" : "Question"}
                     </span>
@@ -400,9 +420,10 @@ export default function AnkiStudyPage() {
                       <TemplateSideRender
                         html={flipped ? renderData!.backHtml : renderData!.frontHtml}
                         styling={renderData!.styling}
+                        fullView={fullView}
                       />
                     ) : (
-                      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-10 py-4 overflow-auto">
+                      <div className="flex flex-col items-center justify-center gap-3 px-10 py-6">
                         <PlainSideRender
                           card={current}
                           flipped={flipped}
@@ -437,7 +458,7 @@ export default function AnkiStudyPage() {
                       onClick={() => handleRate(rating)}
                       disabled={submitting}
                       className={cn(
-                        "flex flex-col items-center gap-1.5 px-6 py-3 rounded-xl border-2 text-sm font-semibold transition-colors disabled:opacity-50 min-w-[80px]",
+                        "flex flex-col items-center gap-1.5 px-6 py-3 rounded-xl border-2 text-sm font-semibold transition-colors disabled:opacity-50 min-w-20",
                         className
                       )}
                     >
@@ -523,31 +544,75 @@ function hasTemplateRender(
 function TemplateSideRender({
   html,
   styling,
+  fullView,
 }: {
   html: string;
   styling: string | null;
+  fullView: boolean;
 }) {
-  const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><style>
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const minH = fullView ? 320 : 200;
+  const [height, setHeight] = useState<number>(minH);
+
+  const srcDoc = useMemo(
+    () => `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light dark; }
 html, body {
   margin: 0;
-  padding: 12px 16px;
+  padding: 16px 20px;
   font-family: ui-sans-serif, system-ui, sans-serif;
   background: transparent;
   color: inherit;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
+img, video { max-width: 100%; height: auto; }
+audio { max-width: 100%; }
 ${styling ?? ""}
-</style></head><body><div class="card">${html}</div></body></html>`;
+</style></head><body><div class="card">${html}</div></body></html>`,
+    [html, styling]
+  );
+
+  /* Allow-same-origin lets us measure iframe content height from the parent.
+     Scripts are still blocked because allow-scripts is not in the sandbox list. */
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const measure = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc || !doc.body) return;
+        const measured = Math.max(
+          doc.body.scrollHeight,
+          doc.documentElement.scrollHeight
+        );
+        if (measured > 0) setHeight(Math.max(minH, measured));
+      } catch {
+        // ignore — cross-origin/sandbox issues
+      }
+    };
+
+    iframe.addEventListener("load", measure);
+    // images & fonts load asynchronously, so re-measure a few times
+    const timers = [
+      window.setTimeout(measure, 80),
+      window.setTimeout(measure, 320),
+      window.setTimeout(measure, 800),
+    ];
+    return () => {
+      iframe.removeEventListener("load", measure);
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, [srcDoc, minH]);
 
   return (
     <iframe
+      ref={iframeRef}
       title="Card content"
-      sandbox=""
+      sandbox="allow-same-origin"
       srcDoc={srcDoc}
-      className="w-full flex-1 min-h-0 border-0 bg-transparent"
-      style={{ minHeight: 0 }}
+      style={{ height: `${height}px` }}
+      className="w-full border-0 bg-transparent block"
     />
   );
 }

@@ -11,8 +11,11 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -98,25 +101,66 @@ public class FlashcardRenderService {
     }
 
     /**
-     * Build label → first non-deleted contentValue map for a given side.
-     * First occurrence per label wins (so duplicates in the card don't override).
+     * Build label → rendered HTML map for a given side.
+     *
+     * Includes both:
+     *   - Explicit label from {@code content.label}
+     *   - Synthetic {@code Field1}, {@code Field2}, ... based on order (matches frontend)
+     *
+     * Media contents (IMAGE/AUDIO/VIDEO) are wrapped as the corresponding HTML element so
+     * templates like <code>{{Field2}}</code> render an actual image instead of a raw URL.
      */
     private Map<String, String> buildLabelMap(Flashcard flashcard, SideType sideType) {
         Map<String, String> map = new LinkedHashMap<>();
         if (flashcard.getSides() == null) return map;
+
         for (FlashcardSide side : flashcard.getSides()) {
             if (side.getSide() != sideType) continue;
             if (side.getContents() == null) continue;
-            for (FlashcardSideContent content : side.getContents()) {
-                if (Boolean.TRUE.equals(content.getIsDeleted())) continue;
+
+            List<FlashcardSideContent> sorted = new ArrayList<>();
+            for (FlashcardSideContent c : side.getContents()) {
+                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
+                if (c.getContentValue() == null) continue;
+                sorted.add(c);
+            }
+            sorted.sort(Comparator.comparingInt(FlashcardSideContent::getOrderIndex));
+
+            for (int i = 0; i < sorted.size(); i++) {
+                FlashcardSideContent content = sorted.get(i);
+                String rendered = renderContentValue(content);
+
                 String label = content.getLabel();
-                String value = content.getContentValue();
-                if (label == null || label.isBlank()) continue;
-                if (value == null) continue;
-                map.putIfAbsent(label.trim(), value);
+                if (label != null && !label.isBlank()) {
+                    map.putIfAbsent(label.trim(), rendered);
+                }
+                // Synthetic field fallback — matches the frontend preview behavior
+                map.putIfAbsent("Field" + (i + 1), rendered);
+                map.putIfAbsent("field" + (i + 1), rendered);
             }
         }
         return map;
+    }
+
+    /** Wrap a content value into HTML based on its contentType (IMAGE → <img>, etc.). */
+    private String renderContentValue(FlashcardSideContent content) {
+        String value = content.getContentValue();
+        if (value == null) return "";
+        ContentType type = content.getContentType();
+        if (type == null) return value;
+
+        String attr = value
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+
+        return switch (type) {
+            case IMAGE -> "<img src=\"" + attr + "\" alt=\"\" />";
+            case AUDIO -> "<audio controls src=\"" + attr + "\"></audio>";
+            case VIDEO -> "<video controls src=\"" + attr + "\"></video>";
+            case TEXT, CLOZE -> value;
+        };
     }
 
     /**

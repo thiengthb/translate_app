@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deckApi, deckItemApi, flashcardApi, flashcardTemplateApi } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +14,22 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Loader2, Save, Trash2 } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Loader2,
+  Mic,
+  Save,
+  Sparkles,
+  Square,
+  Trash2,
+  Type,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import type {
   CreateUpdateTemplateRequest,
   DeckDTO,
+  FlashcardContentType,
   FlashcardDTO,
   FlashcardSideContentDTO,
   FlashcardSideType,
@@ -32,8 +43,10 @@ interface Props {
   onSaved: () => void;
 }
 
-const PREVIEW_DEBOUNCE_MS = 500;
+const PREVIEW_DEBOUNCE_MS = 180;
 const DEFAULT_TEMPLATE_NAME = "Deck template";
+
+type EditorTab = "front" | "back" | "css";
 
 type DraftForm = {
   name: string;
@@ -51,78 +64,119 @@ const EMPTY_DRAFT: DraftForm = {
   styling: "",
 };
 
+const DEFAULT_STYLING = `/* Card-wide styling — edit to customize */
+.card {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  text-align: center;
+  color: #1f2937;
+  background: #ffffff;
+  padding: 24px 16px;
+}
+.card-main {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.card-sub {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 4px 0;
+}
+.card img {
+  max-width: 100%;
+  max-height: 240px;
+  height: auto;
+  border-radius: 12px;
+  margin: 8px auto;
+  display: block;
+}
+.card audio, .card video {
+  max-width: 100%;
+  margin: 8px auto;
+  display: block;
+}
+hr#answer {
+  border: none;
+  border-top: 2px solid #e5e7eb;
+  margin: 24px 0;
+}`;
+
 /* ─────────────────────────────────────────
-   Starter template from the sample card's labels
+   Build the list of available labels (explicit + synthetic Field1/Field2)
 ───────────────────────────────────────── */
-function buildSideStarterTemplate(contents: FlashcardSideContentDTO[]): string {
-  const labels = contents
-    .filter((c) => c.label && c.label.trim().length > 0)
-    .map((c) => c.label!.trim());
-  if (labels.length === 0) return "";
-  return labels
-    .map((label, i) =>
-      i === 0
-        ? `<div class="card-main">{{${label}}}</div>`
-        : `<div class="card-sub">{{${label}}}</div>`
-    )
-    .join("\n");
+interface AvailableLabel {
+  name: string;
+  side: FlashcardSideType;
+  contentType: FlashcardContentType;
+  preview: string;
 }
 
-function buildStarterTemplate(flashcard: FlashcardDTO | null): {
-  frontTemplate: string;
-  backTemplate: string;
-  styling: string;
-} {
-  if (!flashcard?.sides) {
-    return { frontTemplate: "", backTemplate: "", styling: "" };
+interface SideLabelSummary {
+  labels: AvailableLabel[];
+  unlabeledCount: number;
+}
+
+function buildAvailableLabels(
+  flashcard: FlashcardDTO | null,
+  side: FlashcardSideType
+): SideLabelSummary {
+  const labels: AvailableLabel[] = [];
+  let unlabeledCount = 0;
+  const sideDto = flashcard?.sides?.find((s) => s.side === side);
+  if (!sideDto?.contents) return { labels, unlabeledCount };
+
+  for (const c of sideDto.contents) {
+    if (!c.contentValue) continue;
+    const previewText =
+      c.contentValue.length > 30
+        ? c.contentValue.slice(0, 30) + "…"
+        : c.contentValue;
+
+    if (c.label && c.label.trim()) {
+      labels.push({
+        name: c.label.trim(),
+        side,
+        contentType: c.contentType,
+        preview: previewText,
+      });
+    } else {
+      unlabeledCount += 1;
+    }
   }
-  const frontContents = flashcard.sides.find((s) => s.side === "FRONT")?.contents ?? [];
-  const backContents = flashcard.sides.find((s) => s.side === "BACK")?.contents ?? [];
-  const frontTemplate = buildSideStarterTemplate(frontContents);
-  const backTemplate = buildSideStarterTemplate(backContents);
-  return {
-    frontTemplate,
-    backTemplate,
-    styling: buildExampleStyling(frontTemplate, backTemplate),
-  };
+  return { labels, unlabeledCount };
 }
 
 /* ─────────────────────────────────────────
-   Example CSS stubs from class="..." attrs in the HTML
+   Render content value as HTML based on contentType
 ───────────────────────────────────────── */
-function buildExampleStyling(frontTemplate: string, backTemplate: string): string {
-  const combined = `${frontTemplate ?? ""}\n${backTemplate ?? ""}`;
-  const classes = new Set<string>();
-  for (const match of combined.matchAll(/class\s*=\s*["']([^"']+)["']/g)) {
-    for (const cls of match[1].split(/\s+/)) {
-      const trimmed = cls.trim();
-      if (trimmed) classes.add(trimmed);
-    }
+function escapeHtmlAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderContentValue(content: FlashcardSideContentDTO): string {
+  if (!content.contentValue) return "";
+  const url = escapeHtmlAttr(content.contentValue);
+  switch (content.contentType) {
+    case "IMAGE":
+      return `<img src="${url}" alt="" />`;
+    case "AUDIO":
+      return `<audio controls src="${url}"></audio>`;
+    case "VIDEO":
+      return `<video controls src="${url}"></video>`;
+    case "TEXT":
+    case "CLOZE":
+    default:
+      return content.contentValue;
   }
-  if (classes.size === 0) {
-    return [
-      "/* Example styling — edit to customize */",
-      ".card {",
-      "  font-size: 20px;",
-      "  text-align: center;",
-      "  padding: 16px;",
-      "}",
-    ].join("\n");
-  }
-  const stubs = [...classes].map((cls) => {
-    if (cls === "card-main") {
-      return ".card-main {\n  font-size: 24px;\n  font-weight: 600;\n  text-align: center;\n  margin-bottom: 8px;\n}";
-    }
-    if (cls === "card-sub") {
-      return ".card-sub {\n  font-size: 14px;\n  opacity: 0.75;\n  text-align: center;\n  margin: 4px 0;\n}";
-    }
-    return `.${cls} {\n  /* your styles here */\n}`;
-  });
-  return ["/* Example styling — edit to customize */", ...stubs].join("\n\n");
 }
 
 /* ─────────────────────────────────────────
-   buildLabelMap & applyTemplate (live preview)
+   buildLabelMap — supports both explicit labels AND synthetic FieldN
 ───────────────────────────────────────── */
 function buildLabelMap(
   flashcard: FlashcardDTO | null,
@@ -132,22 +186,64 @@ function buildLabelMap(
   if (!flashcard?.sides) return map;
   const sideDto = flashcard.sides.find((s) => s.side === side);
   if (!sideDto?.contents) return map;
-  for (const c of sideDto.contents) {
-    if (!c.label) continue;
-    if (!c.contentValue) continue;
-    if (map[c.label] === undefined) {
-      map[c.label] = c.contentValue;
+
+  sideDto.contents.forEach((c) => {
+    if (!c.contentValue) return;
+    const rendered = renderContentValue(c);
+    if (c.label && c.label.trim()) {
+      if (map[c.label.trim()] === undefined) {
+        map[c.label.trim()] = rendered;
+      }
     }
-  }
+  });
   return map;
 }
 
+/* ─────────────────────────────────────────
+   Apply {{Label}} tokens. Case-insensitive fallback so {{kanji}} matches {{Kanji}}.
+───────────────────────────────────────── */
 function applyTemplate(template: string, labelMap: Record<string, string>): string {
   if (!template) return "";
+  const ciMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(labelMap)) ciMap[k.toLowerCase()] = v;
   return template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, rawLabel: string) => {
     const label = rawLabel.trim();
-    return labelMap[label] ?? "";
+    if (labelMap[label] !== undefined) return labelMap[label];
+    const ci = ciMap[label.toLowerCase()];
+    return ci !== undefined ? ci : "";
   });
+}
+
+/* ─────────────────────────────────────────
+   Starter templates
+───────────────────────────────────────── */
+function buildSideStarterTemplate(contents: FlashcardSideContentDTO[]): string {
+  // Only include content with explicit labels — unlabeled fields can't be referenced.
+  const labeled = contents.filter((c) => c.label && c.label.trim());
+  if (labeled.length === 0) return "";
+  return labeled
+    .map((c, i) => {
+      const cls = i === 0 ? "card-main" : "card-sub";
+      return `<div class="${cls}">{{${c.label!.trim()}}}</div>`;
+    })
+    .join("\n");
+}
+
+function buildStarterTemplate(flashcard: FlashcardDTO | null): {
+  frontTemplate: string;
+  backTemplate: string;
+  styling: string;
+} {
+  if (!flashcard?.sides) {
+    return { frontTemplate: "", backTemplate: "", styling: DEFAULT_STYLING };
+  }
+  const frontContents = flashcard.sides.find((s) => s.side === "FRONT")?.contents ?? [];
+  const backContents = flashcard.sides.find((s) => s.side === "BACK")?.contents ?? [];
+  return {
+    frontTemplate: buildSideStarterTemplate(frontContents),
+    backTemplate: buildSideStarterTemplate(backContents),
+    styling: DEFAULT_STYLING,
+  };
 }
 
 /* ─────────────────────────────────────────
@@ -164,13 +260,19 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
 
   const [draft, setDraft] = useState<DraftForm>(EMPTY_DRAFT);
   const [debouncedDraft, setDebouncedDraft] = useState<DraftForm>(EMPTY_DRAFT);
+  const [activeTab, setActiveTab] = useState<EditorTab>("front");
   const [previewSide, setPreviewSide] = useState<FlashcardSideType>("FRONT");
+
+  const frontTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const backTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   /* ── Load when opened ── */
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setLoading(true);
+    setActiveTab("front");
+    setPreviewSide("FRONT");
 
     (async () => {
       try {
@@ -205,11 +307,11 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
             setTemplateId(tpl.id ?? null);
             return;
           } catch {
-            // template was deleted → fall through to empty draft
+            // template was deleted → fall through to starter
           }
         }
 
-        // No template — seed from the sample card's labels
+        // No template — seed from the sample card's labels (or synthetic Field1/2/3)
         const starter = buildStarterTemplate(sampleCard);
         setDraft({
           name: DEFAULT_TEMPLATE_NAME,
@@ -238,19 +340,23 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
     return () => window.clearTimeout(handle);
   }, [draft]);
 
+  /* ── Switching tab also flips preview side for convenience ── */
+  useEffect(() => {
+    if (activeTab === "front") setPreviewSide("FRONT");
+    else if (activeTab === "back") setPreviewSide("BACK");
+    // CSS tab: keep current previewSide
+  }, [activeTab]);
+
   const applyTemplateToDraft = useCallback((template: FlashcardTemplateDTO) => {
     const frontTemplate = template.frontTemplate ?? "";
     const backTemplate = template.backTemplate ?? "";
     const existingStyling = template.styling ?? "";
-    const seededStyling = existingStyling.trim()
-      ? existingStyling
-      : buildExampleStyling(frontTemplate, backTemplate);
     setDraft({
       name: template.name ?? DEFAULT_TEMPLATE_NAME,
       description: template.description ?? "",
       frontTemplate,
       backTemplate,
-      styling: seededStyling,
+      styling: existingStyling.trim() ? existingStyling : DEFAULT_STYLING,
     });
   }, []);
 
@@ -273,10 +379,8 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
       };
 
       if (templateId != null) {
-        // Deck already points to this template — just update it
         await flashcardTemplateApi.updateTemplate(templateId, payload);
       } else {
-        // Create the template and apply it to the deck
         const created = await flashcardTemplateApi.createTemplate(payload);
         if (created.id == null) throw new Error("Template was created without an id.");
         await deckApi.applyTemplate(deckId, created.id);
@@ -318,24 +422,74 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
     }
   };
 
-  /* ── Preview ── */
-  const labelMap = useMemo(
-    () => buildLabelMap(flashcard, previewSide),
-    [flashcard, previewSide]
+  /* ── Load example into the active editor ── */
+  const handleLoadExample = () => {
+    const starter = buildStarterTemplate(flashcard);
+    if (activeTab === "front") setDraft({ ...draft, frontTemplate: starter.frontTemplate });
+    else if (activeTab === "back") setDraft({ ...draft, backTemplate: starter.backTemplate });
+    else setDraft({ ...draft, styling: starter.styling });
+    toast.success("Example loaded.");
+  };
+
+  /* ── Insert {{Label}} into active textarea at cursor ── */
+  const insertLabelToken = (labelName: string) => {
+    const targetSide: EditorTab = activeTab === "css" ? "front" : activeTab;
+    if (targetSide !== activeTab) setActiveTab(targetSide);
+
+    const ref = targetSide === "front" ? frontTextareaRef : backTextareaRef;
+    const token = `{{${labelName}}}`;
+
+    setTimeout(() => {
+      const ta = ref.current;
+      if (!ta) {
+        // No ref yet — just append
+        const key = targetSide === "front" ? "frontTemplate" : "backTemplate";
+        setDraft((prev) => ({ ...prev, [key]: (prev[key] ?? "") + token }));
+        return;
+      }
+      const start = ta.selectionStart ?? ta.value.length;
+      const end = ta.selectionEnd ?? ta.value.length;
+      const before = ta.value.slice(0, start);
+      const after = ta.value.slice(end);
+      const next = before + token + after;
+      if (targetSide === "front") setDraft((prev) => ({ ...prev, frontTemplate: next }));
+      else setDraft((prev) => ({ ...prev, backTemplate: next }));
+      // restore caret after React updates
+      window.setTimeout(() => {
+        ta.focus();
+        const pos = start + token.length;
+        ta.setSelectionRange(pos, pos);
+      }, 0);
+    }, 0);
+  };
+
+  /* ── Build the live preview HTML ── */
+  const frontLabelMap = useMemo(() => buildLabelMap(flashcard, "FRONT"), [flashcard]);
+  const backLabelMap = useMemo(() => buildLabelMap(flashcard, "BACK"), [flashcard]);
+
+  const renderedFront = useMemo(
+    () => applyTemplate(debouncedDraft.frontTemplate, frontLabelMap),
+    [debouncedDraft.frontTemplate, frontLabelMap]
+  );
+  const renderedBack = useMemo(
+    () => applyTemplate(debouncedDraft.backTemplate, backLabelMap),
+    [debouncedDraft.backTemplate, backLabelMap]
   );
 
-  const previewBodyHtml = useMemo(() => {
-    const tmpl =
-      previewSide === "FRONT" ? debouncedDraft.frontTemplate : debouncedDraft.backTemplate;
-    return applyTemplate(tmpl, labelMap);
-  }, [debouncedDraft.frontTemplate, debouncedDraft.backTemplate, labelMap, previewSide]);
+  const previewBodyHtml = useMemo(
+    () => (previewSide === "FRONT" ? renderedFront : renderedBack),
+    [previewSide, renderedFront, renderedBack]
+  );
 
   const iframeSrcDoc = useMemo(() => {
-    const escapedStyle = debouncedDraft.styling || "";
-    const hasContent = previewBodyHtml.trim().length > 0;
-    const body = hasContent
+    const styling = debouncedDraft.styling || "";
+    const stripped = previewBodyHtml.replace(/<[^>]*>/g, "").trim();
+    const hasVisible =
+      stripped.length > 0 ||
+      /<(img|audio|video|hr|iframe|svg|canvas)\b/i.test(previewBodyHtml);
+    const body = hasVisible
       ? `<div class="card">${previewBodyHtml}</div>`
-      : `<div style="display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;color:#9ca3af;font-size:13px;padding:24px;line-height:1.5;">
+      : `<div style="display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;color:#9ca3af;font-size:13px;padding:24px;line-height:1.5;font-family:ui-sans-serif,system-ui,sans-serif;">
             <div>
               <div style="font-size:32px;margin-bottom:8px;opacity:0.5;">📝</div>
               <div>Type some HTML with <code style="background:#374151;padding:2px 6px;border-radius:4px;color:#e5e7eb;">{{Label}}</code> tokens<br/>to see a preview here.</div>
@@ -343,21 +497,27 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
           </div>`;
     return `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light dark; }
-html, body { margin: 0; padding: ${hasContent ? "16px" : "0"}; font-family: ui-sans-serif, system-ui, sans-serif; background: transparent; color: inherit; }
-${escapedStyle}
+html, body { margin: 0; padding: ${hasVisible ? "0" : "0"}; font-family: ui-sans-serif, system-ui, sans-serif; background: transparent; color: inherit; }
+${styling}
 </style></head><body>${body}</body></html>`;
   }, [previewBodyHtml, debouncedDraft.styling]);
+
+  /* ── Available labels for the chip row ── */
+  const labelSummary = useMemo(() => {
+    const side: FlashcardSideType = activeTab === "back" ? "BACK" : "FRONT";
+    return buildAvailableLabels(flashcard, side);
+  }, [flashcard, activeTab]);
 
   /* ── Render ── */
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[92vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Card template</DialogTitle>
           <DialogDescription>
             Áp dụng cho tất cả card trong deck này. Use{" "}
-            <code className="px-1 py-0.5 rounded bg-muted text-xs">{"{{Label}}"}</code> tokens to
-            inject card content.
+            <code className="px-1 py-0.5 rounded bg-muted text-xs">{"{{Label}}"}</code> tokens
+            to inject card content.
           </DialogDescription>
         </DialogHeader>
 
@@ -368,9 +528,9 @@ ${escapedStyle}
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* ── Left: form ── */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Name + description */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="tpl-name"
@@ -402,50 +562,115 @@ ${escapedStyle}
               </div>
 
               {/* Tabs: Front / Back / CSS */}
-              <Tabs defaultValue="front" className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={(v) => setActiveTab(v as EditorTab)}
+                className="w-full"
+              >
                 <TabsList className="grid grid-cols-3 w-full">
                   <TabsTrigger value="front">Front</TabsTrigger>
                   <TabsTrigger value="back">Back</TabsTrigger>
                   <TabsTrigger value="css">CSS</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="front" className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Front Template</Label>
+                {/* Available labels chip row (HTML tabs only) */}
+                {activeTab !== "css" && (
+                  <AvailableLabelsRow
+                    summary={labelSummary}
+                    onPick={insertLabelToken}
+                    side={activeTab === "back" ? "BACK" : "FRONT"}
+                  />
+                )}
+
+                <TabsContent value="front" className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Front Template</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={handleLoadExample}
+                    >
+                      <Sparkles className="size-3 mr-1" />
+                      Load example
+                    </Button>
+                  </div>
                   <Textarea
+                    ref={frontTextareaRef}
                     value={draft.frontTemplate}
                     onChange={(e) => setDraft({ ...draft, frontTemplate: e.target.value })}
-                    placeholder={"<b>{{Kanji}}</b>\n<hr>\n<span>{{Reading}}</span>"}
-                    rows={10}
+                    placeholder={'<div class="card-main">{{Field1}}</div>'}
+                    rows={12}
+                    spellCheck={false}
                     className="font-mono text-xs"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Use <code>{"{{label}}"}</code> to inject content from each card.
+                    Use <code className="px-1 rounded bg-muted">{"{{label}}"}</code> or{" "}
+                    <code className="px-1 rounded bg-muted">{"{{Field1}}"}</code> to inject
+                    content from each card.
                   </p>
                 </TabsContent>
 
-                <TabsContent value="back" className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Back Template</Label>
+                <TabsContent value="back" className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Back Template</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={handleLoadExample}
+                    >
+                      <Sparkles className="size-3 mr-1" />
+                      Load example
+                    </Button>
+                  </div>
                   <Textarea
+                    ref={backTextareaRef}
                     value={draft.backTemplate}
                     onChange={(e) => setDraft({ ...draft, backTemplate: e.target.value })}
-                    placeholder={"<b>{{Meaning}}</b>\n<div>{{Example}}</div>"}
-                    rows={10}
+                    placeholder={'<div class="card-main">{{Field1}}</div>'}
+                    rows={12}
+                    spellCheck={false}
                     className="font-mono text-xs"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Use <code>{"{{label}}"}</code> to inject content from each card.
+                    Use <code className="px-1 rounded bg-muted">{"{{label}}"}</code> or{" "}
+                    <code className="px-1 rounded bg-muted">{"{{Field1}}"}</code> to inject
+                    content from each card.
                   </p>
                 </TabsContent>
 
-                <TabsContent value="css" className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Styling (CSS)</Label>
+                <TabsContent value="css" className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Styling (CSS)</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={handleLoadExample}
+                    >
+                      <Sparkles className="size-3 mr-1" />
+                      Load example
+                    </Button>
+                  </div>
                   <Textarea
                     value={draft.styling}
                     onChange={(e) => setDraft({ ...draft, styling: e.target.value })}
-                    placeholder={".card { font-size: 20px; }\n.sub { color: grey; }"}
-                    rows={10}
+                    placeholder={".card { font-size: 20px; }\n.card-main { font-weight: 700; }"}
+                    rows={12}
+                    spellCheck={false}
                     className="font-mono text-xs"
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    Applies to both Front and Back. Use selectors{" "}
+                    <code className="px-1 rounded bg-muted">.card</code>,{" "}
+                    <code className="px-1 rounded bg-muted">.card-main</code>,{" "}
+                    <code className="px-1 rounded bg-muted">.card-sub</code>, or any class you
+                    define in the HTML.
+                  </p>
                 </TabsContent>
               </Tabs>
 
@@ -476,22 +701,24 @@ ${escapedStyle}
                 </Label>
                 <div className="flex items-center gap-1 rounded-md border border-border p-0.5 text-xs">
                   <button
+                    type="button"
                     onClick={() => setPreviewSide("FRONT")}
                     className={cn(
-                      "px-2 py-1 rounded transition-colors",
+                      "px-2.5 py-1 rounded transition-colors",
                       previewSide === "FRONT"
-                        ? "bg-accent text-foreground"
+                        ? "bg-accent text-foreground font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     Front
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPreviewSide("BACK")}
                     className={cn(
-                      "px-2 py-1 rounded transition-colors",
+                      "px-2.5 py-1 rounded transition-colors",
                       previewSide === "BACK"
-                        ? "bg-accent text-foreground"
+                        ? "bg-accent text-foreground font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -503,13 +730,23 @@ ${escapedStyle}
                 title="Template preview"
                 sandbox=""
                 srcDoc={iframeSrcDoc}
-                className="w-full h-[420px] lg:h-[520px] rounded-lg border border-border bg-background"
+                className="w-full h-110 lg:h-140 rounded-lg border border-border bg-background"
               />
-              {deck?.title && (
-                <p className="text-[11px] text-muted-foreground">
-                  Preview uses a sample card from <span className="font-medium">{deck.title}</span>.
-                </p>
-              )}
+              <p className="text-[11px] text-muted-foreground">
+                {deck?.title ? (
+                  <>
+                    Preview uses a sample card from{" "}
+                    <span className="font-medium">{deck.title}</span>.
+                  </>
+                ) : (
+                  <>Preview uses a sample card from the deck.</>
+                )}
+                {!flashcard && (
+                  <span className="ml-1 text-amber-600 dark:text-amber-400">
+                    No sample card found — add a card to this deck first to see real content.
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         )}
@@ -529,5 +766,100 @@ ${escapedStyle}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Available labels chip row
+───────────────────────────────────────── */
+function AvailableLabelsRow({
+  summary,
+  onPick,
+  side,
+}: {
+  summary: SideLabelSummary;
+  onPick: (name: string) => void;
+  side: FlashcardSideType;
+}) {
+  const { labels, unlabeledCount } = summary;
+  const sideName = side === "FRONT" ? "front" : "back";
+
+  if (labels.length === 0 && unlabeledCount === 0) {
+    return (
+      <div className="mt-3 text-[11px] text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
+        The sample card has no content on its {sideName} side. Add content to a card in this
+        deck to make labels appear here.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+        Available labels · click to insert
+      </p>
+
+      {labels.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {labels.map((lbl, i) => {
+            const Icon =
+              lbl.contentType === "IMAGE"
+                ? ImageIcon
+                : lbl.contentType === "AUDIO"
+                  ? Mic
+                  : lbl.contentType === "VIDEO"
+                    ? Video
+                    : lbl.contentType === "CLOZE"
+                      ? Square
+                      : Type;
+            const previewText =
+              lbl.contentType === "IMAGE"
+                ? "image"
+                : lbl.contentType === "AUDIO"
+                  ? "audio"
+                  : lbl.contentType === "VIDEO"
+                    ? "video"
+                    : lbl.preview;
+            return (
+              <button
+                key={`${lbl.name}-${i}`}
+                type="button"
+                onClick={() => onPick(lbl.name)}
+                title={`Click to insert {{${lbl.name}}} · ${lbl.contentType} · ${lbl.preview}`}
+                className="group flex flex-col items-start gap-0.5 px-2.5 py-1.5 rounded-lg border border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 text-left transition-all max-w-45"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Icon className="size-3 shrink-0 text-primary" />
+                  <span className="font-mono text-[11px] font-semibold text-primary">
+                    {"{{"}
+                    {lbl.name}
+                    {"}}"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground truncate max-w-full w-full">
+                  {previewText}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground italic">
+          No labeled fields on the {sideName} side yet.
+        </p>
+      )}
+
+      {unlabeledCount > 0 && (
+        <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2 flex items-start gap-1.5">
+          <span aria-hidden>⚠</span>
+          <span>
+            {unlabeledCount} unlabeled {unlabeledCount === 1 ? "field" : "fields"} on the{" "}
+            {sideName} side {unlabeledCount === 1 ? "is" : "are"} hidden. Open{" "}
+            <span className="font-semibold">Edit card</span> and add a label to each field
+            you want to use in the template.
+          </span>
+        </p>
+      )}
+    </div>
   );
 }

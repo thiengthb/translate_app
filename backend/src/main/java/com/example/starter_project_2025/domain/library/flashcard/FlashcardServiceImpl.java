@@ -93,6 +93,7 @@ public class FlashcardServiceImpl
                 for (FlashcardDTO.ContentDTO contentDto : sideDto.getContents()) {
                     side.getContents().add(FlashcardSideContent.builder()
                             .side(side)
+                            .label(contentDto.getLabel())
                             .contentType(contentDto.getContentType())
                             .contentValue(contentDto.getContentValue())
                             .orderIndex(contentDto.getOrderIndex())
@@ -118,6 +119,7 @@ public class FlashcardServiceImpl
 
         FlashcardSideContent content = FlashcardSideContent.builder()
                 .side(side)
+                .label(request.getLabel())
                 .contentType(request.getContentType())
                 .contentValue(request.getContentValue())
                 .orderIndex(request.getOrderIndex())
@@ -237,6 +239,7 @@ public class FlashcardServiceImpl
 
                     FlashcardSideContent content = FlashcardSideContent.builder()
                             .side(side)
+                            .label(contentDto.getLabel())
                             .contentType(contentDto.getContentType())
                             .contentValue(contentDto.getContentValue())
                             .orderIndex(contentDto.getOrderIndex())
