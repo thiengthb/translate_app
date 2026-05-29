@@ -1,9 +1,13 @@
 package com.example.starter_project_2025.system.dictionary;
 
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
+import com.example.starter_project_2025.system.words.word.WordCreateRequest;
+import com.example.starter_project_2025.system.words.word.WordDTO;
+import com.example.starter_project_2025.system.words.word.WordService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,9 +45,16 @@ public class DictionaryController {
     DictionaryService dictionaryService;
     TatoebaClient     tatoebaClient;
     ForvoClient       forvoClient;
+    WordService       wordService;
 
     private static final String GOOGLE_HWR_URL =
             "https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8";
+
+    @PostMapping("/words")
+    @Operation(summary = "Tạo từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ trong một lần")
+    public ResponseEntity<WordDTO> createWord(@Valid @RequestBody WordCreateRequest request) {
+        return ResponseEntity.ok(wordService.createFull(request));
+    }
 
     @GetMapping("/search")
     @Operation(summary = "Tìm kiếm từ theo kanji, kana, romaji hoặc nghĩa")

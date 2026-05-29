@@ -53,4 +53,20 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     protected Long updatedBy;
+
+    /**
+     * Enforce defaults for flag/version columns before persisting.
+     * Needed because MapStruct's generated {@code toEntity(dto)} (and
+     * {@link com.example.starter_project_2025.base.crud.mapper.DefaultCrudMapper})
+     * call the no-args constructor — which, due to Lombok {@code @Builder.Default},
+     * leaves these fields null — and then copy from the (read-only ⇒ null) DTO
+     * values, dropping the initializers. Without this hook, inserts fail on the
+     * NOT NULL {@code is_deleted} / {@code is_active} columns.
+     */
+    @PrePersist
+    protected void applyDefaultsBeforePersist() {
+        if (isActive == null)  isActive = Boolean.TRUE;
+        if (isDeleted == null) isDeleted = Boolean.FALSE;
+        if (version == null)   version = 0L;
+    }
 }

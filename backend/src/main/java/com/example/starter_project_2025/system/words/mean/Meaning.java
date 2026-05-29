@@ -1,6 +1,8 @@
 package com.example.starter_project_2025.system.words.mean;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
+import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.words.language.Language;
 import com.example.starter_project_2025.system.words.word.Word;
@@ -18,6 +20,8 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "meanings")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("MEANING")
+@ResourceMenu(title = "Nghĩa", group = "Tiếng Nhật", icon = "message-square", url = "/meanings", order = 3)
+@AutoCrud(path = "meanings")
 public class Meaning extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
