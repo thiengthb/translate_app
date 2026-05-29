@@ -45,6 +45,7 @@ function getSideAudio(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
 }
 import { BookOpen, Check, ChevronLeft, Maximize2, Minimize2, RotateCcw, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CardEntry {
   orderIndex: number;
@@ -209,9 +210,13 @@ export default function FlashcardStudyPage() {
   const reset = () => {
     setFlipped(false);
     setSlideDir(null);
-    setSession(buildSession(shuffled ? shuffleCards(allCards) : allCards));
+    setShuffled(false);
+    setSession(buildSession(allCards));
   };
 
+  /* Toggle shuffle (session-only, not persisted):
+     ON  → random order, freshly randomized each time it's turned on
+     OFF → restore the original deck order */
   const toggleShuffle = () => {
     setFlipped(false);
     setSlideDir(null);
@@ -235,46 +240,26 @@ export default function FlashcardStudyPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => (fullView ? setFullView(false) : navigate("/library"))}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="size-4" />
-            {fullView ? "Exit full view" : "Back to library"}
-          </button>
+          {fullView ? (
+            <span />
+          ) : (
+            <button
+              onClick={() => navigate("/library")}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+              Back to library
+            </button>
+          )}
 
           <div className="flex items-center gap-3">
-            {session && !session.done && allCards.length > 1 && (
-              <button
-                onClick={toggleShuffle}
-                className={cn(
-                  "flex items-center gap-1.5 text-sm transition-colors",
-                  shuffled
-                    ? "text-primary hover:text-primary/80"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                title={shuffled ? "Restore original order" : "Shuffle deck"}
-              >
-                <Shuffle className="size-3.5" />
-                {shuffled ? "Shuffled" : "Shuffle"}
-              </button>
-            )}
-            {session && !session.done && (
-              <button
-                onClick={reset}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <RotateCcw className="size-3.5" />
-                Reset
-              </button>
-            )}
             <button
               onClick={() => setFullView((v) => !v)}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title={fullView ? "Exit full view (Esc)" : "Full view"}
             >
               {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-              {fullView ? "Exit" : "Full view"}
+              {fullView ? "Exit full view" : "Full view"}
             </button>
           </div>
         </div>
@@ -443,43 +428,87 @@ export default function FlashcardStudyPage() {
               </AnimatePresence>
             </div>
 
-            {/* Action buttons — visible after flip */}
-            <AnimatePresence>
-              {flipped && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center justify-center gap-4"
-                >
-                  {/* Wrong */}
-                  <button
-                    onClick={markWrong}
-                    className="flex items-center gap-2 px-8 py-3 rounded-full border-2 border-destructive text-destructive text-sm font-semibold hover:bg-destructive hover:text-white transition-colors"
+            {/* Action bar — answer buttons centered, utilities flush right */}
+            <div className="relative flex items-center justify-center min-h-14">
+              <AnimatePresence>
+                {flipped && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center gap-4"
                   >
-                    <X className="size-4" />
-                    Still learning
-                  </button>
+                    {/* Wrong */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={markWrong}
+                          aria-label="Still learning"
+                          className="flex size-14 items-center justify-center rounded-full border-2 border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors"
+                        >
+                          <X className="size-6" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Still learning (←)</TooltipContent>
+                    </Tooltip>
 
-                  {/* Correct */}
-                  <button
-                    onClick={markCorrect}
-                    className="flex items-center gap-2 px-8 py-3 rounded-full border-2 border-green-500 text-green-600 text-sm font-semibold hover:bg-green-500 hover:text-white transition-colors"
-                  >
-                    <Check className="size-4" />
-                    Got it
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    {/* Correct */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={markCorrect}
+                          aria-label="Got it"
+                          className="flex size-14 items-center justify-center rounded-full border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white transition-colors"
+                        >
+                          <Check className="size-6" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Got it (→)</TooltipContent>
+                    </Tooltip>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            {/* Keyboard hint */}
-            {flipped && (
-              <p className="text-center text-[10px] text-muted-foreground/40">
-                ← Still learning &nbsp;·&nbsp; Got it →
-              </p>
-            )}
+              {/* Shuffle + Reset — flush to the right corner */}
+              <div className="absolute right-0 flex items-center gap-1">
+                {allCards.length > 1 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={toggleShuffle}
+                        aria-label="Shuffle"
+                        aria-pressed={shuffled}
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 h-9 rounded-full border transition-colors",
+                          shuffled
+                            ? "border-primary bg-primary text-primary-foreground px-3"
+                            : "size-9 border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+                        )}
+                      >
+                        <Shuffle className="size-4" />
+                        {shuffled && <span className="text-xs font-semibold">Shuffling</span>}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {shuffled ? "Shuffling — click to restore original order" : "Shuffle cards"}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={reset}
+                      aria-label="Reset"
+                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      <RotateCcw className="size-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reset to original order</TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
           </>
         )}
 

@@ -274,13 +274,17 @@ export default function AnkiStudyPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => (fullView ? setFullView(false) : navigate("/library"))}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="size-4" />
-            {fullView ? "Exit full view" : "Back to library"}
-          </button>
+          {fullView ? (
+            <span />
+          ) : (
+            <button
+              onClick={() => navigate("/library")}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+              Back to library
+            </button>
+          )}
 
           <div className="flex items-center gap-3">
             {!loading && !isDone && (
@@ -301,7 +305,7 @@ export default function AnkiStudyPage() {
               title={fullView ? "Exit full view (Esc)" : "Full view"}
             >
               {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-              {fullView ? "Exit" : "Full view"}
+              {fullView ? "Exit full view" : "Full view"}
             </button>
           </div>
         </div>
