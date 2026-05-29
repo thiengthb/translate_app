@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="fix merge">
+      <change afterPath="$PROJECT_DIR$/.codemoss/prompt.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/claudeCodeTabState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/translate_app.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/CloudinaryConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/config/KuromojiConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/Deck.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItem.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeck.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/ContentType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/Flashcard.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRenderDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRenderService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSide.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideContent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideContentRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplate.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/SideType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/Folder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgress.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItem.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLog.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySession.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLog.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSession.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItem.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgress.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSetting.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingsRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiReviewRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyCardDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyQueueDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/Tag.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ExerciseResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectionResult.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorRegistry.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorSupport.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/GrammarDetector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/ConditionalBaDetector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/NakerebaNaranaiDetector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/TeShimauDetector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/YouniPurposeDetector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/JudgeVerdictCache.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/JudgeVerdictCacheRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/ScenarioRecency.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/ScenarioRecencyRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttemptRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarMarker.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarMarkerRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSubUse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSubUseRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ReferenceSentence.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ReferenceSentenceRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStub.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStubRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/converter/CommonMistakesConverter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/model/CommonMistake.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptCache.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptCacheRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/ProductionSeeder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/SeedDeckInitializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalysisRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalysisResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/JapaneseTextUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/TokenDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/UserAnalyticsController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/UserAnalyticsService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/dto/UserAnalyticsResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/dto/LeaderboardEntry.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/dto/PublicProfileResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakActivity.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakActivityRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/UserStreak.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/UserStreakRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/CalendarResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/CheckInResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/analyze.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/leaderboard.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/ankiSrsSetting.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/ankiStudy.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/deck.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/deck_item.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/favorite_deck.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/flashcard.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/flashcardTemplate.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/folder.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/srsAlgorithmConfig.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/tag.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/streak.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/userAnalytics.api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/common/KeyboardShortcutsDialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/common/ScrollHintContainer.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/TableSkeleton.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/constants.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnLayout.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnPinning.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnResize.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useDateFormats.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useDensity.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTableModals.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useRowExpansion.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useSavedViews.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableKeyboard.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableLayoutMetrics.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableUrlSync.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableVirtualization.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/BulkEditModal.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/TableView.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/TableView.types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/EditableCell.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/chart/ChartView.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/header/DateFormatButton.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/header/HeaderMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ActiveFilterChips.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/BulkActionBar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/DataIOMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/DisplayOptionsMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/RefreshIndicator.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestActionsRow.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestLogo.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestMobileMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestNavLinks.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/HeaderActionButton.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavGroup.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavItem.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/PinnedSection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/RecentSection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarBranding.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarFooterPanel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSearch.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useFilteredNavGroups.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useGroupCollapseState.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarFavorites.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarRecent.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/streak/StreakBadge.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/DeckTemplateDesigner.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/presets.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/template-generation.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useDebouncedValue.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useKeyboardShortcutsDialog.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useLeaderboard.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useLogoutShortcut.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useStreak.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useThemePreference.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useUserAnalytics.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/lib/keyboard-shortcuts.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/UserDashboardPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/GrowthChart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/RecentUsersList.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/RoleDistributionChart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/SummaryCards.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/TopStreaksList.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/help/KeyboardShortcutsPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/management/library/folder/index.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/publicProfile/PublicProfilePage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/StreakPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakCalendar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakStats.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditModal.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStudyPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CommunityPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateAnkiDeckPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateDeckPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateQuizletDeckPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/DeckPreviewPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardSettingsModal.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardStudyPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/LibraryPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/TemplateEditorModal.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/dashboard.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/anki_srs_setting.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/deck.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/deck_item.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/favorite_deck.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/flashcard.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/folder.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/srs_algorithm_config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/tag.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/streak.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/utils/auth.utils.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/similarity-service/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/similarity-service/app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/similarity-service/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/autoregister/AutoCrudEndpointRegistrar.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/autoregister/AutoCrudEndpointRegistrar.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/domain/BaseEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/domain/BaseEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/service/BaseCrudServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/service/BaseCrudServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileStorageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileStorageService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/token/refresh/RefreshTokenServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/token/refresh/RefreshTokenServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/demo/tag/Tag.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/demo/tag/Tag.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/UserRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/axios.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/axios.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ErrorBoundary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ErrorBoundary.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ToggleTheme.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ToggleTheme.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/ProTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/ProTable.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/NoResult.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/NoResult.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/dataio/ImportResultModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/dataio/ImportResultModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useAutoPageSize.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useAutoPageSize.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTable.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTable.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableMutations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableMutations.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableQuery.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableQuery.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/modal/DetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/DetailModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/modal/form/FormModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/form/FormModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/Pagination.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/Pagination.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/RowActions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/RowActions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/SortableHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/SortableHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ColumnToggle.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/SearchInput.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/SearchInput.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/Toolbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/Toolbar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ToolbarActions.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/filter/FilterPopover.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/filter/FilterPopover.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainHeader.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/NavMain.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/Sidebar.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserMenu.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auth/Login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/auth/Login.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/index.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_D:/StarterProject1203/StarterProject" value="3C1vl6hiINF7XxcPzzxh0qtA0au" />
+      <entry key="_D:/prjdichnew" value="3EITj47Fb4GHEnHpZ2yjehBIfNg" />
+      <entry key="_D:/prjdichnew/backend" value="3EIkLSuKfPFsNnafoe3CO2PDyAA" />
+    </persistenceIdMap>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;khoahd14805&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;f2fe1c27-9351-4f52-a44b-20eeb1da22db&quot;
+  }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="3C1vl6hiINF7XxcPzzxh0qtA0au" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Maven.starter_project_2025 [clean].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.StarterProject2025Application.executor": "Run",
+    "git-widget-placeholder": "Merging feature/dictionary",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/prjdichnew",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\prjdichnew\frontend\src\pages" />
+      <recent name="D:\prjdichnew\frontend\src\components" />
+      <recent name="D:\prjdichnew\frontend\src\api\features" />
+      <recent name="D:\prjdichnew\backend\src\main\java\com\example\starter_project_2025\system" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+    <configuration name="StarterProject2025Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/backend/.env" />
+      </option>
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="starter_project_2025" />
+      <selectedOptions>
+        <option name="environmentVariables" />
+      </selectedOptions>
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.starter_project_2025.StarterProject2025Application" />
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="" />
+      <created>1775566038292</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1775566038292</updated>
+      <workItem from="1779865214172" duration="6852000" />
+      <workItem from="1779873414534" duration="1700000" />
+      <workItem from="1779879953822" duration="12000" />
+      <workItem from="1779880753071" duration="129000" />
+      <workItem from="1779885090502" duration="10145000" />
+      <workItem from="1779895917275" duration="955000" />
+      <workItem from="1779897632155" duration="1318000" />
+      <workItem from="1779899384040" duration="611000" />
+      <workItem from="1779928865503" duration="3617000" />
+      <workItem from="1779948155854" duration="6652000" />
+      <workItem from="1779967985195" duration="2313000" />
+      <workItem from="1779971953588" duration="4242000" />
+      <workItem from="1779979575067" duration="2661000" />
+      <workItem from="1779982270629" duration="1568000" />
+      <workItem from="1780014436214" duration="10898000" />
+      <workItem from="1780035901607" duration="2450000" />
+      <workItem from="1780046527102" duration="10243000" />
+    </task>
+    <task id="LOCAL-00001" summary="test add">
+      <option name="closed" value="true" />
+      <created>1779866076909</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1779866076909</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fix dictionary">
+      <option name="closed" value="true" />
+      <created>1779870787937</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1779870787937</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fix frontend">
+      <option name="closed" value="true" />
+      <created>1779874916299</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1779874916299</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat(dictionary): fix dictionary UI">
+      <option name="closed" value="true" />
+      <created>1779890592941</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1779890592941</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat(dictionary): fix UI and add voice">
+      <option name="closed" value="true" />
+      <created>1779950411909</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1779950411909</updated>
+    </task>
+    <task id="LOCAL-00006" summary="feat(dictionary): fix UI add search kanji likes mazii">
+      <option name="closed" value="true" />
+      <created>1779954232000</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1779954232000</updated>
+    </task>
+    <task id="LOCAL-00007" summary="feat(dictionary): chinh sua UI va them de xuat tu vung">
+      <option name="closed" value="true" />
+      <created>1779969982686</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1779969982686</updated>
+    </task>
+    <task id="LOCAL-00008" summary="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji">
+      <option name="closed" value="true" />
+      <created>1780036654773</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1780036654773</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat(dictionary): chinh them phan vi du tu vung">
+      <option name="closed" value="true" />
+      <created>1780047806236</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1780047806237</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(dictionary): add word">
+      <option name="closed" value="true" />
+      <created>1780053093512</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1780053093512</updated>
+    </task>
+    <task id="LOCAL-00011" summary="fix merge">
+      <option name="closed" value="true" />
+      <created>1780056910269</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1780056910269</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="test add" />
+    <MESSAGE value="fix dictionary" />
+    <MESSAGE value="fix frontend" />
+    <MESSAGE value="feat(dictionary): fix dictionary UI" />
+    <MESSAGE value="feat(dictionary): fix UI and add voice" />
+    <MESSAGE value="feat(dictionary): fix UI add search kanji likes mazii" />
+    <MESSAGE value="feat(dictionary): chinh sua UI va them de xuat tu vung" />
+    <MESSAGE value="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji" />
+    <MESSAGE value="feat(dictionary): chinh them phan vi du tu vung" />
+    <MESSAGE value="feat(dictionary): add word" />
+    <MESSAGE value="fix merge" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix merge" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
