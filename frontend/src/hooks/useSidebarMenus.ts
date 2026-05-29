@@ -1,8 +1,10 @@
 import { moduleApi, moduleGroupApi } from "@/api";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { ModuleDTO, ModuleGroupDTO, Pagination } from "@/types";
+import type { RootState } from "@/store/store";
 import { canAccessByPermission } from "@/utils/rbac.utils";
 import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 
 export type SidebarModule = ModuleDTO & {
     name?: string;
@@ -26,10 +28,16 @@ const modulePagination: Pagination = {
 
 export function useActiveModuleGroups(enabled = true) {
     const { activeRole, hasPermission } = usePermissions();
+    // Module/module-group endpoints require auth. Gate the query on the auth
+    // flag here (not just at call sites) so a caller that forgets to pass
+    // `enabled` — e.g. useAppMeta, mounted on /login & the guest landing —
+    // can't fire authed requests that 401 → /auth/refresh → hard redirect →
+    // reload → loop (the ERR_INSUFFICIENT_RESOURCES storm).
+    const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
 
     return useQuery<SidebarModuleGroup[]>({
         queryKey: ["sidebar-menu", "active-module-groups", activeRole],
-        enabled,
+        enabled: enabled && isAuthenticated,
         queryFn: async () => {
             const [groupPage, modulePage] = await Promise.all([
                 moduleGroupApi.getPage(menuPagination, undefined, { ids: [], isActive: true }),

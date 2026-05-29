@@ -1,6 +1,8 @@
 import { Bell, CheckCheck } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUnreadCount, useUnreadNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -20,10 +22,18 @@ const typeColors: Record<string, string> = {
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: unreadCount = 0 } = useUnreadCount();
   const { data: notifications } = useUnreadNotifications(0, 10);
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
+
+  // Live push: when the BE sends a notification over STOMP, refresh the cached
+  // unread list + count immediately instead of waiting for the 30s poll.
+  const onNotification = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  }, [queryClient]);
+  useWebSocket({ onNotification });
 
   const handleNotificationClick = (notification: any) => {
     markAsRead.mutate(notification.id);
