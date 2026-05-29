@@ -144,6 +144,17 @@ function applyTemplate(template: string, labelMap: Record<string, string>): stri
   });
 }
 
+/** Resolve the app's theme foreground colour so iframe content stays readable
+ *  on both light and dark backgrounds (the iframe is isolated and can't see the
+ *  app's CSS variables, and bare `inherit` falls back to the UA default black). */
+function appForegroundColor(): string {
+  if (typeof window === "undefined") return "#1f2937";
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--foreground")
+    .trim();
+  return v || "#1f2937";
+}
+
 function createIframeDoc(bodyHtml: string, styling: string): string {
   const stripped = bodyHtml.replace(/<[^>]*>/g, "").trim();
   const hasVisible =
@@ -158,7 +169,8 @@ function createIframeDoc(bodyHtml: string, styling: string): string {
       </div>`;
 
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-html, body { margin: 0; height: 100%; background: transparent; }
+:root { color-scheme: light dark; }
+html, body { margin: 0; height: 100%; background: transparent; color: ${appForegroundColor()}; }
 ${styling}
 </style></head><body>${body}</body></html>`;
 }

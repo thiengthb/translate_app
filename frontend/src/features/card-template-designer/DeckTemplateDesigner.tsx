@@ -69,7 +69,6 @@ import type {
   FuriganaMode,
   TemplateLayoutMode,
   TemplateSide,
-  TemplateTheme,
 } from "./types";
 
 export interface TemplateDraftFields {
@@ -114,15 +113,6 @@ const LAYOUT_OPTIONS: Array<{ value: TemplateLayoutMode; label: string; icon: ty
   { value: "IMAGE_RIGHT", label: "Image right", icon: PanelRight },
   { value: "COMPACT", label: "Compact", icon: ImageIcon },
   { value: "FOCUS", label: "Focus", icon: Maximize },
-];
-
-const THEME_OPTIONS: Array<{ value: TemplateTheme; label: string; tone: string }> = [
-  { value: "MINIMAL", label: "Minimal", tone: "bg-white border-slate-200 text-slate-900" },
-  { value: "ZEN", label: "Zen", tone: "bg-[#fffaf2] border-[#b9c7ad] text-slate-900" },
-  { value: "MODERN", label: "Modern", tone: "bg-slate-50 border-blue-200 text-slate-900" },
-  { value: "ACADEMIC", label: "Academic", tone: "bg-[#fbf7ef] border-amber-300 text-slate-900" },
-  { value: "DARK", label: "Dark", tone: "bg-slate-900 border-slate-600 text-white" },
-  { value: "JLPT", label: "JLPT", tone: "bg-orange-50 border-orange-300 text-slate-900" },
 ];
 
 const FONT_OPTIONS: Array<{ value: FontFamilyKey; label: string }> = [
@@ -244,7 +234,6 @@ export function DeckTemplateDesigner({
             <LayoutPanel settings={builderState.settings} onChange={updateSettings} />
             <TypographyPanel settings={builderState.settings} onChange={updateSettings} />
             <JapaneseMediaPanel settings={builderState.settings} onChange={updateSettings} />
-            <ThemePanel settings={builderState.settings} onChange={updateSettings} />
 
             <AdvancedPanel
               advancedMode={advancedMode}
@@ -739,28 +728,28 @@ function TypographyPanel({
             >
               <span className="text-xs font-bold">AA</span>
             </ToggleButton>
-
-            {/* Text color */}
-            <div className="ml-auto flex items-center gap-2">
-              <ColorPicker
-                value={t.textColor ?? DEFAULT_CUSTOM_COLORS.text}
-                onChange={(color) => patch({ textColor: color })}
-                label="Text color"
-              />
-              {t.textColor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[11px]"
-                  onClick={() => patch({ textColor: null })}
-                  title="Use theme color"
-                >
-                  <RotateCcw className="size-3 mr-1" />
-                  Theme
-                </Button>
-              )}
-            </div>
           </div>
+        </div>
+
+        {/* Text color */}
+        <div className="space-y-1.5">
+          <ColorField
+            label="Text color"
+            value={t.textColor ?? DEFAULT_CUSTOM_COLORS.text}
+            onChange={(color) => patch({ textColor: color })}
+          />
+          {t.textColor && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[11px]"
+              onClick={() => patch({ textColor: null })}
+              title="Use default color"
+            >
+              <RotateCcw className="size-3 mr-1" />
+              Reset to default
+            </Button>
+          )}
         </div>
 
         <RangeRow label="Font size" value={t.fontSize} min={14} max={48} unit="px" onChange={(fontSize) => patch({ fontSize })} />
@@ -810,70 +799,6 @@ function JapaneseMediaPanel({
         <ToggleRow label="Show image" checked={settings.media.showImage} onChange={(showImage) => onChange({ media: { ...settings.media, showImage } })} />
         <ToggleRow label="Show video" checked={settings.media.showVideo} onChange={(showVideo) => onChange({ media: { ...settings.media, showVideo } })} />
       </div>
-    </Section>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Theme picker + custom colors
-───────────────────────────────────────── */
-function ThemePanel({
-  settings,
-  onChange,
-}: {
-  settings: CardTemplateSettings;
-  onChange: (next: Partial<CardTemplateSettings>) => void;
-}) {
-  const isCustom = settings.theme === "CUSTOM";
-  const patchColors = (next: Partial<CardTemplateSettings["customColors"]>) =>
-    onChange({ customColors: { ...settings.customColors, ...next } });
-
-  return (
-    <Section title="Theme" description="Color palette for the card.">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {THEME_OPTIONS.map((theme) => {
-          const active = settings.theme === theme.value;
-          return (
-            <button
-              key={theme.value}
-              type="button"
-              onClick={() => onChange({ theme: theme.value })}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition",
-                theme.tone,
-                active && "ring-2 ring-primary ring-offset-1"
-              )}
-            >
-              {theme.label}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => onChange({ theme: "CUSTOM" })}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition border-border bg-background hover:bg-accent",
-            isCustom && "ring-2 ring-primary ring-offset-1 border-primary"
-          )}
-        >
-          <span
-            className="size-3 rounded-full border border-border"
-            style={{
-              background: `conic-gradient(from 0deg, #f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171)`,
-            }}
-          />
-          Custom
-        </button>
-      </div>
-
-      {isCustom && (
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/20 p-3">
-          <ColorField label="Background" value={settings.customColors.bg} onChange={(bg) => patchColors({ bg })} />
-          <ColorField label="Text" value={settings.customColors.text} onChange={(text) => patchColors({ text })} />
-          <ColorField label="Accent" value={settings.customColors.accent} onChange={(accent) => patchColors({ accent })} />
-          <ColorField label="Border" value={settings.customColors.border} onChange={(border) => patchColors({ border })} />
-        </div>
-      )}
     </Section>
   );
 }
@@ -1021,31 +946,6 @@ function ToggleButton({
     >
       {children}
     </button>
-  );
-}
-
-function ColorPicker({
-  value,
-  onChange,
-  label,
-}: {
-  value: string;
-  onChange: (color: string) => void;
-  label: string;
-}) {
-  return (
-    <label
-      title={label}
-      className="relative flex size-8 cursor-pointer items-center justify-center rounded-md border border-border overflow-hidden"
-      style={{ background: value }}
-    >
-      <input
-        type="color"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
-      />
-    </label>
   );
 }
 

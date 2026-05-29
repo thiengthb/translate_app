@@ -426,6 +426,7 @@ export default function AnkiStudyPage() {
                         html={flipped ? renderData!.backHtml : renderData!.frontHtml}
                         styling={renderData!.styling}
                         fullView={fullView}
+                        onFlip={() => !submitting && setFlipped((f) => !f)}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-3 px-10 py-6">
@@ -537,6 +538,17 @@ export default function AnkiStudyPage() {
 }
 
 /* ── Template render helpers ── */
+/** Resolve the app's theme foreground colour so iframe content stays readable
+ *  on both light and dark backgrounds (the iframe is isolated and can't see the
+ *  app's CSS variables, and bare `inherit` falls back to the UA default black). */
+function appForegroundColor(): string {
+  if (typeof window === "undefined") return "#1f2937";
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--foreground")
+    .trim();
+  return v || "#1f2937";
+}
+
 function hasTemplateRender(
   render: FlashcardRenderDTO | null,
   flipped: boolean
@@ -550,15 +562,25 @@ function TemplateSideRender({
   html,
   styling,
   fullView,
+  onFlip,
 }: {
   html: string;
   styling: string | null;
   fullView: boolean;
+  onFlip: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const minH = fullView ? 320 : 200;
   const [height, setHeight] = useState<number>(minH);
 
+  // Keep the latest flip handler in a ref so the iframe effect doesn't need to
+  // re-run (and re-attach listeners) on every parent render.
+  const onFlipRef = useRef(onFlip);
+  onFlipRef.current = onFlip;
+
+  // The iframe is isolated, so `inherit` would resolve to the UA default (black)
+  // — unreadable on a dark app background. Inject the app's theme foreground.
+  const fg = appForegroundColor();
   const srcDoc = useMemo(
     () => `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light dark; }
@@ -567,18 +589,22 @@ html, body {
   padding: 16px 20px;
   font-family: ui-sans-serif, system-ui, sans-serif;
   background: transparent;
-  color: inherit;
+  color: ${fg};
   overflow: hidden;
+  cursor: pointer;
 }
+/* Let genuinely interactive elements keep their own cursor/behavior */
+a, button, input, textarea, select, audio, video, [contenteditable] { cursor: auto; }
 img, video { max-width: 100%; height: auto; }
 audio { max-width: 100%; }
 ${styling ?? ""}
 </style></head><body><div class="card">${html}</div></body></html>`,
-    [html, styling]
+    [html, styling, fg]
   );
 
-  /* Allow-same-origin lets us measure iframe content height from the parent.
-     Scripts are still blocked because allow-scripts is not in the sandbox list. */
+  /* Allow-same-origin lets us measure iframe content height from the parent
+     and forward clicks for flip. Scripts are still blocked because
+     allow-scripts is not in the sandbox list. */
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -597,7 +623,32 @@ ${styling ?? ""}
       }
     };
 
-    iframe.addEventListener("load", measure);
+    // Clicking the rendered card flips it — but ignore clicks that land on
+    // interactive content (audio/video controls, links, form fields).
+    const onClick = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("a, button, input, textarea, select, audio, video, [contenteditable]")) {
+        return;
+      }
+      onFlipRef.current();
+    };
+
+    const attachClick = () => {
+      try {
+        iframe.contentDocument?.addEventListener("click", onClick);
+      } catch {
+        // ignore
+      }
+    };
+
+    const onLoad = () => {
+      measure();
+      attachClick();
+    };
+
+    iframe.addEventListener("load", onLoad);
+    // srcDoc may already be parsed by the time this effect runs
+    attachClick();
     // images & fonts load asynchronously, so re-measure a few times
     const timers = [
       window.setTimeout(measure, 80),
@@ -605,7 +656,12 @@ ${styling ?? ""}
       window.setTimeout(measure, 800),
     ];
     return () => {
-      iframe.removeEventListener("load", measure);
+      iframe.removeEventListener("load", onLoad);
+      try {
+        iframe.contentDocument?.removeEventListener("click", onClick);
+      } catch {
+        // ignore
+      }
       timers.forEach((t) => window.clearTimeout(t));
     };
   }, [srcDoc, minH]);
