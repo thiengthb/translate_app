@@ -8,9 +8,7 @@ import java.util.Optional;
 @Repository
 public interface AnkiSrsSettingRepository extends BaseCrudRepository<AnkiSrsSetting, Long> {
 
-    boolean existsByUserId(Long userId);
+    boolean existsByUserIdAndDeckId(Long userId, Long deckId);
 
-    boolean existsByUserIdAndIdNot(Long userId, Long id);
-
-    Optional<AnkiSrsSetting> findByUserId(Long userId);
+    Optional<AnkiSrsSetting> findByUserIdAndDeckId(Long userId, Long deckId);
 }

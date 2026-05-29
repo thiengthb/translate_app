@@ -11,16 +11,19 @@ public interface AnkiSrsSettingMapper extends BaseCrudMapper<AnkiSrsSetting, Ank
     @Override
     @IgnoreAuditFields
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "deck", ignore = true)
     @Mapping(target = "algorithmConfig", ignore = true)
     AnkiSrsSetting toEntity(AnkiSrsSettingDTO dto);
 
     @Override
     @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "deckId", source = "deck.id")
     @Mapping(target = "algorithmConfigId", source = "algorithmConfig.id")
     AnkiSrsSettingDTO toResponse(AnkiSrsSetting entity);
 
     @Override
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "deck", ignore = true)
     @Mapping(target = "algorithmConfig", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void update(@MappingTarget AnkiSrsSetting entity, AnkiSrsSettingDTO dto);

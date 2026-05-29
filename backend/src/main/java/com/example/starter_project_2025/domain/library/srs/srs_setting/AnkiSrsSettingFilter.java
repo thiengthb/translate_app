@@ -10,6 +10,9 @@ public class AnkiSrsSettingFilter extends BaseFilter {
     @FilterField(entityField = "user.id")
     Long userId;
 
+    @FilterField(entityField = "deck.id")
+    Long deckId;
+
     @FilterField(entityField = "algorithmConfig.id")
     Long algorithmConfigId;
 }

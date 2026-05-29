@@ -17,6 +17,9 @@ public class AnkiSrsSettingDTO extends BaseDTO {
     @NotNull(groups = OnCreate.class, message = "User ID is required")
     Long userId;
 
+    @NotNull(groups = OnCreate.class, message = "Deck ID is required")
+    Long deckId;
+
     Long algorithmConfigId;
 
     Double targetRetention;

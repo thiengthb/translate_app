@@ -26,6 +26,10 @@ import { toast } from "sonner";
 interface FlashcardSettingsModalProps {
   open: boolean;
   onClose: () => void;
+  /** Settings are scoped to this deck. Editing only affects this deck. */
+  deckId: number;
+  /** Optional deck title shown in the header for context. */
+  deckTitle?: string;
 }
 
 interface AlgorithmDraft {
@@ -243,10 +247,13 @@ function retentionLabel(value: number) {
 }
 
 function visibleAlgorithms(list: SrsAlgorithmConfigDTO[], userId: number) {
-  const userCode = `USER_SM2_${userId}`;
+  const userPrefix = `USER_SM2_${userId}`;
   return list.filter((item) => {
     const code = item.code ?? "";
-    return !code.startsWith("USER_SM2_") || code === userCode;
+    // Hide other users' personal presets; keep shared presets and this user's
+    // own presets (global `USER_SM2_<id>` and per-deck `USER_SM2_<id>_<deckId>`).
+    if (!code.startsWith("USER_SM2_")) return true;
+    return code === userPrefix || code.startsWith(`${userPrefix}_`);
   });
 }
 
@@ -259,7 +266,7 @@ function secondStepOrGraduate(steps: string, graduateDays: number) {
   return tokens[1] ?? `${graduateDays}d`;
 }
 
-export function FlashcardSettingsModal({ open, onClose }: FlashcardSettingsModalProps) {
+export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: FlashcardSettingsModalProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [algorithms, setAlgorithms] = useState<SrsAlgorithmConfigDTO[]>([]);
@@ -287,7 +294,7 @@ export function FlashcardSettingsModal({ open, onClose }: FlashcardSettingsModal
       try {
         const [algorithmList, currentSetting] = await Promise.all([
           srsAlgorithmConfigApi.getEnabled(),
-          ankiSrsSettingApi.getMine(),
+          ankiSrsSettingApi.getForDeck(deckId),
         ]);
 
         let filteredAlgorithms = visibleAlgorithms(algorithmList, userId);
@@ -313,7 +320,7 @@ export function FlashcardSettingsModal({ open, onClose }: FlashcardSettingsModal
     };
 
     load();
-  }, [open, onClose]);
+  }, [open, onClose, deckId]);
 
   const patchDraft = (patch: Partial<SettingsDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -355,7 +362,7 @@ export function FlashcardSettingsModal({ open, onClose }: FlashcardSettingsModal
 
     setSaving(true);
     try {
-      const saved = await ankiSrsSettingApi.saveMine(payload);
+      const saved = await ankiSrsSettingApi.saveForDeck(deckId, payload);
       let refreshedAlgorithms = algorithms;
       try {
         refreshedAlgorithms = visibleAlgorithms(await srsAlgorithmConfigApi.getEnabled(), userId);
@@ -409,10 +416,10 @@ export function FlashcardSettingsModal({ open, onClose }: FlashcardSettingsModal
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-lg font-bold tracking-tight text-foreground">
-                        Flashcard study settings
+                        {deckTitle ? `${deckTitle} — study settings` : "Deck study settings"}
                       </h2>
                       <p className="truncate text-xs text-muted-foreground">
-                        Anki SM2 scheduling and daily queue limits
+                        Anki SM2 scheduling &amp; daily limits · applies to this deck only
                       </p>
                     </div>
                   </div>

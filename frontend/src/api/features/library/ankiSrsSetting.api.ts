@@ -16,23 +16,23 @@ export interface AnkiSrsSettingsRequest {
 }
 
 export const ankiSrsSettingApi = Object.assign({}, base, {
-  getMine: async (): Promise<AnkiSrsSettingDTO | null> => {
-    const res = await axiosInstance.get<AnkiSrsSettingDTO | null>("/anki/settings/mine");
+  /** Get the current user's settings for a single deck (null if none saved yet). */
+  getForDeck: async (deckId: number): Promise<AnkiSrsSettingDTO | null> => {
+    const res = await axiosInstance.get<AnkiSrsSettingDTO | null>(
+      `/anki/settings/deck/${deckId}`
+    );
     return res.data && typeof res.data === "object" ? res.data : null;
   },
 
-  saveMine: async (payload: AnkiSrsSettingsRequest): Promise<AnkiSrsSettingDTO> => {
-    const res = await axiosInstance.put<AnkiSrsSettingDTO>("/anki/settings/mine", payload);
-    return res.data;
-  },
-
-  getForUser: async (userId: number): Promise<AnkiSrsSettingDTO | null> => {
-    const res = await base.getPage(
-      { page: 0, size: 1 },
-      undefined,
-      { userId, isActive: true },
+  /** Create or update the current user's settings for a single deck. */
+  saveForDeck: async (
+    deckId: number,
+    payload: AnkiSrsSettingsRequest
+  ): Promise<AnkiSrsSettingDTO> => {
+    const res = await axiosInstance.put<AnkiSrsSettingDTO>(
+      `/anki/settings/deck/${deckId}`,
+      payload
     );
-    const items = res.content ?? (res as any).items ?? [];
-    return items[0] ?? null;
+    return res.data;
   },
 });

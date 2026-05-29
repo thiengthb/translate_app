@@ -42,6 +42,7 @@ interface DeckItemProps {
   onMenuClose: () => void;
   onDelete: () => void;
   onTagToggle: (tagId: number) => void;
+  onOpenSettings: () => void;
 }
 
 /* ─────────────────────────────────────────
@@ -55,7 +56,7 @@ export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [openDeckMenu, setOpenDeckMenu] = useState<number | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsDeck, setSettingsDeck] = useState<DeckDTO | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "list"; } catch { return "list"; }
   });
@@ -136,6 +137,7 @@ export default function LibraryPage() {
     onMenuClose: () => setOpenDeckMenu(null),
     onDelete: () => deck.id != null && handleDeleteDeck(deck.id),
     onTagToggle: (tagId) => handleTagToggle(deck, tagId),
+    onOpenSettings: () => setSettingsDeck(deck),
   });
 
   return (
@@ -163,14 +165,6 @@ export default function LibraryPage() {
               <Plus className="size-3.5" />
             </button>
           </div>
-
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <SlidersHorizontal className="size-3.5" />
-            Study settings
-          </button>
 
           <button
             onClick={() => navigate("/create-deck")}
@@ -368,7 +362,14 @@ export default function LibraryPage() {
         )}
       </AnimatePresence>
 
-      <FlashcardSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {settingsDeck?.id != null && (
+        <FlashcardSettingsModal
+          open={settingsDeck != null}
+          deckId={settingsDeck.id}
+          deckTitle={settingsDeck.title}
+          onClose={() => setSettingsDeck(null)}
+        />
+      )}
     </MainLayout>
   );
 }
@@ -434,6 +435,8 @@ function DeckOverflowMenu({
   deckTagIds,
   onTagToggle,
   onDelete,
+  onOpenSettings,
+  showSettings,
   buttonCls,
 }: {
   menuOpen: boolean;
@@ -445,6 +448,8 @@ function DeckOverflowMenu({
   deckTagIds: Set<number>;
   onTagToggle: (id: number) => void;
   onDelete: () => void;
+  onOpenSettings: () => void;
+  showSettings: boolean;
   buttonCls?: string;
 }) {
   return (
@@ -470,6 +475,20 @@ function DeckOverflowMenu({
               transition={{ duration: 0.12 }}
               className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
             >
+              {/* Study settings — per-deck (Anki only) */}
+              {showSettings && (
+                <>
+                  <button
+                    onClick={() => { onClose(); onOpenSettings(); }}
+                    className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center gap-2"
+                  >
+                    <SlidersHorizontal className="size-3.5 text-muted-foreground" />
+                    Study settings
+                  </button>
+                  <div className="my-1 border-t border-border" />
+                </>
+              )}
+
               {/* Tag picker */}
               <div className="relative">
                 <button
@@ -528,7 +547,7 @@ function DeckOverflowMenu({
 /* ─────────────────────────────────────────
    LIST VIEW — Quizlet-style row
 ───────────────────────────────────────── */
-function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle }: DeckItemProps) {
+function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
   const navigate = useNavigate();
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const gradient = getDeckGradient(deck.id);
@@ -580,6 +599,8 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
           deckTagIds={deckTagIds}
           onTagToggle={onTagToggle}
           onDelete={onDelete}
+          onOpenSettings={onOpenSettings}
+          showSettings={deck.studyMode === "ANKI"}
         />
       </div>
     </motion.div>
@@ -589,7 +610,7 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
 /* ─────────────────────────────────────────
    GRID VIEW — Mazii-style card
 ───────────────────────────────────────── */
-function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle }: DeckItemProps) {
+function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
   const navigate = useNavigate();
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const gradient = getDeckGradient(deck.id);
@@ -636,6 +657,8 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
             deckTagIds={deckTagIds}
             onTagToggle={onTagToggle}
             onDelete={onDelete}
+            onOpenSettings={onOpenSettings}
+            showSettings={deck.studyMode === "ANKI"}
             buttonCls="p-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/20 transition-colors"
           />
         </div>

@@ -88,7 +88,7 @@ public class AnkiStudyController {
         Map<Long, AnkiSrsProgress> progressMap = progressList.stream()
                 .collect(Collectors.toMap(p -> p.getFlashcard().getId(), p -> p));
 
-        AnkiSrsSetting setting = settingRepository.findByUserId(userId).orElse(null);
+        AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, deckId).orElse(null);
         SchedulingConfig schedulingConfig = SchedulingConfig.from(setting, objectMapper);
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
@@ -161,7 +161,7 @@ public class AnkiStudyController {
 
         Flashcard flashcard = flashcardRepository.findById(req.getFlashcardId()).orElseThrow();
         Deck deck = deckRepository.findById(req.getDeckId()).orElseThrow();
-        AnkiSrsSetting setting = settingRepository.findByUserId(userId).orElse(null);
+        AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, req.getDeckId()).orElse(null);
         SchedulingConfig schedulingConfig = SchedulingConfig.from(setting, objectMapper);
 
         AnkiSrsProgress progress = progressRepository

@@ -4,6 +4,8 @@ import com.example.starter_project_2025.base.crud.domain.BaseCrudRepository;
 import com.example.starter_project_2025.base.crud.mapper.BaseCrudMapper;
 import com.example.starter_project_2025.base.crud.service.BaseCrudServiceImpl;
 import com.example.starter_project_2025.base.crud.validation.ValidationContext;
+import com.example.starter_project_2025.domain.library.deck.Deck;
+import com.example.starter_project_2025.domain.library.deck.DeckRepository;
 import com.example.starter_project_2025.domain.library.srs.algorithm_config.SrsAlgorithmConfig;
 import com.example.starter_project_2025.domain.library.srs.algorithm_config.SrsAlgorithmConfigRepository;
 import com.example.starter_project_2025.system.rbac.user.User;
@@ -25,6 +27,7 @@ public class AnkiSrsSettingServiceImpl
     AnkiSrsSettingMapper mapper;
     AnkiSrsSettingRepository repository;
     UserRepository userRepository;
+    DeckRepository deckRepository;
     SrsAlgorithmConfigRepository algorithmConfigRepository;
 
     @Override
@@ -48,8 +51,13 @@ public class AnkiSrsSettingServiceImpl
         if (user == null) { ctx.add("userId", "User not found"); return; }
         entity.setUser(user);
 
-        if (repository.existsByUserId(request.getUserId())) {
-            ctx.add("userId", "Settings already exist for this user");
+        if (request.getDeckId() == null) { ctx.add("deckId", "Deck ID is required"); return; }
+        Deck deck = deckRepository.findById(request.getDeckId()).orElse(null);
+        if (deck == null) { ctx.add("deckId", "Deck not found"); return; }
+        entity.setDeck(deck);
+
+        if (repository.existsByUserIdAndDeckId(request.getUserId(), request.getDeckId())) {
+            ctx.add("deckId", "Settings already exist for this deck");
             return;
         }
 
