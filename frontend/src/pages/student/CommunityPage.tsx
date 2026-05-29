@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { deckApi, favoriteDeckApi } from "@/api";
 import type { DeckDTO, FavoriteDeckDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PaginationBar } from "@/components/common/PaginationBar";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -43,6 +44,8 @@ type Tab = "discover" | "favorites";
 type ModeFilter = "ALL" | "QUIZLET" | "ANKI";
 type SortKey = "newest" | "mostSaved" | "mostFavorited" | "mostViewed";
 
+const DECKS_PER_PAGE = 12;
+
 interface SortOption {
   key: SortKey;
   label: string;
@@ -75,6 +78,7 @@ export default function CommunityPage() {
   const [mode, setMode] = useState<ModeFilter>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [sortOpen, setSortOpen] = useState(false);
+  const [page, setPage] = useState(1); // 1-based
 
   /* Debounce search input */
   useEffect(() => {
@@ -135,6 +139,19 @@ export default function CommunityPage() {
     }
     return decks;
   }, [tab, decks, favoriteByDeckId]);
+
+  /* Pagination (client-side, over the visible list) */
+  const totalPages = Math.max(1, Math.ceil(visibleDecks.length / DECKS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pagedDecks = useMemo(
+    () => visibleDecks.slice((safePage - 1) * DECKS_PER_PAGE, safePage * DECKS_PER_PAGE),
+    [visibleDecks, safePage]
+  );
+
+  // Reset to the first page whenever the visible set changes.
+  useEffect(() => {
+    setPage(1);
+  }, [tab, mode, sortKey, debouncedSearch]);
 
   /* Actions */
   const handleClone = useCallback(
@@ -291,9 +308,9 @@ export default function CommunityPage() {
           ) : visibleDecks.length === 0 ? (
             <EmptyState tab={tab} hasSearch={!!debouncedSearch} />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
               <AnimatePresence initial={false} mode="popLayout">
-                {visibleDecks.map((deck, i) => (
+                {pagedDecks.map((deck, i) => (
                   <motion.div
                     key={deck.id}
                     layout
@@ -317,6 +334,18 @@ export default function CommunityPage() {
             </div>
           )}
         </div>
+
+        {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
+        {!loading && totalPages > 1 && (
+          <div className="shrink-0 border-t border-border bg-background px-6 py-2 flex justify-end">
+            <PaginationBar
+              currentPage={safePage}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              totalItems={visibleDecks.length}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );
