@@ -1,9 +1,10 @@
-import { format } from "date-fns";
 import { CalendarDays, Mail, Phone, Shield } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/contexts/I18nContext";
+import { useFormat } from "@/i18n/format";
 import { formatRoleLabel } from "@/utils/rbac.utils";
 import type { ProfileResponse } from "@/types/features/profile";
 
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function IdentityCard({ profile, onAvatarChange }: Props) {
+    const { t } = useTranslation();
+    const fmt = useFormat();
     const fullName =
         [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "—";
 
@@ -43,21 +46,17 @@ export function IdentityCard({ profile, onAvatarChange }: Props) {
                 <Separator className="my-5" />
 
                 <div className="space-y-3">
-                    <ContactRow icon={<Mail size={14} />} label="Email" value={profile?.email} />
+                    <ContactRow icon={<Mail size={14} />} label={t("profile.identity.email")} value={profile?.email} />
                     <ContactRow
                         icon={<Phone size={14} />}
-                        label="Số điện thoại"
-                        value={profile?.phone || "Chưa cập nhật"}
+                        label={t("profile.identity.phone")}
+                        value={profile?.phone || t("profile.identity.phoneEmpty")}
                         muted={!profile?.phone}
                     />
                     <ContactRow
                         icon={<CalendarDays size={14} />}
-                        label="Tham gia từ"
-                        value={
-                            profile?.createdAt
-                                ? format(new Date(profile.createdAt), "dd/MM/yyyy")
-                                : "—"
-                        }
+                        label={t("profile.identity.joined")}
+                        value={fmt.date(profile?.createdAt)}
                     />
                 </div>
 
@@ -66,7 +65,7 @@ export function IdentityCard({ profile, onAvatarChange }: Props) {
                         <Separator className="my-5" />
                         <div className="space-y-1.5">
                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                Giới thiệu
+                                {t("profile.identity.bio")}
                             </p>
                             <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
                                 {profile.bio}

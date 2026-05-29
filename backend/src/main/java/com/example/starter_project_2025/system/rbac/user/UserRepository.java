@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,14 @@ public interface UserRepository extends BaseCrudRepository<User, Long> {
     boolean existsByEmail(String email);
 
     Long countByIsActive(Boolean isActive);
+
+    long countByCreatedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
+
+    List<User> findTop10ByOrderByCreatedAtDesc();
+
+    @Query("SELECT FUNCTION('DATE', u.createdAt) AS d, COUNT(u) AS c " +
+            "FROM User u WHERE u.createdAt >= :since " +
+            "GROUP BY FUNCTION('DATE', u.createdAt) " +
+            "ORDER BY FUNCTION('DATE', u.createdAt) ASC")
+    List<Object[]> countDailyUsersSince(@Param("since") java.time.LocalDateTime since);
 }

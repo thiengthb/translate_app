@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { useState, useEffect } from "react";
 import type { FieldSchema } from "@/types";
 import { FormFieldRenderer } from "./FormFieldRenderer";
@@ -186,7 +187,11 @@ export function FormModal({
           ) : null}
         </SheetHeader>
 
-        <div className="grid content-start auto-rows-min flex-1 gap-4 overflow-y-auto px-4 py-3">
+        <ScrollHintContainer
+          axis="vertical"
+          className="flex-1"
+          viewportClassName="grid content-start auto-rows-min gap-4 px-4 py-3"
+        >
           {activeLayout ? (
             <>
               {activeLayout.sections.map((section) => {
@@ -250,7 +255,7 @@ export function FormModal({
           ) : (
             editableFields.map((field) => renderField(field))
           )}
-        </div>
+        </ScrollHintContainer>
 
         <SheetFooter className="border-t sm:flex-row sm:justify-end">
           <Button

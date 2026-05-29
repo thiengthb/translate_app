@@ -243,3 +243,46 @@
 .animate-out {
   animation-fill-mode: forwards;
 }
+/* ─── ProTable print mode ─────────────────────────────────────────────── */
+@media print {
+  /* Hide chrome that doesn't make sense on paper */
+  header,
+  nav,
+  aside,
+  .protable-print-hide,
+  [data-slot="sidebar"],
+  [data-slot="sidebar-trigger"],
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Make the page itself printable: white bg, full width */
+  body,
+  html {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Tables should expand to natural width and let rows break */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  table tr {
+    page-break-inside: avoid;
+  }
+
+  /* Drop sticky positioning so columns flow naturally on paper */
+  .sticky {
+    position: static !important;
+    box-shadow: none !important;
+  }
+
+  /* Drop pagination + toolbar + bulk bar from the printed page */
+  [data-protable-pagination],
+  [data-protable-toolbar],
+  [role="toolbar"][aria-label="Bulk actions"] {
+    display: none !important;
+  }
+}

@@ -2,6 +2,9 @@ package com.example.starter_project_2025.base.dataio.template.controller;
 
 import com.example.starter_project_2025.base.dataio.template.registry.ImportEntityRegistry;
 import com.example.starter_project_2025.base.dataio.template.service.ImportTemplateService;
+import com.example.starter_project_2025.exception.BadRequestException;
+import com.example.starter_project_2025.init.annotation.ResourcePermission;
+import com.example.starter_project_2025.security.PermissionChecker;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +34,15 @@ public class ImportTemplateController {
         Class<?> clazz = registry.getEntity(entity);
 
         if (clazz == null) {
-            throw new RuntimeException("Unknown entity: " + entity);
+            throw new BadRequestException("Unknown entity: " + entity);
+        }
+
+        // Require <RESOURCE>_CREATE — the same gate that lets the user
+        // import the file. Reading the template alone leaks field structure,
+        // so callers must already have permission to import this entity.
+        ResourcePermission resourcePermission = clazz.getAnnotation(ResourcePermission.class);
+        if (resourcePermission != null) {
+            PermissionChecker.require(resourcePermission.value() + "_CREATE");
         }
 
         byte[] file = templateService.generateTemplate(clazz);

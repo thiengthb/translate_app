@@ -2,10 +2,18 @@ package com.example.starter_project_2025.base.dataio.importer.mapper;
 
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Component
 public class ValueConverter {
 
     public Object convert(Class<?> type, String raw) {
+        return convert(type, raw, "");
+    }
+
+    public Object convert(Class<?> type, String raw, String dateFormat) {
 
         if (raw == null || raw.isBlank())
             return null;
@@ -36,11 +44,19 @@ public class ValueConverter {
             return enumVal;
         }
 
-        if (type == java.time.LocalDateTime.class)
-            return java.time.LocalDateTime.parse(val);
+        if (type == LocalDateTime.class) {
+            if (dateFormat != null && !dateFormat.isBlank()) {
+                return LocalDateTime.parse(val, DateTimeFormatter.ofPattern(dateFormat));
+            }
+            return LocalDateTime.parse(val);
+        }
 
-        if (type == java.time.LocalDate.class)
-            return java.time.LocalDate.parse(val);
+        if (type == LocalDate.class) {
+            if (dateFormat != null && !dateFormat.isBlank()) {
+                return LocalDate.parse(val, DateTimeFormatter.ofPattern(dateFormat));
+            }
+            return LocalDate.parse(val);
+        }
 
         return raw;
     }

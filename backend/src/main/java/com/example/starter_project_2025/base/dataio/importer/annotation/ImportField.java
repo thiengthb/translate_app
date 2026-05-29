@@ -20,4 +20,11 @@ public @interface ImportField {
     String lookupField() default "id";
 
     String separator() default ",";
+
+    /**
+     * Date pattern (java.time DateTimeFormatter) used to parse LocalDate /
+     * LocalDateTime values from the import file. Empty = ISO-8601 default.
+     * Example: "dd/MM/yyyy", "yyyy-MM-dd HH:mm:ss".
+     */
+    String dateFormat() default "";
 }

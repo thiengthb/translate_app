@@ -8,9 +8,15 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Default filter applied to every list endpoint. Concrete enough to be used
+ * directly when an entity needs no extra filter fields — declare your service
+ * with {@code BaseCrudServiceImpl<E, I, D, BaseFilter>} and skip the per-entity
+ * filter file. Subclass only when you need extra fields.
+ */
 @Getter
 @Setter
-public abstract class BaseFilter {
+public class BaseFilter {
 
     @FilterField(entityField = "id", operator = FilterOperator.IN)
     List<Long> ids;

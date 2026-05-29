@@ -3,7 +3,7 @@
 Project sử dụng Docker để chạy database và cache. Chỉ cần một lệnh:
 
 ```bash
-docker compose -f docker/dev-env.yml up -d
+docker compose -f docker/dev-env.yml --env-file backend/.env up -d
 ```
 
 Kiểm tra services đã chạy:
@@ -17,5 +17,5 @@ docker compose -f docker/dev-env.yml ps
 Để dừng services:
 
 ```bash
-docker compose -f docker/dev-env.yml down
+docker compose -f docker/dev-env.yml down -v
 ```

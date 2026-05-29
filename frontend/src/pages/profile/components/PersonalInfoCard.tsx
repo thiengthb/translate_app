@@ -16,6 +16,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "@/contexts/I18nContext";
 import type { ProfileResponse } from "@/types/features/profile";
 
 import { profileSchema, type ProfileFormValues } from "../schemas";
@@ -28,6 +29,7 @@ interface Props {
 export function PersonalInfoCard({ profile, onSave }: Props) {
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const { t } = useTranslation();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -66,9 +68,9 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                 <div>
                     <CardTitle className="text-base flex items-center gap-2">
                         <UserCircle2 size={16} className="text-primary" />
-                        Thông tin cá nhân
+                        {t("profile.personal.title")}
                     </CardTitle>
-                    <CardDescription>Cập nhật họ tên, số điện thoại và bio</CardDescription>
+                    <CardDescription>{t("profile.personal.description")}</CardDescription>
                 </div>
                 {!editing && (
                     <Button
@@ -78,7 +80,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                         className="gap-1.5"
                     >
                         <Pencil size={14} />
-                        Chỉnh sửa
+                        {t("profile.personal.edit")}
                     </Button>
                 )}
             </CardHeader>
@@ -92,7 +94,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                 name="firstName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Họ</FormLabel>
+                                        <FormLabel>{t("profile.personal.firstName")}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 {...field}
@@ -109,7 +111,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                 name="lastName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tên</FormLabel>
+                                        <FormLabel>{t("profile.personal.lastName")}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 {...field}
@@ -125,7 +127,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Email</Label>
+                                <Label>{t("auth.login.email")}</Label>
                                 <div className="relative">
                                     <Mail
                                         size={15}
@@ -144,7 +146,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                 name="phone"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Số điện thoại</FormLabel>
+                                        <FormLabel>{t("profile.personal.phone")}</FormLabel>
                                         <FormControl>
                                             <div className="relative">
                                                 <Phone
@@ -153,7 +155,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                                 />
                                                 <Input
                                                     {...field}
-                                                    placeholder="0901 234 567"
+                                                    placeholder={t("profile.personal.phonePlaceholder")}
                                                     readOnly={!editing}
                                                     className={`pl-9 ${!editing ? "bg-muted cursor-default" : ""}`}
                                                 />
@@ -170,11 +172,11 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                             name="bio"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Giới thiệu bản thân</FormLabel>
+                                    <FormLabel>{t("profile.personal.bio")}</FormLabel>
                                     <FormControl>
                                         <Textarea
                                             {...field}
-                                            placeholder="Viết vài dòng về bản thân..."
+                                            placeholder={t("profile.personal.bioPlaceholder")}
                                             readOnly={!editing}
                                             rows={4}
                                             className={`resize-none ${!editing ? "bg-muted cursor-default" : ""}`}
@@ -200,7 +202,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                     ) : (
                                         <Check size={14} />
                                     )}
-                                    Lưu thay đổi
+                                    {t("profile.personal.save")}
                                 </Button>
                                 <Button
                                     type="button"
@@ -210,7 +212,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                                     className="gap-1.5"
                                 >
                                     <X size={14} />
-                                    Hủy
+                                    {t("common.cancel")}
                                 </Button>
                             </div>
                         )}

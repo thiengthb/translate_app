@@ -20,5 +20,12 @@ public @interface AutoCrud {
 
     boolean enableImport() default true;
 
-    boolean enableBulkDelete() default false;
+    boolean enableBulkDelete() default true;
+
+    /**
+     * Set false to skip both the auto-registered Service bean and the auto-
+     * registered HTTP endpoints — useful when you ship a custom controller
+     * but still want metadata / menus.
+     */
+    boolean autoRegister() default true;
 }

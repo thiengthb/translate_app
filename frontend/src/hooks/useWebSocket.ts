@@ -25,7 +25,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const { autoConnect = true } = options;
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [state, setState] = useState<WebSocketState>({
     connected: false,
     connecting: false,

@@ -11,6 +11,7 @@ export interface BaseApiService<DTO, Filter> {
     create(data: DTO): Promise<DTO>;
     update(id: string, data: DTO): Promise<DTO>;
     delete(id: string): Promise<void>;
+    bulkDelete(ids: Array<string | number>): Promise<void>;
 }
 
 interface BaseApiConfig {
@@ -27,9 +28,7 @@ export const createBaseApiService = <DTO = any, Filter = any>({
             const formData = new FormData();
             formData.append("file", file);
             const response = await instance.post<ImportResult>(`${path}/import`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+                headers: { "Content-Type": "multipart/form-data" },
             });
             return response.data;
         },
@@ -64,9 +63,7 @@ export const createBaseApiService = <DTO = any, Filter = any>({
             if (filter) {
                 Object.entries(filter as Record<string, any>).forEach(([key, value]) => {
                     if (value === undefined || value === null) return;
-
                     if (typeof value === "string" && !value.trim()) return;
-
                     if (Array.isArray(value)) {
                         value.forEach((v) => params.append(key, serializeValue(v)));
                     } else {
@@ -75,39 +72,31 @@ export const createBaseApiService = <DTO = any, Filter = any>({
                 });
             }
 
-            const response = await instance.get<PageResponse<DTO>>(path, {
-                params,
-            });
-            console.log("GetPage response:", response);
+            const response = await instance.get<PageResponse<DTO>>(path, { params });
             return response.data;
         },
 
         getById: async (id: string): Promise<DTO> => {
-            console.log(`Fetching ${path} with ID:`, id);
             const response = await instance.get<DTO>(`${path}/${id}`);
-            console.log("GetById response:", response);
             return response.data;
         },
 
         create: async (data: DTO): Promise<DTO> => {
-            console.log("Creating new entry at", path, "with data:", data);
             const response = await instance.post<DTO>(path, data);
-            console.log("Create response:", response);
             return response.data;
         },
 
         update: async (id: string, data: DTO): Promise<DTO> => {
-            console.log(`Updating ${path} with ID:`, id, "and data:", data);
             const response = await instance.put<DTO>(`${path}/${id}`, data);
-            console.log("Update response:", response);
             return response.data;
         },
 
         delete: async (id: string): Promise<void> => {
-            console.log(`Deleting ${path} with ID:`, id);
-            const response = await instance.delete(`${path}/${id}`);
-            console.log("Delete response:", response);
-            return response.data;
+            await instance.delete(`${path}/${id}`);
+        },
+
+        bulkDelete: async (ids: Array<string | number>): Promise<void> => {
+            await instance.post(`${path}/bulk-delete`, ids);
         },
     };
 };

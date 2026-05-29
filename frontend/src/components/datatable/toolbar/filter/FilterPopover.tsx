@@ -27,17 +27,23 @@ export function FilterPopover({
     <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
       <PopoverTrigger asChild>
         <div>
-          <TooltipWrapper content="Filter data">
+          <TooltipWrapper
+            content={
+              activeFilterCount > 0
+                ? `Đang lọc ${activeFilterCount} điều kiện`
+                : "Bộ lọc"
+            }
+          >
             <Button
               variant="outline"
-              size="sm"
-              className="gap-1.5"
+              size="icon"
+              className="h-9 w-9 relative"
               onClick={() => setFiltersOpen((prev) => !prev)}
+              aria-label="Filters"
             >
-              <Filter size={14} />
-              Filters
+              <Filter size={15} />
               {activeFilterCount > 0 && (
-                <Badge className="h-5 min-w-5 px-1.5 text-xs rounded-full ml-0.5">
+                <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[10px] rounded-full ring-2 ring-background">
                   {activeFilterCount}
                 </Badge>
               )}

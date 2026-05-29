@@ -27,6 +27,16 @@ public class RateLimitFilter implements Filter {
     @Value("${app.rate-limit.enabled:true}")
     private boolean enabled;
 
+    /**
+     * Trust the X-Forwarded-For header only when running behind a known proxy
+     * (nginx, Cloudflare, AWS ELB...). When false, the rate limiter keys on
+     * the raw socket address so an attacker can't spoof a fresh IP per request.
+     * Set to true in deployments where the proxy is guaranteed to overwrite
+     * the header.
+     */
+    @Value("${app.rate-limit.trust-proxy:false}")
+    private boolean trustProxy;
+
     private final Map<String, RateBucket> buckets = new ConcurrentHashMap<>();
 
     @Override
@@ -54,9 +64,11 @@ public class RateLimitFilter implements Filter {
     }
 
     private String getClientKey(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        if (trustProxy) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
         }
         return request.getRemoteAddr();
     }
