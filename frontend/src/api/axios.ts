@@ -35,12 +35,29 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-let pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+// Single-flight refresh: when many requests fail with 401 at once (e.g. on app
+// boot with a stale access token), they must NOT each fire their own
+// /auth/refresh — that creates a "refresh storm" hammering the BE. Instead the
+// first 401 starts one refresh and every concurrent 401 awaits that same
+// promise. `isLoggingOut` guards against repeated clear()/redirect once the
+// refresh has definitively failed.
+let refreshPromise: Promise<string> | null = null;
+let isLoggingOut = false;
 
-const drainQueue = (err: unknown, token: string | null = null) => {
-    pendingQueue.forEach((p) => (err ? p.reject(err) : p.resolve(token!)));
-    pendingQueue = [];
+const runRefresh = (): Promise<string> => {
+    if (!refreshPromise) {
+        refreshPromise = axios
+            .post<BackendAuthResponse>(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+            .then((res) => {
+                const authData = mapAuthResponse(res.data);
+                store.dispatch(setLogin(authData));
+                return authData.token;
+            })
+            .finally(() => {
+                refreshPromise = null;
+            });
+    }
+    return refreshPromise;
 };
 
 axiosInstance.interceptors.response.use(
@@ -74,26 +91,26 @@ axiosInstance.interceptors.response.use(
 
             isRefreshing = true;
             try {
-                const res = await axios.post<BackendAuthResponse>(
-                    `${API_BASE_URL}/auth/refresh`,
-                    {},
-                    { withCredentials: true },
-                );
-                const authData = mapAuthResponse(res.data);
+                const token = await runRefresh();
 
-                store.dispatch(setLogin(authData));
-                drainQueue(null, authData.token);
                 originalReq.headers = {
                     ...originalReq.headers,
-                    Authorization: `Bearer ${authData.token}`,
+                    Authorization: `Bearer ${token}`,
                 };
 
                 return axiosInstance(originalReq);
             } catch (err) {
-                authStorage.clear();
-                store.dispatch(setLogout());
-                if (!window.location.pathname.includes("/login")) {
-                    window.location.href = "/login";
+                // Only the first failed refresh clears state + redirects; later
+                // waiters from the same storm fall through silently.
+                if (!isLoggingOut) {
+                    isLoggingOut = true;
+                    authStorage.clear();
+                    store.dispatch(setLogout());
+                    // Already on /login → don't hard-navigate (would reload the
+                    // page, re-fire the same failing request, and loop).
+                    if (window.location.pathname !== "/login") {
+                        window.location.href = "/login";
+                    }
                 }
                 return Promise.reject(err);
             } finally {
