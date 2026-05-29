@@ -22,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 @ResourcePermission("FLASHCARD_TEMPLATE")
 @Searchable(fields = {"name", "description"})
 @Filterable(fields = {"cardType", "isSystem", "isDefault"})
+@AutoCrud(path = "flashcard-templates")
 @SoftDelete
 public class FlashcardTemplate extends BaseEntity {
 

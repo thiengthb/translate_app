@@ -16,26 +16,26 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
-@Entity
+@Entity(name = "DemoTag")
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "tags")
+@Table(name = "demo_tags")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@ImportEntity("tag")
-@ExportEntity(fileName = "tags", sheetName = "Tags")
-@ResourcePermission("TAG")
+@ImportEntity("demo_tag")
+@ExportEntity(fileName = "demo_tags", sheetName = "Demo Tags")
+@ResourcePermission("DEMO_TAG")
 @ResourceMenu(
-        title = "Tags",
+        title = "Demo Tags",
         group = "Book Management",
         icon = "tags",
-        url = "/tags",
+        url = "/demo/tags",
         order = 2,
-        permission = "TAG_READ"
+        permission = "DEMO_TAG_READ"
 )
-@AutoCrud(path = "tags")
+@AutoCrud(path = "demo/tags")
 @Searchable(fields = {"name", "description"})
 public class Tag extends BaseEntity {
 
