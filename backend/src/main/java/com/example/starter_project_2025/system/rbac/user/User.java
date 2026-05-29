@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.rbac.user;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportField;
@@ -36,6 +38,8 @@ import java.util.Set;
         order = 1,
         permission = "USER_READ"
 )
+@Searchable(fields = {"email", "firstName", "lastName"})
+@AutoCrud(path = "users")
 public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)
@@ -64,6 +68,24 @@ public class User extends BaseEntity {
 
     @Column(length = 512)
     String avatarUrl;
+
+    @Column(length = 10)
+    String locale;
+
+    @Column(length = 10)
+    String theme;
+
+    /** Base32-encoded TOTP secret. Null until the user enrolls in 2FA. */
+    @Column(length = 64)
+    String totpSecret;
+
+    /**
+     * Set to true only after the user confirms their first TOTP code.
+     * Nullable in DB so existing rows from before this migration default to
+     * "not enrolled" without a backfill.
+     */
+    @Column
+    Boolean totpEnabled;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)

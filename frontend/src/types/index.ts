@@ -14,6 +14,7 @@ export * from "./features/library/deck";
 export * from "./features/library/tag";
 export * from "./features/library/flashcard";
 export * from "./features/library/deck_item";
+export * from "./features/library/favorite_deck";
 export * from "./features/library/srs_algorithm_config";
 export * from "./features/library/anki_srs_setting";
 export * from "./features/menu/module";

@@ -1,40 +1,9 @@
 import axios from "axios";
 import { store } from "@/store/store";
 import { setLogin, setLogout } from "@/store/slices/auth/authSlice";
-import { normalizeAuthRolePayload } from "@/utils/rbac.utils";
-
-interface BackendAuthenticationResponse {
-    accessToken: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role?: string;
-    roles?: string[];
-    permissions?: string[];
-    rolePermissions?: Record<string, string[]>;
-}
+import { authStorage, mapAuthResponse, type BackendAuthResponse } from "@/lib/auth-storage";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-const mapAuthResponse = (data: BackendAuthenticationResponse) => {
-    const normalized = normalizeAuthRolePayload({
-        role: data.role,
-        roles: data.roles,
-        permissions: data.permissions,
-        rolePermissions: data.rolePermissions,
-    });
-
-    return {
-        token: data.accessToken,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: normalized.role,
-        roles: normalized.roles,
-        permissions: normalized.permissions,
-        rolePermissions: normalized.rolePermissions,
-    };
-};
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -53,11 +22,17 @@ axiosInstance.interceptors.request.use(
         if (token && !isAuthRequest) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Send the user's active locale so the BE can localise dynamic content
+        // (module titles, validation messages, email subjects...). Sourced from
+        // localStorage rather than Redux to avoid coupling axios to the store.
+        const locale = localStorage.getItem("app-locale") || localStorage.getItem("locale");
+        if (locale) {
+            config.headers["Accept-Language"] = locale;
+        }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    },
+    (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
@@ -99,7 +74,7 @@ axiosInstance.interceptors.response.use(
 
             isRefreshing = true;
             try {
-                const res = await axios.post<BackendAuthenticationResponse>(
+                const res = await axios.post<BackendAuthResponse>(
                     `${API_BASE_URL}/auth/refresh`,
                     {},
                     { withCredentials: true },
@@ -115,7 +90,7 @@ axiosInstance.interceptors.response.use(
 
                 return axiosInstance(originalReq);
             } catch (err) {
-                drainQueue(err);
+                authStorage.clear();
                 store.dispatch(setLogout());
                 if (!window.location.pathname.includes("/login")) {
                     window.location.href = "/login";

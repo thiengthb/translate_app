@@ -1,8 +1,5 @@
 package com.example.starter_project_2025.domain.library.flashcard;
 
-import com.example.starter_project_2025.base.crud.controller.BaseCrudDataIoController;
-import com.example.starter_project_2025.base.crud.domain.BaseCrudRepository;
-import com.example.starter_project_2025.base.crud.service.BaseCrudService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -18,26 +15,10 @@ import java.util.List;
 @RequestMapping("/api/flashcards")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Flashcard", description = "APIs for managing flashcards")
-public class FlashcardController
-        extends BaseCrudDataIoController<Flashcard, Long, FlashcardDTO, FlashcardFilter> {
+public class FlashcardController {
 
     FlashcardService flashcardService;
-    FlashcardRepository flashcardRepository;
-
-    @Override
-    protected BaseCrudService<Long, FlashcardDTO, FlashcardFilter> getService() {
-        return flashcardService;
-    }
-
-    @Override
-    protected BaseCrudRepository<Flashcard, Long> getRepository() {
-        return flashcardRepository;
-    }
-
-    @Override
-    protected Class<Flashcard> getEntityClass() {
-        return Flashcard.class;
-    }
+    FlashcardRenderService flashcardRenderService;
 
     /* ─────────────────────────────────────────
        Content sub-resource endpoints
@@ -70,5 +51,15 @@ public class FlashcardController
     ) {
         flashcardService.reorderContents(sideId, orderedContentIds);
         return ResponseEntity.noContent().build();
+    }
+
+    /* ─────────────────────────────────────────
+       Render endpoint — returns HTML built from the deck's template
+       (or the system default for the card's cardType).
+    ───────────────────────────────────────── */
+
+    @GetMapping("/{id}/render")
+    public ResponseEntity<FlashcardRenderDTO> render(@PathVariable Long id) {
+        return ResponseEntity.ok(flashcardRenderService.renderCard(id));
     }
 }

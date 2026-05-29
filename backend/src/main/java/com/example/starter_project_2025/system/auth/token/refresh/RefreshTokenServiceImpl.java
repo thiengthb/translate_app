@@ -12,10 +12,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -87,11 +91,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public String createRefreshToken(User user) {
         String rawToken = UUID.randomUUID().toString() + UUID.randomUUID();
 
+        HttpServletRequest req = currentRequest();
+        Instant now = Instant.now();
+
         RefreshToken token = RefreshToken.builder()
                 .tokenHash(TokenUtil.hash(rawToken))
                 .user(user)
-                .expiryDate(Instant.now().plusSeconds(refreshExpirationSeconds))
+                .expiryDate(now.plusSeconds(refreshExpirationSeconds))
                 .revoked(false)
+                .userAgent(truncate(req != null ? req.getHeader("User-Agent") : null, 256))
+                .ipAddress(req != null ? req.getRemoteAddr() : null)
+                .lastUsedAt(now)
                 .build();
 
         refreshTokenRepository.save(token);
@@ -104,20 +114,33 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         String hash = TokenUtil.hash(rawToken);
 
         RefreshToken token = refreshTokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
+                .orElseThrow(() -> new BadRequestException("error.token.invalidRefresh"));
 
         if (token.isRevoked()) {
-            throw new BadRequestException("Refresh token has been revoked");
+            throw new BadRequestException("error.token.refreshRevoked");
         }
 
         if (token.getExpiryDate().isBefore(Instant.now())) {
             token.setRevoked(true);
             refreshTokenRepository.save(token);
 
-            throw new BadRequestException("Refresh token has expired");
+            throw new BadRequestException("error.token.refreshExpired");
         }
 
+        token.setLastUsedAt(Instant.now());
+        refreshTokenRepository.save(token);
+
         return token;
+    }
+
+    private static HttpServletRequest currentRequest() {
+        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+        return attrs instanceof ServletRequestAttributes s ? s.getRequest() : null;
+    }
+
+    private static String truncate(String value, int max) {
+        if (value == null) return null;
+        return value.length() <= max ? value : value.substring(0, max);
     }
 
     @Override
