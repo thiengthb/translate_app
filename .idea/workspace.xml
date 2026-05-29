@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -349,7 +347,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780068282096</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic">
+      <option name="closed" value="true" />
+      <created>1780073234215</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1780073234215</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -392,7 +398,8 @@
     <MESSAGE value="fix merge" />
     <MESSAGE value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
     <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
+    <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
