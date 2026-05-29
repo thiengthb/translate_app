@@ -45,77 +45,46 @@ public class DictionaryServiceImpl implements DictionaryService {
     public List<KanjiSearchResult> searchKanji(String query, int limit) {
         String q    = query.trim();
         String kana = RomajiConverter.isRomaji(q) ? RomajiConverter.toHiragana(q) : q;
+        Set<String> queryKanjiChars = extractKanjiChars(q);
 
-        Set<String> queryKanjiChars  = extractKanjiChars(q);
-        boolean     filterByQueryKanji = !queryKanjiChars.isEmpty();
+        LinkedHashMap<String, Kanji> kanjiMap = new LinkedHashMap<>();
 
-        Map<String, KanjiAccumulator> kanjiMap = new LinkedHashMap<>();
-
-        // ── Strategy 1: word-based via word_kanjis ────────────────────
-        List<Word> words = searchRepository.search(q, kana, PageRequest.of(0, limit));
-        for (Word word : words) {
-            if (word.getWordKanjis() == null) continue;
-            for (WordKanji wk : word.getWordKanjis()) {
-                if (Boolean.TRUE.equals(wk.getIsDeleted())) continue;
-                String ch = wk.getCharacter();
-                if (ch == null) continue;
-                if (filterByQueryKanji && !queryKanjiChars.contains(ch)) continue;
-
-                kanjiMap.computeIfAbsent(ch, k -> {
-                    String jlptLevel = kanjiRepository.findByCharacter(k)
-                            .map(Kanji::getJlptLevel).orElse(null);
-                    return new KanjiAccumulator(wk, jlptLevel);
-                });
-
-                KanjiAccumulator acc = kanjiMap.get(ch);
-                if (acc.words.stream().noneMatch(wi -> wi.getWord().equals(word.getWord()))) {
-                    acc.words.add(KanjiSearchResult.WordInfo.builder()
-                            .word(word.getWord())
-                            .reading(word.getReading())
-                            .meaningText(word.getMeaning().getName())
-                            .build());
-                }
+        // ── Step 1: Direct character lookup (user typed kanji directly) ──
+        if (!queryKanjiChars.isEmpty()) {
+            for (Kanji k : kanjiRepository.findByCharacterInAndIsDeletedFalse(queryKanjiChars)) {
+                kanjiMap.put(k.getCharacter(), k);
             }
         }
 
-        // ── Strategy 2: direct kanji table lookup (fallback) ─────────
+        // ── Step 2: Keyword search in kanji table ─────────────────────
+        //    Matches character / meaning / onyomi / kunyomi (both q and kana form)
+        if (kanjiMap.size() < limit) {
+            String likeQ    = "%" + q    + "%";
+            String likeKana = "%" + kana + "%";
+            for (Kanji k : kanjiRepository.searchByKeyword(likeQ, likeKana, PageRequest.of(0, limit))) {
+                kanjiMap.putIfAbsent(k.getCharacter(), k);
+                if (kanjiMap.size() >= limit) break;
+            }
+        }
+
+        // ── Step 3: Cross-reference via word search ───────────────────
+        //    Helps for inputs like romaji "seijin" → finds word 成人 → 成,人
         if (kanjiMap.isEmpty()) {
-            // Determine which kanji characters to look up
-            Set<String> charsToLookup = new LinkedHashSet<>(queryKanjiChars);
-
-            // If query has no kanji chars (romaji/meaning/kana), extract from found words
-            // e.g. query="seijin" → found word "成人" → chars={成,人}
-            if (charsToLookup.isEmpty()) {
-                for (Word w : words) {
-                    charsToLookup.addAll(extractKanjiChars(w.getWord()));
-                    if (charsToLookup.size() >= limit) break;
+            List<Word> words = searchRepository.search(q, kana, PageRequest.of(0, 5));
+            Set<String> charsFromWords = new LinkedHashSet<>();
+            for (Word w : words) charsFromWords.addAll(extractKanjiChars(w.getWord()));
+            if (!charsFromWords.isEmpty()) {
+                for (Kanji k : kanjiRepository.findByCharacterInAndIsDeletedFalse(charsFromWords)) {
+                    kanjiMap.put(k.getCharacter(), k);
+                    if (kanjiMap.size() >= limit) break;
                 }
-            }
-
-            List<Kanji> kanjis;
-            if (!charsToLookup.isEmpty()) {
-                kanjis = kanjiRepository.findByCharacterInAndIsDeletedFalse(charsToLookup);
-            } else {
-                // Last resort: full-text keyword search (e.g. search by meaning)
-                String likeQ = "%" + q + "%";
-                kanjis = kanjiRepository.searchByKeyword(likeQ, PageRequest.of(0, limit));
-            }
-
-            for (Kanji k : kanjis) {
-                if (k.getCharacter() == null) continue;
-                KanjiAccumulator acc = new KanjiAccumulator(k);
-                wordKanjiRepository
-                        .findByCharacterWithWords(k.getCharacter(), PageRequest.of(0, 8))
-                        .forEach(wk -> acc.words.add(KanjiSearchResult.WordInfo.builder()
-                                .word(wk.getWord().getWord())
-                                .reading(wk.getWord().getReading())
-                                .meaningText(wk.getWord().getMeaning().getName())
-                                .build()));
-                kanjiMap.put(k.getCharacter(), acc);
             }
         }
 
-        return kanjiMap.values().stream().map(KanjiAccumulator::toResult).toList();
+        return kanjiMap.values().stream()
+                .limit(limit)
+                .map(this::toKanjiResult)
+                .toList();
     }
 
     @Override
@@ -150,53 +119,30 @@ public class DictionaryServiceImpl implements DictionaryService {
         return result;
     }
 
-    private static class KanjiAccumulator {
-        final String character;
-        final String meaning;
-        final String onyomi;
-        final String kunyomi;
-        final Integer stroke;
-        final String radical;
-        final String jlptLevel;
-        final List<KanjiSearchResult.WordInfo> words = new ArrayList<>();
-
-        // From word_kanjis link (Strategy 1)
-        KanjiAccumulator(WordKanji wk, String jlptLevel) {
-            this.character = wk.getCharacter();
-            this.meaning   = wk.getMeaning();
-            this.onyomi    = wk.getOnyomi();
-            this.kunyomi   = wk.getKunyomi();
-            this.stroke    = wk.getStroke();
-            this.radical   = wk.getRadical();
-            this.jlptLevel = jlptLevel;
-        }
-
-        // From kanjis table directly (Strategy 2 fallback)
-        KanjiAccumulator(Kanji k) {
-            this.character = k.getCharacter();
-            this.meaning   = k.getMeaning();
-            this.onyomi    = k.getOnyomi();
-            this.kunyomi   = k.getKunyomi();
-            this.stroke    = k.getStroke();
-            this.radical   = k.getRadical();
-            this.jlptLevel = k.getJlptLevel();
-        }
-
-        KanjiSearchResult toResult() {
-            return KanjiSearchResult.builder()
-                    .character(character)
-                    .meaning(meaning)
-                    .onyomi(onyomi)
-                    .kunyomi(kunyomi)
-                    .stroke(stroke)
-                    .radical(radical)
-                    .jlptLevel(jlptLevel)
-                    .words(words)
-                    .build();
-        }
-    }
-
     // ── Mappers ────────────────────────────────────────────────────────
+
+    private KanjiSearchResult toKanjiResult(Kanji k) {
+        List<KanjiSearchResult.WordInfo> relatedWords = wordKanjiRepository
+                .findByCharacterWithWords(k.getCharacter(), PageRequest.of(0, 8))
+                .stream()
+                .map(wk -> KanjiSearchResult.WordInfo.builder()
+                        .word(wk.getWord().getWord())
+                        .reading(wk.getWord().getReading())
+                        .meaningText(wk.getWord().getMeaning().getName())
+                        .build())
+                .toList();
+
+        return KanjiSearchResult.builder()
+                .character(k.getCharacter())
+                .meaning(k.getMeaning())
+                .onyomi(k.getOnyomi())
+                .kunyomi(k.getKunyomi())
+                .stroke(k.getStroke())
+                .radical(k.getRadical())
+                .jlptLevel(k.getJlptLevel())
+                .words(relatedWords)
+                .build();
+    }
 
     private WordSuggestion toSuggestion(Word word) {
         return WordSuggestion.builder()

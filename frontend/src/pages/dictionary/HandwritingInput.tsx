@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useLayoutEffect } from "react";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 
 type Stroke = [number[], number[]]; // [[x coords], [y coords]]
@@ -55,6 +55,25 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
         }
     }, [isOpen]);
 
+    // Set canvas bitmap size ONCE when canvas mounts. Setting canvas.width /
+    // canvas.height ALWAYS clears the bitmap — so we must avoid letting React's
+    // reconciler re-apply these attributes on every render (which is exactly
+    // what was wiping previous strokes when state updated).
+    useLayoutEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        if (canvas.width  !== CANVAS_W) canvas.width  = CANVAS_W;
+        if (canvas.height !== CANVAS_H) canvas.height = CANVAS_H;
+    }, [isOpen]);
+
+    // Canvas safety net: after every render, sync canvas with stroke data
+    // (skip while a stroke is in progress, so we don't wipe the live segment).
+    useLayoutEffect(() => {
+        if (isOpen && !isDrawing.current) {
+            redrawAll(strokesRef.current);
+        }
+    });
+
     const isDark = () => document.documentElement.classList.contains("dark");
 
     const drawGuides = () => {
@@ -110,6 +129,10 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
 
     const startStroke = (x: number, y: number) => {
         setErrorMsg(null);
+        // Defensive: ensure previous strokes are visible before starting a new one.
+        // The canvas bitmap can be cleared by React re-renders / theme switches /
+        // touch+mouse double-fire on some devices — redraw from data each time.
+        redrawAll(strokesRef.current);
         isDrawing.current = true;
         currentXs.current = [Math.round(x)];
         currentYs.current = [Math.round(y)];
@@ -129,18 +152,39 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
         currentYs.current.push(Math.round(y));
         const ctx = canvasRef.current?.getContext("2d");
         if (!ctx) return;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
+        // Defensive full redraw: guides + all completed strokes + current
+        // in-progress stroke. This guarantees the canvas always reflects the
+        // canonical data, regardless of any concurrent clearing.
+        redrawAll(strokesRef.current);
+        ctx.strokeStyle = isDark() ? "#f9fafb" : "#111827";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        const xs = currentXs.current;
+        const ys = currentYs.current;
+        if (xs.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(xs[0], ys[0]);
+            for (let i = 1; i < xs.length; i++) ctx.lineTo(xs[i], ys[i]);
+            ctx.stroke();
+        }
     };
 
     const endStroke = () => {
         if (!isDrawing.current) return;
         isDrawing.current = false;
-        if (currentXs.current.length < 2) return;
+        if (currentXs.current.length < 2) {
+            currentXs.current = [];
+            currentYs.current = [];
+            return;
+        }
         const newStrokes: Stroke[] = [...strokesRef.current, [currentXs.current, currentYs.current]];
         strokesRef.current = newStrokes;
+        currentXs.current = [];
+        currentYs.current = [];
+        // Sync canvas with the canonical stroke data so anything that may have
+        // cleared the canvas mid-draw (re-render, repaint) is reconciled.
+        redrawAll(newStrokes);
         setStrokeCount(newStrokes.length);
         recognize(newStrokes);
     };
@@ -234,17 +278,15 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
                     <div className="p-4 pb-3 flex justify-center bg-white dark:bg-gray-900">
                         <canvas
                             ref={canvasRef}
-                            width={CANVAS_W}
-                            height={CANVAS_H}
                             style={{ width: CANVAS_W, height: CANVAS_H }}
                             className="block cursor-crosshair touch-none rounded-lg"
                             onMouseDown={(e) => { const p = getXY(e); startStroke(p.x, p.y); }}
                             onMouseMove={(e) => { const p = getXY(e); continueStroke(p.x, p.y); }}
                             onMouseUp={endStroke}
                             onMouseLeave={endStroke}
-                            onTouchStart={(e) => { const p = getXY(e); startStroke(p.x, p.y); }}
-                            onTouchMove={(e) => { const p = getXY(e); continueStroke(p.x, p.y); }}
-                            onTouchEnd={endStroke}
+                            onTouchStart={(e) => { e.preventDefault(); const p = getXY(e); startStroke(p.x, p.y); }}
+                            onTouchMove={(e) => { e.preventDefault(); const p = getXY(e); continueStroke(p.x, p.y); }}
+                            onTouchEnd={(e) => { e.preventDefault(); endStroke(); }}
                         />
                     </div>
 

@@ -29,9 +29,13 @@ public interface KanjiRepository extends BaseCrudRepository<Kanji, Long> {
                 OR LOWER(k.onyomi)  LIKE LOWER(:q)
                 OR LOWER(k.kunyomi) LIKE LOWER(:q)
                 OR LOWER(k.meaning) LIKE LOWER(:q)
+                OR LOWER(k.onyomi)  LIKE LOWER(:kana)
+                OR LOWER(k.kunyomi) LIKE LOWER(:kana)
             )
+            ORDER BY CASE k.jlptLevel WHEN 'N5' THEN 1 WHEN 'N4' THEN 2 WHEN 'N3' THEN 3 WHEN 'N2' THEN 4 WHEN 'N1' THEN 5 ELSE 6 END ASC,
+                     k.stroke ASC NULLS LAST
             """)
-    List<Kanji> searchByKeyword(@Param("q") String likeQ, Pageable pageable);
+    List<Kanji> searchByKeyword(@Param("q") String likeQ, @Param("kana") String likeKana, Pageable pageable);
 
     @Query("""
             SELECT k FROM Kanji k
