@@ -28,7 +28,7 @@ export const flashcardTemplateApi = {
       `/flashcard-templates`,
       { params: { userId, page: 0, size: 200 } }
     );
-    const data = res.data as { content?: FlashcardTemplateDTO[] } & FlashcardTemplateDTO[];
+    const data = res.data;
     if (Array.isArray(data)) return data;
     return data.content ?? [];
   },

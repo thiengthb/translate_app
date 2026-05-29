@@ -93,7 +93,7 @@ export function GrowthChart({ data, days, onDaysChange }: Props) {
                                     fontSize: "12px",
                                 }}
                                 labelStyle={{ color: "var(--muted-foreground)" }}
-                                formatter={(value: number) => [`${value}`, "Đăng ký"]}
+                                formatter={(value) => [String(value ?? 0), "Đăng ký"]}
                             />
                             <Area
                                 type="monotone"

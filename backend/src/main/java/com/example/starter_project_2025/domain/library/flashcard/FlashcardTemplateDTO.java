@@ -29,6 +29,8 @@ public class FlashcardTemplateDTO extends BaseDTO {
 
     String styling;
 
+    String builderConfigJson;
+
     Boolean isSystem;
 
     Boolean isDefault;

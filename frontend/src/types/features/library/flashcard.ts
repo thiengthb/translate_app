@@ -52,6 +52,7 @@ export interface FlashcardTemplateDTO extends BaseDTO {
   frontTemplate: string | null;
   backTemplate: string | null;
   styling: string | null;
+  builderConfigJson?: string | null;
   isSystem: boolean;
   isDefault: boolean;
 }
@@ -70,6 +71,7 @@ export interface CreateUpdateTemplateRequest {
   frontTemplate: string | null;
   backTemplate: string | null;
   styling: string | null;
+  builderConfigJson?: string | null;
   isActive: boolean;
 }
 

@@ -47,6 +47,9 @@ public class FlashcardTemplate extends BaseEntity {
     @Column(name = "styling", columnDefinition = "TEXT")
     String styling;
 
+    @Column(name = "builder_config_json", columnDefinition = "TEXT")
+    String builderConfigJson;
+
     @Builder.Default
     @Column(name = "is_system", nullable = false)
     boolean isSystem = false;
