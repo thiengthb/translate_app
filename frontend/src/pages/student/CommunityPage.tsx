@@ -122,11 +122,12 @@ export default function CommunityPage() {
         filter as never
       )
       .then((page) => {
-        const all = page.content ?? [];
-        const others = all.filter(
-          (d) => d.userId == null || d.userId !== currentUserId
-        );
-        setDecks(others);
+        // Show every public deck — including the current user's own. Owned decks
+        // are marked with a "Của bạn" badge (and a preview action instead of a
+        // clone button) on the card. Previously own decks were filtered out,
+        // which left admins — who own the seeded public decks — with an empty
+        // Community.
+        setDecks(page.content ?? []);
       })
       .catch(() => toast.error("Failed to load community decks."))
       .finally(() => setLoading(false));
@@ -338,6 +339,7 @@ export default function CommunityPage() {
                   <CommunityDeckCard
                     key={deck.id}
                     deck={deck}
+                    isOwn={deck.userId != null && deck.userId === currentUserId}
                     favorited={deck.id != null && favoriteByDeckId.has(deck.id)}
                     cloning={cloning === deck.id}
                     togglingFav={togglingFav === deck.id}
@@ -556,6 +558,7 @@ function EmptyState({ tab, hasSearch }: { tab: Tab; hasSearch: boolean }) {
 ───────────────────────────────────────── */
 function CommunityDeckCard({
   deck,
+  isOwn,
   favorited,
   cloning,
   togglingFav,
@@ -564,6 +567,7 @@ function CommunityDeckCard({
   onToggleFavorite,
 }: {
   deck: DeckDTO;
+  isOwn: boolean;
   favorited: boolean;
   cloning: boolean;
   togglingFav: boolean;
@@ -600,26 +604,33 @@ function CommunityDeckCard({
           </span>
         </div>
 
-        {/* Favorite heart — top-right */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite();
-          }}
-          disabled={togglingFav}
-          title={favorited ? "Remove from favorites" : "Add to favorites"}
-          className={cn(
-            "absolute top-2.5 right-2.5 size-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all",
-            favorited
-              ? "bg-rose-500 text-white shadow-md hover:bg-rose-600"
-              : "bg-white/20 text-white hover:bg-white/30",
-            togglingFav && "opacity-60 cursor-wait"
-          )}
-        >
-          <Heart
-            className={cn("size-4 transition-transform", favorited && "fill-current")}
-          />
-        </button>
+        {/* Top-right: own decks get an ownership badge; others get a favorite heart */}
+        {isOwn ? (
+          <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
+            <Check className="size-3" />
+            Của bạn
+          </span>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            disabled={togglingFav}
+            title={favorited ? "Remove from favorites" : "Add to favorites"}
+            className={cn(
+              "absolute top-2.5 right-2.5 size-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all",
+              favorited
+                ? "bg-rose-500 text-white shadow-md hover:bg-rose-600"
+                : "bg-white/20 text-white hover:bg-white/30",
+              togglingFav && "opacity-60 cursor-wait"
+            )}
+          >
+            <Heart
+              className={cn("size-4 transition-transform", favorited && "fill-current")}
+            />
+          </button>
+        )}
       </div>
 
       {/* Body */}
@@ -644,25 +655,38 @@ function CommunityDeckCard({
           )}
         </div>
 
-        {/* Save to library — primary CTA */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClone();
-          }}
-          disabled={cloning}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
-            "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          )}
-        >
-          {cloning ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Download className="size-3.5" />
-          )}
-          {cloning ? "Saving…" : "Save to my library"}
-        </button>
+        {/* CTA — own decks get a preview action; others can save to library */}
+        {isOwn ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Eye className="size-3.5" />
+            Xem deck của bạn
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClone();
+            }}
+            disabled={cloning}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
+              "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            )}
+          >
+            {cloning ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+            {cloning ? "Saving…" : "Save to my library"}
+          </button>
+        )}
       </div>
     </motion.div>
   );
