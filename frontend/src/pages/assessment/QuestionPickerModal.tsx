@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { QuestionFormModal } from "./QuestionFormModal";
+import { QuestionForm } from "./QuestionForm";
 import { TagBadges, TagChips } from "./QuestionTags";
 
 export function QuestionPickerModal({
@@ -69,9 +69,30 @@ export function QuestionPickerModal({
   const excluded = new Set(excludeIds);
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+        {formOpen ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(false)}
+                  className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4 mr-1" /> Back
+                </button>
+                New question
+              </DialogTitle>
+              <DialogDescription>Create a question and add it to this quiz.</DialogDescription>
+            </DialogHeader>
+            <QuestionForm
+              onCancel={() => setFormOpen(false)}
+              onSaved={(q) => { setFormOpen(false); load(); onAdd(q.id); }}
+            />
+          </>
+        ) : (
+          <>
           <DialogHeader>
             <DialogTitle>Add questions</DialogTitle>
             <DialogDescription>Pick from the question bank or create a new one.</DialogDescription>
@@ -136,10 +157,9 @@ export function QuestionPickerModal({
               })
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <QuestionFormModal open={formOpen} onClose={() => setFormOpen(false)} onSaved={(q) => { setFormOpen(false); load(); onAdd(q.id); }} />
-    </>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

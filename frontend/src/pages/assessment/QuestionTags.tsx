@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Plus, Tag as TagIcon } from "lucide-react";
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
 
 /**
  * Presentational toggleable tag chips. Selecting is controlled by the parent.
@@ -56,8 +57,12 @@ export function TagChips({
  * the parent can add it to its list and (optionally) auto-select it.
  */
 export function TagCreateInline({ onCreated }: { onCreated: (tag: QuestionTagDTO) => void }) {
+  const { hasPermission } = usePermissions();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Creating a tag requires QUESTION_TAG_CREATE — hide the affordance otherwise.
+  if (!hasPermission("QUESTION_TAG_CREATE")) return null;
 
   const create = async () => {
     const trimmed = name.trim();

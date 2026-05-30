@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { FileQuestion, Loader2, Pencil, Plus, Search, Tag as TagIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { QuestionFormModal } from "./QuestionFormModal";
+import { useNavigate } from "react-router-dom";
 import { QuestionTagManagerModal } from "./QuestionTagManagerModal";
 import { TagBadges, TagChips } from "./QuestionTags";
 
 export default function QuestionBankPage() {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<QuestionBankDTO[]>([]);
   const [tags, setTags] = useState<QuestionTagDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -21,8 +22,6 @@ export default function QuestionBankPage() {
   const [debounced, setDebounced] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<QuestionBankDTO | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -74,8 +73,8 @@ export default function QuestionBankPage() {
     }
   };
 
-  const openNew = () => { setEditing(null); setFormOpen(true); };
-  const openEdit = (q: QuestionBankDTO) => { setEditing(q); setFormOpen(true); };
+  const openNew = () => navigate("/questions/new");
+  const openEdit = (q: QuestionBankDTO) => navigate(`/questions/${q.id}/edit`);
 
   return (
     <MainLayout pathName={{ "/questions": "Question Bank" }}>
@@ -165,12 +164,6 @@ export default function QuestionBankPage() {
         )}
       </div>
 
-      <QuestionFormModal
-        open={formOpen}
-        question={editing}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => { setFormOpen(false); loadQuestions(); loadTags(); }}
-      />
       <QuestionTagManagerModal
         open={tagManagerOpen}
         onClose={() => setTagManagerOpen(false)}

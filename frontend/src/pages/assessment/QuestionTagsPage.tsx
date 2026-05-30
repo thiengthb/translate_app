@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { assessmentApi } from "@/api";
 import type { QuestionTagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -7,8 +7,27 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Check, Loader2, Pencil, Plus, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { usePermissions } from "@/hooks/usePermissions";
+
+/** Surface the real backend reason (status + message) instead of a generic string. */
+function errMsg(e: unknown, fallback: string): string {
+  const err = e as { response?: { status?: number; data?: { message?: string } }; message?: string };
+  const status = err?.response?.status;
+  const serverMsg = err?.response?.data?.message;
+  if (status === 403) return "You don't have permission to do that (403).";
+  if (serverMsg) return `${serverMsg}${status ? ` (${status})` : ""}`;
+  if (status) return `${fallback} (HTTP ${status})`;
+  if (err?.message?.includes("Network")) return "Network error — is the backend reachable?";
+  return fallback;
+}
 
 export default function QuestionTagsPage() {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("QUESTION_TAG_CREATE");
+  const canUpdate = hasPermission("QUESTION_TAG_UPDATE");
+  const canDelete = hasPermission("QUESTION_TAG_DELETE");
+
+  const newInputRef = useRef<HTMLInputElement>(null);
   const [tags, setTags] = useState<QuestionTagDTO[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +41,7 @@ export default function QuestionTagsPage() {
     setLoading(true);
     assessmentApi.fetchQuestionTags()
       .then(setTags)
-      .catch(() => toast.error("Failed to load tags."))
+      .catch((e) => toast.error(errMsg(e, "Failed to load tags.")))
       .finally(() => setLoading(false));
   };
 
@@ -30,15 +49,20 @@ export default function QuestionTagsPage() {
 
   const create = async () => {
     const name = newName.trim();
-    if (!name) return;
+    if (!name) {
+      // Don't silently no-op — make it obvious a name is required.
+      toast.error("Enter a tag name first.");
+      newInputRef.current?.focus();
+      return;
+    }
     setCreating(true);
     try {
       await assessmentApi.createQuestionTag({ name });
       setNewName("");
       load();
       toast.success("Tag created.");
-    } catch {
-      toast.error("Failed to create tag (it may already exist).");
+    } catch (e) {
+      toast.error(errMsg(e, "Failed to create tag (it may already exist)."));
     } finally {
       setCreating(false);
     }
@@ -52,8 +76,8 @@ export default function QuestionTagsPage() {
       await assessmentApi.updateQuestionTag(tag.id, { name });
       setEditingId(null);
       load();
-    } catch {
-      toast.error("Failed to rename tag.");
+    } catch (e) {
+      toast.error(errMsg(e, "Failed to rename tag."));
     } finally {
       setBusyId(null);
     }
@@ -65,8 +89,8 @@ export default function QuestionTagsPage() {
     try {
       await assessmentApi.deleteQuestionTag(tag.id);
       setTags((prev) => prev.filter((t) => t.id !== tag.id));
-    } catch {
-      toast.error("Failed to delete tag.");
+    } catch (e) {
+      toast.error(errMsg(e, "Failed to delete tag."));
     } finally {
       setBusyId(null);
     }
@@ -80,22 +104,25 @@ export default function QuestionTagsPage() {
         </p>
 
         {/* Create */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void create(); } }}
-              placeholder="New tag name…"
-              className="pl-9"
-            />
+        {canCreate && (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                ref={newInputRef}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void create(); } }}
+                placeholder="New tag name…"
+                className="pl-9"
+              />
+            </div>
+            <Button onClick={create} disabled={creating}>
+              {creating ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}
+              New tag
+            </Button>
           </div>
-          <Button onClick={create} disabled={creating || !newName.trim()}>
-            {creating ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}
-            New tag
-          </Button>
-        </div>
+        )}
 
         {/* List */}
         {loading ? (
@@ -105,7 +132,9 @@ export default function QuestionTagsPage() {
         ) : tags.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
             <TagIcon className="size-10 opacity-40" />
-            <p className="text-sm">No tags yet — create your first one above.</p>
+            <p className="text-sm">
+              {canCreate ? "No tags yet — create your first one above." : "No tags yet."}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -134,14 +163,18 @@ export default function QuestionTagsPage() {
                       <span className="truncate font-medium">{tag.name}</span>
                       {tag.code && <span className="text-[11px] text-muted-foreground">· {tag.code}</span>}
                     </span>
-                    <Button size="sm" variant="ghost"
-                      onClick={() => { setEditingId(tag.id); setEditName(tag.name); }}>
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-destructive"
-                      disabled={busyId === tag.id} onClick={() => remove(tag)}>
-                      {busyId === tag.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                    </Button>
+                    {canUpdate && (
+                      <Button size="sm" variant="ghost"
+                        onClick={() => { setEditingId(tag.id); setEditName(tag.name); }}>
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    )}
+                    {canDelete && (
+                      <Button size="sm" variant="ghost" className="text-destructive"
+                        disabled={busyId === tag.id} onClick={() => remove(tag)}>
+                        {busyId === tag.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                      </Button>
+                    )}
                   </>
                 )}
               </Card>
