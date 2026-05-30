@@ -33,7 +33,7 @@ public class OllamaClient {
 
     private record OllamaRawResponse(String response) {}
 
-    private record OllamaJudgePayload(boolean meaningOk, String feedback) {}
+    private record OllamaJudgePayload(int meaningScore, String feedback) {}
 
     public boolean isAvailable() {
         return true;
@@ -48,17 +48,27 @@ public class OllamaClient {
         }
 
         String prompt = """
-                You are grading a Japanese learner's sentence. Reply with ONLY a JSON object, no other text:
-                {"meaningOk": <true|false>, "feedback": "<short Vietnamese feedback>"}
+                You are a strict Japanese translation grader. Compare the learner's sentence to the reference and score SEMANTIC ACCURACY only.
 
-                Target grammar nuance: %s
-                Reference Japanese sentence: %s
+                Reference (model answer, 100%% correct): %s
                 Learner's answer: %s
-                Common mistakes to watch for:
+                Target grammar nuance: %s
+                Common mistakes:
                 %s
-                meaningOk = true if the learner's answer is semantically close to the reference and natural.
-                feedback in Vietnamese, concise and specific.
-                """.formatted(safe(nuance), safe(refL2), safe(answer), mistakes.toString());
+
+                Score on a 0-100 integer scale:
+                - 0   = empty, gibberish, or completely unrelated language
+                - 20  = a few related words but wrong meaning
+                - 50  = roughly the right idea but missing key meaning
+                - 75  = correct meaning, somewhat unnatural
+                - 90  = correct and natural, minor issues
+                - 100 = matches the reference meaning exactly
+
+                Be strict. "hahaha" or random letters = 0. Off-topic Japanese = 0-20.
+
+                Reply with ONLY this JSON, no other text:
+                {"meaningScore": <integer 0-100>, "feedback": "<one short sentence in Vietnamese>"}
+                """.formatted(safe(refL2), safe(answer), safe(nuance), mistakes.toString());
 
         try {
             Map<String, Object> body = Map.of(
@@ -88,11 +98,14 @@ public class OllamaClient {
     }
 
     private JudgeResult toJudgeResult(OllamaJudgePayload p) {
+        int clamped = Math.max(0, Math.min(100, p.meaningScore()));
+        double score = clamped / 100.0;
+        String verdict = clamped >= 80 ? "PASS" : (clamped >= 50 ? "PARTIAL" : "FAIL");
         return JudgeResult.builder()
-                .meaningScore(p.meaningOk() ? 0.85 : 0.3)
-                .pointUsed(p.meaningOk())
-                .grammarOk(p.meaningOk())
-                .verdict(p.meaningOk() ? "PASS" : "FAIL")
+                .meaningScore(score)
+                .pointUsed(clamped >= 60)
+                .grammarOk(clamped >= 60)
+                .verdict(verdict)
                 .feedback("[AI Offline] " + (p.feedback() == null ? "" : p.feedback()))
                 .build();
     }

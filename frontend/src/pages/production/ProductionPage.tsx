@@ -101,8 +101,8 @@ export default function ProductionPage() {
             </Card>
 
             {result && (
-              <Card className="p-6 gap-3">
-                <div className="flex items-center gap-2">
+              <Card className="p-6 gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge className={VERDICT_STYLE[result.finalVerdict]}>
                     {VERDICT_LABEL[result.finalVerdict] ?? result.finalVerdict}
                   </Badge>
@@ -111,12 +111,33 @@ export default function ProductionPage() {
                   </Badge>
                   {result.judgeScore != null && (
                     <span className="text-sm text-muted-foreground">
-                      Nghĩa: {(result.judgeScore * 100).toFixed(0)}%
+                      Độ chính xác: {(result.judgeScore * 100).toFixed(0)}%
                     </span>
                   )}
                 </div>
+
+                {result.referenceAnswer && (
+                  <div className="border-l-4 border-green-600 bg-green-600/5 pl-4 py-2">
+                    <div className="text-xs uppercase tracking-wide text-green-600 font-semibold mb-1">
+                      Đáp án mẫu (100%)
+                    </div>
+                    <p className="text-base leading-relaxed">{result.referenceAnswer}</p>
+                  </div>
+                )}
+
+                {answer && (
+                  <div className="border-l-4 border-muted-foreground/30 pl-4 py-2">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                      Câu của bạn
+                    </div>
+                    <p className="text-base leading-relaxed">{answer}</p>
+                  </div>
+                )}
+
                 {result.feedback && (
-                  <p className="text-sm leading-relaxed">{result.feedback}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {result.feedback}
+                  </p>
                 )}
               </Card>
             )}

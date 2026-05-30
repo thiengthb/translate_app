@@ -18,4 +18,6 @@ public class AttemptResultResponse {
     private Double judgeScore;
 
     private String feedback;
+
+    private String referenceAnswer;
 }

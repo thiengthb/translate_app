@@ -14,6 +14,7 @@ export interface AttemptResult {
   detectorPassed: boolean;
   judgeScore: number | null;
   feedback: string;
+  referenceAnswer: string;
 }
 
 export const productionApi = {

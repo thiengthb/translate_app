@@ -67,6 +67,7 @@ public class ProductionController {
                 .detectorPassed(Boolean.TRUE.equals(attempt.getDetectorPassed()))
                 .judgeScore(attempt.getLlmJudgeScore())
                 .feedback(attempt.getLlmJudgeFeedback())
+                .referenceAnswer(attempt.getPrompt().getReferenceSentence().getL2Text())
                 .build());
     }
 
