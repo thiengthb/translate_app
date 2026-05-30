@@ -137,13 +137,6 @@ export default function DictionaryPage() {
     }, []);
 
     useEffect(() => {
-        setResults(null);
-        setKanjiResults(null);
-        setError(null);
-        setSearched("");
-    }, [searchMode]);
-
-    useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (wrapRef.current && !wrapRef.current.contains(e.target as Node))
                 setShowDrop(false);
@@ -183,6 +176,19 @@ export default function DictionaryPage() {
             setLoading(false);
         }
     }, [query, searchMode]);
+
+    const switchMode = useCallback((newMode: SearchMode) => {
+        if (newMode === searchMode) return;
+        setSearchMode(newMode);
+        const term = searched || query.trim();
+        if (term) {
+            handleSearch(term, newMode);
+        } else {
+            setResults(null);
+            setKanjiResults(null);
+            setError(null);
+        }
+    }, [searchMode, query, searched, handleSearch]);
 
     const selectSuggestion = (s: WordSuggestion) => { setQuery(s.word); handleSearch(s.word); };
 
@@ -246,10 +252,10 @@ export default function DictionaryPage() {
         <MainLayout pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}>
             <div className="w-full space-y-4">
 
-                {/* ── Sticky search hero ───────────────────────────── */}
-                <div className="sticky top-0 z-30 -mt-1 pt-1 pb-2 bg-background/85 backdrop-blur-md">
-                    <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+                {/* ── Search hero ───────────────────────────── */}
+                <div>
+                    <div className="relative rounded-2xl border bg-card shadow-sm overflow-visible">
+                        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
                         <div className="relative p-4 sm:p-5 space-y-3.5">
 
                             {/* Title + saved toggle */}
@@ -365,7 +371,7 @@ export default function DictionaryPage() {
                                 <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
                                     <button
                                         type="button"
-                                        onClick={() => setSearchMode("vocabulary")}
+                                        onClick={() => switchMode("vocabulary")}
                                         className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
                                             searchMode === "vocabulary"
                                                 ? "bg-background text-foreground shadow-sm"
@@ -377,7 +383,7 @@ export default function DictionaryPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSearchMode("kanji")}
+                                        onClick={() => switchMode("kanji")}
                                         className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
                                             searchMode === "kanji"
                                                 ? "bg-background text-foreground shadow-sm"
@@ -460,7 +466,7 @@ export default function DictionaryPage() {
                 )}
 
                 {/* ── Featured ── */}
-                {!loading && featured && !showSaved && !searched && (
+                {!loading && featured && !showSaved && (
                     <FeaturedSection
                         featured={featured}
                         onWordClick={quickSearch}
@@ -612,8 +618,7 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
     };
 
     return (
-        <Card className={`overflow-hidden gap-0 py-0 border-l-4 transition-shadow hover:shadow-md ${jlpt ? jlpt.accent : "border-l-border"}`}>
-            {jlpt && <div className={`h-1 ${jlpt.bar}`} />}
+        <Card className="overflow-hidden gap-0 py-0 transition-shadow hover:shadow-md">
 
             {/* Header */}
             <div className="px-5 py-4">
