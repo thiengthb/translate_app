@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ChevronsDownUp, ChevronsUpDown, Search as SearchIcon } from "lucide-react";
 
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { Button } from "@/components/ui/button";
 
 import {
     Sidebar,
@@ -168,8 +169,10 @@ export function SidebarMenu() {
                                 : ChevronsUpDown;
                             return (
                                 <TooltipWrapper content={nextLabel}>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="default"
+                                        size="icon"
                                         onClick={() =>
                                             setAllGroups(
                                                 navGroups.map((g) => g.name),
@@ -177,10 +180,10 @@ export function SidebarMenu() {
                                             )
                                         }
                                         aria-label={nextLabel}
-                                        className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+                                        className="shrink-0 h-7 w-7"
                                     >
                                         <Icon size={14} />
-                                    </button>
+                                    </Button>
                                 </TooltipWrapper>
                             );
                         })()

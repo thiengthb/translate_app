@@ -27,6 +27,7 @@ import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
+import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
@@ -60,6 +61,7 @@ export const routes: RouteConfig[] = [
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
 

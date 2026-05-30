@@ -100,8 +100,8 @@ export function NavGroup({
                         />
                         <span
                             className={cn(
-                                "truncate transition-colors",
-                                groupActive && "text-foreground font-medium",
+                                "truncate transition-colors font-semibold text-sm",
+                                groupActive ? "text-foreground" : "text-muted-foreground",
                             )}
                         >
                             {group.name}

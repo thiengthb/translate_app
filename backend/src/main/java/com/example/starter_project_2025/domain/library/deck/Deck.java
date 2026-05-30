@@ -72,6 +72,14 @@ public class Deck extends BaseEntity {
     @Column
     String coverImageUrl;
 
+    /** Icon key from the FE iconMap (e.g. "book-open", "graduation-cap"). */
+    @Column(length = 50)
+    String deckIcon;
+
+    /** Color preset ID from the FE color system (e.g. "violet", "amber"). */
+    @Column(length = 30)
+    String deckColor;
+
     @Column(length = 10)
     String sourceLanguage;
 

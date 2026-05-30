@@ -41,6 +41,7 @@ export default function DeckPreviewPage() {
   const [cards, setCards] = useState<PreviewCard[]>([]);
   const [favorite, setFavorite] = useState<FavoriteDeckDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [togglingFav, setTogglingFav] = useState(false);
   const [visibleCards, setVisibleCards] = useState(CARDS_INITIAL_VISIBLE);
@@ -105,8 +106,12 @@ export default function DeckPreviewPage() {
             /* non-fatal */
           }
         }
-      } catch {
-        if (!cancelled) toast.error("Failed to load deck preview.");
+      } catch (err: any) {
+        if (!cancelled) {
+          const status = err?.response?.status ?? err?.status;
+          if (status === 403 || status === 401) setAccessDenied(true);
+          else toast.error("Không thể tải xem trước deck.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -168,10 +173,9 @@ export default function DeckPreviewPage() {
   /* ── Render ── */
   return (
     <MainLayout
-      pathName={{
-        "/community": "Community",
-        [`/deck/${deckId}/preview`]: deck?.title ?? "Deck preview",
-      }}
+      parentCrumb={{ href: "/community", title: "Shared" }}
+      ignorePaths={["deck", String(deckId)]}
+      pathName={{ [`/deck/${deckId}/preview`]: deck?.title ?? "Preview" }}
     >
       <div className="w-full pb-16 space-y-6 pt-2">
 
@@ -187,6 +191,18 @@ export default function DeckPreviewPage() {
         {loading ? (
           <div className="flex items-center justify-center h-60">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : accessDenied ? (
+          <div className="flex flex-col items-center justify-center h-60 gap-4 text-center">
+            <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+              <Users className="size-7 text-muted-foreground/40" />
+            </div>
+            <div className="space-y-1 max-w-xs">
+              <p className="text-sm font-medium text-foreground">Bộ thẻ này là riêng tư</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Chủ sở hữu đã đặt bộ thẻ này ở chế độ riêng tư và không thể xem được.
+              </p>
+            </div>
           </div>
         ) : !deck ? (
           <div className="flex items-center justify-center h-60 text-muted-foreground text-sm">

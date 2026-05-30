@@ -43,10 +43,13 @@ function getSideAudio(fc: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
   }
   return fc.audioUrl ? [fc.audioUrl] : [];
 }
-import { BookOpen, Check, ChevronLeft, Maximize2, Minimize2, RotateCcw, Shuffle, X } from "lucide-react";
+import { BookOpen, Check, Maximize2, Minimize2, Pencil, RotateCcw, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RevealMore } from "@/components/common/RevealMore";
+import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
+import { DeckAccessControl } from "@/components/common/DeckAccessControl";
+import { getCurrentUserId } from "@/utils/auth.utils";
 
 const TERMS_INITIAL_VISIBLE = 30;
 
@@ -98,9 +101,12 @@ export default function FlashcardStudyPage() {
   const [flipped, setFlipped] = useState(false);
   const [slideDir, setSlideDir] = useState<SlideDir>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [fullView, setFullView] = useState(false);
   const [shuffled, setShuffled] = useState(false);
   const [visibleTerms, setVisibleTerms] = useState(TERMS_INITIAL_VISIBLE);
+  const currentUserId = getCurrentUserId();
+  const isOwner = !!deck && deck.userId === currentUserId;
 
   /* ── Load deck + cards ── */
   useEffect(() => {
@@ -130,6 +136,9 @@ export default function FlashcardStudyPage() {
         setAllCards(sorted);
         setSession(buildSession(sorted));
         setVisibleTerms(TERMS_INITIAL_VISIBLE);
+      } catch (err: any) {
+        const status = err?.response?.status ?? err?.status;
+        if (status === 403 || status === 401) setAccessDenied(true);
       } finally {
         setLoading(false);
       }
@@ -239,47 +248,10 @@ export default function FlashcardStudyPage() {
       <div className={cn(
         "w-full space-y-6",
         fullView
-          ? "px-4 py-6 sm:py-10"
+          ? "px-6 sm:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 max-w-5xl mx-auto"
           : "pb-16 pt-2"
       )}>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          {fullView ? (
-            <span />
-          ) : (
-            <button
-              onClick={() => navigate("/library")}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="size-4" />
-              Back to library
-            </button>
-          )}
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setFullView((v) => !v)}
-              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              title={fullView ? "Exit full view (Esc)" : "Full view"}
-            >
-              {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-              {fullView ? "Exit full view" : "Full view"}
-            </button>
-          </div>
-        </div>
-
-        {/* Deck title */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            {deck?.title ?? "Loading…"}
-          </h1>
-          {deck && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {allCards.length} {allCards.length === 1 ? "term" : "terms"}
-            </p>
-          )}
-        </div>
 
         {/* ── Loading ── */}
         {loading && (
@@ -288,8 +260,27 @@ export default function FlashcardStudyPage() {
           </div>
         )}
 
+        {/* ── Access denied ── */}
+        {!loading && accessDenied && (
+          <div className="flex flex-col items-center justify-center h-64 gap-3 text-center">
+            <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+              <X className="size-7 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-medium text-foreground">Bộ thẻ này là riêng tư</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Bạn không có quyền truy cập bộ thẻ này. Chỉ chủ sở hữu mới có thể xem.
+            </p>
+            <button
+              onClick={() => navigate("/library")}
+              className="mt-2 h-9 px-4 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              Về thư viện
+            </button>
+          </div>
+        )}
+
         {/* ── Empty ── */}
-        {!loading && allCards.length === 0 && (
+        {!loading && !accessDenied && allCards.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
             <BookOpen className="size-10 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">This deck has no cards yet.</p>
@@ -327,8 +318,20 @@ export default function FlashcardStudyPage() {
           <>
             {/* Round + progress */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
+              {/* Deck icon + round info row */}
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  {deck && (() => {
+                    const DeckIcon = deckIconComponent(deck);
+                    return (
+                      <span
+                        className="size-6 rounded-md flex items-center justify-center shrink-0 shadow-sm"
+                        style={deckBgStyle(deck)}
+                      >
+                        <DeckIcon className="size-3.5 text-white" />
+                      </span>
+                    );
+                  })()}
                   Round {session.round}
                   {session.round > 1 && (
                     <span className="ml-1.5 text-amber-500 font-medium">
@@ -337,7 +340,9 @@ export default function FlashcardStudyPage() {
                   )}
                 </span>
                 <span>
-                  {answered} / {session.roundTotal}
+                  <span className="font-semibold text-foreground">{answered}</span>
+                  <span className="mx-0.5 opacity-50">/</span>
+                  <span>{session.roundTotal}</span>
                   {session.wrongAccum.length > 0 && (
                     <span className="ml-1.5 text-destructive font-medium">
                       · {session.wrongAccum.length} to review
@@ -345,7 +350,7 @@ export default function FlashcardStudyPage() {
                   )}
                 </span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   className="h-full rounded-full bg-primary"
                   animate={{ width: `${progress}%` }}
@@ -361,7 +366,7 @@ export default function FlashcardStudyPage() {
                 fullView ? "h-[65vh]" : "h-64"
               )}
               onClick={() => !slideDir && setFlipped((f) => !f)}
-              style={{ perspective: 1200 }}
+              style={{ perspective: 800 }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -369,13 +374,13 @@ export default function FlashcardStudyPage() {
                   initial={
                     slideDir
                       ? { x: slideDir === "right" ? 80 : -80, opacity: 0 }
-                      : { rotateY: 90, opacity: 0 }
+                      : { rotateX: 90, opacity: 0 }
                   }
-                  animate={{ x: 0, rotateY: 0, opacity: 1 }}
+                  animate={{ x: 0, rotateX: 0, opacity: 1 }}
                   exit={
                     slideDir
                       ? { x: slideDir === "right" ? -80 : 80, opacity: 0 }
-                      : { rotateY: -90, opacity: 0 }
+                      : { rotateX: -90, opacity: 0 }
                   }
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className={cn(
@@ -433,8 +438,18 @@ export default function FlashcardStudyPage() {
               </AnimatePresence>
             </div>
 
-            {/* Action bar — answer buttons centered, utilities flush right */}
+            {/* Action bar — answer buttons centered, utilities flush right, access control flush left */}
             <div className="relative flex items-center justify-center min-h-14">
+              {/* Access control — owner only, left side */}
+              {isOwner && !fullView && deck && (
+                <div className="absolute left-0">
+                  <DeckAccessControl
+                    deckId={deck.id!}
+                    visibility={(deck.visibility as "PUBLIC" | "PRIVATE") ?? "PRIVATE"}
+                    onChanged={(next) => setDeck((d) => d ? { ...d, visibility: next } : d)}
+                  />
+                </div>
+              )}
               <AnimatePresence>
                 {flipped && (
                   <motion.div
@@ -442,7 +457,7 @@ export default function FlashcardStudyPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center justify-center gap-4"
+                    className="flex items-center justify-center gap-2"
                   >
                     {/* Wrong */}
                     <Tooltip>
@@ -450,12 +465,13 @@ export default function FlashcardStudyPage() {
                         <button
                           onClick={markWrong}
                           aria-label="Still learning"
-                          className="flex size-14 items-center justify-center rounded-full border-2 border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors"
+                          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors text-xs font-semibold"
                         >
-                          <X className="size-6" />
+                          <X className="size-3.5" />
+                          Học lại
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>Still learning (←)</TooltipContent>
+                      <TooltipContent>Học lại (←)</TooltipContent>
                     </Tooltip>
 
                     {/* Correct */}
@@ -464,18 +480,19 @@ export default function FlashcardStudyPage() {
                         <button
                           onClick={markCorrect}
                           aria-label="Got it"
-                          className="flex size-14 items-center justify-center rounded-full border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white transition-colors"
+                          className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-green-500 text-green-600 hover:bg-green-500 hover:text-white transition-colors text-xs font-semibold"
                         >
-                          <Check className="size-6" />
+                          <Check className="size-3.5" />
+                          Nhớ rồi
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>Got it (→)</TooltipContent>
+                      <TooltipContent>Nhớ rồi (→)</TooltipContent>
                     </Tooltip>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Shuffle + Reset — flush to the right corner */}
+              {/* Shuffle + Reset + Edit + Full view — flush to the right corner */}
               <div className="absolute right-0 flex items-center gap-1">
                 {allCards.length > 1 && (
                   <Tooltip>
@@ -512,6 +529,33 @@ export default function FlashcardStudyPage() {
                   </TooltipTrigger>
                   <TooltipContent>Reset to original order</TooltipContent>
                 </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setFullView((v) => !v)}
+                      aria-label={fullView ? "Exit full view" : "Full view"}
+                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {fullView ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{fullView ? "Exit full view (Esc)" : "Full view"}</TooltipContent>
+                </Tooltip>
+                {!fullView && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate(`/deck/${deckId}/edit`)}
+                        aria-label="Chỉnh sửa deck"
+                        className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-primary bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors font-medium text-sm"
+                      >
+                        <Pencil className="size-3.5" />
+                        Sửa
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Chỉnh sửa deck</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
           </>
@@ -519,7 +563,7 @@ export default function FlashcardStudyPage() {
 
         {/* ── All terms list ── */}
         {!loading && !fullView && allCards.length > 0 && (
-          <div className="pt-4 space-y-3">
+          <div className="pt-2 space-y-2">
             <h2 className="text-sm font-semibold text-foreground">
               Terms in this set ({allCards.length})
             </h2>
@@ -527,8 +571,12 @@ export default function FlashcardStudyPage() {
               {allCards.slice(0, visibleTerms).map(({ flashcard }, i) => (
                 <div
                   key={flashcard.id ?? i}
-                  className="grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-border bg-border"
+                  className="grid grid-cols-[32px_1fr_1fr] gap-px rounded-xl overflow-hidden border border-border bg-border"
                 >
+                  {/* Number */}
+                  <div className="bg-muted/50 flex items-center justify-center text-xs font-semibold text-muted-foreground select-none">
+                    {i + 1}
+                  </div>
                   {/* Front */}
                   <div className="bg-card px-5 py-4 space-y-2">
                     <div className="space-y-1">
@@ -576,6 +624,7 @@ export default function FlashcardStudyPage() {
               total={allCards.length}
               visibleCount={visibleTerms}
               onChange={setVisibleTerms}
+              initialCount={TERMS_INITIAL_VISIBLE}
             />
           </div>
         )}
@@ -591,7 +640,11 @@ export default function FlashcardStudyPage() {
   }
 
   return (
-    <MainLayout pathName={{ "/library": "Library", [`/deck/${deckId}`]: deck?.title ?? "Study" }}>
+    <MainLayout
+      parentCrumb={{ href: "/library", title: "My Library" }}
+      ignorePaths={["deck"]}
+      pathName={{ [`/deck/${deckId}`]: deck?.title ?? "Study" }}
+    >
       {content}
     </MainLayout>
   );

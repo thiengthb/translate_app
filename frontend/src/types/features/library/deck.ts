@@ -10,6 +10,8 @@ export interface DeckDTO extends BaseDTO {
   visibility?: string;
   studyMode?: "QUIZLET" | "ANKI";
   coverImageUrl?: string;
+  deckIcon?: string;
+  deckColor?: string;
   sourceLanguage?: string;
   targetLanguage?: string;
   totalCards?: number;

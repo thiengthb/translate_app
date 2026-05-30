@@ -26,7 +26,7 @@ public class StudentMenuInitializer implements CommandLineRunner {
         ModuleGroup learningGroup = getOrCreateGroup("Learning", 10);
 
         upsertModule(learningGroup, "My Library", "/library",   "layers", 1, "FOLDER_READ");
-        upsertModule(learningGroup, "Community",  "/community", "users",  2, "DECK_READ");
+        upsertModule(learningGroup, "Shared",     "/community", "users",  2, "DECK_READ");
 
         // Create Deck is no longer a sidebar entry — it lives as a button inside the Library page.
         moduleRepository.findByUrl("/create-deck").ifPresent(moduleRepository::delete);

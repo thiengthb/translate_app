@@ -37,6 +37,12 @@ public class DeckDTO extends BaseDTO {
 
     String coverImageUrl;
 
+    /** Icon key from the FE iconMap (e.g. "book-open", "graduation-cap"). */
+    String deckIcon;
+
+    /** Color preset ID from the FE color system (e.g. "violet", "amber"). */
+    String deckColor;
+
     String sourceLanguage;
 
     String targetLanguage;

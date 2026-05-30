@@ -4,12 +4,11 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface MainLayoutTopBarProps {
-    /** Path → title map used by DynamicBreadcrumbs to override auto-generated labels. */
     pathName?: Record<string, string>;
-    /** Optional content rendered to the right of the breadcrumb — used by
-     *  pages that need tabs / segmented controls / quick filters at the
-     *  chrome level (e.g. `/users` has Manage / Analytic tabs here). */
     headerExtra?: React.ReactNode;
+    parentCrumb?: { href: string; title: string };
+    ignorePaths?: string[];
+    pageDescription?: string;
 }
 
 /**
@@ -35,6 +34,9 @@ interface MainLayoutTopBarProps {
 export function MainLayoutTopBar({
     pathName,
     headerExtra,
+    parentCrumb,
+    ignorePaths,
+    pageDescription,
 }: MainLayoutTopBarProps) {
     return (
         <header className="flex h-12 shrink-0 items-center gap-1.5 px-3 sm:px-4 min-w-0">
@@ -43,11 +45,13 @@ export function MainLayoutTopBar({
                 orientation="vertical"
                 className="md:hidden !h-5"
             />
-            {/* Breadcrumbs shrink first to give `headerExtra` (tabs etc.)
-                room. The scrollable overflow keeps long crumb trails from
-                pushing actions off the right edge. */}
             <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <DynamicBreadcrumbs pathTitles={pathName} />
+                <DynamicBreadcrumbs
+                    pathTitles={pathName}
+                    parentCrumb={parentCrumb}
+                    ignorePaths={ignorePaths}
+                    pageDescription={pageDescription}
+                />
             </div>
             {headerExtra && (
                 <>

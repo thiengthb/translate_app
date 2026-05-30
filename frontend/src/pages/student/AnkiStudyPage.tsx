@@ -559,10 +559,9 @@ export default function AnkiStudyPage() {
 
   return (
     <MainLayout
-      pathName={{
-        "/library": "Library",
-        [`/deck/${deckId}/anki`]: deckTitle || "Anki Study",
-      }}
+      parentCrumb={{ href: "/library", title: "My Library" }}
+      ignorePaths={["deck", String(deckId)]}
+      pathName={{ [`/deck/${deckId}/anki`]: deckTitle || "Anki Study" }}
     >
       {content}
       {modal}
