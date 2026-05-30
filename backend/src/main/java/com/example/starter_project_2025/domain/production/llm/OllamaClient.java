@@ -1,6 +1,5 @@
 package com.example.starter_project_2025.domain.production.llm;
 
-import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.model.CommonMistake;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +116,7 @@ public class OllamaClient {
                 .build();
     }
 
-    // ── Translate-page analysis: alternatives + grammar supplement ───────────
+    // ── Translate-page analysis: alternative translations ────────────────────
 
     /** 2–3 alternative translations of {@code sourceText} into the target language. */
     public List<String> alternatives(String sourceText, String referenceTranslation, String targetLangName) {
@@ -139,39 +137,6 @@ public class OllamaClient {
                     out.add(text);
                 }
                 if (out.size() >= 3) {
-                    break;
-                }
-            }
-        }
-        return out;
-    }
-
-    /** JLPT grammar patterns the LLM finds, excluding {@code alreadyFound} (dictionary hits). */
-    public List<GrammarSpotterService.GrammarHit> spotGrammar(String japaneseText, Collection<String> alreadyFound) {
-        String prompt = """
-                You are a JLPT grammar analyzer. Find the Japanese grammar patterns in this sentence:
-                "%s"
-                For each DISTINCT grammar pattern give: its dictionary form, JLPT level (one of N5,N4,N3,N2,N1),
-                and a SHORT meaning in Vietnamese. Ignore plain vocabulary.
-                Reply with ONLY a JSON array and nothing else, e.g.
-                [{"pattern":"～のだが","level":"N4","meaning":"mào đầu, giải thích bối cảnh"}]
-                """.formatted(safe(japaneseText));
-
-        JsonNode node = parseJsonArray(generate(prompt));
-        List<GrammarSpotterService.GrammarHit> out = new ArrayList<>();
-        if (node != null && node.isArray()) {
-            for (JsonNode n : node) {
-                String pattern = n.path("pattern").asText("").trim();
-                String level = n.path("level").asText("").trim();
-                String meaning = n.path("meaning").asText("").trim();
-                if (pattern.isBlank()
-                        || (alreadyFound != null && alreadyFound.contains(pattern))
-                        || out.stream().anyMatch(h -> h.pattern().equals(pattern))) {
-                    continue;
-                }
-                out.add(new GrammarSpotterService.GrammarHit(
-                        pattern, level.isBlank() ? null : level, meaning, null, "ai"));
-                if (out.size() >= 8) {
                     break;
                 }
             }

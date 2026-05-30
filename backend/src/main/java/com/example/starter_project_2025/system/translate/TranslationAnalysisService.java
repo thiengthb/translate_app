@@ -11,17 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Builds the translate-page analysis: romaji (Kuromoji, deterministic),
  * alternative translations (Ollama), and JLPT Grammar Spotter results
- * (dictionary scan ∪ Ollama supplement).
+ * (fully deterministic dictionary — no Ollama at grammar-scan runtime).
  *
- * Romaji + grammar only apply to Japanese targets. Every AI step degrades
- * gracefully to an empty result when Ollama is unavailable, so romaji and the
- * deterministic dictionary hits always come through.
+ * <p>Grammar scanning uses the pre-built Aho-Corasick + compiled-Pattern index
+ * in {@link GrammarSpotterService}: O(sentence_length) with zero DB calls after
+ * the first warm-up. Romaji + grammar only apply to Japanese targets. The Ollama
+ * step (alternatives) degrades gracefully to an empty list when the model is
+ * unavailable.
  */
 @Service
 @RequiredArgsConstructor
@@ -63,12 +63,9 @@ public class TranslationAnalysisService {
     }
 
     private List<GrammarPointDTO> buildGrammar(String japaneseText) {
-        // Deterministic dictionary first, then LLM supplement for patterns outside it.
-        List<GrammarHit> hits = new ArrayList<>(grammarSpotter.spot(japaneseText));
-        Set<String> found = hits.stream().map(GrammarHit::pattern).collect(Collectors.toSet());
-        hits.addAll(ollamaClient.spotGrammar(japaneseText, found));
-
-        return hits.stream()
+        // Fully deterministic: Aho-Corasick + compiled-Pattern index (no Ollama at runtime).
+        // The index is pre-built from the JLPT dictionary seeded by GrammarDictionarySeeder.
+        return grammarSpotter.spot(japaneseText).stream()
                 .map(h -> new GrammarPointDTO(h.pattern(), h.level(), h.meaning(), h.matchedText(), h.source()))
                 .toList();
     }

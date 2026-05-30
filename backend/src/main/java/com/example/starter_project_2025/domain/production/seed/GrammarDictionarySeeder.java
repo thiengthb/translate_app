@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.production.seed;
 
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarker;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerRepository;
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class GrammarDictionarySeeder implements CommandLineRunner {
 
     private final GrammarSubUseRepository subUseRepository;
     private final GrammarMarkerRepository markerRepository;
+    private final GrammarSpotterService grammarSpotter;
 
     /** key, display pattern, JLPT level, Vietnamese nuance, detection regex. */
     private record Entry(String key, String pattern, String level, String nuance, String regex) {}
@@ -183,5 +185,7 @@ public class GrammarDictionarySeeder implements CommandLineRunner {
         if (added > 0) {
             log.info("Grammar Spotter dictionary seeded: {} new JLPT patterns", added);
         }
+        // Always invalidate so the Aho-Corasick index is rebuilt with the latest data
+        grammarSpotter.invalidateIndex();
     }
 }
