@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound, Loader2, Lock, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -59,15 +60,14 @@ export function SecurityCard({ onChangePassword }: Props) {
     };
 
     return (
-        <Card>
-            <CardHeader className="pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0">
                 <CardTitle className="text-base flex items-center gap-2">
                     <KeyRound size={16} className="text-primary" />
-                    {t("profile.security.title")}
+                    <InfoLabel title={t("profile.security.title")} info={t("profile.security.description")} />
                 </CardTitle>
-                <CardDescription>{t("profile.security.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="px-4 space-y-5">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField

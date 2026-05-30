@@ -9,14 +9,7 @@ import {
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { InfoCard } from "@/components/common/InfoCard";
 
 import { useTranslation } from "@/contexts/I18nContext";
 import { useColorPreset } from "@/hooks/useColorPreset";
@@ -352,10 +345,9 @@ function SegmentedControl({
 }
 
 /**
- * Section card shell — mirrors the Profile page's cards (shadcn
- * `Card`/`CardHeader`/`CardTitle`/`CardDescription`) with an icon header
- * and an optional right-aligned action slot (used by Typography to dock
- * the density segmented control inline with the title).
+ * Section card shell — thin wrapper over {@link InfoCard}. The section's
+ * `description` is no longer a header row; it lives behind the ⓘ icon next
+ * to the title so the card stays compact.
  */
 function SectionCard({
     icon,
@@ -371,16 +363,8 @@ function SectionCard({
     children: React.ReactNode;
 }) {
     return (
-        <Card className="h-full gap-3 py-4">
-            <CardHeader className="px-4 gap-0.5">
-                <CardTitle className="text-sm flex items-center gap-2">
-                    {icon}
-                    {title}
-                </CardTitle>
-                <CardDescription className="text-xs">{description}</CardDescription>
-                {actions && <CardAction className="self-center">{actions}</CardAction>}
-            </CardHeader>
-            <CardContent className="px-4">{children}</CardContent>
-        </Card>
+        <InfoCard icon={icon} title={title} info={description} actions={actions}>
+            {children}
+        </InfoCard>
     );
 }

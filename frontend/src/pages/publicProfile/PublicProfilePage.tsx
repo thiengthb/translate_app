@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -121,9 +122,8 @@ export default function PublicProfilePage() {
                     <CardHeader className="pb-3">
                         <CardTitle className="text-base flex items-center gap-2">
                             <Flame size={16} className="text-orange-500 fill-orange-500" />
-                            Hoạt động
+                            <InfoLabel title="Hoạt động" info="Mức độ tương tác của người dùng này" />
                         </CardTitle>
-                        <CardDescription>Mức độ tương tác của người dùng này</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

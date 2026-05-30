@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Loader2, Mail, Pencil, Phone, UserCircle2, X } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,14 +64,13 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
     };
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0 flex flex-row items-start justify-between space-y-0">
                 <div>
                     <CardTitle className="text-base flex items-center gap-2">
                         <UserCircle2 size={16} className="text-primary" />
-                        {t("profile.personal.title")}
+                        <InfoLabel title={t("profile.personal.title")} info={t("profile.personal.description")} />
                     </CardTitle>
-                    <CardDescription>{t("profile.personal.description")}</CardDescription>
                 </div>
                 {!editing && (
                     <Button
@@ -85,7 +85,7 @@ export function PersonalInfoCard({ profile, onSave }: Props) {
                 )}
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-4">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

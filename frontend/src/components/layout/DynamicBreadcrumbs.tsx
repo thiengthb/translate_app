@@ -11,6 +11,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb.tsx";
 import { iconMap } from "@/components/datatable/iconMap";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus.ts";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,29 @@ function formatPath(path: string) {
         .replace(/_/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
+/**
+ * Fallback page descriptions for the breadcrumb ⓘ tooltip on routes that are
+ * NOT backed by a `@ResourceMenu` module (static pages — profile, settings,
+ * help, role homes, library flows…). Module pages get their description from
+ * the backend; these cover the rest so every endpoint can explain itself.
+ * Keyed by full path.
+ */
+const PAGE_DESCRIPTIONS: Record<string, string> = {
+    "/profile": "Your account profile and personal details.",
+    "/settings": "Personalize theme, color, typography and language.",
+    "/help/shortcuts": "All keyboard shortcuts available across the app.",
+    "/student": "Learning area for students.",
+    "/teacher": "Workspace for teachers.",
+    "/library": "Your collection of study decks.",
+    "/community": "Browse and clone public decks shared by others.",
+    "/create-deck": "Pick a study mode and create a new deck.",
+    "/create-deck/quizlet": "Create a fast flip-card (Quizlet) deck.",
+    "/create-deck/anki": "Create a spaced-repetition (Anki) deck.",
+    "/analyze": "Break down the grammar of a Japanese sentence.",
+    "/production": "Practice composing Japanese sentences.",
+    "/notifications": "Your notification inbox.",
+};
 
 /**
  * Top-bar breadcrumb.
@@ -133,9 +157,21 @@ export default function DynamicBreadcrumbs({
                                             aria-hidden
                                         />
                                     )}
-                                    <BreadcrumbPage className="text-foreground font-medium truncate">
-                                        {title}
-                                    </BreadcrumbPage>
+                                    {/* ⓘ next to the page name reveals the
+                                        module's description on hover — page
+                                        context without spending header space. */}
+                                    <InfoLabel
+                                        title={
+                                            <BreadcrumbPage className="text-foreground font-medium truncate">
+                                                {title}
+                                            </BreadcrumbPage>
+                                        }
+                                        info={
+                                            activeModule?.description ??
+                                            PAGE_DESCRIPTIONS[href]
+                                        }
+                                        side="bottom"
+                                    />
                                 </span>
                             ) : (
                                 <BreadcrumbLink asChild>

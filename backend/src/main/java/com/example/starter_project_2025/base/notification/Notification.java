@@ -17,10 +17,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @ResourceMenu(
-        title = "Thông báo",
+        title = "Notifications",
         group = "Community",
         icon = "bell",
         url = "/notifications",
+        description = "User notification inbox records.",
         order = 3,
         permission = ""
 )

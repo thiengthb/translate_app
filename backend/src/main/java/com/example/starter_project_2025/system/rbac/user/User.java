@@ -35,6 +35,7 @@ import java.util.Set;
         group = "RBAC Management",
         icon = "users",
         url = "/users",
+        description = "Manage user accounts, roles and account status.",
         order = 1,
         permission = "USER_READ"
 )

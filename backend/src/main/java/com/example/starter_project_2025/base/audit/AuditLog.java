@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
         group = "System Management",
         icon = "shield-check",
         url = "/audit-logs",
+        description = "Read-only log of every create, update and delete across the system.",
         order = 10,
         permission = "AUDIT_READ"
 )

@@ -1,6 +1,7 @@
 import { Flame } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import type { TopStreakUser } from "@/types/features/dashboard";
 
 interface Props {
@@ -13,9 +14,8 @@ export function TopStreaksList({ users }: Props) {
             <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                     <Flame size={16} className="text-orange-500 fill-orange-500" />
-                    Bảng vàng streak
+                    <InfoLabel title="Bảng vàng streak" info="Top 10 người dùng có streak cao nhất" />
                 </CardTitle>
-                <CardDescription>Top 10 người dùng có streak cao nhất</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 {users.length === 0 ? (

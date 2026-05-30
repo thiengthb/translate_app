@@ -15,8 +15,9 @@ import java.time.LocalDate;
 @ResourceMenu(
         title = "Streak",
         group = "Community",
-        icon = "flame",
+        icon = "calendar-days",
         url = "/streak",
+        description = "Your daily learning check-in streak.",
         order = 2,
         permission = ""
 )

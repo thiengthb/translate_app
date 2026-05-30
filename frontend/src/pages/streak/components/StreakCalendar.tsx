@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { useStreakCalendar } from "@/hooks/useStreak";
 
@@ -46,10 +47,12 @@ export function StreakCalendar() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <div>
-                    <CardTitle className="text-base">Lịch hoạt động</CardTitle>
-                    <CardDescription>
-                        Những ngày bạn đã check-in trong tháng
-                    </CardDescription>
+                    <CardTitle className="text-base">
+                        <InfoLabel
+                            title="Lịch hoạt động"
+                            info="Những ngày bạn đã check-in trong tháng"
+                        />
+                    </CardTitle>
                 </div>
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={prevMonth} aria-label="Previous month">

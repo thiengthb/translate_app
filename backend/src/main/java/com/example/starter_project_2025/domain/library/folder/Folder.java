@@ -2,7 +2,6 @@ package com.example.starter_project_2025.domain.library.folder;
 
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.persistence.*;
@@ -19,14 +18,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "folders")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("FOLDER")
-@ResourceMenu(
-        title = "Folders",
-        group = "Library",
-        icon = "folder",
-        url = "/folders",
-        order = 1,
-        permission = "FOLDER_READ"
-)
 @EntityLabel(name = "Folder", plural = "Folders", description = "User folder management")
 @AutoCrud(path = "folders")
 @Searchable(fields = {"name", "description"})

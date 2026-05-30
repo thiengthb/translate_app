@@ -25,8 +25,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Session Items",
         group = "Anki SRS",
-        icon = "list",
+        icon = "clipboard-check",
         url = "/anki/session-items",
+        description = "Cards queued within an Anki review session.",
         order = 3,
         permission = "ANKI_REVIEW_SESSION_ITEM_READ"
 )

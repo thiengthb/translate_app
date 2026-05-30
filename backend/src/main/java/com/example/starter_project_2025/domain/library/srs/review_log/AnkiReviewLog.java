@@ -27,8 +27,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Review Logs",
         group = "Anki SRS",
-        icon = "history",
+        icon = "activity",
         url = "/anki/review-logs",
+        description = "History of individual Anki card reviews.",
         order = 4,
         permission = "ANKI_REVIEW_LOG_READ"
 )
