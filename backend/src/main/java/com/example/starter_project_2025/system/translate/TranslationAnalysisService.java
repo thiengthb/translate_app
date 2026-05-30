@@ -1,0 +1,83 @@
+package com.example.starter_project_2025.system.translate;
+
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService.GrammarHit;
+import com.example.starter_project_2025.domain.production.llm.OllamaClient;
+import com.example.starter_project_2025.system.analyze.RomajiService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Builds the translate-page analysis: romaji (Kuromoji, deterministic),
+ * alternative translations (Ollama), and JLPT Grammar Spotter results
+ * (dictionary scan ∪ Ollama supplement).
+ *
+ * Romaji + grammar only apply to Japanese targets. Every AI step degrades
+ * gracefully to an empty result when Ollama is unavailable, so romaji and the
+ * deterministic dictionary hits always come through.
+ */
+@Service
+@RequiredArgsConstructor
+public class TranslationAnalysisService {
+
+    private final RomajiService romajiService;
+    private final GrammarSpotterService grammarSpotter;
+    private final OllamaClient ollamaClient;
+
+    private static final Map<String, String> LANGUAGE_NAMES = Map.of(
+            "JA", "Japanese", "EN", "English", "VI", "Vietnamese",
+            "ZH", "Chinese", "KO", "Korean", "FR", "French", "DE", "German");
+
+    public TranslateAnalysisResponse analyze(TranslateAnalysisRequest req) {
+        String target = req.targetLang() == null ? "" : req.targetLang();
+        String translated = req.translatedText() == null ? "" : req.translatedText().trim();
+        boolean japanese = target.toUpperCase(Locale.ROOT).startsWith("JA");
+
+        List<AlternativeDTO> alternatives = buildAlternatives(req.text(), translated, target, japanese);
+
+        if (!japanese || translated.isBlank()) {
+            return new TranslateAnalysisResponse(null, alternatives, List.of());
+        }
+
+        String romaji = romajiService.toRomaji(translated);
+        List<GrammarPointDTO> grammar = buildGrammar(translated);
+        return new TranslateAnalysisResponse(romaji, alternatives, grammar);
+    }
+
+    private List<AlternativeDTO> buildAlternatives(String source, String translated, String target, boolean japanese) {
+        List<AlternativeDTO> alternatives = new ArrayList<>();
+        if (translated.isBlank()) {
+            return alternatives;
+        }
+        for (String alt : ollamaClient.alternatives(source, translated, languageName(target))) {
+            alternatives.add(new AlternativeDTO(alt, japanese ? romajiService.toRomaji(alt) : null));
+        }
+        return alternatives;
+    }
+
+    private List<GrammarPointDTO> buildGrammar(String japaneseText) {
+        // Deterministic dictionary first, then LLM supplement for patterns outside it.
+        List<GrammarHit> hits = new ArrayList<>(grammarSpotter.spot(japaneseText));
+        Set<String> found = hits.stream().map(GrammarHit::pattern).collect(Collectors.toSet());
+        hits.addAll(ollamaClient.spotGrammar(japaneseText, found));
+
+        return hits.stream()
+                .map(h -> new GrammarPointDTO(h.pattern(), h.level(), h.meaning(), h.matchedText(), h.source()))
+                .toList();
+    }
+
+    private String languageName(String code) {
+        if (code == null || code.isBlank()) {
+            return "the target language";
+        }
+        String base = code.split("-")[0].toUpperCase(Locale.ROOT);
+        return LANGUAGE_NAMES.getOrDefault(base, code);
+    }
+}

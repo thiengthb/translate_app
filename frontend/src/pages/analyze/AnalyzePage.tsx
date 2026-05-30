@@ -4,14 +4,10 @@ import { toast } from "sonner";
 import {
   ArrowLeftRight,
   Copy,
+  GraduationCap,
   Loader2,
+  Volume2,
   X,
-  Sparkles,
-  CheckCircle2,
-  LayoutGrid,
-  BookOpen,
-  Quote,
-  Brain,
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -19,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 import {
   Select,
   SelectContent,
@@ -27,28 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { logger } from "@/lib/logger";
-import {
-  translateApi,
-  type Formality,
-  type LanguageOption,
-} from "@/api/features/translate.api";
+import { translateApi, type LanguageOption } from "@/api/features/translate.api";
 
 const AUTO = "auto";
 const MAX_CHARS = 5000;
 const DEBOUNCE_MS = 600;
-
-/** Editing-tool rows that require DeepL Pro (no Free-API equivalent) — shown
- *  disabled, mirroring deepl.com. */
-const PRO_TOOLS = [
-  { key: "clarify",              label: "Clarify",              icon: CheckCircle2 },
-  { key: "style-profiles",       label: "Style profiles",       icon: LayoutGrid   },
-  { key: "glossaries",           label: "Glossaries",           icon: BookOpen     },
-  { key: "style-rules",          label: "Style rules",          icon: Quote        },
-  { key: "translation-memories", label: "Translation memories", icon: Brain        },
-] as const;
 
 /** Resolve a code in `list`, tolerating DeepL's regional split
  *  (target "EN-US" ↔ source "EN"). */
@@ -61,11 +41,108 @@ function findCode(list: LanguageOption[], wanted: string): string | undefined {
   );
 }
 
+// ─── Text-to-speech (Web Speech API, like DictionaryPage) ──────────────────
+const SPEECH_LANG: Record<string, string> = {
+  JA: "ja-JP",
+  EN: "en-US",
+  "EN-US": "en-US",
+  "EN-GB": "en-GB",
+  VI: "vi-VN",
+  ZH: "zh-CN",
+  KO: "ko-KR",
+  FR: "fr-FR",
+  DE: "de-DE",
+};
+
+function speechLang(code: string): string {
+  return SPEECH_LANG[code] ?? SPEECH_LANG[code.split("-")[0]] ?? code.toLowerCase();
+}
+
+function pickVoice(lang: string): SpeechSynthesisVoice | null {
+  if (!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const base = lang.split("-")[0].toLowerCase();
+  return (
+    voices.find((v) => v.lang === lang) ??
+    voices.find((v) => v.lang.toLowerCase().startsWith(base)) ??
+    null
+  );
+}
+
+function SpeakButton({ text, lang }: { text: string; lang: string }) {
+  const [speaking, setSpeaking] = useState(false);
+
+  const speak = () => {
+    if (!window.speechSynthesis) {
+      toast.error("Trình duyệt không hỗ trợ đọc thành tiếng");
+      return;
+    }
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = lang;
+    utt.rate = 0.9;
+    const voice = pickVoice(lang);
+    if (voice) utt.voice = voice;
+    utt.onstart = () => setSpeaking(true);
+    utt.onend = () => setSpeaking(false);
+    utt.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utt);
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={speak}
+      title="Nghe phát âm"
+      className={speaking ? "text-primary" : ""}
+    >
+      <Volume2 size={16} className={speaking ? "animate-pulse" : ""} />
+    </Button>
+  );
+}
+
+function CopyButton({ text, title = "Sao chép" }: { text: string; title?: string }) {
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Đã sao chép");
+    } catch {
+      toast.error("Không thể sao chép");
+    }
+  };
+  return (
+    <Button variant="ghost" size="icon" onClick={onCopy} title={title}>
+      <Copy size={16} />
+    </Button>
+  );
+}
+
+/** Colour a JLPT level chip by difficulty. */
+function levelBadgeClass(level?: string | null): string {
+  switch ((level ?? "").toUpperCase()) {
+    case "N5":
+    case "N4":
+      return "bg-emerald-600 text-white hover:bg-emerald-600";
+    case "N3":
+      return "bg-amber-500 text-white hover:bg-amber-500";
+    case "N2":
+    case "N1":
+      return "bg-rose-600 text-white hover:bg-rose-600";
+    default:
+      return "bg-muted text-foreground";
+  }
+}
+
 export default function AnalyzePage() {
   const [sourceText, setSourceText] = useState("");
   const [sourceLang, setSourceLang] = useState<string>(AUTO);
   const [targetLang, setTargetLang] = useState<string>("");
-  const [formality, setFormality] = useState<Formality>("default");
 
   const debouncedText = useDebouncedValue(sourceText, DEBOUNCE_MS);
 
@@ -81,21 +158,18 @@ export default function AnalyzePage() {
     staleTime: Infinity,
   });
 
-  // Pick a sensible default target once the list arrives (DeepL has no Vietnamese,
-  // so the mockup's JA→VI isn't possible — default to English).
+  // Default the target to Japanese — the page is tuned for VI/EN → JA (romaji +
+  // JLPT Grammar Spotter). Fall back to the first language if JA is missing.
   useEffect(() => {
     if (!targetLang && targetLanguages.length > 0) {
       const preferred =
-        targetLanguages.find((l) => l.code === "EN-US") ?? targetLanguages[0];
+        targetLanguages.find((l) => l.code.toUpperCase().startsWith("JA")) ??
+        targetLanguages[0];
       setTargetLang(preferred.code);
     }
   }, [targetLanguages, targetLang]);
 
-  const targetMeta = useMemo(
-    () => targetLanguages.find((l) => l.code === targetLang),
-    [targetLanguages, targetLang],
-  );
-  const supportsFormality = Boolean(targetMeta?.supportsFormality);
+  const isJa = targetLang.toUpperCase().startsWith("JA");
 
   // ─── Translation ─────────────────────────────────────────────────────────
   const trimmed = debouncedText.trim();
@@ -104,13 +178,12 @@ export default function AnalyzePage() {
     isFetching,
     isError,
   } = useQuery({
-    queryKey: ["translate", trimmed, sourceLang, targetLang, formality],
+    queryKey: ["translate", trimmed, sourceLang, targetLang],
     queryFn: () =>
       translateApi.translate({
         text: trimmed,
         sourceLang: sourceLang === AUTO ? undefined : sourceLang,
         targetLang,
-        formality: supportsFormality ? formality : undefined,
       }),
     enabled: trimmed.length > 0 && Boolean(targetLang),
     staleTime: 5 * 60 * 1000,
@@ -125,6 +198,26 @@ export default function AnalyzePage() {
   }, [isError]);
 
   const translatedText = sourceText.trim() ? result?.translatedText ?? "" : "";
+
+  // ─── Analysis (romaji + alternatives + Grammar Spotter) — JA target only ──
+  const { data: analysis, isFetching: analyzing } = useQuery({
+    queryKey: ["translate-analyze", translatedText, trimmed, targetLang],
+    queryFn: () =>
+      translateApi.analyze({
+        text: trimmed,
+        translatedText,
+        sourceLang: sourceLang === AUTO ? undefined : sourceLang,
+        targetLang,
+      }),
+    enabled: isJa && translatedText.length > 0,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const romaji = analysis?.romaji ?? null;
+  const alternatives = analysis?.alternatives ?? [];
+  const grammar = analysis?.grammar ?? [];
+
   const detectedName = useMemo(() => {
     if (sourceLang !== AUTO || !result?.detectedSourceLang) return null;
     const code = result.detectedSourceLang;
@@ -143,22 +236,12 @@ export default function AnalyzePage() {
     setSourceText(translatedText);
   };
 
-  const onCopy = async () => {
-    if (!translatedText) return;
-    try {
-      await navigator.clipboard.writeText(translatedText);
-      toast.success("Đã sao chép bản dịch");
-    } catch {
-      toast.error("Không thể sao chép");
-    }
-  };
-
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <MainLayout pathName={{ "/analyze": "Dịch thuật" }}>
-      <div className="w-full flex flex-col gap-4 lg:flex-row">
+      <div className="w-full flex flex-col gap-4">
         {/* Main translator */}
-        <Card className="flex-1 p-0 overflow-hidden gap-0">
+        <Card className="p-0 overflow-hidden gap-0">
           {/* Language bar */}
           <div className="flex items-center gap-2 px-4 py-3 border-b">
             <Select value={sourceLang} onValueChange={setSourceLang}>
@@ -207,11 +290,9 @@ export default function AnalyzePage() {
             <div className="relative flex flex-col">
               <Textarea
                 value={sourceText}
-                onChange={(e) =>
-                  setSourceText(e.target.value.slice(0, MAX_CHARS))
-                }
+                onChange={(e) => setSourceText(e.target.value.slice(0, MAX_CHARS))}
                 placeholder="Nhập văn bản cần dịch…"
-                className="min-h-[280px] resize-none border-0 shadow-none focus-visible:ring-0 text-lg p-4 pr-10"
+                className="min-h-[240px] resize-none border-0 shadow-none focus-visible:ring-0 text-lg p-4 pr-10"
               />
               {sourceText && (
                 <Button
@@ -231,99 +312,123 @@ export default function AnalyzePage() {
 
             {/* Target */}
             <div className="relative flex flex-col bg-muted/30">
-              <div className="min-h-[280px] p-4 text-lg whitespace-pre-wrap break-words">
+              <div className="min-h-[240px] p-4 flex flex-col gap-2">
                 {translatedText ? (
-                  <span>{translatedText}</span>
+                  <>
+                    <p className="text-lg whitespace-pre-wrap break-words">
+                      {translatedText}
+                    </p>
+                    {isJa && romaji && (
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                        {romaji}
+                      </p>
+                    )}
+                  </>
                 ) : (
-                  <span className="text-muted-foreground">Bản dịch</span>
+                  <span className="text-lg text-muted-foreground">Bản dịch</span>
                 )}
               </div>
+
               {isFetching && (
                 <Loader2
                   className="absolute top-3 right-3 animate-spin text-muted-foreground"
                   size={18}
                 />
               )}
-              <div className="flex items-center justify-between px-4 py-2 min-h-[36px]">
+
+              {/* Action row — Speak + Copy (no share / like / dislike) */}
+              <div className="flex items-center justify-between px-4 py-2 min-h-[44px] border-t">
                 <span className="text-xs text-muted-foreground">
                   {detectedName ? `Đã phát hiện: ${detectedName}` : ""}
                 </span>
                 {translatedText && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onCopy}
-                    title="Sao chép"
-                  >
-                    <Copy size={16} />
-                  </Button>
+                  <div className="flex items-center">
+                    <SpeakButton text={translatedText} lang={speechLang(targetLang)} />
+                    <CopyButton text={translatedText} title="Sao chép bản dịch" />
+                  </div>
                 )}
               </div>
+
+              {/* Alternatives (DeepL-style) */}
+              {isJa && translatedText && (alternatives.length > 0 || analyzing) && (
+                <div className="px-4 py-3 border-t">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    Alternatives:
+                    {analyzing && <Loader2 className="animate-spin" size={14} />}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {alternatives.map((a, i) => (
+                      <div key={i}>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-base whitespace-pre-wrap break-words">
+                            {a.text}
+                          </p>
+                          <div className="flex shrink-0">
+                            <SpeakButton text={a.text} lang={speechLang(targetLang)} />
+                            <CopyButton text={a.text} />
+                          </div>
+                        </div>
+                        {a.romaji && (
+                          <p className="text-xs text-muted-foreground">{a.romaji}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </Card>
 
-        {/* Editing tools */}
-        <Card className="lg:w-72 p-4 gap-4 h-fit">
-          <div className="text-sm font-medium text-muted-foreground">
-            Editing tools
-          </div>
-
-          {/* Formality — the one tool the Free API supports */}
-          <div className="flex flex-col gap-2">
+        {/* Grammar Spotter — JLPT pattern analysis of the Japanese sentence */}
+        {isJa && translatedText && (
+          <Card className="p-4 gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Sparkles size={16} />
-              Formality
+              <GraduationCap size={18} />
+              Phân tích ngữ pháp (JLPT)
+              {analyzing && (
+                <Loader2 className="animate-spin text-muted-foreground" size={14} />
+              )}
             </div>
-            {supportsFormality ? (
-              <div className="grid grid-cols-3 gap-1">
-                {(
-                  [
-                    ["default", "Mặc định"],
-                    ["prefer_more", "Trang trọng"],
-                    ["prefer_less", "Thân mật"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <Button
-                    key={value}
-                    size="sm"
-                    variant={formality === value ? "default" : "outline"}
-                    onClick={() => setFormality(value)}
+
+            {grammar.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {analyzing
+                  ? "Đang phân tích…"
+                  : "Không phát hiện cấu trúc ngữ pháp JLPT nổi bật trong câu này."}
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {grammar.map((g, i) => (
+                  <div
+                    key={`${g.pattern}-${i}`}
+                    className="flex items-start gap-2 rounded-md border p-3"
                   >
-                    {label}
-                  </Button>
+                    <span className="text-lg leading-none">📦</span>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium break-words">{g.pattern}</span>
+                        {g.level && (
+                          <Badge className={levelBadgeClass(g.level)}>{g.level}</Badge>
+                        )}
+                        {g.source === "ai" && (
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+                      {g.meaning && (
+                        <p className="text-sm text-muted-foreground break-words">
+                          {g.meaning}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Ngôn ngữ đích này không hỗ trợ tùy chỉnh mức độ trang trọng.
-              </p>
             )}
-          </div>
-
-          <Separator />
-
-          {/* Pro-only tools — visual parity with deepl.com */}
-          <div className="flex flex-col gap-1">
-            {PRO_TOOLS.map(({ key, label, icon: Icon }) => (
-              <div
-                key={key}
-                className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground/70 cursor-not-allowed select-none"
-              >
-                <span className="flex items-center gap-2">
-                  <Icon size={16} />
-                  {label}
-                </span>
-                <Badge
-                  variant="secondary"
-                  className="bg-emerald-600 text-white hover:bg-emerald-600"
-                >
-                  Pro
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
     </MainLayout>
   );

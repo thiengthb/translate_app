@@ -7,7 +7,6 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerR
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentence;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
-import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.llm.JudgeResult;
 import com.example.starter_project_2025.domain.production.llm.OllamaClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
@@ -18,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.List;
 
 @Slf4j
@@ -33,9 +30,7 @@ public class GradingService {
     private final ReferenceSentenceRepository referenceRepository;
     private final GrammarMarkerRepository markerRepository;
     private final DetectorRegistry detectorRegistry;
-    private final GeminiClient geminiClient;
     private final OllamaClient ollamaClient;
-    private final JudgeVerdictCacheRepository judgeCacheRepository;
     private final TranslationAttemptRepository attemptRepository;
 
     @Transactional
@@ -50,8 +45,9 @@ public class GradingService {
         DetectionResult detection = detectorRegistry.run(subUse.getDetectorKey(), answer);
         GrammarMarker markerUsed = resolveMarker(subUse.getId(), detection.getMarkerPattern());
 
-        // Signal 2: LLM judge (cached), may be null when Gemini unavailable
-        JudgeResult judge = judgeWithCache(reference, answer, subUse);
+        // Signal 2: LLM judge (Ollama offline), may be null on network/parse error
+        JudgeResult judge = ollamaClient.judge(
+                reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
 
         String finalVerdict;
         Double judgeScore = judge == null ? null : judge.getMeaningScore();
@@ -91,42 +87,6 @@ public class GradingService {
         return "FAIL";
     }
 
-    private JudgeResult judgeWithCache(ReferenceSentence reference, String answer, GrammarSubUse subUse) {
-        if (geminiClient.isAvailable()) {
-            String hash = sha256(normalize(answer));
-
-            JudgeVerdictCache cached = judgeCacheRepository
-                    .findByReferenceSentenceIdAndLearnerAnswerHash(reference.getId(), hash)
-                    .orElse(null);
-            if (cached != null) {
-                return JudgeResult.builder()
-                        .meaningScore(cached.getScore() == null ? 0 : cached.getScore())
-                        .pointUsed(false)
-                        .grammarOk(false)
-                        .verdict(cached.getVerdict())
-                        .feedback(cached.getFeedback())
-                        .build();
-            }
-
-            JudgeResult judge = geminiClient.judge(
-                    reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
-            if (judge != null) {
-                judgeCacheRepository.save(JudgeVerdictCache.builder()
-                        .referenceSentence(reference)
-                        .learnerAnswerHash(hash)
-                        .verdict(judge.getVerdict())
-                        .score(judge.getMeaningScore())
-                        .feedback(judge.getFeedback())
-                        .build());
-                return judge;
-            }
-            log.warn("Gemini returned null (quota/network error) — falling back to Ollama");
-        }
-
-        return ollamaClient.judge(
-                reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
-    }
-
     private GrammarMarker resolveMarker(Long subUseId, String markerPattern) {
         if (markerPattern == null) return null;
         List<GrammarMarker> markers = markerRepository.findBySubUseId(subUseId);
@@ -134,23 +94,5 @@ public class GradingService {
                 .filter(m -> markerPattern.equals(m.getMarkerPattern()))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private String normalize(String s) {
-        return s == null ? "" : s.trim().replaceAll("\\s+", "");
-    }
-
-    private String sha256(String s) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(s.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return Integer.toHexString(s.hashCode());
-        }
     }
 }

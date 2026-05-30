@@ -1,13 +1,18 @@
 package com.example.starter_project_2025.domain.production.llm;
 
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.model.CommonMistake;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +30,10 @@ public class OllamaClient {
             @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
             @Value("${ollama.model:qwen2.5-coder:3b}") String model,
             ObjectMapper mapper) {
-        this.restClient = builder.build();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3000);   // fail fast if Ollama isn't running
+        requestFactory.setReadTimeout(25000);      // generous: small model can be slow on first call
+        this.restClient = builder.requestFactory(requestFactory).build();
         this.apiUrl = apiUrl;
         this.model = model;
         this.mapper = mapper;
@@ -108,6 +116,99 @@ public class OllamaClient {
                 .verdict(verdict)
                 .feedback("[AI Offline] " + (p.feedback() == null ? "" : p.feedback()))
                 .build();
+    }
+
+    // ── Translate-page analysis: alternatives + grammar supplement ───────────
+
+    /** 2–3 alternative translations of {@code sourceText} into the target language. */
+    public List<String> alternatives(String sourceText, String referenceTranslation, String targetLangName) {
+        String prompt = """
+                You are a professional translator. Source text: "%s"
+                A reference translation in %s is: "%s"
+                Provide 2 alternative natural translations in %s that keep the SAME meaning but use different wording.
+                Reply with ONLY a JSON array of strings and nothing else, e.g. ["...", "..."].
+                """.formatted(safe(sourceText), targetLangName, safe(referenceTranslation), targetLangName);
+
+        JsonNode node = parseJsonArray(generate(prompt));
+        List<String> out = new ArrayList<>();
+        if (node != null && node.isArray()) {
+            for (JsonNode n : node) {
+                String text = n.isTextual() ? n.asText() : n.path("text").asText("");
+                text = text == null ? "" : text.trim();
+                if (!text.isBlank() && !text.equals(referenceTranslation) && !out.contains(text)) {
+                    out.add(text);
+                }
+                if (out.size() >= 3) {
+                    break;
+                }
+            }
+        }
+        return out;
+    }
+
+    /** JLPT grammar patterns the LLM finds, excluding {@code alreadyFound} (dictionary hits). */
+    public List<GrammarSpotterService.GrammarHit> spotGrammar(String japaneseText, Collection<String> alreadyFound) {
+        String prompt = """
+                You are a JLPT grammar analyzer. Find the Japanese grammar patterns in this sentence:
+                "%s"
+                For each DISTINCT grammar pattern give: its dictionary form, JLPT level (one of N5,N4,N3,N2,N1),
+                and a SHORT meaning in Vietnamese. Ignore plain vocabulary.
+                Reply with ONLY a JSON array and nothing else, e.g.
+                [{"pattern":"～のだが","level":"N4","meaning":"mào đầu, giải thích bối cảnh"}]
+                """.formatted(safe(japaneseText));
+
+        JsonNode node = parseJsonArray(generate(prompt));
+        List<GrammarSpotterService.GrammarHit> out = new ArrayList<>();
+        if (node != null && node.isArray()) {
+            for (JsonNode n : node) {
+                String pattern = n.path("pattern").asText("").trim();
+                String level = n.path("level").asText("").trim();
+                String meaning = n.path("meaning").asText("").trim();
+                if (pattern.isBlank()
+                        || (alreadyFound != null && alreadyFound.contains(pattern))
+                        || out.stream().anyMatch(h -> h.pattern().equals(pattern))) {
+                    continue;
+                }
+                out.add(new GrammarSpotterService.GrammarHit(
+                        pattern, level.isBlank() ? null : level, meaning, null, "ai"));
+                if (out.size() >= 8) {
+                    break;
+                }
+            }
+        }
+        return out;
+    }
+
+    private String generate(String prompt) {
+        try {
+            Map<String, Object> body = Map.of("model", model, "prompt", prompt, "stream", false);
+            OllamaRawResponse raw = restClient.post()
+                    .uri(apiUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(OllamaRawResponse.class);
+            return raw == null ? null : raw.response();
+        } catch (Exception e) {
+            log.warn("Ollama generate failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private JsonNode parseJsonArray(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String text = raw.trim();
+        int start = text.indexOf('[');
+        int end = text.lastIndexOf(']');
+        String json = (start != -1 && end > start) ? text.substring(start, end + 1) : text;
+        try {
+            return mapper.readTree(json);
+        } catch (Exception e) {
+            log.warn("Ollama JSON-array parse failed: {}", e.getMessage());
+            return null;
+        }
     }
 
     private String extractJson(String text) {

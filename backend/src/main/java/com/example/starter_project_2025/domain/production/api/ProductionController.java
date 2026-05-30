@@ -4,6 +4,7 @@ import com.example.starter_project_2025.domain.production.grading.GradingService
 import com.example.starter_project_2025.domain.production.grading.TranslationAttempt;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
+import com.example.starter_project_2025.domain.production.grammar.ScenarioStubRepository;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptService;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
@@ -17,7 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
@@ -28,6 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ProductionController {
 
     private final GrammarSubUseRepository subUseRepository;
+    private final ScenarioStubRepository scenarioRepository;
     private final PromptService promptService;
     private final GradingService gradingService;
 
@@ -72,10 +76,15 @@ public class ProductionController {
     }
 
     private GrammarSubUse pickRandom() {
-        List<GrammarSubUse> all = subUseRepository.findAll();
-        if (all.isEmpty()) {
-            throw new ResourceNotFoundException("No grammar sub-uses seeded");
+        // Only sub-uses that have a scenario can drive an exercise; the Grammar
+        // Spotter dictionary adds many scenario-less sub-uses, so filter them out.
+        Set<Long> withScenario = new HashSet<>(scenarioRepository.findDistinctSubUseIds());
+        List<GrammarSubUse> eligible = subUseRepository.findAll().stream()
+                .filter(su -> withScenario.contains(su.getId()))
+                .toList();
+        if (eligible.isEmpty()) {
+            throw new ResourceNotFoundException("No grammar sub-uses with a scenario seeded");
         }
-        return all.get(ThreadLocalRandom.current().nextInt(all.size()));
+        return eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
     }
 }

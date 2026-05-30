@@ -30,6 +30,7 @@ import java.util.List;
 public class TranslateController {
 
     DeepLClient deepLClient;
+    TranslationAnalysisService analysisService;
 
     @PostMapping
     @Operation(summary = "Translate text from one language to another")
@@ -40,6 +41,12 @@ public class TranslateController {
                 request.targetLang(),
                 request.formality()
         ));
+    }
+
+    @PostMapping("/analyze")
+    @Operation(summary = "Analyze a translation: romaji, alternatives, and JLPT Grammar Spotter")
+    public ResponseEntity<TranslateAnalysisResponse> analyze(@Valid @RequestBody TranslateAnalysisRequest request) {
+        return ResponseEntity.ok(analysisService.analyze(request));
     }
 
     @GetMapping("/languages")
