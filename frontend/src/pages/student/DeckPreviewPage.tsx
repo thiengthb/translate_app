@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import { RevealMore } from "@/components/common/RevealMore";
+
+const CARDS_INITIAL_VISIBLE = 30;
 
 interface PreviewCard {
   orderIndex: number;
@@ -40,6 +43,7 @@ export default function DeckPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
   const [togglingFav, setTogglingFav] = useState(false);
+  const [visibleCards, setVisibleCards] = useState(CARDS_INITIAL_VISIBLE);
 
   /* ── Bump view count once when this preview opens ── */
   useEffect(() => {
@@ -52,6 +56,7 @@ export default function DeckPreviewPage() {
     if (!deckId) return;
     let cancelled = false;
     setLoading(true);
+    setVisibleCards(CARDS_INITIAL_VISIBLE);
 
     (async () => {
       try {
@@ -320,24 +325,32 @@ export default function DeckPreviewPage() {
                   This deck has no cards yet.
                 </div>
               ) : (
-                <ul className="space-y-2">
-                  <AnimatePresence initial={false}>
-                    {cards.map((entry, i) => (
-                      <motion.li
-                        key={entry.flashcard.id ?? i}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          duration: 0.15,
-                          delay: Math.min(i * 0.02, 0.2),
-                        }}
-                      >
-                        <PreviewCardRow index={i + 1} card={entry.flashcard} />
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
-                </ul>
+                <>
+                  <ul className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {cards.slice(0, visibleCards).map((entry, i) => (
+                        <motion.li
+                          key={entry.flashcard.id ?? i}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{
+                            duration: 0.15,
+                            delay: Math.min((i % 30) * 0.02, 0.2),
+                          }}
+                        >
+                          <PreviewCardRow index={i + 1} card={entry.flashcard} />
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+
+                  <RevealMore
+                    total={cards.length}
+                    visibleCount={visibleCards}
+                    onChange={setVisibleCards}
+                  />
+                </>
               )}
             </div>
           </>
