@@ -1,0 +1,154 @@
+import { useEffect, useState } from "react";
+import { assessmentApi } from "@/api";
+import type { QuestionTagDTO } from "@/types";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Check, Loader2, Pencil, Plus, Tag as TagIcon, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+
+export default function QuestionTagsPage() {
+  const [tags, setTags] = useState<QuestionTagDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    assessmentApi.fetchQuestionTags()
+      .then(setTags)
+      .catch(() => toast.error("Failed to load tags."))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      await assessmentApi.createQuestionTag({ name });
+      setNewName("");
+      load();
+      toast.success("Tag created.");
+    } catch {
+      toast.error("Failed to create tag (it may already exist).");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const saveEdit = async (tag: QuestionTagDTO) => {
+    const name = editName.trim();
+    if (!name || name === tag.name) { setEditingId(null); return; }
+    setBusyId(tag.id);
+    try {
+      await assessmentApi.updateQuestionTag(tag.id, { name });
+      setEditingId(null);
+      load();
+    } catch {
+      toast.error("Failed to rename tag.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const remove = async (tag: QuestionTagDTO) => {
+    if (!window.confirm(`Delete tag "${tag.name}"? Questions keep their other tags.`)) return;
+    setBusyId(tag.id);
+    try {
+      await assessmentApi.deleteQuestionTag(tag.id);
+      setTags((prev) => prev.filter((t) => t.id !== tag.id));
+    } catch {
+      toast.error("Failed to delete tag.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <MainLayout pathName={{ "/question-tags": "Question Tags" }}>
+      <div className="space-y-5 max-w-2xl">
+        <p className="text-sm text-muted-foreground">
+          Your private tags for organising and filtering questions.
+        </p>
+
+        {/* Create */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void create(); } }}
+              placeholder="New tag name…"
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={create} disabled={creating || !newName.trim()}>
+            {creating ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}
+            New tag
+          </Button>
+        </div>
+
+        {/* List */}
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : tags.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-40 gap-2 text-muted-foreground">
+            <TagIcon className="size-10 opacity-40" />
+            <p className="text-sm">No tags yet — create your first one above.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {tags.map((tag) => (
+              <Card key={tag.id} className="p-3 flex items-center gap-2">
+                {editingId === tag.id ? (
+                  <>
+                    <Input
+                      value={editName}
+                      autoFocus
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void saveEdit(tag); } }}
+                      className="h-8"
+                    />
+                    <Button size="sm" variant="ghost" disabled={busyId === tag.id} onClick={() => saveEdit(tag)}>
+                      {busyId === tag.id ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                      <X className="size-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 min-w-0 flex items-center gap-1.5 text-sm">
+                      <TagIcon className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate font-medium">{tag.name}</span>
+                      {tag.code && <span className="text-[11px] text-muted-foreground">· {tag.code}</span>}
+                    </span>
+                    <Button size="sm" variant="ghost"
+                      onClick={() => { setEditingId(tag.id); setEditName(tag.name); }}>
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-destructive"
+                      disabled={busyId === tag.id} onClick={() => remove(tag)}>
+                      {busyId === tag.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                    </Button>
+                  </>
+                )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </MainLayout>
+  );
+}

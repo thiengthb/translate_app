@@ -10,6 +10,9 @@ import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,10 +54,57 @@ public class QuestionBankServiceImpl
         return new String[]{"prompt"};
     }
 
+    /* ──────────────────────────────────────────
+       Per-user ownership — the question bank is private to each user.
+       List is scoped to the caller; reads/writes of someone else's question
+       are rejected. (Quiz attempts read questions internally by id, bypassing
+       this service, so public/cloned quizzes still work.)
+    ────────────────────────────────────────── */
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuestionBankDTO> getAll(Pageable pageable, String search, QuestionBankFilter filter) {
+        QuestionBankFilter scoped = filter != null ? filter : QuestionBankFilter.builder().build();
+        Long uid = getCurrentUserId();
+        if (uid != null) scoped.createdByUser = uid; // force owner scope (same package)
+        return super.getAll(pageable, search, scoped);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuestionBankDTO getById(Long id) {
+        assertOwned(id);
+        return super.getById(id);
+    }
+
+    @Override
+    public QuestionBankDTO update(Long id, QuestionBankDTO request) {
+        assertOwned(id);
+        return super.update(id, request);
+    }
+
+    @Override
+    public void delete(Long id) {
+        assertOwned(id);
+        super.delete(id);
+    }
+
+    /** Reject access to a question the current user does not own. */
+    private void assertOwned(Long id) {
+        Long uid = getCurrentUserId();
+        QuestionBank q = questionBankRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
+        if (uid != null && !uid.equals(q.getCreatedByUser())) {
+            throw new AccessDeniedException("This question belongs to another user");
+        }
+    }
+
     /* ── Lifecycle hooks: build / replace options ── */
 
     @Override
     protected void beforeCreate(QuestionBank entity, QuestionBankDTO request, ValidationContext ctx) {
+        Long uid = getCurrentUserId();
+        if (uid != null) entity.setCreatedByUser(uid); // owner = current user
         entity.setOptions(buildOptions(entity, request));
         if (request.getTagIds() != null) {
             entity.setTags(resolveTags(request.getTagIds()));

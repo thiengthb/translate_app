@@ -28,12 +28,36 @@ public class ClassroomController {
         return ResponseEntity.ok(classroomService.getMyClassrooms(principal.getId()));
     }
 
+    /** Browse classes anyone can self-join (visibility = PUBLIC). */
+    @GetMapping("/public")
+    public ResponseEntity<List<ClassroomDTO>> publicClassrooms() {
+        return ResponseEntity.ok(classroomService.getPublicClassrooms());
+    }
+
     @PostMapping("/join")
     public ResponseEntity<ClassMemberDTO> join(
             @RequestBody JoinRequest body,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return ResponseEntity.ok(classroomService.joinByInviteCode(principal.getId(), body.getInviteCode()));
+    }
+
+    /** Self-join a PUBLIC class by id — no invite code needed. */
+    @PostMapping("/{classroomId}/join")
+    public ResponseEntity<ClassMemberDTO> joinPublic(
+            @PathVariable Long classroomId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(classroomService.joinPublic(principal.getId(), classroomId));
+    }
+
+    /** Copy a class into your own classes (like cloning a deck). */
+    @PostMapping("/{classroomId}/clone")
+    public ResponseEntity<ClassroomDTO> clone(
+            @PathVariable Long classroomId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(classroomService.cloneClassroom(classroomId, principal.getId()));
     }
 
     @PutMapping("/{classroomId}/invite-code/regenerate")

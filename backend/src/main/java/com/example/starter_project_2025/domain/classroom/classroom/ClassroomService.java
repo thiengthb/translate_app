@@ -11,6 +11,15 @@ public interface ClassroomService extends BaseCrudService<Long, ClassroomDTO, Ba
 
     List<ClassroomDTO> getMyClassrooms(Long userId);
 
+    /** Classes anyone can browse and self-join (visibility = PUBLIC). */
+    List<ClassroomDTO> getPublicClassrooms();
+
+    /** Self-join a PUBLIC class by id (rejects PRIVATE classes). */
+    ClassMemberDTO joinPublic(Long userId, Long classroomId);
+
+    /** Copy a class into the current user's own classes (like cloning a deck). */
+    ClassroomDTO cloneClassroom(Long classroomId, Long userId);
+
     ClassMemberDTO joinByInviteCode(Long userId, String inviteCode);
 
     ClassroomDTO regenerateInviteCode(Long classroomId);

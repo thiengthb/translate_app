@@ -111,7 +111,7 @@ public class SeedAssessmentInitializer implements CommandLineRunner {
        Tag helper — find by code or create a system tag
     ───────────────────────────────────────── */
     private QuestionTag ensureTag(String name, String code) {
-        return questionTagRepository.findByCode(code)
+        return questionTagRepository.findByCodeAndCreatedByUserIsNull(code)
                 .orElseGet(() -> questionTagRepository.save(
                         QuestionTag.builder()
                                 .name(name)

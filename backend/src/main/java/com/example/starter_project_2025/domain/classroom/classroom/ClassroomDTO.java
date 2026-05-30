@@ -27,6 +27,9 @@ public class ClassroomDTO extends BaseDTO {
 
     Integer maxMembers;
 
+    /** PUBLIC (listed + self-join) or PRIVATE (link/invite only). */
+    String visibility;
+
     /** Computed — number of active members. */
     Integer memberCount;
 }
