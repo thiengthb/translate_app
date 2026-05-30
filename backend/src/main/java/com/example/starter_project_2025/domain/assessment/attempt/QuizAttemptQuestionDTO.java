@@ -18,9 +18,14 @@ public class QuizAttemptQuestionDTO extends BaseDTO {
 
     String questionType;
 
+    Integer originalQuestionVersion;
+
     Map<String, Object> questionSnapshot;
 
     List<Map<String, Object>> optionsSnapshot;
+
+    /** Answer key — only populated once the attempt is submitted / reveal is allowed. */
+    Map<String, Object> correctAnswerSnapshot;
 
     Integer orderIndex;
 

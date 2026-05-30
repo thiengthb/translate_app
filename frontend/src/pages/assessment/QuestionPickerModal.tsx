@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { assessmentApi } from "@/api";
-import type { QuestionBankDTO } from "@/types";
+import type { QuestionBankDTO, QuestionTagDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -8,9 +8,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionFormModal } from "./QuestionFormModal";
+import { TagBadges, TagChips } from "./QuestionTags";
 
 export function QuestionPickerModal({
   open, onClose, onAdd, excludeIds = [],
@@ -25,9 +27,21 @@ export function QuestionPickerModal({
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
 
+  /* ── Tag filter ── */
+  const [allTags, setAllTags] = useState<QuestionTagDTO[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+  const [matchAll, setMatchAll] = useState(false);
+
   const load = () => {
     setLoading(true);
-    assessmentApi.fetchQuestions(search.trim() ? { search: search.trim() } : {})
+    const term = search.trim().toLowerCase();
+    const tagIds = Array.from(selectedTagIds);
+    const request = tagIds.length > 0
+      ? assessmentApi.fetchQuestionsByTags(tagIds, matchAll)
+          // tag endpoint doesn't take a search term — filter client-side
+          .then((qs) => (term ? qs.filter((q) => q.prompt.toLowerCase().includes(term)) : qs))
+      : assessmentApi.fetchQuestions(term ? { search: search.trim() } : {});
+    request
       .then(setQuestions)
       .catch(() => toast.error("Failed to load questions."))
       .finally(() => setLoading(false));
@@ -35,10 +49,22 @@ export function QuestionPickerModal({
 
   useEffect(() => {
     if (!open) return;
+    assessmentApi.fetchQuestionTags().then(setAllTags).catch(() => setAllTags([]));
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const t = window.setTimeout(load, 250);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, search]);
+  }, [open, search, selectedTagIds, matchAll]);
+
+  const toggleTag = (id: number) =>
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   const excluded = new Set(excludeIds);
 
@@ -59,6 +85,31 @@ export function QuestionPickerModal({
             <Button variant="outline" onClick={() => setFormOpen(true)}><Plus className="size-4 mr-1" />New</Button>
           </div>
 
+          {/* Tag filter */}
+          {allTags.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-dashed p-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Filter by tag</span>
+                {selectedTagIds.size > 0 && (
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Switch checked={matchAll} onCheckedChange={setMatchAll} />
+                      Match all
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTagIds(new Set())}
+                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+              <TagChips tags={allTags} selectedIds={selectedTagIds} onToggle={toggleTag} />
+            </div>
+          )}
+
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center h-32"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
@@ -71,9 +122,10 @@ export function QuestionPickerModal({
                   <Card key={q.id} className="p-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{q.prompt}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <Badge variant="outline" className="text-[10px]">{q.questionType.replace("_", " ")}</Badge>
                         <span className="text-xs text-muted-foreground">{q.options.length} options</span>
+                        <TagBadges tags={q.tags} />
                       </div>
                     </div>
                     <Button size="sm" variant={added ? "ghost" : "outline"} disabled={added} onClick={() => onAdd(q.id)}>

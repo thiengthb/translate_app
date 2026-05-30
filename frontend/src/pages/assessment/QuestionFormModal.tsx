@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { assessmentApi } from "@/api";
-import type { QuestionBankDTO, QuestionType } from "@/types";
+import type { QuestionBankDTO, QuestionTagDTO, QuestionType } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -12,8 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { History, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { TagChips, TagCreateInline } from "./QuestionTags";
 
 const QUESTION_TYPES: QuestionType[] = [
   "SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK", "WRITING", "MATCHING", "ORDERING", "LISTENING",
@@ -47,8 +49,13 @@ export function QuestionFormModal({
   const [difficulty, setDifficulty] = useState("");
   const [options, setOptions] = useState<OptionDraft[]>([makeOption(), makeOption()]);
 
+  /* ── Tags ── */
+  const [allTags, setAllTags] = useState<QuestionTagDTO[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+
   useEffect(() => {
     if (!open) return;
+    assessmentApi.fetchQuestionTags().then(setAllTags).catch(() => setAllTags([]));
     if (question) {
       setQuestionType(question.questionType);
       setPrompt(question.prompt);
@@ -57,6 +64,7 @@ export function QuestionFormModal({
       setExplanation(question.explanation ?? "");
       setHint(question.hint ?? "");
       setDifficulty(question.difficultyLevel ?? "");
+      setSelectedTagIds(new Set((question.tags ?? []).map((t) => t.id)));
       setOptions(
         (question.options ?? []).map((o) => ({
           uid: crypto.randomUUID(),
@@ -69,9 +77,17 @@ export function QuestionFormModal({
       setQuestionType("SINGLE_CHOICE");
       setPrompt(""); setPromptAudioUrl(""); setPromptImageUrl("");
       setExplanation(""); setHint(""); setDifficulty("");
+      setSelectedTagIds(new Set());
       setOptions([makeOption(), makeOption()]);
     }
   }, [open, question]);
+
+  const toggleTag = (id: number) =>
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   const needsOptions = !NO_OPTION_TYPES.includes(questionType);
 
@@ -98,6 +114,7 @@ export function QuestionFormModal({
         hint: hint.trim() || null,
         difficultyLevel: (difficulty || null) as QuestionBankDTO["difficultyLevel"],
         defaultScore: 1,
+        tagIds: Array.from(selectedTagIds),
         options: needsOptions
           ? filled.map((o, i) => ({
               id: 0, questionId: 0, content: o.content.trim(),
@@ -123,8 +140,18 @@ export function QuestionFormModal({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{question ? "Edit question" : "New question"}</DialogTitle>
-          <DialogDescription>Build a question for the bank. It can be reused across quizzes.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            {question ? "Edit question" : "New question"}
+            {question?.contentVersion != null && (
+              <Badge variant="outline" className="gap-1 text-[10px] font-normal">
+                <History className="size-3" /> v{question.contentVersion}
+              </Badge>
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            Build a question for the bank. It can be reused across quizzes.
+            {question != null && " Editing content bumps its version; in-progress attempts keep their snapshot."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -203,6 +230,23 @@ export function QuestionFormModal({
               <Label className="text-xs">Hint</Label>
               <Textarea value={hint} onChange={(e) => setHint(e.target.value)} rows={2} />
             </div>
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagChips
+              tags={allTags}
+              selectedIds={selectedTagIds}
+              onToggle={toggleTag}
+              emptyHint="No tags yet — create one below."
+            />
+            <TagCreateInline
+              onCreated={(tag) => {
+                setAllTags((prev) => [...prev.filter((t) => t.id !== tag.id), tag]);
+                setSelectedTagIds((prev) => new Set(prev).add(tag.id));
+              }}
+            />
           </div>
         </div>
 

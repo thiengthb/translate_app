@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Check, ChevronLeft, ChevronRight, Clock, Loader2, Send, X } from "lucide-react";
-import { formatSeconds } from "./_shared";
+import { acceptedAnswers, formatSeconds, isCorrectOption } from "./_shared";
 
-type OptionSnap = { id: number; content: string; contentImageUrl?: string | null; contentAudioUrl?: string | null; isCorrect?: boolean };
+type OptionSnap = { id: number; content: string; contentImageUrl?: string | null; contentAudioUrl?: string | null };
 
 export default function QuizSessionPage() {
   const { quizId, attemptId } = useParams<{ quizId: string; attemptId: string }>();
@@ -122,26 +122,30 @@ export default function QuizSessionPage() {
               onValueChange={(v) => { const optionId = Number(v); setDraft(q.id, { optionId }); void saveAnswer(q, { optionId }); }}
               className="space-y-2"
             >
-              {options.map((o) => (
-                <label key={o.id}
-                  className={cn("flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
-                    revealed && o.isCorrect && "border-green-500 bg-green-500/10",
-                    revealed && !o.isCorrect && draft.optionId === o.id && "border-red-500 bg-red-500/10",
-                    !revealed && "hover:bg-accent")}>
-                  <RadioGroupItem value={String(o.id)} disabled={revealed} />
-                  <span className="text-sm">{o.content}</span>
-                </label>
-              ))}
+              {options.map((o) => {
+                const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
+                return (
+                  <label key={o.id}
+                    className={cn("flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      revealed && correct && "border-green-500 bg-green-500/10",
+                      revealed && !correct && draft.optionId === o.id && "border-red-500 bg-red-500/10",
+                      !revealed && "hover:bg-accent")}>
+                    <RadioGroupItem value={String(o.id)} disabled={revealed} />
+                    <span className="text-sm">{o.content}</span>
+                  </label>
+                );
+              })}
             </RadioGroup>
           ) : q.questionType === "MULTIPLE_CHOICE" ? (
             <div className="space-y-2">
               {options.map((o) => {
                 const checked = (draft.optionIds ?? []).includes(o.id);
+                const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
                 return (
                   <label key={o.id}
                     className={cn("flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
-                      revealed && o.isCorrect && "border-green-500 bg-green-500/10",
-                      revealed && !o.isCorrect && checked && "border-red-500 bg-red-500/10",
+                      revealed && correct && "border-green-500 bg-green-500/10",
+                      revealed && !correct && checked && "border-red-500 bg-red-500/10",
                       !revealed && "hover:bg-accent")}>
                     <Checkbox
                       checked={checked}
@@ -212,6 +216,11 @@ export default function QuizSessionPage() {
               {q.isCorrect ? <Check className="size-4 mt-0.5" /> : <X className="size-4 mt-0.5" />}
               <div>
                 <p className="font-medium">{q.isCorrect ? "Correct" : "Incorrect"}</p>
+                {q.questionType === "FILL_BLANK" && acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
+                  <p className="opacity-90 mt-0.5">
+                    Accepted: {acceptedAnswers(q.correctAnswerSnapshot).join(", ")}
+                  </p>
+                )}
                 {typeof snap.explanation === "string" && snap.explanation && <p className="opacity-90 mt-0.5">{snap.explanation}</p>}
               </div>
             </div>

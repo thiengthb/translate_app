@@ -18,4 +18,8 @@ public class QuestionBankFilter extends BaseFilter {
 
     @FilterField
     String difficultyLevel;
+
+    /** Filter the list endpoint to questions carrying this tag. */
+    @FilterField(entityField = "tags.id")
+    Long tagId;
 }

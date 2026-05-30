@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.assessment.question;
 
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
+import com.example.starter_project_2025.domain.assessment.tag.QuestionTag;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import jakarta.persistence.*;
@@ -10,7 +11,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -98,4 +101,11 @@ public class QuestionBank extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     List<QuestionOption> options = new ArrayList<>();
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "question_tag_links",
+            joinColumns = @JoinColumn(name = "question_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    Set<QuestionTag> tags = new HashSet<>();
 }

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { AttemptStatus, DifficultyLevel, QuizStatus } from "@/types";
+import type { AttemptStatus, CorrectAnswerSnapshot, DifficultyLevel, QuizStatus } from "@/types";
 
 export function DifficultyBadge({ level }: { level: DifficultyLevel | null | undefined }) {
   if (!level) return null;
@@ -47,4 +47,26 @@ export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleString();
+}
+
+/* ─────────────────────────────────────────
+   Answer-key helpers — the attempt's options no longer carry `isCorrect`.
+   The correct answer lives in `correctAnswerSnapshot`, revealed only after
+   submit. These read it back regardless of question type.
+───────────────────────────────────────── */
+
+/** Whether a given option id is part of the correct answer key. */
+export function isCorrectOption(
+  correct: CorrectAnswerSnapshot | null | undefined,
+  optionId: number
+): boolean {
+  if (!correct) return false;
+  if (correct.correctOptionId != null && correct.correctOptionId === optionId) return true;
+  if (Array.isArray(correct.correctOptionIds) && correct.correctOptionIds.includes(optionId)) return true;
+  return false;
+}
+
+/** Accepted free-text answers (FILL_BLANK), if any. */
+export function acceptedAnswers(correct: CorrectAnswerSnapshot | null | undefined): string[] {
+  return correct?.acceptedAnswers ?? [];
 }

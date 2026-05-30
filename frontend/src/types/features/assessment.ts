@@ -75,6 +75,17 @@ export interface QuestionOptionDTO {
   orderIndex: number;
 }
 
+/** A reusable label for filtering / grouping questions. */
+export interface QuestionTagDTO {
+  id: number;
+  name: string;
+  code: string | null;
+  description: string | null;
+  /** Owner user id; null = system tag. */
+  createdByUser: number | null;
+  isActive?: boolean;
+}
+
 export interface QuestionBankDTO {
   id: number;
   categoryId: number | null;
@@ -89,8 +100,15 @@ export interface QuestionBankDTO {
   difficultyLevel: DifficultyLevel | null;
   defaultScore: number;
   isActive: boolean;
+  /** Optimistic-lock version (BaseDTO). */
   version: number;
+  /** Content version — bumped only when the question's content changes. */
+  contentVersion?: number;
   options: QuestionOptionDTO[];
+  /** Tags attached to the question (read-only view from the API). */
+  tags?: QuestionTagDTO[];
+  /** Tag ids to attach on create/update (write-only). */
+  tagIds?: number[];
 }
 
 export interface QuizQuestionDTO {
@@ -117,11 +135,38 @@ export interface SubmitAnswerRequest {
   responseTimeMs: number;
 }
 
+/** Option as shown during an attempt — deliberately WITHOUT `isCorrect`
+ *  (the answer key lives in `correctAnswerSnapshot`, revealed only after submit). */
+export interface AttemptOptionSnapshot {
+  id: number;
+  questionId?: number;
+  content: string;
+  contentAudioUrl?: string | null;
+  contentImageUrl?: string | null;
+  orderIndex?: number;
+}
+
+/**
+ * Frozen answer key for an attempt question. Shape depends on question type:
+ * - SINGLE_CHOICE / TRUE_FALSE / LISTENING → `{ correctOptionId }`
+ * - MULTIPLE_CHOICE / ORDERING / MATCHING → `{ correctOptionIds }`
+ * - FILL_BLANK → `{ acceptedAnswers }`
+ * Only present once the attempt is submitted / reveal is allowed.
+ */
+export interface CorrectAnswerSnapshot {
+  correctOptionId?: number | null;
+  correctOptionIds?: number[];
+  acceptedAnswers?: string[];
+}
+
 export interface QuizAttemptQuestionDTO {
   id: number;
   questionType: QuestionType;
+  originalQuestionVersion?: number | null;
   questionSnapshot: Record<string, unknown>;
-  optionsSnapshot: QuestionOptionDTO[] | null;
+  optionsSnapshot: AttemptOptionSnapshot[] | null;
+  /** Answer key — only populated after submit / when reveal is allowed. */
+  correctAnswerSnapshot?: CorrectAnswerSnapshot | null;
   orderIndex: number;
   score: number;
   isAnswered: boolean;
@@ -180,5 +225,13 @@ export interface QuestionQueryParams {
   levelId?: number;
   questionType?: QuestionType;
   difficultyLevel?: DifficultyLevel;
+  /** Filter to questions carrying this single tag. */
+  tagId?: number;
+  search?: string;
+}
+
+export interface QuestionTagQueryParams {
+  name?: string;
+  code?: string;
   search?: string;
 }
