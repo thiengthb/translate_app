@@ -215,6 +215,37 @@ public class GrammarSpotterService {
         return hits;
     }
 
+    /**
+     * Targeted check: does {@code japaneseText} contain any marker belonging to
+     * the given sub-use?  Used by the production grader as a regex-backed
+     * fallback when a sub-use has no hand-written Java {@code GrammarDetector},
+     * so new grammar points can be added by data alone.
+     */
+    public boolean matchesSubUse(long subUseId, String japaneseText) {
+        if (japaneseText == null || japaneseText.isBlank()) {
+            return false;
+        }
+        String surface = DetectorSupport.joinSurfaces(tokenizer.tokenize(japaneseText));
+        GrammarIndex idx = getIndex();
+
+        // Track B: regex markers for this sub-use
+        List<Pattern> patterns = idx.compiledPatterns().get(subUseId);
+        if (patterns != null) {
+            for (Pattern p : patterns) {
+                if (p.matcher(surface).find()) {
+                    return true;
+                }
+            }
+        }
+        // Track A: plain-string markers (look up which keywords map to this sub-use)
+        for (Map.Entry<String, Set<Long>> e : idx.keywordToSubUseIds().entrySet()) {
+            if (e.getValue().contains(subUseId) && surface.contains(e.getKey())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private static String stripPattern(String pattern) {

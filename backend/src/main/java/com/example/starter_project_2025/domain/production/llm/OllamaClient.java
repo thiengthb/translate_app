@@ -54,25 +54,32 @@ public class OllamaClient {
         }
 
         String prompt = """
-                You are a strict Japanese translation grader. Compare the learner's sentence to the reference and score SEMANTIC ACCURACY only.
+                You are a STRICT Japanese translation grader. Compare the learner's sentence to the
+                reference model answer and score SEMANTIC ACCURACY (does it convey the same meaning?).
 
                 Reference (model answer, 100%% correct): %s
                 Learner's answer: %s
                 Target grammar nuance: %s
-                Common mistakes:
+                Common mistakes to watch for:
                 %s
 
-                Score on a 0-100 integer scale:
-                - 0   = empty, gibberish, or completely unrelated language
-                - 20  = a few related words but wrong meaning
-                - 50  = roughly the right idea but missing key meaning
-                - 75  = correct meaning, somewhat unnatural
-                - 90  = correct and natural, minor issues
-                - 100 = matches the reference meaning exactly
+                Score on a 0-100 integer scale, and BE HARSH:
+                - 0   = empty, gibberish, romaji-only, or a completely unrelated/other language
+                - 20  = a few related words but the meaning is wrong
+                - 50  = roughly the right idea but a key piece of meaning is missing or distorted
+                - 75  = correct core meaning, but unnatural OR a noticeable nuance/particle error
+                - 90  = correct and natural, only a trivial issue
+                - 100 = matches the reference meaning exactly and naturally
 
-                Be strict. "hahaha" or random letters = 0. Off-topic Japanese = 0-20.
+                Hard rules:
+                - "hahaha", keyboard mashing, or random letters = 0.
+                - Off-topic Japanese (grammatical but wrong meaning) = 0-20.
+                - If ANY important information from the reference is missing or contradicted, cap the score at 60.
+                - Do NOT give 80+ unless the meaning is genuinely equivalent to the reference.
+                - Judge meaning only; do not reward extra politeness or length.
 
-                Reply with ONLY this JSON, no other text:
+                Reply with ONLY this JSON, no other text. The feedback must be ONE short Vietnamese
+                sentence that names the concrete problem (or confirms it is correct):
                 {"meaningScore": <integer 0-100>, "feedback": "<one short sentence in Vietnamese>"}
                 """.formatted(safe(refL2), safe(answer), safe(nuance), mistakes.toString());
 

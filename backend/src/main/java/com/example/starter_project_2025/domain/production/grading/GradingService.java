@@ -4,6 +4,7 @@ import com.example.starter_project_2025.domain.production.detector.DetectionResu
 import com.example.starter_project_2025.domain.production.detector.DetectorRegistry;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarker;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerRepository;
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentence;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
@@ -24,12 +25,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GradingService {
 
-    private static final double MEANING_THRESHOLD = 0.6;
+    /** Minimum meaning score to count as "meaning roughly OK" (→ at least PARTIAL). */
+    private static final double MEANING_THRESHOLD = 0.7;
+    /** Minimum meaning score required for a full PASS (in addition to correct grammar). */
+    private static final double PASS_THRESHOLD = 0.85;
 
     private final PromptCacheRepository promptCacheRepository;
     private final ReferenceSentenceRepository referenceRepository;
     private final GrammarMarkerRepository markerRepository;
     private final DetectorRegistry detectorRegistry;
+    private final GrammarSpotterService grammarSpotter;
     private final OllamaClient ollamaClient;
     private final TranslationAttemptRepository attemptRepository;
 
@@ -41,8 +46,14 @@ public class GradingService {
         GrammarSubUse subUse = prompt.getSubUse();
         ReferenceSentence reference = prompt.getReferenceSentence();
 
-        // Signal 1: deterministic detector (Kuromoji)
+        // Signal 1: grammar detection.
+        // Prefer a hand-written Kuromoji detector; if the sub-use has none (most
+        // data-seeded grammar points), fall back to the regex-backed grammar bank.
         DetectionResult detection = detectorRegistry.run(subUse.getDetectorKey(), answer);
+        boolean detectorPassed = detection.isPassed();
+        if (!detectorPassed && !detectorRegistry.hasDetector(subUse.getDetectorKey())) {
+            detectorPassed = grammarSpotter.matchesSubUse(subUse.getId(), answer);
+        }
         GrammarMarker markerUsed = resolveMarker(subUse.getId(), detection.getMarkerPattern());
 
         // Signal 2: LLM judge (Ollama offline), may be null on network/parse error
@@ -55,13 +66,13 @@ public class GradingService {
         String feedback;
 
         if (judge == null) {
-            finalVerdict = detection.isPassed() ? "PASS" : "FAIL";
-            feedback = detection.isPassed()
-                    ? "Đã dùng đúng cấu trúc ngữ pháp mục tiêu."
+            // Meaning can't be verified offline → never award a full PASS.
+            finalVerdict = detectorPassed ? "PARTIAL" : "FAIL";
+            feedback = detectorPassed
+                    ? "Đã dùng đúng cấu trúc ngữ pháp mục tiêu, nhưng chưa kiểm tra được nghĩa (AI tạm offline)."
                     : "Chưa thấy cấu trúc ngữ pháp mục tiêu trong câu của bạn.";
         } else {
-            boolean meaningOk = judge.getMeaningScore() >= MEANING_THRESHOLD;
-            finalVerdict = decide(detection.isPassed(), meaningOk);
+            finalVerdict = decide(detectorPassed, judge.getMeaningScore());
             feedback = judge.getFeedback();
         }
 
@@ -69,7 +80,7 @@ public class GradingService {
                 .userId(userId)
                 .prompt(prompt)
                 .userAnswerL2(answer)
-                .detectorPassed(detection.isPassed())
+                .detectorPassed(detectorPassed)
                 .markerUsed(markerUsed)
                 .llmJudgeScore(judgeScore)
                 .llmJudgeVerdict(judgeVerdict)
@@ -80,10 +91,16 @@ public class GradingService {
         return attemptRepository.save(attempt);
     }
 
-    private String decide(boolean detectorPassed, boolean meaningOk) {
-        if (detectorPassed && meaningOk) return "PASS";
-        if (detectorPassed) return "PARTIAL";
-        if (meaningOk) return "PARTIAL";
+    /**
+     * Strict verdict: a full PASS requires BOTH the target grammar pattern AND a
+     * high meaning score ({@link #PASS_THRESHOLD}). Correct grammar with weaker
+     * meaning, or good meaning without the target grammar, is only PARTIAL.
+     */
+    private String decide(boolean detectorPassed, double meaningScore) {
+        if (detectorPassed && meaningScore >= PASS_THRESHOLD) return "PASS";
+        if (detectorPassed && meaningScore >= MEANING_THRESHOLD) return "PARTIAL";
+        if (detectorPassed) return "PARTIAL";                 // right grammar, weak meaning
+        if (meaningScore >= MEANING_THRESHOLD) return "PARTIAL"; // right meaning, missing grammar
         return "FAIL";
     }
 

@@ -28,6 +28,9 @@ const VERDICT_LABEL: Record<string, string> = {
 export default function ProductionPage() {
   const [exercise, setExercise] = useState<ExerciseResponse | null>(null);
   const [answer, setAnswer] = useState("");
+  // Snapshot of the answer at the moment of submission, so editing/clearing the
+  // textarea afterwards does not retroactively change the graded "Câu của bạn".
+  const [submittedAnswer, setSubmittedAnswer] = useState("");
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -36,6 +39,7 @@ export default function ProductionPage() {
     setLoading(true);
     setResult(null);
     setAnswer("");
+    setSubmittedAnswer("");
     try {
       setExercise(await productionApi.getExercise());
     } catch {
@@ -50,10 +54,13 @@ export default function ProductionPage() {
   }, [loadExercise]);
 
   const onSubmit = async () => {
-    if (!exercise || !answer.trim()) return;
+    const snapshot = answer.trim();
+    if (!exercise || !snapshot) return;
     setSubmitting(true);
     try {
-      setResult(await productionApi.submitAttempt(exercise.promptId, answer));
+      const res = await productionApi.submitAttempt(exercise.promptId, answer);
+      setSubmittedAnswer(answer);
+      setResult(res);
     } catch {
       toast.error("Chấm bài thất bại. Vui lòng thử lại.");
     } finally {
@@ -125,12 +132,12 @@ export default function ProductionPage() {
                   </div>
                 )}
 
-                {answer && (
+                {submittedAnswer && (
                   <div className="border-l-4 border-muted-foreground/30 pl-4 py-2">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
                       Câu của bạn
                     </div>
-                    <p className="text-base leading-relaxed">{answer}</p>
+                    <p className="text-base leading-relaxed">{submittedAnswer}</p>
                   </div>
                 )}
 
