@@ -91,6 +91,40 @@ const RATING_CONFIG: {
 /* ──────────────────────────────────────────
    Page
 ────────────────────────────────────────── */
+type QueueStats = { new: number; learning: number; review: number };
+
+function isLearningState(card: AnkiStudyCard) {
+  return card.state === "LEARNING" || card.state === "RELEARNING";
+}
+
+function returnsTodayOrEarlier(nextReviewAt?: string) {
+  if (!nextReviewAt) return true;
+
+  const nextReview = new Date(nextReviewAt);
+  if (Number.isNaN(nextReview.getTime())) return true;
+
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  return nextReview <= endOfToday;
+}
+
+function shouldTrackAsSessionLearning(card: AnkiStudyCard) {
+  return isLearningState(card) && returnsTodayOrEarlier(card.nextReviewAt);
+}
+
+function countMainQueueStats(cards: AnkiStudyCard[]): QueueStats {
+  return cards.reduce<QueueStats>(
+    (acc, card) => {
+      if (card.state === "NEW") acc.new += 1;
+      else if (isLearningState(card)) acc.learning += 1;
+      else acc.review += 1;
+      return acc;
+    },
+    { new: 0, learning: 0, review: 0 }
+  );
+}
+
 export default function AnkiStudyPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
@@ -103,7 +137,10 @@ export default function AnkiStudyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [totalStudied, setTotalStudied] = useState(0);
   const [totalNew, setTotalNew] = useState(0);
+  const [totalLearning, setTotalLearning] = useState(0);
+  const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
+  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0 });
   const [editOpen, setEditOpen] = useState(false);
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [fullView, setFullView] = useState(false);
@@ -118,7 +155,11 @@ export default function AnkiStudyPage() {
       .then((data) => {
         setDeckTitle(data.deckTitle);
         setQueue(data.cards);
+        setAgainQueue([]);
+        setSessionStats(countMainQueueStats(data.cards));
         setTotalNew(data.totalNew);
+        setTotalLearning(data.totalLearning ?? 0);
+        setTotalReview(data.totalReview ?? data.totalDue);
         setTotalDue(data.totalDue);
       })
       .catch(() => toast.error("Failed to load study queue."))
@@ -230,29 +271,26 @@ export default function AnkiStudyPage() {
       setTotalStudied((n) => n + 1);
       setFlipped(false);
 
-      setQueue((prev) => {
-        const rest = prev.slice(1);
+      const rest = queue.slice(1);
+      const shouldRequeueForLearning = shouldTrackAsSessionLearning(updated);
+      let nextAgainQueue = shouldRequeueForLearning ? [...againQueue, updated] : [...againQueue];
+      let nextQueue = rest;
 
-        if (rating === "AGAIN") {
-          // Re-queue the updated card at the end of the again-queue
-          setAgainQueue((aq) => [...aq, updated]);
-          if (rest.length === 0) {
+      if (nextQueue.length === 0 && nextAgainQueue.length > 0) {
+        const [next, ...remainingAgain] = nextAgainQueue;
+        nextQueue = next ? [next] : [];
+        nextAgainQueue = remainingAgain;
+      }
+
+      setQueue(nextQueue);
+      setAgainQueue(nextAgainQueue);
+      const mainStats = countMainQueueStats(nextQueue);
+      setSessionStats({ ...mainStats, learning: mainStats.learning + nextAgainQueue.length });
+
+      
             // Main queue empty — pull from again-queue
-            const [next, ...remaining] = [...againQueue, updated];
-            setAgainQueue(remaining);
-            return next ? [next] : [];
-          }
-          return rest;
-        }
 
         // HARD / GOOD / EASY — card scheduled for future, remove from session
-        if (rest.length === 0 && againQueue.length > 0) {
-          const [next, ...remaining] = againQueue;
-          setAgainQueue(remaining);
-          return [next];
-        }
-        return rest;
-      });
     } catch {
       toast.error("Failed to submit review.");
     } finally {
@@ -305,21 +343,16 @@ export default function AnkiStudyPage() {
             {deckTitle || "Loading…"}
           </h1>
           {!loading && !isDone && (
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span>
-                {remaining} card{remaining !== 1 ? "s" : ""} remaining
-              </span>
-              <span className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-blue-500 inline-block" />
-                  {totalNew} new
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-orange-400 inline-block" />
-                  {totalDue} due
-                </span>
-              </span>
-            </div>
+            <AnkiQueueSummary
+              remaining={remaining}
+              liveNew={sessionStats.new}
+              liveLearning={sessionStats.learning}
+              liveReview={sessionStats.review}
+              totalNew={totalNew}
+              totalLearning={totalLearning}
+              totalReview={totalReview}
+              totalDue={totalDue}
+            />
           )}
         </div>
 
@@ -541,6 +574,64 @@ export default function AnkiStudyPage() {
 /** Resolve the app's theme foreground colour so iframe content stays readable
  *  on both light and dark backgrounds (the iframe is isolated and can't see the
  *  app's CSS variables, and bare `inherit` falls back to the UA default black). */
+function AnkiQueueSummary({
+  remaining,
+  liveNew,
+  liveLearning,
+  liveReview,
+  totalNew,
+  totalLearning,
+  totalReview,
+  totalDue,
+}: {
+  remaining: number;
+  liveNew: number;
+  liveLearning: number;
+  liveReview: number;
+  totalNew: number;
+  totalLearning: number;
+  totalReview: number;
+  totalDue: number;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">{remaining}</span>{" "}
+        card{remaining !== 1 ? "s" : ""} remaining
+      </div>
+
+      <div
+        className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm"
+        title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
+      >
+        <QueueStat label="New" value={liveNew} dotClassName="bg-blue-500" valueClassName="text-blue-500" />
+        <QueueStat label="Learning" value={liveLearning} dotClassName="bg-orange-400" valueClassName="text-orange-500" />
+        <QueueStat label="To Review" value={liveReview} dotClassName="bg-green-500" valueClassName="text-green-600" />
+      </div>
+    </div>
+  );
+}
+
+function QueueStat({
+  label,
+  value,
+  dotClassName,
+  valueClassName,
+}: {
+  label: string;
+  value: number;
+  dotClassName: string;
+  valueClassName: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className={cn("size-2 rounded-full", dotClassName)} />
+      <span className="text-muted-foreground">{label}:</span>
+      <span className={cn("font-bold tabular-nums", valueClassName)}>{value}</span>
+    </span>
+  );
+}
+
 function appForegroundColor(): string {
   if (typeof window === "undefined") return "#1f2937";
   const v = getComputedStyle(document.documentElement)

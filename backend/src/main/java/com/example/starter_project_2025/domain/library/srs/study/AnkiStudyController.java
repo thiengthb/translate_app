@@ -76,6 +76,8 @@ public class AnkiStudyController {
                     .deckTitle(deck.getTitle())
                     .cards(List.of())
                     .totalNew(0)
+                    .totalLearning(0)
+                    .totalReview(0)
                     .totalDue(0)
                     .build());
         }
@@ -110,6 +112,8 @@ public class AnkiStudyController {
 
         List<AnkiStudyCardDTO> studyCards = new ArrayList<>();
         int totalNew = 0;
+        int totalLearning = 0;
+        int totalReview = 0;
         int totalDue = 0;
 
         for (DeckItem item : items) {
@@ -129,7 +133,10 @@ public class AnkiStudyController {
                 queuedNew++;
             } else {
                 totalDue++;
-                if ("REVIEW".equals(progress.getState())) {
+                if ("LEARNING".equals(progress.getState()) || "RELEARNING".equals(progress.getState())) {
+                    totalLearning++;
+                } else if ("REVIEW".equals(progress.getState())) {
+                    totalReview++;
                     if (queuedDue >= dueLimit) continue;
                     queuedDue++;
                 }
@@ -142,6 +149,8 @@ public class AnkiStudyController {
                 .deckTitle(deck.getTitle())
                 .cards(studyCards)
                 .totalNew(totalNew)
+                .totalLearning(totalLearning)
+                .totalReview(totalReview)
                 .totalDue(totalDue)
                 .build());
     }
