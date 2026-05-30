@@ -15,7 +15,6 @@ import {
   useThemePreference,
   type ThemePreference,
 } from "@/hooks/useThemePreference";
-import { playThemeTransition } from "@/lib/theme-transition";
 import { Check, Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 

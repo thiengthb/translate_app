@@ -16,5 +16,7 @@ public class AnkiStudyQueueDTO {
     String deckTitle;
     List<AnkiStudyCardDTO> cards;
     int totalNew;
+    int totalLearning;
+    int totalReview;
     int totalDue;
 }

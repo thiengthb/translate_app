@@ -79,17 +79,6 @@ axiosInstance.interceptors.response.use(
         ) {
             originalReq._retry = true;
 
-            if (isRefreshing) {
-                // Queue this request until the in-flight refresh resolves
-                return new Promise<string>((resolve, reject) => {
-                    pendingQueue.push({ resolve, reject });
-                }).then((token) => {
-                    originalReq.headers = { ...originalReq.headers, Authorization: `Bearer ${token}` };
-                    return axiosInstance(originalReq);
-                });
-            }
-
-            isRefreshing = true;
             try {
                 const token = await runRefresh();
 
@@ -113,8 +102,6 @@ axiosInstance.interceptors.response.use(
                     }
                 }
                 return Promise.reject(err);
-            } finally {
-                isRefreshing = false;
             }
         }
 
