@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "examples")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("EXAMPLE")
-@ResourceMenu(title = "Examples", group = "Japanese", icon = "file-text", url = "/examples", order = 8, description = "Example sentences attached to vocabulary.")
+@ResourceMenu(title = "Examples", group = "Language", icon = "file-text", url = "/examples", order = 8, description = "Example sentences attached to vocabulary.")
 @AutoCrud(path = "examples")
 public class Example extends BaseEntity {
 

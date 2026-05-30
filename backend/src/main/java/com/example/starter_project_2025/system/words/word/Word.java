@@ -26,7 +26,7 @@ import java.util.List;
 @Table(name = "words")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("WORD")
-@ResourceMenu(title = "Vocabulary", group = "Japanese", icon = "book", url = "/words", order = 1, description = "Japanese vocabulary entries with readings and meanings.")
+@ResourceMenu(title = "Vocabulary", group = "Language", icon = "book", url = "/words", order = 1, description = "Japanese vocabulary entries with readings and meanings.")
 @AutoCrud(path = "words")
 public class Word extends BaseEntity {
 

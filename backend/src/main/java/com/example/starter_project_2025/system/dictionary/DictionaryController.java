@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 
 @ResourceMenu(
         title = "Dictionary",
-        group = "Japanese",
+        group = "Language",
         icon = "book",
         url = "/dictionary",
         description = "Look up Japanese words by kanji, kana, romaji or meaning.",

@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @ResourcePermission("AUDIT")
 @ResourceMenu(
         title = "Audit Log",
-        group = "System Management",
+        group = "System",
         icon = "shield-check",
         url = "/audit-logs",
         description = "Read-only log of every create, update and delete across the system.",

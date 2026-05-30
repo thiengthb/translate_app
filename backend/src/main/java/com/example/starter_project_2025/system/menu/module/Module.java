@@ -26,7 +26,7 @@ import lombok.experimental.SuperBuilder;
 @ResourcePermission("MENU")
 @ResourceMenu(
         title = "Modules",
-        group = "System Management",
+        group = "System",
         icon = "menus",
         url = "/menus",
         description = "Configure the navigation items shown in the sidebar.",

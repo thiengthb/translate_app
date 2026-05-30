@@ -21,6 +21,7 @@ interface InfoCardProps {
     actions?: React.ReactNode;
     children: React.ReactNode;
     className?: string;
+    headerClassName?: string;
     contentClassName?: string;
 }
 
@@ -36,11 +37,12 @@ export function InfoCard({
     actions,
     children,
     className,
+    headerClassName,
     contentClassName,
 }: InfoCardProps) {
     return (
         <Card className={cn("h-full gap-3 py-4", className)}>
-            <CardHeader className="px-4 gap-0.5">
+            <CardHeader className={cn("px-4 gap-0.5", headerClassName)}>
                 <CardTitle className="text-sm flex items-center gap-2">
                     {icon}
                     <InfoLabel title={title} info={info} />

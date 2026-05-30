@@ -8,6 +8,7 @@ export * from "./features/words/word.api";
 export * from "./features/words/kanji.api";
 export * from "./features/words/example.api";
 export * from "./features/words/word_kanji.api";
+export * from "./features/words/wordType.api";
 export * from "./features/dictionary.api";
 export * from "./features/library/folder.api";
 export * from "./features/library/deck.api";

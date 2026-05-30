@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "word_kanjis")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("WORD_KANJI")
-@ResourceMenu(title = "Word-Kanji", group = "Japanese", icon = "link", url = "/word-kanjis", order = 7, description = "Links between vocabulary words and their kanji.")
+@ResourceMenu(title = "Word-Kanji", group = "Language", icon = "link", url = "/word-kanjis", order = 7, description = "Links between vocabulary words and their kanji.")
 @AutoCrud(path = "word-kanjis")
 public class WordKanji extends BaseEntity {
 

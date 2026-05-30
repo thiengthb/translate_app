@@ -10,6 +10,8 @@ import com.example.starter_project_2025.system.words.representation.Representati
 import com.example.starter_project_2025.system.words.representation.RepresentationRepository;
 import com.example.starter_project_2025.system.words.word.Word;
 import com.example.starter_project_2025.system.words.word.WordRepository;
+import com.example.starter_project_2025.system.words.word_type.WordType;
+import com.example.starter_project_2025.system.words.word_type.WordTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -40,6 +42,29 @@ public class DictionaryDataInitializer implements CommandLineRunner {
     private final RepresentationRepository representationRepository;
     private final LevelRepository levelRepository;
     private final LanguageRepository languageRepository;
+    private final WordTypeRepository wordTypeRepository;
+
+    /** name | code | description */
+    private record SeedWordType(String name, String code, String description) {}
+
+    private static final List<SeedWordType> SEED_WORD_TYPES = List.of(
+            new SeedWordType("Noun", "n", "Danh từ"),
+            new SeedWordType("Ichidan verb", "v1", "Động từ nhóm 2 (ru-verb)"),
+            new SeedWordType("Godan verb", "v5", "Động từ nhóm 1 (u-verb)"),
+            new SeedWordType("Suru verb", "vs", "Động từ する"),
+            new SeedWordType("I-adjective", "adj-i", "Tính từ đuôi い"),
+            new SeedWordType("Na-adjective", "adj-na", "Tính từ đuôi な"),
+            new SeedWordType("Adverb", "adv", "Phó từ"),
+            new SeedWordType("Pronoun", "pron", "Đại từ"),
+            new SeedWordType("Particle", "prt", "Trợ từ"),
+            new SeedWordType("Conjunction", "conj", "Liên từ"),
+            new SeedWordType("Interjection", "int", "Thán từ"),
+            new SeedWordType("Counter", "ctr", "Trợ số từ"),
+            new SeedWordType("Prefix", "pref", "Tiền tố"),
+            new SeedWordType("Suffix", "suf", "Hậu tố"),
+            new SeedWordType("Numeral", "num", "Số từ"),
+            new SeedWordType("Expression", "expr", "Cụm từ / thành ngữ")
+    );
 
     /** word | reading | type | repCode | levelCode | VI | EN | exampleJA | exampleVI */
     private record SeedWord(
@@ -47,35 +72,45 @@ public class DictionaryDataInitializer implements CommandLineRunner {
             String vi, String en, String exJa, String exVi) {}
 
     private static final List<SeedWord> SEED_WORDS = List.of(
-            new SeedWord("水", "みず", "noun", "kanji", "N5", "nước", "water",
+            new SeedWord("水", "みず", "n", "kanji", "N5", "nước", "water",
                     "毎日水を飲みます。", "Tôi uống nước mỗi ngày."),
-            new SeedWord("食べる", "たべる", "verb", "kanji", "N5", "ăn", "to eat",
+            new SeedWord("食べる", "たべる", "v1", "kanji", "N5", "ăn", "to eat",
                     "朝ご飯を食べる。", "Ăn cơm sáng."),
-            new SeedWord("学校", "がっこう", "noun", "kanji", "N5", "trường học", "school",
+            new SeedWord("学校", "がっこう", "n", "kanji", "N5", "trường học", "school",
                     "学校へ行きます。", "Tôi đi đến trường."),
-            new SeedWord("大きい", "おおきい", "adjective", "kanji", "N5", "to, lớn", "big",
+            new SeedWord("大きい", "おおきい", "adj-i", "kanji", "N5", "to, lớn", "big",
                     "大きい家ですね。", "Ngôi nhà lớn nhỉ."),
-            new SeedWord("友達", "ともだち", "noun", "kanji", "N5", "bạn bè", "friend",
+            new SeedWord("友達", "ともだち", "n", "kanji", "N5", "bạn bè", "friend",
                     "友達と話します。", "Tôi nói chuyện với bạn bè."),
-            new SeedWord("行く", "いく", "verb", "kanji", "N5", "đi", "to go",
+            new SeedWord("行く", "いく", "v5", "kanji", "N5", "đi", "to go",
                     "日本へ行きたい。", "Tôi muốn đi Nhật."),
-            new SeedWord("本", "ほん", "noun", "kanji", "N5", "sách", "book",
+            new SeedWord("本", "ほん", "n", "kanji", "N5", "sách", "book",
                     "本を読みます。", "Tôi đọc sách."),
-            new SeedWord("先生", "せんせい", "noun", "kanji", "N5", "giáo viên", "teacher",
+            new SeedWord("先生", "せんせい", "n", "kanji", "N5", "giáo viên", "teacher",
                     "先生に聞きます。", "Tôi hỏi giáo viên."),
-            new SeedWord("日本語", "にほんご", "noun", "kanji", "N5", "tiếng Nhật", "Japanese language",
+            new SeedWord("日本語", "にほんご", "n", "kanji", "N5", "tiếng Nhật", "Japanese language",
                     "日本語を勉強します。", "Tôi học tiếng Nhật."),
-            new SeedWord("ありがとう", "ありがとう", "interjection", "hiragana", "N5", "cảm ơn", "thank you",
+            new SeedWord("ありがとう", "ありがとう", "int", "hiragana", "N5", "cảm ơn", "thank you",
                     "ありがとうございます。", "Cảm ơn rất nhiều."),
-            new SeedWord("猫", "ねこ", "noun", "kanji", "N5", "con mèo", "cat",
+            new SeedWord("猫", "ねこ", "n", "kanji", "N5", "con mèo", "cat",
                     "猫が好きです。", "Tôi thích mèo."),
-            new SeedWord("新しい", "あたらしい", "adjective", "kanji", "N5", "mới", "new",
+            new SeedWord("新しい", "あたらしい", "adj-i", "kanji", "N5", "mới", "new",
                     "新しい車を買いました。", "Tôi đã mua một chiếc xe mới.")
     );
 
     @Override
     @Transactional
     public void run(String... args) {
+        // Word types (parts of speech) — seeded independently of words.
+        if (wordTypeRepository.count() == 0) {
+            for (SeedWordType t : SEED_WORD_TYPES) {
+                wordTypeRepository.save(WordType.builder()
+                        .name(t.name()).code(t.code()).description(t.description())
+                        .build());
+            }
+            log.info("Word type seed: {} types created.", SEED_WORD_TYPES.size());
+        }
+
         if (wordRepository.count() > 0) {
             log.info("Dictionary seed: skipped (words already present).");
             return;

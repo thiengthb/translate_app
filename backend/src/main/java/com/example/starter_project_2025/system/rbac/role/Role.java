@@ -31,7 +31,7 @@ import java.util.Set;
 @ResourcePermission("ROLE")
 @ResourceMenu(
         title = "Roles",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "roles",
         url = "/roles",
         description = "Sets of permissions assigned to users.",

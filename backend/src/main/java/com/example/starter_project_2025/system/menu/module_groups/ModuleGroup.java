@@ -31,7 +31,7 @@ import java.util.List;
 @ResourcePermission("MENU")
 @ResourceMenu(
         title = "Module Groups",
-        group = "System Management",
+        group = "System",
         icon = "menu_groups",
         url = "/menu-groups",
         description = "Group sidebar menu items into sections.",

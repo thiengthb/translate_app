@@ -52,6 +52,8 @@ const PAGE_DESCRIPTIONS: Record<string, string> = {
     "/analyze": "Break down the grammar of a Japanese sentence.",
     "/production": "Practice composing Japanese sentences.",
     "/notifications": "Your notification inbox.",
+    "/words/create":
+        "Thêm từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ — tất cả trong một lần.",
 };
 
 /**

@@ -22,7 +22,7 @@ import java.util.List;
 @Table(name = "languages")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("LANGUAGE")
-@ResourceMenu(title = "Languages", group = "Japanese", icon = "globe", url = "/languages", order = 6, description = "Languages used for meanings and example sentences.")
+@ResourceMenu(title = "Languages", group = "Language", icon = "globe", url = "/languages", order = 6, description = "Languages used for meanings and example sentences.")
 @AutoCrud(path = "languages")
 public class Language extends BaseEntity {
 
