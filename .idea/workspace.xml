@@ -6,19 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/backend.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/backend/backend.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStubRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStubRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/JapaneseTextUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/JapaneseTextUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/TranslateController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/TranslateController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/features/translate.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/features/translate.api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -400,7 +387,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780154891240</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="feat(translation): implement translation analysis service with alternatives and grammar detection">
+      <option name="closed" value="true" />
+      <created>1780162018999</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1780162018999</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -445,9 +440,11 @@
     <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
     <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
     <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
-    <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
     <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
+    <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
+    <MESSAGE value="perf(grammar): replace runtime regex loop with Aho-Corasick + compiled-Pattern index&#10;&#10;- Add org.ahocorasick:ahocorasick 0.6.3 to pom.xml&#10;- Rewrite GrammarSpotterService: lazy-built GrammarIndex caches an&#10;  Aho-Corasick trie (plain-string markers, O(n) scan) plus pre-compiled&#10;  java.util.regex.Pattern entries (regex markers); double-checked locking&#10;  keeps the index thread-safe. Add invalidateIndex() called by seeder.&#10;- Remove spotGrammar() from OllamaClient — grammar detection is now&#10;  fully deterministic and offline; no Ollama at scan runtime.&#10;- TranslationAnalysisService: grammar = dictionary only (spotter.spot()).&#10;- GrammarDictionarySeeder: call grammarSpotter.invalidateIndex() after&#10;  each seed run so the fresh patterns are picked up immediately.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
+    <MESSAGE value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
