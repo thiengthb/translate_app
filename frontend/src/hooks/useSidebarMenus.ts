@@ -14,6 +14,20 @@ export type SidebarModuleGroup = ModuleGroupDTO & {
     modules: SidebarModule[];
 };
 
+/**
+ * Menu entries intentionally hidden from the sidebar (and therefore from the
+ * module-driven routes built off this data). These resources still exist as
+ * CRUD endpoints — the study/dictionary features use them programmatically —
+ * we just don't want admins poking at the raw tables directly.
+ */
+const HIDDEN_GROUP_NAMES = new Set(["Anki SRS", "Quizlet"]);
+const HIDDEN_MODULE_URLS = new Set([
+    "/meanings",
+    "/word-kanjis",
+    "/examples",
+    "/notifications",
+]);
+
 const menuPagination: Pagination = {
     page: 0,
     size: 9999,
@@ -44,10 +58,14 @@ export function useActiveModuleGroups(enabled = true) {
                 moduleApi.getPage(modulePagination, undefined, { ids: [], isActive: true }),
             ]);
 
-            const groups = groupPage.content ?? groupPage.items ?? [];
-            const modules = (modulePage.content ?? modulePage.items ?? []).filter((module) =>
-                canAccessByPermission(module.requiredPermission, hasPermission),
+            const groups = (groupPage.content ?? groupPage.items ?? []).filter(
+                (group) => !HIDDEN_GROUP_NAMES.has(group.name ?? ""),
             );
+            const modules = (modulePage.content ?? modulePage.items ?? [])
+                .filter((module) => !HIDDEN_MODULE_URLS.has(module.url ?? ""))
+                .filter((module) =>
+                    canAccessByPermission(module.requiredPermission, hasPermission),
+                );
 
             const groupedModules = modules.reduce<Record<string, SidebarModule[]>>((acc, module) => {
                 if (!module.moduleGroupId) return acc;

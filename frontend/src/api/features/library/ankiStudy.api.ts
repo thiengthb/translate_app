@@ -31,6 +31,8 @@ export interface AnkiStudyQueue {
   deckTitle: string;
   cards: AnkiStudyCard[];
   totalNew: number;
+  totalLearning?: number;
+  totalReview?: number;
   totalDue: number;
 }
 

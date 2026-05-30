@@ -21,7 +21,7 @@ import java.util.List;
 @Table(name = "levels")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("LEVEL")
-@ResourceMenu(title = "Cấp độ", group = "Tiếng Nhật", icon = "graduation-cap", url = "/levels", order = 5)
+@ResourceMenu(title = "Levels", group = "Language", icon = "graduation-cap", url = "/levels", order = 5, description = "JLPT proficiency levels (N5 to N1).")
 @AutoCrud(path = "levels")
 public class Level extends BaseEntity {
 

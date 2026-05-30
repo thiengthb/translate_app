@@ -63,7 +63,7 @@ export default function ProductionPage() {
 
   return (
     <MainLayout pathName={{ "/production": "Luyện viết câu" }}>
-      <div className="w-full max-w-3xl mx-auto flex flex-col gap-6">
+      <div className="w-full flex flex-col gap-6">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="animate-spin text-primary" size={32} />

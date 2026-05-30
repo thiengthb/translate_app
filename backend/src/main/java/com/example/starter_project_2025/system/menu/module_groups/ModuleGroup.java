@@ -31,9 +31,10 @@ import java.util.List;
 @ResourcePermission("MENU")
 @ResourceMenu(
         title = "Module Groups",
-        group = "System Management",
+        group = "System",
         icon = "menu_groups",
         url = "/menu-groups",
+        description = "Group sidebar menu items into sections.",
         order = 1,
         // See the matching note on Module.java — MENU_UPDATE is the manage
         // gate, MENU_READ is the metadata-read gate granted to every role.

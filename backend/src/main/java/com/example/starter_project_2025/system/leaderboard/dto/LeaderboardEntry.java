@@ -7,8 +7,9 @@ import java.util.List;
 @ResourceMenu(
         title = "Leaderboard",
         group = "Community",
-        icon = "trophy",
+        icon = "star",
         url = "/leaderboard",
+        description = "Ranking of the most active learners by streak.",
         order = 1,
         permission = ""
 )

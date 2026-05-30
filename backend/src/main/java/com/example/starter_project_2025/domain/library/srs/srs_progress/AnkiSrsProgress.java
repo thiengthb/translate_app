@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
         group = "Anki SRS",
         icon = "trending-up",
         url = "/anki/srs-progress",
+        description = "Scheduling state of each card under SRS.",
         order = 1,
         permission = "ANKI_SRS_PROGRESS_READ"
 )

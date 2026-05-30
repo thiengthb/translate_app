@@ -82,12 +82,11 @@ export function MainLayout({ children, pathName, headerExtra }: MainLayoutProps)
                 <AppShell
                     pathName={pathName}
                     headerExtra={headerExtra}
-                    onOpenShortcuts={() => shortcuts.setOpen(true)}
                 >
                     {children}
                 </AppShell>
             ) : (
-                <GuestLayout onOpenShortcuts={() => shortcuts.setOpen(true)}>
+                <GuestLayout>
                     {/* Mobile-first padding: tighter on small screens so the
                         navbar + content stay close to the edges where the
                         thumb naturally lands. */}
@@ -110,7 +109,6 @@ interface AppShellProps {
     children: ReactNode;
     pathName?: MainLayoutProps["pathName"];
     headerExtra?: MainLayoutProps["headerExtra"];
-    onOpenShortcuts: () => void;
 }
 
 /**
@@ -156,15 +154,13 @@ function AppShell({
     children,
     pathName,
     headerExtra,
-    onOpenShortcuts,
 }: AppShellProps) {
     return (
         <SidebarProvider defaultOpen={readPersistedSidebarOpen()}>
-            <SidebarMenu onOpenShortcuts={onOpenShortcuts} />
+            <SidebarMenu />
             <SidebarInset className="flex h-svh max-h-[calc(100svh-16px)] flex-col overflow-hidden min-w-0 max-w-full">
                 <MainLayoutTopBar
                     pathName={pathName}
-                    onOpenShortcuts={onOpenShortcuts}
                     headerExtra={headerExtra}
                 />
                 <ScrollHintContainer

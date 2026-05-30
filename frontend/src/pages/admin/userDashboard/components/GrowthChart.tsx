@@ -9,7 +9,8 @@ import {
     YAxis,
 } from "recharts";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import type { GrowthPoint } from "@/types/features/dashboard";
 
@@ -38,10 +39,12 @@ export function GrowthChart({ data, days, onDaysChange }: Props) {
         <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
                 <div>
-                    <CardTitle className="text-base">Tăng trưởng người dùng</CardTitle>
-                    <CardDescription>
-                        {total.toLocaleString()} đăng ký mới trong {days} ngày qua
-                    </CardDescription>
+                    <CardTitle className="text-base">
+                        <InfoLabel
+                            title="Tăng trưởng người dùng"
+                            info={`${total.toLocaleString()} đăng ký mới trong ${days} ngày qua`}
+                        />
+                    </CardTitle>
                 </div>
                 <div className="flex items-center gap-1 bg-muted/50 p-0.5 rounded-md">
                     {RANGE_OPTIONS.map((opt) => (

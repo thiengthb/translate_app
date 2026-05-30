@@ -1,6 +1,7 @@
 export * from "./features/auth.api";
+export * from "./features/assessment.api";
+export * from "./features/classroom.api";
 export * from "./features/audit.api";
-export * from "./features/demo/book.api";
 export * from "./features/words/language.api";
 export * from "./features/words/level.api";
 export * from "./features/words/representation.api";
@@ -13,6 +14,7 @@ export * from "./features/grammar/grammar-sub-use.api";
 export * from "./features/grammar/grammar-marker.api";
 export * from "./features/grammar/reference-sentence.api";
 export * from "./features/grammar/scenario-stub.api";
+export * from "./features/words/wordType.api";
 export * from "./features/dictionary.api";
 export * from "./features/library/folder.api";
 export * from "./features/library/deck.api";

@@ -28,10 +28,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @ResourceMenu(
-        title = "Từ điển",
-        group = "Tiếng Nhật",
+        title = "Dictionary",
+        group = "Language",
         icon = "book",
         url = "/dictionary",
+        description = "Look up Japanese words by kanji, kana, romaji or meaning.",
         order = 1
 )
 @Slf4j

@@ -30,6 +30,13 @@ import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import QuizListPage from "@/pages/assessment/QuizListPage";
+import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
+import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
+import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
+import QuizResultPage from "@/pages/assessment/QuizResultPage";
+import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
+import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -45,8 +52,8 @@ export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
-  { path: "/student", component: StudentLandingPage, requiredPermission: "BOOK_READ" },
-  { path: "/teacher", component: TeacherLandingPage, requiredPermission: "BOOK_UPDATE" },
+  { path: "/student", component: StudentLandingPage },
+  { path: "/teacher", component: TeacherLandingPage },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
@@ -55,6 +62,18 @@ export const routes: RouteConfig[] = [
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+
+  // ── Assessment ──
+  { path: "/quizzes", component: QuizListPage, isModuleDriven: true },
+  { path: "/quizzes/create", component: QuizCreateEditPage, requiredPermission: "QUIZ_CREATE" },
+  { path: "/quizzes/:quizId", component: QuizDetailPage, requiredPermission: "QUIZ_READ" },
+  { path: "/quizzes/:quizId/edit", component: QuizCreateEditPage, requiredPermission: "QUIZ_UPDATE" },
+  { path: "/quizzes/:quizId/attempt/:attemptId", component: QuizSessionPage, requiredPermission: "QUIZ_ATTEMPT_CREATE" },
+  { path: "/quizzes/:quizId/result/:attemptId", component: QuizResultPage, requiredPermission: "QUIZ_ATTEMPT_READ" },
+
+  // ── Classroom ──
+  { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
+  { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

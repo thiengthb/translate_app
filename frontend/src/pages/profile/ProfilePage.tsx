@@ -25,14 +25,19 @@ export default function ProfilePage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <IdentityCard profile={profile} onAvatarChange={setAvatarUrl} />
-                    <PersonalInfoCard profile={profile} onSave={saveInfo} />
-                    <AccountInfoCard profile={profile} />
-                    <SecurityCard onChangePassword={changePassword} />
-                    <LanguageCard />
-                    <TwoFactorCard />
+            {/* Uniform 2-column grid: every card is a grid cell so they line
+                up in straight rows and columns. Default `items-stretch` makes
+                the two cards in each row share the same height. */}
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                <IdentityCard profile={profile} onAvatarChange={setAvatarUrl} />
+                <PersonalInfoCard profile={profile} onSave={saveInfo} />
+                <AccountInfoCard profile={profile} />
+                <SecurityCard onChangePassword={changePassword} />
+                <LanguageCard />
+                <TwoFactorCard />
+                {/* Odd one out — span the full width so the grid doesn't end
+                    on a lonely half-row. */}
+                <div className="md:col-span-2">
                     <SessionsCard />
                 </div>
             </div>

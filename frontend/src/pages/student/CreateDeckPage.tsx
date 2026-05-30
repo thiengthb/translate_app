@@ -19,7 +19,7 @@ export default function CreateDeckPage() {
 
   return (
     <MainLayout pathName={{ "/create-deck": "Create deck" }}>
-      <div className="h-full flex flex-col -mx-6 -mt-6">
+      <div className="h-full flex flex-col w-full">
 
         {/* ── narrow centered column ── */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">

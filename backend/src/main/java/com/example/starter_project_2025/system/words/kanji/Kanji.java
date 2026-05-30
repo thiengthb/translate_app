@@ -21,7 +21,7 @@ import java.util.List;
 @Table(name = "kanjis")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("KANJI")
-@ResourceMenu(title = "Kanji", group = "Tiếng Nhật", icon = "book-open", url = "/kanjis", order = 2)
+@ResourceMenu(title = "Kanji", group = "Language", icon = "book-open", url = "/kanjis", order = 2, description = "Kanji characters with readings, meanings and stroke info.")
 @AutoCrud(path = "kanjis")
 public class Kanji extends BaseEntity {
 

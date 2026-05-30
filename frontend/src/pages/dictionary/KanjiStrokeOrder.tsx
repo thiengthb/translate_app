@@ -73,7 +73,7 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
     const [drawn,    setDrawn]    = useState(0);   // 0 = nothing, N = N strokes drawn
     const [playing,  setPlaying]  = useState(false);
     const [speedIdx, setSpeedIdx] = useState(1);
-    const timer = useRef<ReturnType<typeof setTimeout>>();
+    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const ms = SPEEDS[speedIdx].ms;
 
@@ -84,7 +84,7 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
         setStrokes([]);
         setDrawn(0);
         setPlaying(false);
-        clearTimeout(timer.current);
+        if (timer.current) clearTimeout(timer.current);
 
         fetch(`https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${toHex5(character)}.svg`)
             .then(r => { if (!r.ok) throw 0; return r.text(); })
@@ -98,7 +98,9 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
             })
             .catch(() => setPhase("error"));
 
-        return () => clearTimeout(timer.current);
+        return () => {
+            if (timer.current) clearTimeout(timer.current);
+        };
     }, [character]);
 
     // Auto-advance strokes
@@ -106,7 +108,9 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
         if (!playing) return;
         if (drawn >= strokes.length) { setPlaying(false); return; }
         timer.current = setTimeout(() => setDrawn(d => d + 1), ms + 120);
-        return () => clearTimeout(timer.current);
+        return () => {
+            if (timer.current) clearTimeout(timer.current);
+        };
     }, [playing, drawn, strokes.length, ms]);
 
     const play  = useCallback(() => { if (drawn >= strokes.length) setDrawn(0); setPlaying(true);  }, [drawn, strokes.length]);

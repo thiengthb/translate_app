@@ -32,7 +32,15 @@ export type ColorPresetId =
     | "sky"
     | "indigo"
     | "coral"
-    | "teal";
+    | "teal"
+    | "crimson"
+    | "magenta"
+    | "lime"
+    | "cyan"
+    | "violet"
+    | "stone"
+    | "pink"
+    | "gold";
 
 /**
  * Every CSS variable we override. Stored as `Record<varName, oklch>`
@@ -298,6 +306,87 @@ const SEEDS: PresetSeed[] = [
         hue: 195,
         chroma: 0.13,
         neutralHue: 195,
+    },
+    // Crimson — deep, confident red.
+    {
+        id: "crimson",
+        name: "Crimson",
+        description: "Đỏ thẫm — mạnh mẽ",
+        swatch: "#dc2626",
+        hue: 25,
+        chroma: 0.19,
+        neutralHue: 25,
+    },
+    // Magenta — vivid pink-purple.
+    {
+        id: "magenta",
+        name: "Magenta",
+        description: "Hồng cánh sen — nổi bật",
+        swatch: "#c026d3",
+        hue: 328,
+        chroma: 0.21,
+        neutralHue: 328,
+    },
+    // Lime — fresh yellow-green.
+    {
+        id: "lime",
+        name: "Lime",
+        description: "Xanh chanh — tươi tắn",
+        swatch: "#65a30d",
+        hue: 130,
+        chroma: 0.16,
+        neutralHue: 130,
+    },
+    // Cyan — bright aqua.
+    {
+        id: "cyan",
+        name: "Cyan",
+        description: "Lục lam — mát mẻ",
+        swatch: "#06b6d4",
+        hue: 205,
+        chroma: 0.15,
+        neutralHue: 205,
+    },
+    // Violet — saturated purple, brighter than Royal.
+    {
+        id: "violet",
+        name: "Violet",
+        description: "Tím violet — rực rỡ",
+        swatch: "#a855f7",
+        hue: 305,
+        chroma: 0.2,
+        neutralHue: 305,
+    },
+    // Stone — warm neutral brown-gray, near achromatic.
+    {
+        id: "stone",
+        name: "Stone",
+        description: "Nâu đá — trung tính ấm",
+        swatch: "#78716c",
+        hue: 60,
+        chroma: 0.03,
+        neutralHue: 60,
+        neutralScale: 0.35,
+    },
+    // Pink — soft candy pink.
+    {
+        id: "pink",
+        name: "Pink",
+        description: "Hồng kẹo — dịu dàng",
+        swatch: "#ec4899",
+        hue: 350,
+        chroma: 0.19,
+        neutralHue: 350,
+    },
+    // Gold — olive-gold, earthy.
+    {
+        id: "gold",
+        name: "Gold",
+        description: "Vàng kim — sang trọng",
+        swatch: "#ca8a04",
+        hue: 85,
+        chroma: 0.16,
+        neutralHue: 85,
     },
 ];
 

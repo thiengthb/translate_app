@@ -91,6 +91,40 @@ const RATING_CONFIG: {
 /* ──────────────────────────────────────────
    Page
 ────────────────────────────────────────── */
+type QueueStats = { new: number; learning: number; review: number };
+
+function isLearningState(card: AnkiStudyCard) {
+  return card.state === "LEARNING" || card.state === "RELEARNING";
+}
+
+function returnsTodayOrEarlier(nextReviewAt?: string) {
+  if (!nextReviewAt) return true;
+
+  const nextReview = new Date(nextReviewAt);
+  if (Number.isNaN(nextReview.getTime())) return true;
+
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  return nextReview <= endOfToday;
+}
+
+function shouldTrackAsSessionLearning(card: AnkiStudyCard) {
+  return isLearningState(card) && returnsTodayOrEarlier(card.nextReviewAt);
+}
+
+function countMainQueueStats(cards: AnkiStudyCard[]): QueueStats {
+  return cards.reduce<QueueStats>(
+    (acc, card) => {
+      if (card.state === "NEW") acc.new += 1;
+      else if (isLearningState(card)) acc.learning += 1;
+      else acc.review += 1;
+      return acc;
+    },
+    { new: 0, learning: 0, review: 0 }
+  );
+}
+
 export default function AnkiStudyPage() {
   const { deckId } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
@@ -103,7 +137,10 @@ export default function AnkiStudyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [totalStudied, setTotalStudied] = useState(0);
   const [totalNew, setTotalNew] = useState(0);
+  const [totalLearning, setTotalLearning] = useState(0);
+  const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
+  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0 });
   const [editOpen, setEditOpen] = useState(false);
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [fullView, setFullView] = useState(false);
@@ -118,7 +155,11 @@ export default function AnkiStudyPage() {
       .then((data) => {
         setDeckTitle(data.deckTitle);
         setQueue(data.cards);
+        setAgainQueue([]);
+        setSessionStats(countMainQueueStats(data.cards));
         setTotalNew(data.totalNew);
+        setTotalLearning(data.totalLearning ?? 0);
+        setTotalReview(data.totalReview ?? data.totalDue);
         setTotalDue(data.totalDue);
       })
       .catch(() => toast.error("Failed to load study queue."))
@@ -230,29 +271,26 @@ export default function AnkiStudyPage() {
       setTotalStudied((n) => n + 1);
       setFlipped(false);
 
-      setQueue((prev) => {
-        const rest = prev.slice(1);
+      const rest = queue.slice(1);
+      const shouldRequeueForLearning = shouldTrackAsSessionLearning(updated);
+      let nextAgainQueue = shouldRequeueForLearning ? [...againQueue, updated] : [...againQueue];
+      let nextQueue = rest;
 
-        if (rating === "AGAIN") {
-          // Re-queue the updated card at the end of the again-queue
-          setAgainQueue((aq) => [...aq, updated]);
-          if (rest.length === 0) {
+      if (nextQueue.length === 0 && nextAgainQueue.length > 0) {
+        const [next, ...remainingAgain] = nextAgainQueue;
+        nextQueue = next ? [next] : [];
+        nextAgainQueue = remainingAgain;
+      }
+
+      setQueue(nextQueue);
+      setAgainQueue(nextAgainQueue);
+      const mainStats = countMainQueueStats(nextQueue);
+      setSessionStats({ ...mainStats, learning: mainStats.learning + nextAgainQueue.length });
+
+      
             // Main queue empty — pull from again-queue
-            const [next, ...remaining] = [...againQueue, updated];
-            setAgainQueue(remaining);
-            return next ? [next] : [];
-          }
-          return rest;
-        }
 
         // HARD / GOOD / EASY — card scheduled for future, remove from session
-        if (rest.length === 0 && againQueue.length > 0) {
-          const [next, ...remaining] = againQueue;
-          setAgainQueue(remaining);
-          return [next];
-        }
-        return rest;
-      });
     } catch {
       toast.error("Failed to submit review.");
     } finally {
@@ -268,8 +306,8 @@ export default function AnkiStudyPage() {
       <div className={cn(
         "w-full space-y-6",
         fullView
-          ? "max-w-3xl mx-auto px-4 py-6 sm:py-10"
-          : "max-w-3xl mx-auto pb-16 pt-2"
+          ? "px-4 py-6 sm:py-10"
+          : "pb-16 pt-2"
       )}>
 
         {/* Header */}
@@ -287,18 +325,6 @@ export default function AnkiStudyPage() {
           )}
 
           <div className="flex items-center gap-3">
-            {!loading && !isDone && (
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-blue-500 inline-block" />
-                  {totalNew} new
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="size-2 rounded-full bg-orange-400 inline-block" />
-                  {totalDue} due
-                </span>
-              </div>
-            )}
             <button
               onClick={() => setFullView((v) => !v)}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -317,9 +343,16 @@ export default function AnkiStudyPage() {
             {deckTitle || "Loading…"}
           </h1>
           {!loading && !isDone && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {remaining} card{remaining !== 1 ? "s" : ""} remaining
-            </p>
+            <AnkiQueueSummary
+              remaining={remaining}
+              liveNew={sessionStats.new}
+              liveLearning={sessionStats.learning}
+              liveReview={sessionStats.review}
+              totalNew={totalNew}
+              totalLearning={totalLearning}
+              totalReview={totalReview}
+              totalDue={totalDue}
+            />
           )}
         </div>
 
@@ -394,37 +427,39 @@ export default function AnkiStudyPage() {
               </button>
             </div>
 
-            {/* Flip card — grows with content, min-height keeps it visually stable */}
+            {/* Open field — content shows directly on the page (no card chrome).
+               Switching sides uses a "deck shuffle" depth motion: the current
+               side pushes back into the stack while the new side comes forward. */}
             <div
               className={cn(
                 "relative cursor-pointer select-none",
                 fullView ? "min-h-[60vh]" : "min-h-64"
               )}
               onClick={() => !submitting && setFlipped((f) => !f)}
-              style={{ perspective: 1200 }}
+              style={{ perspective: 1400 }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${current.flashcardId}-${flipped}`}
-                  initial={{ rotateY: 90, opacity: 0 }}
-                  animate={{ rotateY: 0, opacity: 1 }}
-                  exit={{ rotateY: -90, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={cn(
-                    "rounded-2xl border border-border shadow-md overflow-hidden p-0",
-                    flipped ? "bg-primary/5" : "bg-card"
-                  )}
+                  initial={{ opacity: 0, scale: 0.9, y: 28, z: -160 }}
+                  animate={{ opacity: 1, scale: 1, y: 0, z: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -28, z: -160 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transformStyle: "preserve-3d" }}
+                  className="p-0"
                 >
                   <div className="flex flex-col">
-                    <span className="shrink-0 pt-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <span className="shrink-0 pt-1 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       {flipped ? "Answer" : "Question"}
                     </span>
+                    <span className="mx-auto mt-2 mb-1 h-px w-12 bg-border/70" />
 
                     {hasTemplateRender(renderData, flipped) ? (
                       <TemplateSideRender
                         html={flipped ? renderData!.backHtml : renderData!.frontHtml}
                         styling={renderData!.styling}
                         fullView={fullView}
+                        onFlip={() => !submitting && setFlipped((f) => !f)}
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-3 px-10 py-6">
@@ -536,6 +571,75 @@ export default function AnkiStudyPage() {
 }
 
 /* ── Template render helpers ── */
+/** Resolve the app's theme foreground colour so iframe content stays readable
+ *  on both light and dark backgrounds (the iframe is isolated and can't see the
+ *  app's CSS variables, and bare `inherit` falls back to the UA default black). */
+function AnkiQueueSummary({
+  remaining,
+  liveNew,
+  liveLearning,
+  liveReview,
+  totalNew,
+  totalLearning,
+  totalReview,
+  totalDue,
+}: {
+  remaining: number;
+  liveNew: number;
+  liveLearning: number;
+  liveReview: number;
+  totalNew: number;
+  totalLearning: number;
+  totalReview: number;
+  totalDue: number;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">{remaining}</span>{" "}
+        card{remaining !== 1 ? "s" : ""} remaining
+      </div>
+
+      <div
+        className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm"
+        title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
+      >
+        <QueueStat label="New" value={liveNew} dotClassName="bg-blue-500" valueClassName="text-blue-500" />
+        <QueueStat label="Learning" value={liveLearning} dotClassName="bg-orange-400" valueClassName="text-orange-500" />
+        <QueueStat label="To Review" value={liveReview} dotClassName="bg-green-500" valueClassName="text-green-600" />
+      </div>
+    </div>
+  );
+}
+
+function QueueStat({
+  label,
+  value,
+  dotClassName,
+  valueClassName,
+}: {
+  label: string;
+  value: number;
+  dotClassName: string;
+  valueClassName: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className={cn("size-2 rounded-full", dotClassName)} />
+      <span className="text-muted-foreground">{label}:</span>
+      <span className={cn("font-bold tabular-nums", valueClassName)}>{value}</span>
+    </span>
+  );
+}
+
+function appForegroundColor(): string {
+  if (typeof window === "undefined") return "#1f2937";
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--foreground")
+    .trim();
+  return v || "#1f2937";
+}
+
 function hasTemplateRender(
   render: FlashcardRenderDTO | null,
   flipped: boolean
@@ -549,15 +653,25 @@ function TemplateSideRender({
   html,
   styling,
   fullView,
+  onFlip,
 }: {
   html: string;
   styling: string | null;
   fullView: boolean;
+  onFlip: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const minH = fullView ? 320 : 200;
   const [height, setHeight] = useState<number>(minH);
 
+  // Keep the latest flip handler in a ref so the iframe effect doesn't need to
+  // re-run (and re-attach listeners) on every parent render.
+  const onFlipRef = useRef(onFlip);
+  onFlipRef.current = onFlip;
+
+  // The iframe is isolated, so `inherit` would resolve to the UA default (black)
+  // — unreadable on a dark app background. Inject the app's theme foreground.
+  const fg = appForegroundColor();
   const srcDoc = useMemo(
     () => `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light dark; }
@@ -566,18 +680,22 @@ html, body {
   padding: 16px 20px;
   font-family: ui-sans-serif, system-ui, sans-serif;
   background: transparent;
-  color: inherit;
+  color: ${fg};
   overflow: hidden;
+  cursor: pointer;
 }
+/* Let genuinely interactive elements keep their own cursor/behavior */
+a, button, input, textarea, select, audio, video, [contenteditable] { cursor: auto; }
 img, video { max-width: 100%; height: auto; }
 audio { max-width: 100%; }
 ${styling ?? ""}
 </style></head><body><div class="card">${html}</div></body></html>`,
-    [html, styling]
+    [html, styling, fg]
   );
 
-  /* Allow-same-origin lets us measure iframe content height from the parent.
-     Scripts are still blocked because allow-scripts is not in the sandbox list. */
+  /* Allow-same-origin lets us measure iframe content height from the parent
+     and forward clicks for flip. Scripts are still blocked because
+     allow-scripts is not in the sandbox list. */
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -596,7 +714,32 @@ ${styling ?? ""}
       }
     };
 
-    iframe.addEventListener("load", measure);
+    // Clicking the rendered card flips it — but ignore clicks that land on
+    // interactive content (audio/video controls, links, form fields).
+    const onClick = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("a, button, input, textarea, select, audio, video, [contenteditable]")) {
+        return;
+      }
+      onFlipRef.current();
+    };
+
+    const attachClick = () => {
+      try {
+        iframe.contentDocument?.addEventListener("click", onClick);
+      } catch {
+        // ignore
+      }
+    };
+
+    const onLoad = () => {
+      measure();
+      attachClick();
+    };
+
+    iframe.addEventListener("load", onLoad);
+    // srcDoc may already be parsed by the time this effect runs
+    attachClick();
     // images & fonts load asynchronously, so re-measure a few times
     const timers = [
       window.setTimeout(measure, 80),
@@ -604,7 +747,12 @@ ${styling ?? ""}
       window.setTimeout(measure, 800),
     ];
     return () => {
-      iframe.removeEventListener("load", measure);
+      iframe.removeEventListener("load", onLoad);
+      try {
+        iframe.contentDocument?.removeEventListener("click", onClick);
+      } catch {
+        // ignore
+      }
       timers.forEach((t) => window.clearTimeout(t));
     };
   }, [srcDoc, minH]);

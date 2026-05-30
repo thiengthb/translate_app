@@ -32,9 +32,10 @@ import java.util.Set;
 @ResourcePermission("USER")
 @ResourceMenu(
         title = "Users",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "users",
         url = "/users",
+        description = "Manage user accounts, roles and account status.",
         order = 1,
         permission = "USER_READ"
 )
