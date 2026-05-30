@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WordRepository extends BaseCrudRepository<Word, Long> {
+
+    boolean existsByWordAndIsDeletedFalse(String word);
 }

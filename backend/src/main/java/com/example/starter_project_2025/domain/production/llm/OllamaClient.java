@@ -23,7 +23,7 @@ public class OllamaClient {
     public OllamaClient(
             RestClient.Builder builder,
             @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
-            @Value("${ollama.model:qwen2.5-coder:1.5b}") String model,
+            @Value("${ollama.model:qwen2.5-coder:3b}") String model,
             ObjectMapper mapper) {
         this.restClient = builder.build();
         this.apiUrl = apiUrl;
