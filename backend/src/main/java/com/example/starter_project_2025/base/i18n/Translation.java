@@ -41,8 +41,9 @@ import lombok.experimental.SuperBuilder;
 @ResourceMenu(
         title = "Translations",
         group = "System Management",
-        icon = "menu",
+        icon = "globe",
         url = "/translations",
+        description = "Manage UI text for each supported language.",
         order = 3,
         permission = "TRANSLATION_READ"
 )

@@ -29,6 +29,7 @@ import lombok.experimental.SuperBuilder;
         group = "System Management",
         icon = "menus",
         url = "/menus",
+        description = "Configure the navigation items shown in the sidebar.",
         order = 2,
         // Reads of menu metadata are needed by every authenticated user to
         // render the nav, so MENU_READ is granted broadly (see

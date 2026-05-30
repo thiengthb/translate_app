@@ -211,7 +211,7 @@ export default function CommunityPage() {
   /* Render */
   return (
     <MainLayout pathName={{ "/community": "Community" }}>
-      <div className="flex flex-col -mx-6 -mt-6 flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
         {/* ════════ HEADER ════════ */}
         <div className="px-6 pt-5 pb-3 border-b border-border shrink-0">

@@ -19,7 +19,7 @@ export default function LeaderboardPage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-5xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 {/* ─── Header ─────────────────────────────────────────────── */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                     <div>

@@ -28,8 +28,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Study Logs",
         group = "Quizlet",
-        icon = "history",
+        icon = "activity",
         url = "/quizlet/study-logs",
+        description = "History of completed Quizlet study attempts.",
         order = 4,
         permission = "QUIZLET_STUDY_LOG_READ"
 )

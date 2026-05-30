@@ -23,7 +23,7 @@ export default function StreakPage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-7xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 {/* ─── Hero ──────────────────────────────────────────────── */}
                 <Card className="overflow-hidden p-0">
                     <div className="relative bg-gradient-to-br from-orange-500 via-orange-500/90 to-orange-600 text-white">

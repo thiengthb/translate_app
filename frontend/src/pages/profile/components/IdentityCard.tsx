@@ -23,10 +23,10 @@ export function IdentityCard({ profile, onAvatarChange }: Props) {
 
     return (
         <Card className="overflow-hidden p-0 gap-0">
-            <div className="h-24 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+            <div className="h-20 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
 
-            <CardContent className="px-6 pb-6">
-                <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14">
+            <CardContent className="px-5 pb-5">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
                     <AvatarUploader profile={profile} onAvatarChange={onAvatarChange} />
                     <div className="sm:pb-2 flex-1 min-w-0 space-y-1.5">
                         <h1 className="text-xl font-bold text-foreground leading-tight truncate">
@@ -43,7 +43,7 @@ export function IdentityCard({ profile, onAvatarChange }: Props) {
                     </div>
                 </div>
 
-                <Separator className="my-5" />
+                <Separator className="my-4" />
 
                 <div className="space-y-3">
                     <ContactRow icon={<Mail size={14} />} label={t("profile.identity.email")} value={profile?.email} />
@@ -62,7 +62,7 @@ export function IdentityCard({ profile, onAvatarChange }: Props) {
 
                 {profile?.bio && (
                     <>
-                        <Separator className="my-5" />
+                        <Separator className="my-4" />
                         <div className="space-y-1.5">
                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                 {t("profile.identity.bio")}

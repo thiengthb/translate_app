@@ -1,6 +1,7 @@
 import { Languages } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import {
     Select,
     SelectContent,
@@ -15,15 +16,14 @@ export function LanguageCard() {
     const { locale, setLocale, locales, t } = useTranslation();
 
     return (
-        <Card>
-            <CardHeader className="pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0">
                 <CardTitle className="text-base flex items-center gap-2">
                     <Languages size={16} className="text-primary" />
-                    {t("profile.language.title")}
+                    <InfoLabel title={t("profile.language.title")} info={t("profile.language.description")} />
                 </CardTitle>
-                <CardDescription>{t("profile.language.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="px-4 space-y-3">
                 <div className="space-y-2">
                     <label className="text-sm font-medium leading-none" htmlFor="profile-language">
                         {t("profile.language.label")}

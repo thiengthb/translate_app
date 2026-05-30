@@ -239,8 +239,8 @@ export default function FlashcardStudyPage() {
       <div className={cn(
         "w-full space-y-6",
         fullView
-          ? "max-w-3xl mx-auto px-4 py-6 sm:py-10"
-          : "max-w-3xl mx-auto pb-16 pt-2"
+          ? "px-4 py-6 sm:py-10"
+          : "pb-16 pt-2"
       )}>
 
         {/* Header */}

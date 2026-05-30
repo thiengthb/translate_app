@@ -21,7 +21,6 @@ import { PinnedSection } from "./PinnedSection";
 import { RecentSection } from "./RecentSection";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { SidebarBranding } from "./SidebarBranding";
-import { SidebarFooterPanel } from "./SidebarFooterPanel";
 import { SidebarSearch } from "./SidebarSearch";
 import type { SidebarNavGroup, SidebarNavItem } from "./types";
 
@@ -48,13 +47,7 @@ import { useSidebarRecent } from "./hooks/useSidebarRecent";
  *   │ [Avatar] User  🌗 ⟨      │ ← footer
  *   └──────────────────────────┘
  */
-interface SidebarMenuProps {
-    /** Forwarded down to SidebarFooterPanel so the avatar dropdown's
-     *  "Phím tắt" entry hits the same global dialog the header opens. */
-    onOpenShortcuts?: () => void;
-}
-
-export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
+export function SidebarMenu() {
     const location = useLocation();
     const { state } = useSidebar();
     const isCollapsed = state !== "expanded";
@@ -268,8 +261,6 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                     ))}
                 </ScrollHintContainer>
             </SidebarContent>
-
-            <SidebarFooterPanel onOpenShortcuts={onOpenShortcuts} />
         </Sidebar>
     );
 }

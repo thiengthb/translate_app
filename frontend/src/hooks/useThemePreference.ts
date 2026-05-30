@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { profileApi } from "@/api/features/profile.api";
 import { logger } from "@/lib/logger";
+import { playThemeTransition } from "@/lib/theme-transition";
 import { setTheme as setThemeAction } from "@/store/slices/auth/authSlice";
 import type { RootState } from "@/store/store";
 
@@ -142,6 +143,7 @@ export function useThemePreference() {
     const setThemePreference = useCallback(
         (next: ThemePreference) => {
             if (next === themePreference) return;
+            playThemeTransition();
             setThemePreferenceState(next);
             if (isAuthenticated && lastSyncedRef.current !== next) {
                 lastSyncedRef.current = next;

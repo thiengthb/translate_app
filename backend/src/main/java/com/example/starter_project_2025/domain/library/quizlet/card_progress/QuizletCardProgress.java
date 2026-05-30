@@ -30,8 +30,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Card Progress",
         group = "Quizlet",
-        icon = "chart-bar",
+        icon = "bar-chart",
         url = "/quizlet/card-progress",
+        description = "Per-card study progress in Quizlet mode.",
         order = 1,
         permission = "QUIZLET_CARD_PROGRESS_READ"
 )

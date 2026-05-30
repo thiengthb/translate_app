@@ -48,7 +48,6 @@ public class RoleDataInitializer implements CommandLineRunner {
                 "Student with read access to decks and full control over personal folders, favorites, and quizlet study",
                 findPermissions(
                         "MENU_READ",
-                        "BOOK_READ",
                         "TAG_READ", "TAG_CREATE", "TAG_UPDATE", "TAG_DELETE",
                         "DECK_READ", "DECK_CREATE", "DECK_UPDATE", "DECK_DELETE",
                         "DECK_ITEM_READ", "DECK_ITEM_CREATE", "DECK_ITEM_UPDATE", "DECK_ITEM_DELETE",
@@ -71,8 +70,8 @@ public class RoleDataInitializer implements CommandLineRunner {
 
         upsertRole(
                 TEACHER_ROLE,
-                "Teacher with book management permissions",
-                findPermissions("MENU_READ", "BOOK_CREATE", "BOOK_READ", "BOOK_UPDATE", "BOOK_DELETE")
+                "Teacher",
+                findPermissions("MENU_READ")
         );
 
         log.info("Ensured roles and permission mappings: ADMIN, STUDENT, TEACHER.");

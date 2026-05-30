@@ -245,7 +245,7 @@ export default function DictionaryPage() {
 
     return (
         <MainLayout pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}>
-            <div className="w-full max-w-4xl mx-auto space-y-4">
+            <div className="w-full space-y-4">
 
                 {/* ── Hero / Search card ───────────────────────────── */}
                 <Card className="relative">

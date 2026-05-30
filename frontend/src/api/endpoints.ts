@@ -26,7 +26,6 @@ export const ENDPOINTS = {
     USERS: "/users",
     ROLES: "/roles",
     PERMISSIONS: "/permissions",
-    BOOKS: "/books",
     TAGS: "/tags",
     DASHBOARD_STATS: "/dashboard/stats",
     AUDIT_LOGS: "/audit-logs",
