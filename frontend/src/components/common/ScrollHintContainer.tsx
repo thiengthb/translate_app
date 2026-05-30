@@ -209,9 +209,13 @@ function ScrollHintButton({ edge, visible, onClick }: ScrollHintButtonProps) {
                 aria-label={EDGE_LABEL[edge]}
                 tabIndex={visible ? 0 : -1}
                 className={cn(
-                    "pointer-events-auto inline-flex h-6 w-6 items-center justify-center rounded-full",
+                    "inline-flex h-6 w-6 items-center justify-center rounded-full",
                     "bg-background/90 text-foreground shadow-md ring-1 ring-border/60 backdrop-blur",
                     "hover:bg-background hover:scale-105 active:scale-95 transition-all cursor-pointer",
+                    // Only intercept clicks while visible — an invisible chevron
+                    // must not block the element underneath (e.g. the first
+                    // sidebar item when the rail sits at the top edge).
+                    visible ? "pointer-events-auto" : "pointer-events-none",
                 )}
             >
                 <Icon size={13} />

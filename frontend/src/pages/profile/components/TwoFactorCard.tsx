@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Loader2, Lock, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -121,19 +122,18 @@ export function TwoFactorCard() {
     const remaining = status?.remainingRecoveryCodes ?? 0;
 
     return (
-        <Card>
-            <CardHeader className="pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0">
                 <CardTitle className="text-base flex items-center gap-2">
                     {enabled ? (
                         <ShieldCheck size={16} className="text-primary" />
                     ) : (
                         <ShieldOff size={16} className="text-muted-foreground" />
                     )}
-                    {t("twofa.title")}
+                    <InfoLabel title={t("twofa.title")} info={t("twofa.description")} />
                 </CardTitle>
-                <CardDescription>{t("twofa.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-4 space-y-4">
                 {loading ? (
                     <div className="flex justify-center py-4">
                         <Loader2 size={20} className="animate-spin text-primary" />

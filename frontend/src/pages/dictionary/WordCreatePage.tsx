@@ -151,7 +151,7 @@ export default function WordCreatePage() {
 
     return (
         <MainLayout pathName={{ "/words": "Từ vựng", "/words/create": "Tạo từ vựng" }}>
-            <div className="w-full max-w-3xl mx-auto space-y-4 pb-8">
+            <div className="w-full space-y-4 pb-8">
 
                 {/* Header */}
                 <div className="flex items-center gap-3">

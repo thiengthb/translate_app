@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { deckApi, tagApi } from "@/api";
@@ -6,11 +6,19 @@ import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { FlashcardSettingsModal } from "@/pages/student/FlashcardSettingsModal";
 import { PaginationBar } from "@/components/common/PaginationBar";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { cn } from "@/lib/utils";
 
 const DECKS_PER_PAGE = 12;
+
+/* Directional horizontal slide for page changes (next → slide left, prev → slide right). */
+const pageSlideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
+};
 import {
-  BookOpen, Brain, Check, LayoutGrid, List,
+  BookOpen, Brain, Check, ChevronDown, ChevronUp, LayoutGrid, List,
   MoreHorizontal, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
 } from "lucide-react";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -57,10 +65,12 @@ export default function LibraryPage() {
   const [tags, setTags] = useState<TagDTO[]>([]);
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [openDeckMenu, setOpenDeckMenu] = useState<number | null>(null);
   const [settingsDeck, setSettingsDeck] = useState<DeckDTO | null>(null);
   const [page, setPage] = useState(1); // 1-based
+  const [pageDir, setPageDir] = useState(0); // 1 = next, -1 = prev (drives slide direction)
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "list"; } catch { return "list"; }
   });
@@ -76,6 +86,12 @@ export default function LibraryPage() {
     tagApi.getPage({ page: 0, size: 100 }).then((r) => setTags(r.content ?? (r as any).items ?? []));
   }, []);
 
+  /* Debounce the search box so we don't hit the API on every keystroke. */
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(searchQuery), 250);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
+
   useEffect(() => {
     const userId = getCurrentUserId();
     if (userId == null) {
@@ -84,10 +100,10 @@ export default function LibraryPage() {
     }
     setIsLoading(true);
     deckApi
-      .getPage({ page: 0, size: 100 }, searchQuery, { userId } as never)
+      .getPage({ page: 0, size: 100 }, debouncedSearch || undefined, { userId } as never)
       .then((r) => setDecks(r.content ?? (r as any).items ?? []))
       .finally(() => setIsLoading(false));
-  }, [searchQuery]);
+  }, [debouncedSearch]);
 
   /* ── Derived ── */
   const filteredDecks = useMemo(() => {
@@ -105,8 +121,14 @@ export default function LibraryPage() {
 
   // Reset to the first page whenever the filtered set changes.
   useEffect(() => {
+    setPageDir(-1);
     setPage(1);
-  }, [selectedTagId, searchQuery]);
+  }, [selectedTagId, debouncedSearch]);
+
+  const handlePageChange = (next: number) => {
+    setPageDir(next >= safePage ? 1 : -1);
+    setPage(next);
+  };
 
   /* ── Actions ── */
   const changeViewMode = (mode: ViewMode) => {
@@ -159,29 +181,16 @@ export default function LibraryPage() {
 
   return (
     <MainLayout pathName={{ "/library": "Your Library" }}>
-      <div className="flex flex-col -mx-6 -mt-6 flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
         {/* ════════ TOP — Tags + Create ════════ */}
-        <div className="flex items-center gap-3 px-6 pt-5 pb-3 border-b border-border shrink-0">
-          <div className="flex items-center gap-2 flex-1 overflow-x-auto min-w-0 pb-0.5 scrollbar-none">
-            <TagTab label="All" active={selectedTagId === null} onClick={() => setSelectedTagId(null)} />
-            {tags.map((tag) => (
-              <TagTab
-                key={tag.id}
-                label={tag.name ?? "—"}
-                color={tag.color}
-                active={selectedTagId === tag.id}
-                onClick={() => setSelectedTagId(selectedTagId === tag.id ? null : tag.id!)}
-              />
-            ))}
-            <button
-              onClick={() => setNewTagOpen(true)}
-              className="shrink-0 size-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              title="New tag"
-            >
-              <Plus className="size-3.5" />
-            </button>
-          </div>
+        <div className="flex items-start gap-3 px-6 pt-5 pb-3 border-b border-border shrink-0">
+          <TagFilterBar
+            tags={tags}
+            selectedTagId={selectedTagId}
+            onSelect={setSelectedTagId}
+            onNewTag={() => setNewTagOpen(true)}
+          />
 
           <button
             onClick={() => navigate("/create-deck")}
@@ -250,8 +259,8 @@ export default function LibraryPage() {
         </div>
 
         {/* ════════ CONTENT ════════ */}
-        <div className="flex-1 overflow-y-auto px-6 min-h-0">
-          {isLoading ? (
+        <ScrollHintContainer axis="vertical" viewportClassName="px-6">
+          {isLoading && decks.length === 0 ? (
             <div className="flex items-center justify-center h-40">
               <div className="size-5 border-2 border-border border-t-foreground rounded-full animate-spin" />
             </div>
@@ -270,48 +279,49 @@ export default function LibraryPage() {
                   : "No decks yet — create one!"}
               </p>
             </motion.div>
-          ) : viewMode === "list" ? (
-            /* ─── LIST VIEW (Quizlet-style) ─── */
-            <ul className="space-y-1 py-2 pb-6">
-              <AnimatePresence initial={false} mode="popLayout">
-                {pagedDecks.map((deck, i) => (
-                  <motion.li
-                    key={deck.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{ duration: 0.14, delay: Math.min(i * 0.025, 0.18) }}
-                    className="relative"
-                    style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                  >
-                    <DeckRow {...itemProps(deck)} />
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
           ) : (
-            /* ─── GRID VIEW (Mazii-style) ─── */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
-              <AnimatePresence initial={false} mode="popLayout">
-                {pagedDecks.map((deck, i) => (
-                  <motion.div
-                    key={deck.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.92, y: 14 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.88 }}
-                    transition={{ duration: 0.18, delay: Math.min(i * 0.04, 0.24) }}
-                    className="relative"
-                    style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                  >
-                    <DeckCard {...itemProps(deck)} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+            /* ─── Sliding page container (direction follows next/prev) ─── */
+            <AnimatePresence mode="wait" custom={pageDir} initial={false}>
+              <motion.div
+                key={safePage}
+                custom={pageDir}
+                variants={pageSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {viewMode === "list" ? (
+                  /* ─── LIST VIEW (Quizlet-style) ─── */
+                  <ul className="space-y-1 py-2 pb-6">
+                    {pagedDecks.map((deck) => (
+                      <li
+                        key={deck.id}
+                        className="relative"
+                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
+                      >
+                        <DeckRow {...itemProps(deck)} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  /* ─── GRID VIEW (Mazii-style) ─── */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
+                    {pagedDecks.map((deck) => (
+                      <div
+                        key={deck.id}
+                        className="relative"
+                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
+                      >
+                        <DeckCard {...itemProps(deck)} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
-        </div>
+        </ScrollHintContainer>
 
         {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
         {!isLoading && totalPages > 1 && (
@@ -319,7 +329,7 @@ export default function LibraryPage() {
             <PaginationBar
               currentPage={safePage}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
               totalItems={filteredDecks.length}
             />
           </div>
@@ -426,6 +436,95 @@ function TagTab({ label, color, active, onClick }: {
       {color && <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />}
       {label}
     </button>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Tag filter bar — wraps to one row by default; expands when there are
+   too many tags so they never run off-screen or force horizontal scrolling.
+───────────────────────────────────────── */
+function TagFilterBar({
+  tags,
+  selectedTagId,
+  onSelect,
+  onNewTag,
+}: {
+  tags: TagDTO[];
+  selectedTagId: number | null;
+  onSelect: (id: number | null) => void;
+  onNewTag: () => void;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  // Detect whether the (collapsed) single row is hiding any tags.
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const measure = () => {
+      if (expanded) return; // while expanded we always offer "Thu gọn"
+      setOverflowing(el.scrollHeight - el.clientHeight > 4);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [tags, expanded]);
+
+  const showToggle = expanded || overflowing;
+
+  return (
+    <div className="flex items-start gap-2 flex-1 min-w-0">
+      <div
+        ref={rowRef}
+        className={cn(
+          "flex flex-wrap items-center gap-2 min-w-0",
+          expanded
+            ? "max-h-40 overflow-y-auto scrollbar-none"
+            : "max-h-9 overflow-hidden"
+        )}
+      >
+        <TagTab label="All" active={selectedTagId === null} onClick={() => onSelect(null)} />
+        {tags.map((tag) => (
+          <TagTab
+            key={tag.id}
+            label={tag.name ?? "—"}
+            color={tag.color}
+            active={selectedTagId === tag.id}
+            onClick={() => onSelect(selectedTagId === tag.id ? null : tag.id!)}
+          />
+        ))}
+      </div>
+
+      {/* Right-side controls stay visible regardless of collapse state */}
+      <div className="shrink-0 flex items-center gap-2">
+        {showToggle && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="inline-flex items-center gap-1 px-2.5 h-8 rounded-full border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors whitespace-nowrap"
+            title={expanded ? "Collapse tags" : "Show all tags"}
+          >
+            {expanded ? (
+              <><ChevronUp className="size-3.5" /> Thu gọn</>
+            ) : (
+              <><ChevronDown className="size-3.5" /> Tất cả thẻ</>
+            )}
+          </button>
+        )}
+        <button
+          onClick={onNewTag}
+          className="size-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+          title="New tag"
+        >
+          <Plus className="size-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }
 

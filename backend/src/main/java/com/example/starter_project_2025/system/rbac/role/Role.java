@@ -34,6 +34,7 @@ import java.util.Set;
         group = "RBAC Management",
         icon = "roles",
         url = "/roles",
+        description = "Sets of permissions assigned to users.",
         order = 2,
         permission = "ROLE_READ"
 )

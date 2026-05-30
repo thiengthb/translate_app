@@ -21,7 +21,7 @@ import java.util.List;
 @Table(name = "representations")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("REPRESENTATION")
-@ResourceMenu(title = "Kiểu chữ", group = "Tiếng Nhật", icon = "type", url = "/representations", order = 4)
+@ResourceMenu(title = "Representations", group = "Japanese", icon = "file-text", url = "/representations", order = 4, description = "Writing forms: hiragana, katakana, kanji.")
 @AutoCrud(path = "representations")
 public class Representation extends BaseEntity {
 

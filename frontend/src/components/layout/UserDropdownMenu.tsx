@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-    Check,
     Keyboard,
     LogOut,
-    Settings,
     Settings2,
     User as UserIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import {
     DropdownMenu,
@@ -16,18 +15,13 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { THEME_OPTIONS } from "@/components/ToggleTheme";
 
 import { profileApi } from "@/api/features/profile.api";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useLogout } from "@/hooks/useLogout";
-import { useThemePreference } from "@/hooks/useThemePreference";
-import type { Locale } from "@/i18n";
+import { SHORTCUTS_PAGE_PATH } from "@/lib/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 
@@ -42,8 +36,6 @@ interface UserDropdownMenuProps {
     variant?: Variant;
     /** Where the dropdown content opens. */
     side?: Side;
-    /** Optional shortcuts dialog opener. */
-    onOpenShortcuts?: () => void;
 }
 
 /**
@@ -81,7 +73,6 @@ interface UserDropdownMenuProps {
 export function UserDropdownMenu({
     variant = "compact",
     side = "bottom",
-    onOpenShortcuts,
 }: UserDropdownMenuProps) {
     const navigate = useNavigate();
     const { firstName, lastName, email } = useSelector(
@@ -166,122 +157,88 @@ export function UserDropdownMenu({
                 <DropdownMenuSeparator />
 
                 {/* ── Account ──────────────────────────────────────────── */}
-                <DropdownMenuItem
+                <MenuRow
+                    icon={UserIcon}
+                    label={t("nav.profile")}
                     onSelect={() => navigate("/profile")}
-                    className="gap-2 text-sm cursor-pointer"
-                >
-                    <UserIcon size={14} className="opacity-70" />
-                    <span className="flex-1">{t("nav.profile")}</span>
-                </DropdownMenuItem>
+                />
 
                 {/* ── Tools ────────────────────────────────────────────── */}
-                {onOpenShortcuts && (
-                    <DropdownMenuItem
-                        onSelect={onOpenShortcuts}
-                        className="gap-2 text-sm cursor-pointer"
-                    >
-                        <Keyboard size={14} className="opacity-70" />
-                        <span className="flex-1">Phím tắt</span>
-                        <kbd className="text-[10px] text-muted-foreground tabular-nums">
-                            ?
-                        </kbd>
-                    </DropdownMenuItem>
-                )}
+                {/* Goes straight to the full docs page; the quick popup is
+                    still one `?` keypress away (hinted by the kbd). */}
+                <MenuRow
+                    icon={Keyboard}
+                    label="Phím tắt"
+                    hint="?"
+                    onSelect={() => navigate(SHORTCUTS_PAGE_PATH)}
+                />
 
-                {/* Full settings page — palette + theme + language with
-                    more room to choose than the quick submenu below. */}
-                <DropdownMenuItem
+                {/* Full settings page — palette + theme + language. */}
+                <MenuRow
+                    icon={Settings2}
+                    label="Cài đặt"
                     onSelect={() => navigate("/settings")}
-                    className="gap-2 text-sm cursor-pointer"
-                >
-                    <Settings2 size={14} className="opacity-70" />
-                    <span className="flex-1">Cài đặt</span>
-                </DropdownMenuItem>
-
-                {/* Quick palette + theme + language toggle (compact). */}
-                <PreferencesSubMenu />
+                />
 
                 <DropdownMenuSeparator />
 
                 {/* ── Logout ───────────────────────────────────────────── */}
-                <DropdownMenuItem
+                <MenuRow
+                    icon={LogOut}
+                    label={t("nav.logout")}
+                    hint="⇧+L"
                     onSelect={handleLogout}
-                    className="gap-2 text-sm text-rose-600 focus:text-rose-600 focus:bg-rose-500/10 cursor-pointer"
-                >
-                    <LogOut size={14} />
-                    <span className="flex-1">{t("nav.logout")}</span>
-                    <kbd className="text-[10px] text-muted-foreground tabular-nums">
-                        ⇧+L
-                    </kbd>
-                </DropdownMenuItem>
+                    destructive
+                />
             </DropdownMenuContent>
         </DropdownMenu>
     );
 }
 
-// ─── Settings submenu (language + theme inline as one slide-out) ───────────
-function PreferencesSubMenu() {
-    const { t, locale, setLocale, locales } = useTranslation();
-    const { themePreference, setThemePreference } = useThemePreference();
-
+// ─── Menu row ────────────────────────────────────────────────────────────────
+/**
+ * Consistent dropdown row: icon in a soft rounded chip (tints to primary on
+ * highlight), label, and an optional right-aligned keyboard hint.
+ */
+function MenuRow({
+    icon: Icon,
+    label,
+    hint,
+    onSelect,
+    destructive = false,
+}: {
+    icon: LucideIcon;
+    label: string;
+    hint?: string;
+    onSelect: () => void;
+    destructive?: boolean;
+}) {
     return (
-        <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="gap-2 text-sm">
-                <Settings size={14} className="opacity-70" />
-                <span>Tùy chỉnh</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-56">
-                {/* Language */}
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                    Ngôn ngữ
-                </DropdownMenuLabel>
-                {locales.map((l) => {
-                    const active = l.code === locale;
-                    return (
-                        <DropdownMenuItem
-                            key={l.code}
-                            onSelect={() => setLocale(l.code as Locale)}
-                            className={cn(
-                                "gap-2 text-sm cursor-pointer",
-                                active && "bg-accent",
-                            )}
-                        >
-                            <span aria-hidden>{l.flag}</span>
-                            <span className="flex-1">{t(l.labelKey)}</span>
-                            {active && (
-                                <Check size={13} className="text-primary" />
-                            )}
-                        </DropdownMenuItem>
-                    );
-                })}
-
-                <DropdownMenuSeparator />
-
-                {/* Theme */}
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                    Giao diện
-                </DropdownMenuLabel>
-                {THEME_OPTIONS.map(({ value, label, Icon }) => {
-                    const active = themePreference === value;
-                    return (
-                        <DropdownMenuItem
-                            key={value}
-                            onSelect={() => setThemePreference(value)}
-                            className={cn(
-                                "gap-2 text-sm cursor-pointer",
-                                active && "bg-accent",
-                            )}
-                        >
-                            <Icon size={14} className="opacity-70" />
-                            <span className="flex-1">{label}</span>
-                            {active && (
-                                <Check size={13} className="text-primary" />
-                            )}
-                        </DropdownMenuItem>
-                    );
-                })}
-            </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuItem
+            onSelect={onSelect}
+            className={cn(
+                "group gap-2.5 rounded-md px-2 py-2 text-sm cursor-pointer",
+                destructive &&
+                    "text-rose-600 focus:text-rose-600 focus:bg-rose-500/10",
+            )}
+        >
+            <span
+                className={cn(
+                    "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors",
+                    destructive
+                        ? "bg-rose-500/10 text-rose-600"
+                        : "bg-muted text-muted-foreground group-focus:bg-primary/10 group-focus:text-primary",
+                )}
+            >
+                <Icon size={15} />
+            </span>
+            <span className="flex-1 font-medium">{label}</span>
+            {hint && (
+                <kbd className="rounded border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums">
+                    {hint}
+                </kbd>
+            )}
+        </DropdownMenuItem>
     );
 }
 

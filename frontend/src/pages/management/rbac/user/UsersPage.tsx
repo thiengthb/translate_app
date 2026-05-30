@@ -58,5 +58,9 @@ export default function UsersPage() {
 // ─── Manage tab: the User CRUD ProTable ─────────────────────────────────────
 function ManageTab() {
     const table = useProTable(entityConfig.api, entityConfig.schema);
-    return <ProTable table={table} />;
+    return (
+        <div className="w-full flex-1 min-h-0 flex flex-col min-w-0">
+            <ProTable table={table} />
+        </div>
+    );
 }

@@ -20,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "meanings")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("MEANING")
-@ResourceMenu(title = "Nghĩa", group = "Tiếng Nhật", icon = "message-square", url = "/meanings", order = 3)
+@ResourceMenu(title = "Meanings", group = "Japanese", icon = "message", url = "/meanings", order = 3, description = "Word meanings/translations per language.")
 @AutoCrud(path = "meanings")
 public class Meaning extends BaseEntity {
 

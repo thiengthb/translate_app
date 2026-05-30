@@ -6,8 +6,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 interface MainLayoutTopBarProps {
     /** Path → title map used by DynamicBreadcrumbs to override auto-generated labels. */
     pathName?: Record<string, string>;
-    /** Opens the global keyboard shortcuts dialog (passed through to HeaderRight). */
-    onOpenShortcuts?: () => void;
     /** Optional content rendered to the right of the breadcrumb — used by
      *  pages that need tabs / segmented controls / quick filters at the
      *  chrome level (e.g. `/users` has Manage / Analytic tabs here). */
@@ -36,7 +34,6 @@ interface MainLayoutTopBarProps {
  */
 export function MainLayoutTopBar({
     pathName,
-    onOpenShortcuts,
     headerExtra,
 }: MainLayoutTopBarProps) {
     return (
@@ -62,7 +59,7 @@ export function MainLayoutTopBar({
                 </>
             )}
             <div className="flex-1" />
-            <HeaderRight onOpenShortcuts={onOpenShortcuts} />
+            <HeaderRight />
         </header>
     );
 }

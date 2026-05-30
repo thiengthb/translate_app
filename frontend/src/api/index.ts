@@ -2,7 +2,6 @@ export * from "./features/auth.api";
 export * from "./features/assessment.api";
 export * from "./features/classroom.api";
 export * from "./features/audit.api";
-export * from "./features/demo/book.api";
 export * from "./features/words/language.api";
 export * from "./features/words/level.api";
 export * from "./features/words/representation.api";

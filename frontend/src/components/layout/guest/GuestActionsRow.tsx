@@ -19,9 +19,6 @@ import type { RootState } from "@/store/store";
 interface GuestActionsRowProps {
     /** Hide login/register buttons on `/login`, `/register`, etc. */
     isAuthPage: boolean;
-    /** Forwarded into the avatar dropdown — opens the global shortcuts
-     *  dialog mounted in MainLayout. */
-    onOpenShortcuts?: () => void;
 }
 
 /**
@@ -43,10 +40,7 @@ interface GuestActionsRowProps {
  * one canonical "me / settings" entry. Guests keep them inline since
  * they have no avatar yet.
  */
-export function GuestActionsRow({
-    isAuthPage,
-    onOpenShortcuts,
-}: GuestActionsRowProps) {
+export function GuestActionsRow({ isAuthPage }: GuestActionsRowProps) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -81,11 +75,7 @@ export function GuestActionsRow({
                     <MoreMenu streakCount={streak?.currentStreak} />
                 </div>
 
-                <UserDropdownMenu
-                    variant="compact"
-                    side="bottom"
-                    onOpenShortcuts={onOpenShortcuts}
-                />
+                <UserDropdownMenu variant="compact" side="bottom" />
             </div>
         );
     }

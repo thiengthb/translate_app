@@ -145,7 +145,7 @@ export function TableView({
         (showActionsColumn ? 1 : 0);
 
     return (
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="relative flex-1 min-h-0 flex flex-col">
             {/* ScrollHintContainer replaces the previous `<div overflow-auto>`
                 — it provides the single y+x scroll surface that the sticky
                 cells need (sticky positions relative to nearest scrolling
@@ -328,9 +328,14 @@ export function TableView({
                 </DndContext>
             </ScrollHintContainer>
 
+            {/* Empty / no-result state — overlays the whole table region and
+                centers in its TRUE middle. Absolute (not a flex sibling) so it
+                doesn't split height with the scroll area and get pushed into
+                the lower half. `pointer-events-none` lets header sorting still
+                work; the message itself re-enables clicks for its action. */}
             {!showSkeleton && !hasRows && (
-                <div className="flex-1 flex items-center justify-center">
-                    {renderEmptyState()}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="pointer-events-auto">{renderEmptyState()}</div>
                 </div>
             )}
         </div>

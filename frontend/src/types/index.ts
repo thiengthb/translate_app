@@ -10,7 +10,6 @@ export * from "./common/registry";
 export * from "./features/assessment";
 export * from "./features/classroom";
 export * from "./features/auth";
-export * from "./features/demo/book";
 export * from "./features/words";
 export * from "./features/library/folder";
 export * from "./features/library/deck";

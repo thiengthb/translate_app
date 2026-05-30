@@ -5,7 +5,6 @@ import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.domain.library.flashcard.FlashcardTemplate;
 import com.example.starter_project_2025.domain.library.folder.Folder;
 import com.example.starter_project_2025.domain.library.tag.Tag;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.persistence.*;
@@ -25,14 +24,6 @@ import java.util.Set;
 @Table(name = "decks")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("DECK")
-@ResourceMenu(
-        title = "Decks",
-        group = "Library",
-        icon = "layer-group",
-        url = "/decks",
-        order = 3,
-        permission = "DECK_READ"
-)
 @EntityLabel(name = "Deck", plural = "Decks", description = "Study deck management")
 @AutoCrud(path = "decks")
 @Searchable(fields = {"title", "description"})

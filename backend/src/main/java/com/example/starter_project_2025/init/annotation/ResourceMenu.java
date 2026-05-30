@@ -20,4 +20,12 @@ public @interface ResourceMenu {
     int order() default 0;
 
     String permission() default "";
+
+    /**
+     * Short, human-friendly explanation of what this page/resource is for.
+     * Surfaced in the UI as a tooltip (the ⓘ next to a breadcrumb / card
+     * title) so the visible label can stay terse. Copied into
+     * {@code Module.description} by {@code AutoMenuInitializer}.
+     */
+    String description() default "";
 }

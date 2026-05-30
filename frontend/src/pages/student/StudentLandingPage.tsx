@@ -1,12 +1,10 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTranslation } from "@/contexts/I18nContext";
 import { formatRoleLabel } from "@/utils/rbac.utils";
 import { motion } from "motion/react";
-import { ArrowRight, BookOpen, CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BookOpen, CheckCircle2 } from "lucide-react";
 import type { MessageKey } from "@/i18n";
 
 const CHECKLIST: Array<{ titleKey: MessageKey; textKey: MessageKey }> = [
@@ -15,15 +13,15 @@ const CHECKLIST: Array<{ titleKey: MessageKey; textKey: MessageKey }> = [
 ];
 
 export default function StudentLandingPage() {
-    const { user, activeRole, hasPermission } = usePermissions();
+    const { user, activeRole } = usePermissions();
     const { t } = useTranslation();
 
     const displayName =
         [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
-    const canReadBooks = hasPermission("BOOK_READ");
 
     return (
         <MainLayout>
+            <div className="w-full">
             <section className="relative overflow-hidden rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 p-6 sm:p-8">
                 <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-cyan-200/50 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-16 -left-8 h-44 w-44 rounded-full bg-emerald-200/50 blur-3xl" />
@@ -50,21 +48,6 @@ export default function StudentLandingPage() {
                     <p className="mt-3 max-w-2xl text-sm text-foreground sm:text-base">
                         {t("student.intro")}
                     </p>
-
-                    <div className="mt-6 flex flex-wrap gap-3">
-                        {canReadBooks ? (
-                            <Button asChild className="bg-foreground text-background hover:bg-foreground/90">
-                                <Link to="/books">
-                                    {t("student.openBooks")}
-                                    <ArrowRight className="ml-2 size-4" />
-                                </Link>
-                            </Button>
-                        ) : (
-                            <Button disabled variant="outline" className="border-border bg-background/80">
-                                {t("student.noPermission")}
-                            </Button>
-                        )}
-                    </div>
                 </motion.div>
             </section>
 
@@ -98,6 +81,7 @@ export default function StudentLandingPage() {
                     <p className="text-sm">{t("student.contact")}</p>
                 </div>
             </motion.section>
+            </div>
         </MainLayout>
     );
 }

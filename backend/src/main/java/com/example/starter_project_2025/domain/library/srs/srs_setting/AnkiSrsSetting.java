@@ -32,6 +32,7 @@ import lombok.experimental.SuperBuilder;
         group = "Anki SRS",
         icon = "settings",
         url = "/anki/settings",
+        description = "Per-user Anki scheduling preferences.",
         order = 6,
         permission = "ANKI_SRS_SETTING_READ"
 )

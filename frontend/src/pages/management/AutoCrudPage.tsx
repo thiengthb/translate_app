@@ -28,7 +28,9 @@ export const AutoCrudPage = ({ entity }: any) => {
 
     return (
         <MainLayout pathName={{ [entity.path]: entity.name }}>
-            <ProTable table={table} headerActions={headerActions} />
+            <div className="w-full flex-1 min-h-0 flex flex-col min-w-0">
+                <ProTable table={table} headerActions={headerActions} />
+            </div>
         </MainLayout>
     );
 };

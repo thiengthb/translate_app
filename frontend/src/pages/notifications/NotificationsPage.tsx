@@ -138,7 +138,7 @@ export default function NotificationsPage() {
 
     return (
         <MainLayout pathName={{ "/notifications": "Thông báo" }}>
-            <div className="max-w-3xl mx-auto w-full space-y-4">
+            <div className="w-full space-y-4">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <header className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
