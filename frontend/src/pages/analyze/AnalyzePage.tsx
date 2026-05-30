@@ -7,13 +7,18 @@ import {
   Loader2,
   X,
   Sparkles,
-
+  CheckCircle2,
+  LayoutGrid,
+  BookOpen,
+  Quote,
+  Brain,
 } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Select,
@@ -37,7 +42,13 @@ const DEBOUNCE_MS = 600;
 
 /** Editing-tool rows that require DeepL Pro (no Free-API equivalent) — shown
  *  disabled, mirroring deepl.com. */
-
+const PRO_TOOLS = [
+  { key: "clarify",              label: "Clarify",              icon: CheckCircle2 },
+  { key: "style-profiles",       label: "Style profiles",       icon: LayoutGrid   },
+  { key: "glossaries",           label: "Glossaries",           icon: BookOpen     },
+  { key: "style-rules",          label: "Style rules",          icon: Quote        },
+  { key: "translation-memories", label: "Translation memories", icon: Brain        },
+] as const;
 
 /** Resolve a code in `list`, tolerating DeepL's regional split
  *  (target "EN-US" ↔ source "EN"). */
@@ -293,7 +304,25 @@ export default function AnalyzePage() {
           <Separator />
 
           {/* Pro-only tools — visual parity with deepl.com */}
-
+          <div className="flex flex-col gap-1">
+            {PRO_TOOLS.map(({ key, label, icon: Icon }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between rounded-md px-2 py-2 text-sm text-muted-foreground/70 cursor-not-allowed select-none"
+              >
+                <span className="flex items-center gap-2">
+                  <Icon size={16} />
+                  {label}
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="bg-emerald-600 text-white hover:bg-emerald-600"
+                >
+                  Pro
+                </Badge>
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
     </MainLayout>

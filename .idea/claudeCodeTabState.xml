@@ -8,7 +8,8 @@
             <TabSessionState>
               <option name="provider" value="claude" />
               <option name="sessionId" value="4d685978-c13b-4b4b-8199-3037200205df" />
-              <option name="model" value="claude-opus-4-8[1m]" />
+              <option name="cwd" value="$PROJECT_DIR$" />
+              <option name="model" value="claude-haiku-4-5" />
               <option name="permissionMode" value="plan" />
               <option name="reasoningEffort" value="high" />
             </TabSessionState>
