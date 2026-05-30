@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Check, ChevronLeft, Loader2, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
-import { formatSeconds } from "./_shared";
+import { acceptedAnswers, formatSeconds, isCorrectOption } from "./_shared";
 
-type OptionSnap = { id: number; content: string; isCorrect?: boolean };
+type OptionSnap = { id: number; content: string };
 
 export default function QuizResultPage() {
   const { quizId, attemptId } = useParams<{ quizId: string; attemptId: string }>();
@@ -109,13 +109,22 @@ export default function QuizResultPage() {
                   </div>
                   {options.length > 0 && (
                     <div className="space-y-1 pl-6">
-                      {options.map((o) => (
-                        <div key={o.id} className={cn("text-sm rounded px-2 py-1",
-                          o.isCorrect ? "bg-green-500/10 text-green-700 dark:text-green-400" : "text-muted-foreground")}>
-                          {o.isCorrect && <Check className="size-3.5 inline mr-1" />}{o.content}
-                        </div>
-                      ))}
+                      {options.map((o) => {
+                        const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
+                        return (
+                          <div key={o.id} className={cn("text-sm rounded px-2 py-1",
+                            correct ? "bg-green-500/10 text-green-700 dark:text-green-400" : "text-muted-foreground")}>
+                            {correct && <Check className="size-3.5 inline mr-1" />}{o.content}
+                          </div>
+                        );
+                      })}
                     </div>
+                  )}
+                  {q.questionType === "FILL_BLANK" && acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
+                    <p className="text-xs pl-6 text-green-700 dark:text-green-400">
+                      <Check className="size-3.5 inline mr-1" />
+                      Accepted: {acceptedAnswers(q.correctAnswerSnapshot).join(", ")}
+                    </p>
                   )}
                   {typeof snap.explanation === "string" && snap.explanation && (
                     <p className="text-xs text-muted-foreground pl-6">💡 {snap.explanation}</p>

@@ -75,12 +75,79 @@ public class ClassroomServiceImpl
         if (entity.getInviteCode() == null || entity.getInviteCode().isBlank()) {
             entity.setInviteCode(generateInviteCode());
         }
+        // The mapper may have overwritten the entity default with a null from the
+        // request — normalise to a valid visibility (column is NOT NULL).
+        entity.setVisibility(normalizeVisibility(entity.getVisibility()));
+    }
+
+    @Override
+    protected void beforeUpdate(Classroom entity, ClassroomDTO request, ValidationContext ctx) {
+        if (request.getVisibility() != null) {
+            entity.setVisibility(normalizeVisibility(request.getVisibility()));
+        }
+    }
+
+    private static String normalizeVisibility(String v) {
+        return "PUBLIC".equalsIgnoreCase(v) ? "PUBLIC" : "PRIVATE";
     }
 
     @Override
     protected ClassroomDTO afterRead(ClassroomDTO dto, Classroom entity) {
         dto.setMemberCount((int) memberRepository.countByClassroomIdAndIsActiveTrue(entity.getId()));
         return dto;
+    }
+
+    /* ── Public classes (browse + self-join) ── */
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClassroomDTO> getPublicClassrooms() {
+        List<ClassroomDTO> result = new ArrayList<>();
+        for (Classroom c : classroomRepository.findByVisibilityAndIsDeletedFalseOrderByCreatedAtDesc("PUBLIC")) {
+            result.add(enrich(c));
+        }
+        return result;
+    }
+
+    @Override
+    public ClassMemberDTO joinPublic(Long userId, Long classroomId) {
+        Classroom classroom = load(classroomId);
+        if (Boolean.TRUE.equals(classroom.getIsDeleted())) {
+            throw new ResourceNotFoundException("Classroom not found");
+        }
+        if (!"PUBLIC".equalsIgnoreCase(classroom.getVisibility())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This class is private — join with an invite code");
+        }
+        return addMember(classroomId, userId);
+    }
+
+    /* ── Clone a class into the current user's own classes ── */
+
+    @Override
+    public ClassroomDTO cloneClassroom(Long classroomId, Long userId) {
+        Classroom source = load(classroomId);
+
+        Classroom copy = Classroom.builder()
+                .ownerId(userId)
+                .name(source.getName() + " (Copy)")
+                .description(source.getDescription())
+                .coverImageUrl(source.getCoverImageUrl())
+                .maxMembers(source.getMaxMembers())
+                .visibility("PRIVATE")
+                .inviteCode(generateInviteCode())
+                .build();
+        Classroom saved = classroomRepository.save(copy);
+
+        // Copy the deck links (shared deck references); members are NOT copied.
+        for (ClassDeck cd : deckLinkRepository.findByClassroomIdAndIsActiveTrue(classroomId)) {
+            deckLinkRepository.save(ClassDeck.builder()
+                    .classroomId(saved.getId())
+                    .deckId(cd.getDeckId())
+                    .addedBy(userId)
+                    .addedAt(LocalDateTime.now())
+                    .build());
+        }
+        return enrich(saved);
     }
 
     /* ── My classrooms (owner + joined) ── */

@@ -32,6 +32,9 @@ import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
+import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
+import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
+import QuestionTagsPage from "@/pages/assessment/QuestionTagsPage";
 import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
 import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
 import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
@@ -66,6 +69,10 @@ export const routes: RouteConfig[] = [
   { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
 
   // ── Assessment ──
+  { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
+  { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
+  { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
+  { path: "/question-tags", component: QuestionTagsPage, isModuleDriven: true },
   { path: "/quizzes", component: QuizListPage, isModuleDriven: true },
   { path: "/quizzes/create", component: QuizCreateEditPage, requiredPermission: "QUIZ_CREATE" },
   { path: "/quizzes/:quizId", component: QuizDetailPage, requiredPermission: "QUIZ_READ" },

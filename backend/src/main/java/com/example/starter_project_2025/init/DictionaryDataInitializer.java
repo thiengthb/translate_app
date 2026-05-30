@@ -72,29 +72,29 @@ public class DictionaryDataInitializer implements CommandLineRunner {
             String vi, String en, String exJa, String exVi) {}
 
     private static final List<SeedWord> SEED_WORDS = List.of(
-            new SeedWord("水", "みず", "n", "kanji", "N5", "nước", "water",
+            new SeedWord("水", "みず", "n", "KANJI", "N5", "nước", "water",
                     "毎日水を飲みます。", "Tôi uống nước mỗi ngày."),
-            new SeedWord("食べる", "たべる", "v1", "kanji", "N5", "ăn", "to eat",
+            new SeedWord("食べる", "たべる", "v1", "KANJI", "N5", "ăn", "to eat",
                     "朝ご飯を食べる。", "Ăn cơm sáng."),
-            new SeedWord("学校", "がっこう", "n", "kanji", "N5", "trường học", "school",
+            new SeedWord("学校", "がっこう", "n", "KANJI", "N5", "trường học", "school",
                     "学校へ行きます。", "Tôi đi đến trường."),
-            new SeedWord("大きい", "おおきい", "adj-i", "kanji", "N5", "to, lớn", "big",
+            new SeedWord("大きい", "おおきい", "adj-i", "KANJI", "N5", "to, lớn", "big",
                     "大きい家ですね。", "Ngôi nhà lớn nhỉ."),
-            new SeedWord("友達", "ともだち", "n", "kanji", "N5", "bạn bè", "friend",
+            new SeedWord("友達", "ともだち", "n", "KANJI", "N5", "bạn bè", "friend",
                     "友達と話します。", "Tôi nói chuyện với bạn bè."),
-            new SeedWord("行く", "いく", "v5", "kanji", "N5", "đi", "to go",
+            new SeedWord("行く", "いく", "v5", "KANJI", "N5", "đi", "to go",
                     "日本へ行きたい。", "Tôi muốn đi Nhật."),
-            new SeedWord("本", "ほん", "n", "kanji", "N5", "sách", "book",
+            new SeedWord("本", "ほん", "n", "KANJI", "N5", "sách", "book",
                     "本を読みます。", "Tôi đọc sách."),
-            new SeedWord("先生", "せんせい", "n", "kanji", "N5", "giáo viên", "teacher",
+            new SeedWord("先生", "せんせい", "n", "KANJI", "N5", "giáo viên", "teacher",
                     "先生に聞きます。", "Tôi hỏi giáo viên."),
-            new SeedWord("日本語", "にほんご", "n", "kanji", "N5", "tiếng Nhật", "Japanese language",
+            new SeedWord("日本語", "にほんご", "n", "KANJI", "N5", "tiếng Nhật", "Japanese language",
                     "日本語を勉強します。", "Tôi học tiếng Nhật."),
-            new SeedWord("ありがとう", "ありがとう", "int", "hiragana", "N5", "cảm ơn", "thank you",
+            new SeedWord("ありがとう", "ありがとう", "int", "HIRAGANA", "N5", "cảm ơn", "thank you",
                     "ありがとうございます。", "Cảm ơn rất nhiều."),
-            new SeedWord("猫", "ねこ", "n", "kanji", "N5", "con mèo", "cat",
+            new SeedWord("猫", "ねこ", "n", "KANJI", "N5", "con mèo", "cat",
                     "猫が好きです。", "Tôi thích mèo."),
-            new SeedWord("新しい", "あたらしい", "adj-i", "kanji", "N5", "mới", "new",
+            new SeedWord("新しい", "あたらしい", "adj-i", "KANJI", "N5", "mới", "new",
                     "新しい車を買いました。", "Tôi đã mua một chiếc xe mới.")
     );
 
@@ -164,7 +164,7 @@ public class DictionaryDataInitializer implements CommandLineRunner {
 
     private Representation ensureRepresentation(String code) {
         return representationRepository.findAll().stream()
-                .filter(r -> code.equals(r.getCode()))
+                .filter(r -> code.equalsIgnoreCase(r.getCode()))
                 .findFirst()
                 .orElseGet(() -> representationRepository.save(
                         Representation.builder().code(code).name(capitalize(code)).build()));

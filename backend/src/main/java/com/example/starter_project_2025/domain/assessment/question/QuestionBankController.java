@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,5 +44,46 @@ public class QuestionBankController {
     ) {
         questionBankService.reorderOptions(id, orderedOptionIds);
         return ResponseEntity.noContent().build();
+    }
+
+    /* ── Version (audit) ── */
+
+    @GetMapping("/{id}/version")
+    public ResponseEntity<Map<String, Object>> getVersion(@PathVariable Long id) {
+        return ResponseEntity.ok(Map.of(
+                "questionId", id,
+                "currentVersion", questionBankService.getCurrentVersion(id)
+        ));
+    }
+
+    /* ── Tags ── */
+
+    @PostMapping("/{id}/tags")
+    public ResponseEntity<Void> addTags(
+            @PathVariable Long id,
+            @RequestBody AddTagsRequest request
+    ) {
+        questionBankService.addTags(id, request.tagIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/tags/{tagId}")
+    public ResponseEntity<Void> removeTag(
+            @PathVariable Long id,
+            @PathVariable Long tagId
+    ) {
+        questionBankService.removeTag(id, tagId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/by-tags")
+    public ResponseEntity<List<QuestionBankDTO>> findByTags(
+            @RequestParam List<Long> tagIds,
+            @RequestParam(defaultValue = "false") boolean matchAll
+    ) {
+        return ResponseEntity.ok(questionBankService.findByTags(tagIds, matchAll));
+    }
+
+    public record AddTagsRequest(List<Long> tagIds) {
     }
 }
