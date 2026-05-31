@@ -17,8 +17,12 @@ import {
   MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
 } from "lucide-react";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import { COLOR_PRESETS } from "@/lib/color-presets";
 
 const DECKS_PER_PAGE = 12;
+
+/** Fixed tag colour palette — the app's preset swatches (no free colour picker). */
+const TAG_COLORS = COLOR_PRESETS.map((p) => p.swatch);
 
 type ViewMode = "list" | "grid";
 
@@ -304,55 +308,95 @@ export default function LibraryPage() {
               onClick={() => setNewTagOpen(false)}
             />
             <motion.div
-              className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4"
+              className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-4"
               initial={{ opacity: 0, scale: 0.95, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.18 }}
             >
-              <div className="rounded-2xl border border-border bg-card shadow-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-foreground">Create new tag</h2>
-                  <button onClick={() => setNewTagOpen(false)} className="text-muted-foreground hover:text-foreground">
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+                {/* Header */}
+                <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Tag className="size-4" />
+                    </span>
+                    <h2 className="text-base font-semibold text-foreground">Create new tag</h2>
+                  </div>
+                  <button
+                    onClick={() => setNewTagOpen(false)}
+                    className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
                     <X className="size-4" />
                   </button>
                 </div>
-                <div className="space-y-3">
+
+                {/* Body */}
+                <div className="space-y-4 px-5 py-4">
+                  {/* Name */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Tag name</label>
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tag name</label>
                     <input
                       autoFocus
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       placeholder="e.g. Grammar"
-                      className="w-full text-sm rounded-lg border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      maxLength={50}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
                       onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Color</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={newTagColor}
-                        onChange={(e) => setNewTagColor(e.target.value)}
-                        className="size-9 rounded-lg border border-input cursor-pointer bg-background"
-                      />
-                      <span className="text-sm text-muted-foreground font-mono">{newTagColor}</span>
+
+                  {/* Color palette */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Color</label>
+                    <div className="grid grid-cols-10 gap-2">
+                      {TAG_COLORS.map((c) => {
+                        const active = newTagColor.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            title={c}
+                            onClick={() => setNewTagColor(c)}
+                            className={cn(
+                              "relative flex size-7 items-center justify-center rounded-full transition-transform hover:scale-110",
+                              active ? "ring-2 ring-foreground/70 ring-offset-2 ring-offset-card" : "ring-1 ring-black/5 dark:ring-white/10"
+                            )}
+                            style={{ backgroundColor: c }}
+                          >
+                            {active && <Check className="size-3.5 text-white drop-shadow-sm" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Live preview pill — mirrors the tag tabs */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Preview</label>
+                    <span
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-medium"
+                      style={{ backgroundColor: `${newTagColor}20`, color: newTagColor }}
+                    >
+                      <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: newTagColor }} />
+                      {newTagName.trim() || "Tag name"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-2 pt-1">
+
+                {/* Footer */}
+                <div className="flex gap-2 border-t border-border px-5 py-3.5">
                   <button
                     onClick={() => setNewTagOpen(false)}
-                    className="flex-1 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="flex-1 rounded-lg border border-border py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateTag}
                     disabled={!newTagName.trim() || isSavingTag}
-                    className="flex-1 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                   >
                     {isSavingTag ? "Creating…" : "Create"}
                   </button>

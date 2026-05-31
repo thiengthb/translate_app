@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { BookOpen, Pencil, X } from "lucide-react";
+import { BookOpen, Brush, Pencil, SquarePen, X } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DeckAccessControl } from "@/components/common/DeckAccessControl";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { cn } from "@/lib/utils";
@@ -37,7 +43,7 @@ export default function DeckStudyPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isAnkiPath = location.pathname.endsWith("/anki");
-  const { loading, accessDenied, deck, setDeck, cards } = useDeckStudyData(deckId);
+  const { loading, accessDenied, deck, setDeck, cards, progressByCard } = useDeckStudyData(deckId);
 
   // Default to SRS Review: opening a deck lands on spaced-repetition first.
   // An explicit `?mode=` (or the legacy `/anki` path) still wins.
@@ -46,11 +52,17 @@ export default function DeckStudyPage() {
   );
   const [fullView, setFullView] = useState(false);
   const [srsDue, setSrsDue] = useState<number | undefined>(undefined);
+  // Current card the active study mode is showing — enables "Edit card" in the
+  // header edit menu (reported by SRS; null in modes without a current card).
+  const [currentFlashcardId, setCurrentFlashcardId] = useState<number | null>(null);
   const toggleFullView = () => setFullView((v) => !v);
 
   const changeMode = (next: StudyMode) => {
     setMode(next);
     setFullView(false);
+    // The current-card target is owned by each mode: it reports its card while
+    // mounted and clears it on unmount, so switching modes hands the target off
+    // cleanly (Match never reports → "Sửa thẻ hiện tại" hides there).
     const params = new URLSearchParams(searchParams);
     params.set("mode", next);
     setSearchParams(params, { replace: true });
@@ -106,6 +118,7 @@ export default function DeckStudyPage() {
           fullView={fullView}
           onToggleFullView={toggleFullView}
           onDueCount={setSrsDue}
+          onCurrentCard={setCurrentFlashcardId}
         />
       );
     }
@@ -117,7 +130,14 @@ export default function DeckStudyPage() {
         </div>
       );
     }
-    const props = { deckId: Number(deckId), cards, fullView, onToggleFullView: toggleFullView };
+    const props = {
+      deckId: Number(deckId),
+      cards,
+      fullView,
+      onToggleFullView: toggleFullView,
+      progress: progressByCard,
+      onCurrentCard: setCurrentFlashcardId,
+    };
     switch (resolvedMode) {
       case "LEARN":
         return <LearnMode {...props} />;
@@ -191,14 +211,36 @@ export default function DeckStudyPage() {
                     />
                   )}
                   {isOwner && (
-                    <button
-                      onClick={() => navigate(`/deck/${deckId}/edit`)}
-                      title="Chỉnh sửa deck"
-                      aria-label="Chỉnh sửa deck"
-                      className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                    >
-                      <Pencil className="size-4" />
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          title="Chỉnh sửa"
+                          aria-label="Chỉnh sửa"
+                          className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem className="gap-2" onClick={() => navigate(`/deck/${deckId}/edit`)}>
+                          <Pencil className="size-4 text-muted-foreground" />
+                          Chỉnh sửa deck
+                        </DropdownMenuItem>
+                        {currentFlashcardId != null && (
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => navigate(`/deck/${deckId}/card/${currentFlashcardId}/edit`)}
+                          >
+                            <SquarePen className="size-4 text-muted-foreground" />
+                            Sửa thẻ hiện tại
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem className="gap-2" onClick={() => navigate(`/deck/${deckId}/anki/template`)}>
+                          <Brush className="size-4 text-muted-foreground" />
+                          Sửa mẫu thẻ
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </div>

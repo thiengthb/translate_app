@@ -4,6 +4,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  HelpCircle,
   Maximize2,
   Minimize2,
   RotateCcw,
@@ -17,8 +18,17 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RevealMore } from "@/components/common/RevealMore";
 import { CardFace } from "../CardFace";
+import { StudyMessage } from "../StudyMessage";
 import { getSideTextBlocks } from "../cardContent";
 import type { StudyCard, StudyModeProps } from "../types";
+
+/** Keyboard shortcuts shown in the help tooltip (mirrors SRS mode). */
+const SHORTCUTS: { keys: string; desc: string }[] = [
+  { keys: "Space", desc: "Lật thẻ" },
+  { keys: "→ / 1", desc: "Nhớ rồi (khi bật tiến độ)" },
+  { keys: "← / 2", desc: "Học lại (khi bật tiến độ)" },
+  { keys: "← →", desc: "Chuyển thẻ (khi tắt tiến độ)" },
+];
 
 const TERMS_INITIAL_VISIBLE = 30;
 
@@ -55,7 +65,7 @@ function buildSession(cards: StudyCard[]): SessionState {
  *   - Track OFF → plain browsing with prev/next arrows and a position counter;
  *     nothing is recorded.
  */
-export function FlashcardMode({ deckId, cards, fullView, onToggleFullView }: StudyModeProps) {
+export function FlashcardMode({ deckId, cards, fullView, onToggleFullView, onCurrentCard }: StudyModeProps) {
   const [order, setOrder] = useState<StudyCard[]>(cards);
   const [session, setSession] = useState<SessionState>(() => buildSession(cards));
   const [index, setIndex] = useState(0); // browse position (track OFF)
@@ -174,6 +184,13 @@ export function FlashcardMode({ deckId, cards, fullView, onToggleFullView }: Stu
     [order]
   );
 
+  /* Report the shown card up to the shell so "Sửa thẻ hiện tại" targets it,
+     and clear it on unmount so the next mode starts from a clean target. */
+  useEffect(() => {
+    onCurrentCard?.(current?.flashcard.id ?? null);
+  }, [current?.flashcard.id, onCurrentCard]);
+  useEffect(() => () => onCurrentCard?.(null), [onCurrentCard]);
+
   /* Keyboard: Space/Enter flip. Track: →/1 correct, ←/2 wrong. Browse: ←/→ nav. */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -208,28 +225,12 @@ export function FlashcardMode({ deckId, cards, fullView, onToggleFullView }: Stu
 
   if (trackProgress && session.done) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center gap-6 py-16"
-      >
-        <div className="flex size-20 items-center justify-center rounded-full bg-green-500/10">
-          <Check className="size-10 text-green-500" />
-        </div>
-        <div className="space-y-1 text-center">
-          <h2 className="text-2xl font-bold text-foreground">All done!</h2>
-          <p className="text-sm text-muted-foreground">
-            You studied all {cards.length} cards in {session.round} {session.round === 1 ? "round" : "rounds"}.
-          </p>
-        </div>
-        <button
-          onClick={reset}
-          className="flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <RotateCcw className="size-4" />
-          Study again
-        </button>
-      </motion.div>
+      <StudyMessage
+        icon={<Check size={26} />}
+        title="All done!"
+        description={`You studied all ${cards.length} cards in ${session.round} ${session.round === 1 ? "round" : "rounds"}.`}
+        action={{ label: "Study again", icon: <RotateCcw className="size-4" />, onClick: reset }}
+      />
     );
   }
 
@@ -266,7 +267,6 @@ export function FlashcardMode({ deckId, cards, fullView, onToggleFullView }: Stu
               {flipped ? "Definition" : "Term"}
             </span>
             <CardFace flashcard={current.flashcard} side={flipped ? "BACK" : "FRONT"} large={fullView} />
-            {!flipped && <p className="mt-2 text-[10px] text-muted-foreground/50">Click to reveal · Space</p>}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -348,6 +348,30 @@ export function FlashcardMode({ deckId, cards, fullView, onToggleFullView }: Stu
 
         {/* Utilities */}
         <div className="absolute right-0 flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Phím tắt"
+                className="flex size-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <HelpCircle className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="w-56">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide opacity-70">Phím tắt</p>
+              <div className="space-y-1">
+                {SHORTCUTS.map((s) => (
+                  <div key={s.keys} className="flex items-center justify-between gap-4">
+                    <span>{s.desc}</span>
+                    <kbd className="rounded bg-background/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none">
+                      {s.keys}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
           {cards.length > 1 && (
             <CardActionButton
               onClick={toggleShuffle}

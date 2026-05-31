@@ -1,5 +1,5 @@
 /**
- * Shared card-editor components used by both CreateQuizletDeckPage
+ * Shared card-editor components used by both CreateDeckPage
  * and EditQuizletDeckPage so the two pages look and feel identical.
  */
 import { useRef, useState } from "react";

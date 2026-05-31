@@ -1,5 +1,11 @@
-import { GraduationCap, Grid2x2, Layers, Repeat } from "lucide-react";
+import { Check, ChevronDown, GraduationCap, Grid2x2, Layers, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { StudyMode } from "./types";
 
 interface ModeDef {
@@ -18,49 +24,59 @@ const MODES: ModeDef[] = [
 interface ModeBarProps {
   mode: StudyMode;
   onChange: (mode: StudyMode) => void;
-  /** Cards due today, shown as a badge on the SRS tab. */
+  /** Cards due today — badged on the SRS entry. */
   srsDue?: number;
 }
 
+const hasDue = (srsDue?: number): srsDue is number => typeof srsDue === "number" && srsDue > 0;
+
+function DueBadge({ value }: { value: number }) {
+  return (
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[11px] font-bold tabular-nums text-primary">
+      {value}
+    </span>
+  );
+}
+
 /**
- * Horizontal selector across all six study modes. Switching modes never
- * navigates away — it swaps the active mode component in place. The SRS tab
- * carries a due-count badge so the learner can see retention work at a glance.
+ * Single "choose mode" dropdown: the trigger shows the active mode; the menu
+ * lists every mode. Switching never navigates away — it swaps the active mode
+ * component in place. The SRS entry carries a due-count badge.
  */
 export function ModeBar({ mode, onChange, srsDue }: ModeBarProps) {
+  const current = MODES.find((m) => m.mode === mode) ?? MODES[0];
+  const CurrentIcon = current.icon;
+
   return (
-    <div className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {MODES.map(({ mode: m, label, icon: Icon }) => {
-        const active = m === mode;
-        const showDue = m === "SRS" && typeof srsDue === "number" && srsDue > 0;
-        return (
-          <button
-            key={m}
-            type="button"
-            onClick={() => onChange(m)}
-            aria-pressed={active}
-            className={cn(
-              "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors",
-              active
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Icon className="size-4" />
-            {label}
-            {showDue && (
-              <span
-                className={cn(
-                  "ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold tabular-nums",
-                  active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
-                )}
-              >
-                {srsDue}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+        >
+          <CurrentIcon className="size-4 text-primary" />
+          <span>{current.label}</span>
+          {mode === "SRS" && hasDue(srsDue) && <DueBadge value={srsDue} />}
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-52">
+        {MODES.map(({ mode: m, label, icon: Icon }) => {
+          const active = m === mode;
+          return (
+            <DropdownMenuItem
+              key={m}
+              onClick={() => onChange(m)}
+              className={cn("gap-2", active && "bg-accent")}
+            >
+              <Icon className="size-4 text-muted-foreground" />
+              <span className="flex-1">{label}</span>
+              {m === "SRS" && hasDue(srsDue) && <DueBadge value={srsDue} />}
+              {active && <Check className="size-4 text-primary" />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

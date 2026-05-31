@@ -203,7 +203,7 @@ export default function AnkiTemplateEditPage() {
   const { deckId: deckIdParam } = useParams<{ deckId: string }>();
   const navigate = useNavigate();
   const deckId = Number(deckIdParam);
-  const backTo = `/deck/${deckIdParam}/anki`;
+  const backTo = `/deck/${deckIdParam}`;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -217,12 +217,21 @@ export default function AnkiTemplateEditPage() {
   const [previewSide, setPreviewSide] = useState<TemplateSide>("FRONT");
   const [advancedMode, setAdvancedMode] = useState(false);
   const [customCode, setCustomCode] = useState(false);
+  // Tracks whether the user changed anything since load → gates the Save button.
+  const [dirty, setDirty] = useState(false);
 
   /** Builder changes → regenerate templates (unless user has switched to advanced/custom) */
   const setBuilderAndGenerate = useCallback((next: CardTemplateBuilderState) => {
     const generated = generateTemplates(next);
+    setDirty(true);
     setBuilderState(next);
     setDraft((current) => ({ ...current, ...generated }));
+  }, []);
+
+  /** Direct draft edits (template details / advanced HTML-CSS) mark the form dirty. */
+  const handleDraftChange = useCallback((next: TemplateDraftFields) => {
+    setDirty(true);
+    setDraft(next);
   }, []);
 
   useEffect(() => {
@@ -232,6 +241,7 @@ export default function AnkiTemplateEditPage() {
     setPreviewSide("FRONT");
     setAdvancedMode(false);
     setCustomCode(false);
+    setDirty(false);
 
     (async () => {
       try {
@@ -383,6 +393,7 @@ export default function AnkiTemplateEditPage() {
       setTemplateId(null);
       setDeck((current) => (current ? { ...current, templateId: null } : current));
       setCustomCode(false);
+      setDirty(false);
       toast.success("Template removed from deck.");
     } catch {
       toast.error("Failed to remove template.");
@@ -393,9 +404,10 @@ export default function AnkiTemplateEditPage() {
 
   return (
     <MainLayout
-      parentCrumb={{ href: backTo, title: "Study" }}
-      ignorePaths={["deck", String(deckIdParam), "anki", "template"]}
+      parentCrumb={{ href: "/library", title: "My Library" }}
+      ignorePaths={["deck", "anki"]}
       pathName={{
+        [`/deck/${deckIdParam}`]: deck?.title || "Deck",
         [`/deck/${deckIdParam}/anki/template`]: "Card template",
       }}
     >
@@ -405,7 +417,7 @@ export default function AnkiTemplateEditPage() {
         </div>
       ) : (
         <DeckTemplateDesigner
-          className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border"
+          className="flex-1 min-h-0 overflow-hidden"
           deckTitle={deck?.title}
           draft={draft}
           builderState={builderState}
@@ -418,7 +430,8 @@ export default function AnkiTemplateEditPage() {
           removing={removing}
           hasTemplate={templateId != null}
           hasSampleCard={flashcard != null}
-          onDraftChange={setDraft}
+          dirty={dirty}
+          onDraftChange={handleDraftChange}
           onBuilderChange={setBuilderAndGenerate}
           onPreviewSideChange={setPreviewSide}
           onAdvancedModeChange={setAdvancedMode}

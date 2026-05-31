@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
 import { Grid2x2, RotateCcw, Timer } from "lucide-react";
 import { quizletStudyApi } from "@/api";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { sideText } from "../cardContent";
 import { shuffle } from "../quizUtils";
+import { StudyMessage } from "../StudyMessage";
 import type { StudyCard, StudyModeProps } from "../types";
 
 const MAX_PAIRS = 6;
@@ -117,10 +117,22 @@ export function MatchMode({ deckId, cards }: StudyModeProps) {
 
   if (pairCount < 2) {
     return (
-      <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-center">
-        <Grid2x2 className="size-9 text-muted-foreground/30" />
-        <p className="text-sm text-muted-foreground">Need at least 2 cards with text on both sides to play Match.</p>
-      </div>
+      <StudyMessage
+        icon={<Grid2x2 size={26} />}
+        title="Not enough cards"
+        description="Need at least 2 cards with text on both sides to play Match."
+      />
+    );
+  }
+
+  if (finished) {
+    return (
+      <StudyMessage
+        icon={<Grid2x2 size={26} />}
+        title={`Matched in ${formatElapsed(elapsed)}!`}
+        description={`All ${pairCount} pairs cleared.`}
+        action={{ label: "Play again", icon: <RotateCcw className="size-4" />, onClick: () => setRound((r) => r + 1) }}
+      />
     );
   }
 
@@ -138,48 +150,29 @@ export function MatchMode({ deckId, cards }: StudyModeProps) {
         </span>
       </div>
 
-      {finished ? (
-        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center gap-6 py-12">
-          <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
-            <Grid2x2 className="size-10 text-primary" />
-          </div>
-          <div className="space-y-1 text-center">
-            <h2 className="text-2xl font-bold text-foreground">Matched in {formatElapsed(elapsed)}!</h2>
-            <p className="text-sm text-muted-foreground">All {pairCount} pairs cleared.</p>
-          </div>
-          <button
-            onClick={() => setRound((r) => r + 1)}
-            className="flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <RotateCcw className="size-4" />
-            Play again
-          </button>
-        </motion.div>
-      ) : (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-          {tiles.map((tile) => {
-            const isMatched = matched.has(tile.cardKey);
-            const isSelected = selected === tile.id;
-            const isWrong = wrong?.includes(tile.id);
-            return (
-              <button
-                key={tile.id}
-                onClick={() => click(tile)}
-                disabled={isMatched}
-                className={cn(
-                  "flex min-h-20 items-center justify-center rounded-xl border-2 p-3 text-center text-sm font-medium transition-all",
-                  isMatched && "pointer-events-none scale-95 border-transparent opacity-0",
-                  !isMatched && !isSelected && !isWrong && "border-border bg-background hover:border-primary/50 hover:bg-primary/5",
-                  isSelected && "border-primary bg-primary/10 text-primary",
-                  isWrong && "border-destructive bg-destructive/10 text-destructive"
-                )}
-              >
-                <span className="line-clamp-4 whitespace-pre-line">{tile.text}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+        {tiles.map((tile) => {
+          const isMatched = matched.has(tile.cardKey);
+          const isSelected = selected === tile.id;
+          const isWrong = wrong?.includes(tile.id);
+          return (
+            <button
+              key={tile.id}
+              onClick={() => click(tile)}
+              disabled={isMatched}
+              className={cn(
+                "flex min-h-20 items-center justify-center rounded-xl border-2 p-3 text-center text-sm font-medium transition-all",
+                isMatched && "pointer-events-none scale-95 border-transparent opacity-0",
+                !isMatched && !isSelected && !isWrong && "border-border bg-background hover:border-primary/50 hover:bg-primary/5",
+                isSelected && "border-primary bg-primary/10 text-primary",
+                isWrong && "border-destructive bg-destructive/10 text-destructive"
+              )}
+            >
+              <span className="line-clamp-4 whitespace-pre-line">{tile.text}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

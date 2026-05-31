@@ -26,9 +26,8 @@ import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
-import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
-import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
+import FlashcardTemplateLibraryPage from "@/pages/student/FlashcardTemplateLibraryPage";
 import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
 import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
 import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
@@ -63,8 +62,9 @@ export const routes: RouteConfig[] = [
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
+  // Reusable card-template library. Module-driven: the @ResourceMenu on the
+  // FlashcardTemplate entity seeds the sidebar item + route at this URL.
+  { path: "/card-templates", component: FlashcardTemplateLibraryPage, isModuleDriven: true, requiredPermission: "FLASHCARD_TEMPLATE_READ" },
   { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId", component: DeckStudyPage, requiredPermission: "DECK_READ" },
   // Legacy alias — the unified study screen detects the `/anki` suffix and

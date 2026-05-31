@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ankiStudyApi, flashcardApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, Brush, HelpCircle, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, HelpCircle, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardRenderDTO } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TemplateCardFace } from "../TemplateCardFace";
+import { StudyMessage } from "../StudyMessage";
 
 /** Keyboard shortcuts shown in the card's help tooltip. */
 const SHORTCUTS: { keys: string; desc: string }[] = [
@@ -84,12 +83,35 @@ function countMainQueueStats(cards: AnkiStudyCard[]): QueueStats {
   );
 }
 
+/**
+ * Module-level cache of the in-progress SRS session, keyed by deck. Switching
+ * to another study mode unmounts SrsMode; without this, remounting would reload
+ * the queue from the server and drop session-learning cards (short intervals
+ * that aren't "due" yet, so the queue endpoint omits them) — making the live
+ * "Learning" count vanish. We resume the cached session if it's recent.
+ */
+interface CachedSrsSession {
+  cachedAt: number;
+  queue: AnkiStudyCard[];
+  againQueue: AnkiStudyCard[];
+  totalStudied: number;
+  totalNew: number;
+  totalLearning: number;
+  totalReview: number;
+  totalDue: number;
+  sessionStats: QueueStats;
+}
+const srsSessionCache = new Map<number, CachedSrsSession>();
+const SRS_CACHE_TTL_MS = 10 * 60 * 1000; // resume within 10 min, else reload fresh
+
 interface SrsModeProps {
   deckId: number;
   fullView: boolean;
   onToggleFullView: () => void;
   /** Report the due-card count up to the shell so the mode bar can badge it. */
   onDueCount?: (total: number) => void;
+  /** Report the current card up to the shell so its edit menu can target it. */
+  onCurrentCard?: (flashcardId: number | null) => void;
 }
 
 /**
@@ -98,8 +120,7 @@ interface SrsModeProps {
  * the former AnkiStudyPage; the unified shell now provides the layout + full
  * view, so this renders just the study surface.
  */
-export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsModeProps) {
-  const navigate = useNavigate();
+export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurrentCard }: SrsModeProps) {
 
   const [queue, setQueue] = useState<AnkiStudyCard[]>([]);
   const [againQueue, setAgainQueue] = useState<AnkiStudyCard[]>([]);
@@ -134,10 +155,42 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       });
   };
 
+  // On mount: resume a recent in-progress session (e.g. came back from another
+  // mode) instead of reloading — otherwise session-learning cards are lost.
   useEffect(() => {
-    loadQueue();
+    const cached = srsSessionCache.get(deckId);
+    if (cached && Date.now() - cached.cachedAt < SRS_CACHE_TTL_MS) {
+      setQueue(cached.queue);
+      setAgainQueue(cached.againQueue);
+      setTotalStudied(cached.totalStudied);
+      setTotalNew(cached.totalNew);
+      setTotalLearning(cached.totalLearning);
+      setTotalReview(cached.totalReview);
+      setTotalDue(cached.totalDue);
+      setSessionStats(cached.sessionStats);
+      setLoading(false);
+      onDueCount?.(cached.totalDue + cached.totalNew);
+    } else {
+      loadQueue();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
+
+  // Persist the live session so it survives a mode switch (remount).
+  useEffect(() => {
+    if (loading) return;
+    srsSessionCache.set(deckId, {
+      cachedAt: Date.now(),
+      queue,
+      againQueue,
+      totalStudied,
+      totalNew,
+      totalLearning,
+      totalReview,
+      totalDue,
+      sessionStats,
+    });
+  }, [deckId, loading, queue, againQueue, totalStudied, totalNew, totalLearning, totalReview, totalDue, sessionStats]);
 
   /* Keyboard: Space flip, 1-4 rate */
   useEffect(() => {
@@ -179,6 +232,12 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       cancelled = true;
     };
   }, [currentFlashcardId]);
+
+  // Surface the current card to the shell (for its "Edit card" menu item).
+  useEffect(() => {
+    onCurrentCard?.(currentFlashcardId);
+  }, [currentFlashcardId, onCurrentCard]);
+  useEffect(() => () => onCurrentCard?.(null), [onCurrentCard]);
 
   const handleRate = async (rating: AnkiRating) => {
     if (submitting || queue.length === 0) return;
@@ -222,39 +281,22 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
 
   if (isDone) {
     return (
-      <div className="flex h-full min-h-60 items-center justify-center">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-muted-foreground">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Brain size={26} />
-          </div>
-          <div className="max-w-md text-center">
-            <p className="font-medium text-foreground">Session complete!</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You reviewed {totalStudied} card{totalStudied !== 1 ? "s" : ""}. Scheduled with SM2 spaced repetition.
-            </p>
-          </div>
-          <Button size="sm" onClick={() => loadQueue()}>
-            <RotateCcw className="size-4" />
-            Reload queue
-          </Button>
-        </div>
-      </div>
+      <StudyMessage
+        icon={<Brain size={26} />}
+        title="Session complete!"
+        description={`You reviewed ${totalStudied} card${totalStudied !== 1 ? "s" : ""}. Scheduled with SM2 spaced repetition.`}
+        action={{ label: "Reload queue", icon: <RotateCcw className="size-4" />, onClick: () => loadQueue() }}
+      />
     );
   }
 
   if (!current) {
     return (
-      <div className="flex h-full min-h-60 items-center justify-center">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-muted-foreground">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <BookOpen size={26} />
-          </div>
-          <div className="max-w-md text-center">
-            <p className="font-medium text-foreground">No cards due for review</p>
-            <p className="mt-1 text-sm text-muted-foreground">You're all caught up — check back later.</p>
-          </div>
-        </div>
-      </div>
+      <StudyMessage
+        icon={<BookOpen size={26} />}
+        title="No cards due for review"
+        description="You're all caught up — check back later."
+      />
     );
   }
 
@@ -362,8 +404,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       {/* Controls — question: New/Learning/Review; answer: Again/Hard/Good/Easy.
           Fixed height (== rating buttons + the time labels above them) so the
           card above keeps a constant size when flipping between the two. */}
-      <div className="flex h-16 shrink-0 items-center gap-2">
-        <div className="flex-1" />
+      <div className="flex h-16 shrink-0 items-center justify-center">
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           {flipped ? (
             RATING_CONFIG.map(({ rating, label, shortcut }) => (
@@ -393,46 +434,8 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
             />
           )}
         </div>
-        <div className="flex flex-1 items-center justify-end gap-1.5">
-          <ChromeButton
-            icon={Pencil}
-            label="Edit card"
-            onClick={() => navigate(`/deck/${deckId}/card/${current.flashcardId}/edit`)}
-            title="Edit this card"
-          />
-          <ChromeButton
-            icon={Brush}
-            label="Template"
-            onClick={() => navigate(`/deck/${deckId}/anki/template`)}
-            title="Edit template (affects all cards using this template)"
-          />
-        </div>
       </div>
     </div>
-  );
-}
-
-/* ── Toolbar chrome button ── */
-function ChromeButton({
-  icon: Icon,
-  label,
-  onClick,
-  title,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  onClick: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title ?? label}
-      className="flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-    >
-      <Icon className="size-3.5" />
-      <span className="hidden sm:inline">{label}</span>
-    </button>
   );
 }
 
