@@ -170,7 +170,7 @@ export default function AnkiStatsPage() {
 
   useEffect(() => {
     if (!userId) return;
-    deckApi.getPage({ page: 0, size: 100 }, undefined, { userId, studyMode: "ANKI" } as never)
+    deckApi.getPage({ page: 0, size: 100 }, undefined, { userId } as never)
       .then((r) => setAnkiDecks(r.content ?? [])).catch(() => {});
   }, [userId]);
 

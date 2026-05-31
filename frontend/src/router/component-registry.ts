@@ -29,8 +29,9 @@ import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
-import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
-import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
+import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
+import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
 import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
 import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
@@ -65,8 +66,12 @@ export const routes: RouteConfig[] = [
   { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
-  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
-  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+  { path: "/deck/:deckId", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  // Legacy alias — the unified study screen detects the `/anki` suffix and
+  // defaults to SRS mode, keeping old links + the Anki editors' backTo working.
+  { path: "/deck/:deckId/anki", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  { path: "/deck/:deckId/card/:flashcardId/edit", component: AnkiCardEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──

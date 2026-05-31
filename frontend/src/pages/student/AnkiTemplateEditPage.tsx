@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { deckApi, deckItemApi, flashcardApi, flashcardTemplateApi } from "@/api";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,13 +28,6 @@ import type {
   FlashcardSideType,
   FlashcardTemplateDTO,
 } from "@/types";
-
-interface Props {
-  deckId: number;
-  open: boolean;
-  onClose: () => void;
-  onSaved: () => void;
-}
 
 const PREVIEW_DEBOUNCE_MS = 120;
 const DEFAULT_TEMPLATE_NAME = "Deck template";
@@ -176,7 +170,7 @@ ${styling}
 }
 
 /**
- * Decide the initial builder state when the modal opens.
+ * Decide the initial builder state when the page opens.
  *
  * Priority:
  *   1. saved builderConfigJson — reconciled against current fields
@@ -193,15 +187,25 @@ function resolveInitialState(
   }
 
   if (template && (template.frontTemplate?.trim() || template.backTemplate?.trim())) {
-    // Existing handcrafted template — keep an empty builder but flag custom code
     return { state: createEmptyState(), customCode: true };
   }
 
   return { state: buildStateFromFields(fields), customCode: false };
 }
 
-export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
-  const [loading, setLoading] = useState(false);
+/**
+ * Editor for a deck's card template. Reached from the Anki study toolbar's
+ * "Template" action — replaces the former modal so the designer gets its own
+ * route. Rendered inside MainLayout (sidebar + breadcrumbs) like the card
+ * editor, with the two-pane designer filling the layout's content column.
+ */
+export default function AnkiTemplateEditPage() {
+  const { deckId: deckIdParam } = useParams<{ deckId: string }>();
+  const navigate = useNavigate();
+  const deckId = Number(deckIdParam);
+  const backTo = `/deck/${deckIdParam}/anki`;
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [deck, setDeck] = useState<DeckDTO | null>(null);
@@ -222,7 +226,7 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!deckIdParam) return;
     let cancelled = false;
     setLoading(true);
     setPreviewSide("FRONT");
@@ -269,8 +273,6 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
         setTemplateId(template?.id ?? null);
 
         if (template) {
-          // Keep the existing rendered template + styling for advanced view,
-          // but if no custom code, regenerate from the reconciled builder state.
           const generated = generateTemplates(state);
           setDraft({
             name: template.name ?? DEFAULT_TEMPLATE_NAME,
@@ -303,7 +305,7 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [deckId, open]);
+  }, [deckId, deckIdParam]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => setDebouncedDraft(draft), PREVIEW_DEBOUNCE_MS);
@@ -357,12 +359,10 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
         const created = await flashcardTemplateApi.createTemplate(payload);
         if (created.id == null) throw new Error("Template was created without an id.");
         await deckApi.applyTemplate(deckId, created.id);
-        setTemplateId(created.id);
-        setDeck((current) => (current ? { ...current, templateId: created.id } : current));
       }
 
       toast.success("Template saved.");
-      onSaved();
+      navigate(backTo);
     } catch {
       toast.error("Failed to save template.");
     } finally {
@@ -384,7 +384,6 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
       setDeck((current) => (current ? { ...current, templateId: null } : current));
       setCustomCode(false);
       toast.success("Template removed from deck.");
-      onSaved();
     } catch {
       toast.error("Failed to remove template.");
     } finally {
@@ -393,40 +392,42 @@ export function TemplateEditorModal({ deckId, open, onClose, onSaved }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent
-        className="max-w-350! w-[96vw] h-[92vh] p-0 gap-0 overflow-hidden"
-        showCloseButton={false}
-      >
-        {loading ? (
-          <div className="flex h-full items-center justify-center bg-background">
-            <Loader2 className="size-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          <DeckTemplateDesigner
-            deckTitle={deck?.title}
-            draft={draft}
-            builderState={builderState}
-            availableFields={availableFields}
-            previewSide={previewSide}
-            previewSrcDoc={previewSrcDoc}
-            advancedMode={advancedMode}
-            customCode={customCode}
-            saving={saving}
-            removing={removing}
-            hasTemplate={templateId != null}
-            hasSampleCard={flashcard != null}
-            onDraftChange={setDraft}
-            onBuilderChange={setBuilderAndGenerate}
-            onPreviewSideChange={setPreviewSide}
-            onAdvancedModeChange={setAdvancedMode}
-            onCustomCodeChange={setCustomCode}
-            onSave={handleSave}
-            onCancel={onClose}
-            onRemoveTemplate={handleRemoveTemplate}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+    <MainLayout
+      parentCrumb={{ href: backTo, title: "Study" }}
+      ignorePaths={["deck", String(deckIdParam), "anki", "template"]}
+      pathName={{
+        [`/deck/${deckIdParam}/anki/template`]: "Card template",
+      }}
+    >
+      {loading ? (
+        <div className="flex flex-1 min-h-0 items-center justify-center">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      ) : (
+        <DeckTemplateDesigner
+          className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border"
+          deckTitle={deck?.title}
+          draft={draft}
+          builderState={builderState}
+          availableFields={availableFields}
+          previewSide={previewSide}
+          previewSrcDoc={previewSrcDoc}
+          advancedMode={advancedMode}
+          customCode={customCode}
+          saving={saving}
+          removing={removing}
+          hasTemplate={templateId != null}
+          hasSampleCard={flashcard != null}
+          onDraftChange={setDraft}
+          onBuilderChange={setBuilderAndGenerate}
+          onPreviewSideChange={setPreviewSide}
+          onAdvancedModeChange={setAdvancedMode}
+          onCustomCodeChange={setCustomCode}
+          onSave={handleSave}
+          onCancel={() => navigate(backTo)}
+          onRemoveTemplate={handleRemoveTemplate}
+        />
+      )}
+    </MainLayout>
   );
 }

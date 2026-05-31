@@ -57,7 +57,7 @@ export default function HeaderRight() {
     }
 
     return (
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
             <RoleSwitcher primaryRole={role} roles={roles} />
 
             {isPreviewMode && (
@@ -71,7 +71,7 @@ export default function HeaderRight() {
 
             <Separator
                 orientation="vertical"
-                className="!h-5 mx-1 hidden sm:block"
+                className="!h-6 mx-1 hidden sm:block"
             />
 
             {/* Desktop-only quick stat */}

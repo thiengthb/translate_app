@@ -33,8 +33,6 @@ public class DeckDTO extends BaseDTO {
 
     String visibility;
 
-    String studyMode;
-
     String coverImageUrl;
 
     /** Icon key from the FE iconMap (e.g. "book-open", "graduation-cap"). */

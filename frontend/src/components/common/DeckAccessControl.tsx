@@ -78,7 +78,7 @@ export function DeckAccessControl({ deckId, visibility, onChanged }: Props) {
           type="button"
           onClick={() => setPopoverOpen((v) => !v)}
           className={cn(
-            "flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-all",
+            "flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-all",
             visibility === "PUBLIC"
               ? "border-primary/40 bg-primary/8 text-primary hover:bg-primary/15"
               : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -155,7 +155,7 @@ export function DeckAccessControl({ deckId, visibility, onChanged }: Props) {
           type="button"
           onClick={handleShare}
           className={cn(
-            "flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-all",
+            "flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-all",
             copied
               ? "border-green-400 bg-green-50 dark:bg-green-950/30 text-green-600"
               : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"

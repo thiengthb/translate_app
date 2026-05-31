@@ -23,11 +23,13 @@ import { RecentSection } from "./RecentSection";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { SidebarBranding } from "./SidebarBranding";
 import { SidebarSearch } from "./SidebarSearch";
+import { SidebarSettings } from "./SidebarSettings";
 import type { SidebarNavGroup, SidebarNavItem } from "./types";
 
 import { useFilteredNavGroups } from "./hooks/useFilteredNavGroups";
 import { useGroupCollapseState } from "./hooks/useGroupCollapseState";
 import { useSidebarFavorites } from "./hooks/useSidebarFavorites";
+import { useSidebarPreferences } from "./hooks/useSidebarPreferences";
 import { useSidebarRecent } from "./hooks/useSidebarRecent";
 
 /**
@@ -54,6 +56,7 @@ export function SidebarMenu() {
     const isCollapsed = state !== "expanded";
 
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const { preferences, setPreference } = useSidebarPreferences();
     const { isFavorite, toggle: toggleFavorite } = useSidebarFavorites();
     const {
         isOpen: isGroupOpen,
@@ -191,30 +194,34 @@ export function SidebarMenu() {
                 />
 
                 <ScrollHintContainer>
-                    {showSecondarySections && favoriteItems.length > 0 && (
-                        <>
-                            <PinnedSection
-                                items={favoriteItems}
-                                favoriteFor={favoriteFor}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showPinned &&
+                        favoriteItems.length > 0 && (
+                            <>
+                                <PinnedSection
+                                    items={favoriteItems}
+                                    favoriteFor={favoriteFor}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
-                    {showSecondarySections && recentItems.length > 0 && (
-                        <>
-                            <RecentSection
-                                items={recentItems}
-                                onRemoveItem={removeRecentItem}
-                                onClearAll={clearRecentAll}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showRecent &&
+                        recentItems.length > 0 && (
+                            <>
+                                <RecentSection
+                                    items={recentItems}
+                                    onRemoveItem={removeRecentItem}
+                                    onClearAll={clearRecentAll}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
                     {isSearching && !hasSearchResults && !isCollapsed && (
                         <div className="px-4 py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
@@ -264,6 +271,11 @@ export function SidebarMenu() {
                     ))}
                 </ScrollHintContainer>
             </SidebarContent>
+
+            <SidebarSettings
+                preferences={preferences}
+                setPreference={setPreference}
+            />
         </Sidebar>
     );
 }

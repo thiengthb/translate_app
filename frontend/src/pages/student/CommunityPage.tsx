@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/usePagination";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import {
-  BookOpen,
-  Brain,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -35,7 +33,6 @@ import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
 
 type Tab = "discover" | "favorites";
 type ViewMode = "grid" | "list";
-type ModeFilter = "ALL" | "QUIZLET" | "ANKI";
 type SortKey = "newest" | "mostSaved" | "mostFavorited" | "mostViewed";
 
 const DECKS_PER_PAGE = 12;
@@ -203,7 +200,6 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(false);
   const [cloning, setCloning] = useState<number | null>(null);
   const [togglingFav, setTogglingFav] = useState<number | null>(null);
-  const [mode, setMode] = useState<ModeFilter>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [sortOpen, setSortOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -233,14 +229,13 @@ export default function CommunityPage() {
   useEffect(() => {
     setLoading(true);
     const sortParam = SORT_OPTIONS.find((o) => o.key === sortKey)?.param ?? "createdAt,desc";
-    const filter: { visibility: string; studyMode?: "QUIZLET" | "ANKI" } = { visibility: "PUBLIC" };
-    if (mode !== "ALL") filter.studyMode = mode;
+    const filter = { visibility: "PUBLIC" };
     deckApi
       .getPage({ page: 0, size: 100, sort: sortParam }, debouncedSearch || undefined, filter as never)
       .then((pg) => setDecks(pg.content ?? []))
       .catch(() => toast.error("Không thể tải danh sách deck."))
       .finally(() => setLoading(false));
-  }, [debouncedSearch, currentUserId, mode, sortKey]);
+  }, [debouncedSearch, currentUserId, sortKey]);
 
   const favoriteByDeckId = useMemo(() => {
     const map = new Map<number, FavoriteDeckDTO>();
@@ -261,7 +256,7 @@ export default function CommunityPage() {
     [visibleDecks, safePage]
   );
 
-  useEffect(() => { setPageDir(-1); setPage(1); }, [tab, mode, sortKey, debouncedSearch]);
+  useEffect(() => { setPageDir(-1); setPage(1); }, [tab, sortKey, debouncedSearch]);
 
   const handlePageChange = (next: number) => {
     setPageDir(next >= safePage ? 1 : -1);
@@ -310,13 +305,6 @@ export default function CommunityPage() {
 
         {/* ════════ TOOLBAR ════════ */}
         <div className="flex flex-wrap items-center gap-2 px-1 pt-2 pb-3 shrink-0">
-          {/* Mode pills */}
-          <div className="flex items-center gap-1">
-            <ModePill label="Tất cả"  icon={<Sparkles className="size-3.5" />} active={mode === "ALL"}     onClick={() => setMode("ALL")} />
-            <ModePill label="Quizlet" icon={<BookOpen className="size-3.5" />} active={mode === "QUIZLET"} onClick={() => setMode("QUIZLET")} />
-            <ModePill label="Anki"    icon={<Brain className="size-3.5" />}    active={mode === "ANKI"}    onClick={() => setMode("ANKI")} />
-          </div>
-
           <div className="flex-1" />
 
           {/* Sort + search + view toggle */}
@@ -439,32 +427,6 @@ export default function CommunityPage() {
   );
 }
 
-/* ─────────────────────────────────────────
-   Mode pill — uses system primary only
-───────────────────────────────────────── */
-function ModePill({
-  icon, label, active, onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
-        active
-          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent"
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 /* ─────────────────────────────────────────
    Sort dropdown
@@ -583,7 +545,6 @@ function CommunityDeckRow({
 }) {
   const gradStyle = deckBgStyle(deck);
   const DeckIcon  = deckIconComponent(deck);
-  const isAnki = deck.studyMode === "ANKI";
 
   return (
     <motion.div
@@ -600,9 +561,6 @@ function CommunityDeckRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
-          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-            {isAnki ? "ANKI" : "QUIZLET"}
-          </span>
           {isOwn && (
             <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
               <Check className="size-3" /> Của bạn
@@ -681,7 +639,6 @@ function CommunityDeckCard({
 }) {
   const gradStyle = deckBgStyle(deck);
   const DeckIcon  = deckIconComponent(deck);
-  const isAnki    = deck.studyMode === "ANKI";
 
   return (
     <motion.div
@@ -697,12 +654,6 @@ function CommunityDeckCard({
 
         <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
           <DeckIcon className="size-5 text-white" />
-        </div>
-
-        <div className="absolute top-2.5 left-4">
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm tracking-wide">
-            {isAnki ? "ANKI" : "QUIZLET"}
-          </span>
         </div>
 
         {isOwn ? (

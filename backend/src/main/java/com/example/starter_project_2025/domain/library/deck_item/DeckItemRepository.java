@@ -16,4 +16,6 @@ public interface DeckItemRepository extends BaseCrudRepository<DeckItem, Long> {
     List<DeckItem> findByDeckIdOrderByOrderIndexAsc(Long deckId);
 
     Optional<DeckItem> findFirstByFlashcardId(Long flashcardId);
+
+    Optional<DeckItem> findByDeckIdAndFlashcardId(Long deckId, Long flashcardId);
 }

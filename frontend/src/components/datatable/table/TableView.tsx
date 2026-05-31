@@ -152,7 +152,10 @@ export function TableView({
                 ancestor, so we keep the structure flat). Hidden scrollbars
                 + floating chevrons replace the native bars without changing
                 sticky behaviour. */}
-            <ScrollHintContainer axis="both" className="flex-1 min-h-0">
+            {/* topOffset clears the sticky header (h-11 = 44px) so the up-arrow
+                floats over the scrollable rows, not the frozen header. 48 =
+                44px header + 4px gap (matches the default top inset). */}
+            <ScrollHintContainer axis="both" className="flex-1 min-h-0" topOffset={48}>
                 <DndContext
                     sensors={dndSensors}
                     collisionDetection={closestCenter}

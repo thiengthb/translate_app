@@ -484,32 +484,6 @@ function TagFilterBar({
 }
 
 /* ─────────────────────────────────────────
-   Mode badge
-───────────────────────────────────────── */
-function ModeBadge({ mode, ghost }: { mode?: string; ghost?: boolean }) {
-  if (!mode) return null;
-  if (ghost) {
-    return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-        {mode}
-      </span>
-    );
-  }
-  if (mode === "ANKI") {
-    return (
-      <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-500 border border-sky-500/20">
-        Anki
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-500 border border-indigo-500/20">
-      Quizlet
-    </span>
-  );
-}
-
-/* ─────────────────────────────────────────
    Shared overflow menu (tag picker + delete)
 ───────────────────────────────────────── */
 function DeckOverflowMenu({
@@ -732,7 +706,7 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
         "relative flex items-center gap-4 px-4 py-3.5 rounded-lg hover:bg-accent group border border-transparent hover:border-border/40 transition-colors",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
       <div
         className="shrink-0 size-11 rounded-lg flex items-center justify-center shadow-sm"
@@ -744,7 +718,6 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
-          <ModeBadge mode={deck.studyMode} />
         </div>
         <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
           <p className="text-xs text-muted-foreground">{deck.totalCards ?? 0} terms</p>
@@ -770,7 +743,7 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
           onEdit={onEdit}
-          showSettings={deck.studyMode === "ANKI"}
+          showSettings={true}
           tagFlyout
         />
       </div>
@@ -799,7 +772,7 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
         "group relative rounded-xl border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card flex flex-col",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
       {/* Gradient header */}
       <div className="relative h-24 overflow-hidden rounded-t-xl shrink-0" style={gradStyle}>
@@ -809,10 +782,6 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
 
         <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
           <DeckIcon className="size-5 text-white" />
-        </div>
-
-        <div className="absolute top-2.5 left-4">
-          <ModeBadge mode={deck.studyMode} ghost />
         </div>
       </div>
 
@@ -833,7 +802,7 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
           onEdit={onEdit}
-          showSettings={deck.studyMode === "ANKI"}
+          showSettings={true}
           buttonCls="p-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/20 transition-colors"
         />
       </div>

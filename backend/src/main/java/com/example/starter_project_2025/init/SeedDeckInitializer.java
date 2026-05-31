@@ -69,7 +69,6 @@ public class SeedDeckInitializer implements CommandLineRunner {
                 .title(spec.title)
                 .description(spec.description)
                 .visibility("PUBLIC")
-                .studyMode(spec.studyMode)
                 .sourceLanguage(spec.sourceLang)
                 .targetLanguage(spec.targetLang)
                 .totalCards(0)
