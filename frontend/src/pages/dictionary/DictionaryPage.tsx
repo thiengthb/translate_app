@@ -157,6 +157,7 @@ export default function DictionaryPage() {
         const effectiveMode = mode ?? searchMode;
         if (!term) return;
         setShowDrop(false);
+        setShowSaved(false);
         setLoading(true);
         setError(null);
         setResults(null);
@@ -243,6 +244,60 @@ export default function DictionaryPage() {
         setSavedKanjis([]);
     };
 
+    // Đối chiếu mục "đã lưu" với server: bỏ những từ/kanji đã bị xóa (hoặc tắt
+    // hoạt động) khỏi localStorage. Lỗi mạng thì GIỮ NGUYÊN để không xóa nhầm.
+    const reconcileSaved = useCallback(async () => {
+        const words  = loadSavedWords();
+        const kanjis = loadSavedKanjis();
+        if (!words.length && !kanjis.length) return;
+
+        const wordChecks = await Promise.all(words.map(async (w) => {
+            try {
+                const res = await dictionaryApi.search(w.word, 50);
+                return res.find((r) => r.id === w.id) ?? null; // null = đã bị xóa → loại
+            } catch {
+                return w; // lỗi mạng → giữ lại bản cũ
+            }
+        }));
+        const liveWords = wordChecks.filter(Boolean) as WordSearchResult[];
+
+        const kanjiChecks = await Promise.all(kanjis.map(async (k) => {
+            try {
+                const res = await dictionaryApi.kanjiSearch(k.character, 10);
+                return res.find((r) => r.character === k.character) ?? null;
+            } catch {
+                return k;
+            }
+        }));
+        const liveKanjis = kanjiChecks.filter(Boolean) as DictionaryKanjiDetail[];
+
+        if (liveWords.length !== words.length) {
+            localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(liveWords));
+            setSavedWords(liveWords);
+        }
+        if (liveKanjis.length !== kanjis.length) {
+            localStorage.setItem(SAVED_KANJIS_KEY, JSON.stringify(liveKanjis));
+            setSavedKanjis(liveKanjis);
+        }
+    }, []);
+
+    // Mở/đóng mục "đã lưu". Khi mở: xóa kết quả tìm kiếm đang hiển thị để danh
+    // sách đã lưu hiện ra, đồng thời đối chiếu server loại các từ đã bị xóa.
+    const toggleSavedView = useCallback(() => {
+        setShowSaved((v) => {
+            const next = !v;
+            if (next) {
+                setResults(null);
+                setKanjiResults(null);
+                setSearched("");
+                setError(null);
+                setShowDrop(false);
+                void reconcileSaved();
+            }
+            return next;
+        });
+    }, [reconcileSaved]);
+
     const hasVocabResults = !loading && results !== null;
     const hasKanjiResults = !loading && kanjiResults !== null;
     const noResults = (hasVocabResults && results!.length === 0) || (hasKanjiResults && kanjiResults!.length === 0);
@@ -276,7 +331,7 @@ export default function DictionaryPage() {
                                 <Button
                                     variant={showSaved ? "default" : "outline"}
                                     size="sm"
-                                    onClick={() => setShowSaved((v) => !v)}
+                                    onClick={toggleSavedView}
                                     className="gap-1.5 shrink-0"
                                 >
                                     <Bookmark className="h-4 w-4" />
@@ -453,7 +508,7 @@ export default function DictionaryPage() {
                 )}
 
                 {/* ── Saved section ── */}
-                {showSaved && !searched && !loading && (
+                {showSaved && !loading && (
                     <SavedSection
                         savedWords={savedWords}
                         savedKanjis={savedKanjis}
