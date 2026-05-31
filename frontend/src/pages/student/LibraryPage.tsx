@@ -7,13 +7,10 @@ import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { FlashcardSettingsModal } from "@/pages/student/FlashcardSettingsModal";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { DataPagination } from "@/components/common/DataPagination";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { usePagination } from "@/hooks/usePagination";
-import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import {
-  BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight,
-  ChevronsLeft, ChevronsRight, ChevronUp, LayoutGrid, List,
+  BookOpen, Check, ChevronDown, ChevronUp, LayoutGrid, List,
   MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
 } from "lucide-react";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -286,7 +283,7 @@ export default function LibraryPage() {
             Tổng:{" "}
             <span className="font-semibold text-foreground">{filteredDecks.length}</span>
           </span>
-          <LibraryPagination
+          <DataPagination
             currentPage={safePage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
@@ -372,74 +369,6 @@ export default function LibraryPage() {
         />
       )}
     </MainLayout>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Datatable-style pagination (no page-size select)
-───────────────────────────────────────── */
-function LibraryPagination({
-  currentPage, totalPages, onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (p: number) => void;
-}) {
-  const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
-    currentPage, totalPages, paginationItemsToDisplay: 5,
-  });
-
-  if (totalPages <= 1) return null;
-
-  const canPrev = currentPage > 1;
-  const canNext = currentPage < totalPages;
-
-  return (
-    <div className="flex items-center gap-1.5 text-xs">
-      <span className="text-muted-foreground whitespace-nowrap tabular-nums select-none">
-        <span className="font-semibold text-foreground">{currentPage}</span>
-        <span className="mx-1 opacity-50">/</span>
-        <span className="text-foreground">{totalPages}</span>
-      </span>
-      <div className="flex items-center gap-0.5">
-        <TooltipWrapper content="Trang đầu">
-          <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => onPageChange(1)} disabled={!canPrev}>
-            <ChevronsLeft size={14} />
-          </Button>
-        </TooltipWrapper>
-        <TooltipWrapper content="Trang trước">
-          <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => onPageChange(currentPage - 1)} disabled={!canPrev}>
-            <ChevronLeft size={14} />
-          </Button>
-        </TooltipWrapper>
-        <div className="hidden md:flex items-center gap-0.5">
-          {showLeftEllipsis && <span className="px-1 text-muted-foreground select-none">…</span>}
-          {pages.map((p) => (
-            <Button key={p} size="icon"
-              variant={p === currentPage ? "default" : "ghost"}
-              onClick={() => onPageChange(p)}
-              className="h-8 w-8 tabular-nums text-xs">
-              {p}
-            </Button>
-          ))}
-          {showRightEllipsis && <span className="px-1 text-muted-foreground select-none">…</span>}
-        </div>
-        <TooltipWrapper content="Trang sau">
-          <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => onPageChange(currentPage + 1)} disabled={!canNext}>
-            <ChevronRight size={14} />
-          </Button>
-        </TooltipWrapper>
-        <TooltipWrapper content="Trang cuối">
-          <Button variant="ghost" size="icon" className="h-8 w-8"
-            onClick={() => onPageChange(totalPages)} disabled={!canNext}>
-            <ChevronsRight size={14} />
-          </Button>
-        </TooltipWrapper>
-      </div>
-    </div>
   );
 }
 

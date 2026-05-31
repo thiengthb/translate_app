@@ -10,6 +10,7 @@ import com.example.starter_project_2025.domain.assessment.quiz.QuizRepository;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestion;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
+import com.example.starter_project_2025.system.reward.RewardService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,6 +42,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     QuizAttemptRepository attemptRepository;
     QuizAttemptQuestionRepository attemptQuestionRepository;
     UserQuizProgressRepository progressRepository;
+    RewardService rewardService;
 
     /* ──────────────────────────────────────────
        Start a new attempt — snapshots every question
@@ -484,6 +486,10 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             progress.setStatus("FAILED");
         }
         progressRepository.save(progress);
+
+        // Grant exp + coins for classroom quiz completion (no-op for free-play
+        // quizzes and idempotent for repeated calls on the same attempt).
+        rewardService.grantForAttempt(attempt);
     }
 
     /* ──────────────────────────────────────────
