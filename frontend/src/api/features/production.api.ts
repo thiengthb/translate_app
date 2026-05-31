@@ -35,6 +35,18 @@ export interface VocabSource {
   deckId?: number;
 }
 
+/** An AI-generated prompt awaiting teacher review. */
+export interface PendingPrompt {
+  promptId: number;
+  subUseId: number;
+  subUseName: string;
+  jlptLevel: string | null;
+  situation: string;
+  referenceAnswer: string;
+  register: string | null;
+  createdAt: string;
+}
+
 export const productionApi = {
   getExercise: async (subUseId?: number): Promise<ExerciseResponse> => {
     const res = await axiosInstance.get<ExerciseResponse>("/production/exercise", {
@@ -58,5 +70,23 @@ export const productionApi = {
   generateExercise: async (subUseId: number, source: VocabSource): Promise<ExerciseResponse> => {
     const res = await axiosInstance.post<ExerciseResponse>("/production/generate", { subUseId, source });
     return res.data;
+  },
+
+  // ── Teacher review queue (requires SCENARIO_STUB_UPDATE) ──
+
+  /** Generated prompts awaiting review (newest first). */
+  listPending: async (): Promise<PendingPrompt[]> => {
+    const res = await axiosInstance.get<PendingPrompt[]>("/production/prompts/pending");
+    return res.data;
+  },
+
+  /** Approve a generated prompt into the shared pool. */
+  approvePrompt: async (promptId: number): Promise<void> => {
+    await axiosInstance.post(`/production/prompts/${promptId}/approve`);
+  },
+
+  /** Reject a generated prompt (keeps it out of the shared pool). */
+  rejectPrompt: async (promptId: number): Promise<void> => {
+    await axiosInstance.post(`/production/prompts/${promptId}/reject`);
   },
 };

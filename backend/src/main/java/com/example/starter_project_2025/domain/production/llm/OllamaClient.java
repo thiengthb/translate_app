@@ -169,19 +169,28 @@ public class OllamaClient {
                 : String.join(", ", vocab);
 
         String prompt = """
-                You are a Japanese teacher writing ONE translation practice item for a JLPT %s learner.
-                The learner MUST practice this grammar point: %s
+                You are a Japanese teacher creating ONE translation practice item for a JLPT %s
+                learner whose native language is Vietnamese.
+
+                MANDATORY grammar point (the Japanese answer MUST use it): %s
                 Register: %s
-                Vocabulary the learner is studying (try to use 2-3 of them naturally): %s
+                Suggested vocabulary the learner is studying: %s
+
+                Naturalness rules (most important):
+                - The grammar point above is REQUIRED — the Japanese answer must clearly use it.
+                - Use the suggested vocabulary ONLY where it sounds natural. You do NOT have to use
+                  all of them. If you cannot fit the vocabulary naturally while keeping the grammar,
+                  drop the vocabulary and just write a natural sentence that uses the grammar.
+                - Never force vocabulary in a way that makes the sentence awkward.
 
                 Produce:
-                1. "situation": ONE short real-life situation in ENGLISH (1-2 sentences, addressed to the
-                   learner as "You ..."), that naturally REQUIRES the target grammar to answer.
-                2. "l2Reference": a natural JAPANESE model answer that (a) actually uses the target grammar,
-                   (b) uses some of the vocabulary above, (c) matches the register.
+                1. "situation": ONE short real-life situation in VIETNAMESE (1-2 sentences, addressed to
+                   the learner as "Bạn ..."), that naturally REQUIRES the target grammar to respond.
+                2. "l2Reference": a natural JAPANESE model answer that (a) clearly uses the target grammar,
+                   (b) matches the register, (c) is a valid response to the situation.
 
                 Reply with ONLY this JSON, no other text:
-                {"situation": "<english>", "l2Reference": "<japanese>"}
+                {"situation": "<vietnamese>", "l2Reference": "<japanese>"}
                 """.formatted(safe(jlptLevel), safe(nuance), safe(register), vocabList);
 
         String raw = generate(prompt);
@@ -203,7 +212,13 @@ public class OllamaClient {
 
     private String generate(String prompt) {
         try {
-            Map<String, Object> body = Map.of("model", model, "prompt", prompt, "stream", false);
+            // A little temperature for variety; compose/alternatives want diverse output
+            // (the strict judge builds its own deterministic request separately).
+            Map<String, Object> body = Map.of(
+                    "model", model,
+                    "prompt", prompt,
+                    "stream", false,
+                    "options", Map.of("temperature", 0.7));
             OllamaRawResponse raw = restClient.post()
                     .uri(apiUrl)
                     .contentType(MediaType.APPLICATION_JSON)

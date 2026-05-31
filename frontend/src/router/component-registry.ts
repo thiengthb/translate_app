@@ -21,6 +21,7 @@ import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
 import DrillPage from "@/pages/production/DrillPage";
+import ReviewPage from "@/pages/production/ReviewPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
@@ -92,6 +93,7 @@ export const routes: RouteConfig[] = [
   { path: "/analyze", component: AnalyzePage },
   { path: "/production", component: ProductionPage },
   { path: "/production/drill", component: DrillPage },
+  { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   { path: "/login", component: Login, isPublic: true },

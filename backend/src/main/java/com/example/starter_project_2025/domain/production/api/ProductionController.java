@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,6 +83,29 @@ public class ProductionController {
                 generationService.generate(principal.getId(), req.getSubUseId(), req.getSource()));
     }
 
+    @GetMapping("/prompts/pending")
+    @PreAuthorize("hasAuthority('SCENARIO_STUB_UPDATE')")
+    @Operation(summary = "List AI-generated prompts awaiting teacher review")
+    public ResponseEntity<List<PendingPromptResponse>> listPending() {
+        return ResponseEntity.ok(promptService.listPendingReview());
+    }
+
+    @PostMapping("/prompts/{promptId}/approve")
+    @PreAuthorize("hasAuthority('SCENARIO_STUB_UPDATE')")
+    @Operation(summary = "Approve a generated prompt so it can enter the shared practice pool")
+    public ResponseEntity<Void> approvePrompt(@PathVariable Long promptId) {
+        promptService.approveGenerated(promptId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/prompts/{promptId}/reject")
+    @PreAuthorize("hasAuthority('SCENARIO_STUB_UPDATE')")
+    @Operation(summary = "Reject a generated prompt (keeps it out of the shared pool)")
+    public ResponseEntity<Void> rejectPrompt(@PathVariable Long promptId) {
+        promptService.rejectGenerated(promptId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/attempt")
     @Operation(summary = "Submit and grade a production attempt")
     public ResponseEntity<AttemptResultResponse> submitAttempt(
@@ -103,7 +127,7 @@ public class ProductionController {
     private GrammarSubUse pickRandom() {
         // Only sub-uses that have a scenario can drive an exercise; the Grammar
         // Spotter dictionary adds many scenario-less sub-uses, so filter them out.
-        Set<Long> withScenario = new HashSet<>(scenarioRepository.findDistinctSubUseIds());
+        Set<Long> withScenario = new HashSet<>(scenarioRepository.findDistinctApprovedSubUseIds());
         List<GrammarSubUse> eligible = subUseRepository.findAll().stream()
                 .filter(su -> withScenario.contains(su.getId()))
                 .toList();
