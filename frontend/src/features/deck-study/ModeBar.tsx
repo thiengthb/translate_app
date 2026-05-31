@@ -1,4 +1,4 @@
-import { GraduationCap, Grid2x2, Layers, ListChecks, PenLine, Repeat } from "lucide-react";
+import { GraduationCap, Grid2x2, Layers, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StudyMode } from "./types";
 
@@ -13,8 +13,6 @@ const MODES: ModeDef[] = [
   { mode: "FLASHCARD", label: "Flashcard", icon: Layers },
   { mode: "LEARN", label: "Learn", icon: GraduationCap },
   { mode: "MATCH", label: "Match", icon: Grid2x2 },
-  { mode: "WRITE", label: "Write", icon: PenLine },
-  { mode: "QUIZ", label: "Quiz", icon: ListChecks },
 ];
 
 interface ModeBarProps {

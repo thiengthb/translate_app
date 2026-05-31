@@ -1,8 +1,8 @@
 import axiosInstance from "@/api/axios";
 
-/** The six study modes a deck can be studied in. SRS is the only one that
- *  touches spaced-repetition scheduling; the rest persist here (or nowhere). */
-export type StudyMode = "FLASHCARD" | "LEARN" | "MATCH" | "WRITE" | "QUIZ" | "SRS";
+/** The study modes a deck can be studied in. SRS is the only one that touches
+ *  spaced-repetition scheduling; the rest persist here (or nowhere). */
+export type StudyMode = "FLASHCARD" | "LEARN" | "MATCH" | "SRS";
 
 /** Non-SRS modes that report graded answers / sessions to the backend. */
 export type QuizletMode = Exclude<StudyMode, "SRS">;

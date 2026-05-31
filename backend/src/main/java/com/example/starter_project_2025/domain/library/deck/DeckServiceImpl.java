@@ -255,7 +255,6 @@ public class DeckServiceImpl
                 .title(candidate)
                 .description(original.getDescription())
                 .visibility("PRIVATE")
-                .studyMode(original.getStudyMode() != null ? original.getStudyMode() : "QUIZLET")
                 .coverImageUrl(original.getCoverImageUrl())
                 .sourceLanguage(original.getSourceLanguage())
                 .targetLanguage(original.getTargetLanguage())

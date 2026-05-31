@@ -27,7 +27,7 @@ import java.util.Set;
 @EntityLabel(name = "Deck", plural = "Decks", description = "Study deck management")
 @AutoCrud(path = "decks")
 @Searchable(fields = {"title", "description"})
-@Filterable(fields = {"title", "visibility", "studyMode", "isActive"})
+@Filterable(fields = {"title", "visibility", "isActive"})
 @Sortable(fields = {"title", "createdAt", "updatedAt", "cloneCount", "favoriteCount", "viewCount", "totalCards"})
 @SoftDelete
 @AuditEnabled
@@ -63,11 +63,6 @@ public class Deck extends BaseEntity {
     @Builder.Default
     @Column(length = 20)
     String visibility = "PRIVATE";
-
-    @Builder.Default
-    @Column(name = "study_mode", nullable = false, length = 20)
-    @FieldMeta(label = "Study Mode", type = "select", order = 3, group = "Study", placeholder = "QUIZLET or ANKI")
-    String studyMode = "QUIZLET";
 
     @Column
     String coverImageUrl;

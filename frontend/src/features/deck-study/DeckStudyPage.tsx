@@ -10,13 +10,11 @@ import { ModeBar } from "./ModeBar";
 import { FlashcardMode } from "./modes/FlashcardMode";
 import { LearnMode } from "./modes/LearnMode";
 import { MatchMode } from "./modes/MatchMode";
-import { WriteMode } from "./modes/WriteMode";
-import { QuizMode } from "./modes/QuizMode";
 import { SrsMode } from "./modes/SrsMode";
 import { useDeckStudyData } from "./useDeckStudyData";
 import type { StudyMode } from "./types";
 
-const VALID_MODES: StudyMode[] = ["FLASHCARD", "LEARN", "MATCH", "WRITE", "QUIZ", "SRS"];
+const VALID_MODES: StudyMode[] = ["FLASHCARD", "LEARN", "MATCH", "SRS"];
 
 function parseMode(value: string | null): StudyMode | null {
   return value && (VALID_MODES as string[]).includes(value) ? (value as StudyMode) : null;
@@ -125,10 +123,6 @@ export default function DeckStudyPage() {
         return <LearnMode {...props} />;
       case "MATCH":
         return <MatchMode {...props} />;
-      case "WRITE":
-        return <WriteMode {...props} />;
-      case "QUIZ":
-        return <QuizMode {...props} />;
       case "FLASHCARD":
       default:
         return <FlashcardMode {...props} />;

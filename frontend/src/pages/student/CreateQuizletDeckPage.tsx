@@ -150,7 +150,6 @@ export default function CreateQuizletDeckPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         visibility,
-        studyMode: "QUIZLET",
         deckIcon,
         deckColor,
         totalCards: validCards.length,

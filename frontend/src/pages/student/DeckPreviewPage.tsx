@@ -11,7 +11,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
-  Brain,
   ChevronLeft,
   Download,
   Heart,
@@ -127,8 +126,6 @@ export default function DeckPreviewPage() {
     () => deck != null && deck.userId != null && deck.userId === currentUserId,
     [deck, currentUserId]
   );
-  const isAnki = deck?.studyMode === "ANKI";
-
   /* ── Actions ── */
   const handleClone = async () => {
     if (!deck?.id) return;
@@ -209,25 +206,11 @@ export default function DeckPreviewPage() {
           <>
             {/* ── Deck header ── */}
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-              <div
-                className={cn(
-                  "h-28 bg-linear-to-br relative",
-                  isAnki
-                    ? "from-indigo-500 to-blue-600"
-                    : "from-violet-500 to-purple-600"
-                )}
-              >
+              <div className="relative h-28 bg-linear-to-br from-violet-500 to-purple-600">
                 <div className="absolute -top-5 -right-5 size-24 rounded-full bg-white/10" />
                 <div className="absolute -bottom-3 left-8 size-14 rounded-full bg-black/10" />
-                <span className="absolute top-3 left-5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-                  {isAnki ? "ANKI" : "QUIZLET"}
-                </span>
                 <div className="absolute bottom-3 left-5 size-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                  {isAnki ? (
-                    <Brain className="size-6 text-white" />
-                  ) : (
-                    <BookOpen className="size-6 text-white" />
-                  )}
+                  <BookOpen className="size-6 text-white" />
                 </div>
               </div>
 

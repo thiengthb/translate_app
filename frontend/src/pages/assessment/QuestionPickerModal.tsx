@@ -14,6 +14,18 @@ import { toast } from "sonner";
 import { QuestionForm } from "./QuestionForm";
 import { TagBadges, TagChips } from "./QuestionTags";
 
+const TYPE_LABELS: Record<string, string> = {
+  SINGLE_CHOICE: "Single Choice",
+  MULTIPLE_CHOICE: "Multiple Choice",
+  TRUE_FALSE: "True / False",
+  FILL_BLANK: "Fill in the Blank",
+  // Hidden types — kept for data display only
+  WRITING: "Writing",
+  MATCHING: "Matching",
+  ORDERING: "Ordering",
+  LISTENING: "Listening",
+};
+
 export function QuestionPickerModal({
   open, onClose, onAdd, excludeIds = [],
 }: {
@@ -144,7 +156,7 @@ export function QuestionPickerModal({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{q.prompt}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="outline" className="text-[10px]">{q.questionType.replace("_", " ")}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{TYPE_LABELS[q.questionType] ?? q.questionType}</Badge>
                         <span className="text-xs text-muted-foreground">{q.options.length} options</span>
                         <TagBadges tags={q.tags} />
                       </div>
