@@ -33,4 +33,8 @@ public class ReferenceSentence extends BaseEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)
     String l2Text;
+
+    /** Provenance marker: null/"SEED" for hand-seeded, "GENERATED" for AI-composed. */
+    @Column(length = 20)
+    String source;
 }

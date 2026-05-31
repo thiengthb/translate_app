@@ -1,5 +1,6 @@
 package com.example.starter_project_2025.domain.production.api;
 
+import com.example.starter_project_2025.domain.production.generation.ExerciseGenerationService;
 import com.example.starter_project_2025.domain.production.grading.GradingService;
 import com.example.starter_project_2025.domain.production.grading.TranslationAttempt;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class ProductionController {
     private final ScenarioStubRepository scenarioRepository;
     private final PromptService promptService;
     private final GradingService gradingService;
+    private final ExerciseGenerationService generationService;
 
     @GetMapping("/exercise")
     @Operation(summary = "Get a production exercise prompt")
@@ -55,6 +58,28 @@ public class ProductionController {
                 .jlptLevel(subUse.getJlptLevel())
                 .l1Prompt(prompt.getL1Prompt())
                 .build());
+    }
+
+    @GetMapping("/grammars")
+    @Operation(summary = "List grammar points available to drill (id, name, level)")
+    public ResponseEntity<List<GrammarOption>> listGrammars() {
+        List<GrammarOption> options = subUseRepository.findAll().stream()
+                .map(su -> new GrammarOption(su.getId(), su.getName(), su.getJlptLevel()))
+                .sorted(Comparator
+                        .comparing(GrammarOption::jlptLevel, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(GrammarOption::name, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        return ResponseEntity.ok(options);
+    }
+
+    @PostMapping("/generate")
+    @Operation(summary = "Generate a vocab-driven practice prompt for a selected grammar point")
+    public ResponseEntity<ExerciseResponse> generate(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody GenerateExerciseRequest req) {
+
+        return ResponseEntity.ok(
+                generationService.generate(principal.getId(), req.getSubUseId(), req.getSource()));
     }
 
     @PostMapping("/attempt")
@@ -87,4 +112,7 @@ public class ProductionController {
         }
         return eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
     }
+
+    /** Lightweight grammar-point option for the drill selector. */
+    public record GrammarOption(Long id, String name, String jlptLevel) {}
 }

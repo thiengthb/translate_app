@@ -20,6 +20,7 @@ import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
+import DrillPage from "@/pages/production/DrillPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
@@ -90,6 +91,7 @@ export const routes: RouteConfig[] = [
   { path: "/users/:userId", component: PublicProfilePage },
   { path: "/analyze", component: AnalyzePage },
   { path: "/production", component: ProductionPage },
+  { path: "/production/drill", component: DrillPage },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   { path: "/login", component: Login, isPublic: true },

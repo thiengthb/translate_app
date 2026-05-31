@@ -151,6 +151,56 @@ public class OllamaClient {
         return out;
     }
 
+    // ── Production drill: compose a prompt + reference from vocab + grammar ───
+
+    /** A generated practice item: an English situation and a Japanese model answer. */
+    public record GeneratedExercise(String situation, String l2Reference) {}
+
+    private record ComposePayload(String situation, String l2Reference) {}
+
+    /**
+     * Compose ONE practice item for a target grammar point, optionally seeded with
+     * the learner's vocabulary. Returns {@code null} when Ollama is unavailable or
+     * the response cannot be parsed (the caller decides the fallback).
+     */
+    public GeneratedExercise compose(String jlptLevel, String nuance, String register, List<String> vocab) {
+        String vocabList = (vocab == null || vocab.isEmpty())
+                ? "(any common words)"
+                : String.join(", ", vocab);
+
+        String prompt = """
+                You are a Japanese teacher writing ONE translation practice item for a JLPT %s learner.
+                The learner MUST practice this grammar point: %s
+                Register: %s
+                Vocabulary the learner is studying (try to use 2-3 of them naturally): %s
+
+                Produce:
+                1. "situation": ONE short real-life situation in ENGLISH (1-2 sentences, addressed to the
+                   learner as "You ..."), that naturally REQUIRES the target grammar to answer.
+                2. "l2Reference": a natural JAPANESE model answer that (a) actually uses the target grammar,
+                   (b) uses some of the vocabulary above, (c) matches the register.
+
+                Reply with ONLY this JSON, no other text:
+                {"situation": "<english>", "l2Reference": "<japanese>"}
+                """.formatted(safe(jlptLevel), safe(nuance), safe(register), vocabList);
+
+        String raw = generate(prompt);
+        if (raw == null) {
+            return null;
+        }
+        try {
+            ComposePayload p = mapper.readValue(extractJson(raw.trim()), ComposePayload.class);
+            if (p == null || p.l2Reference() == null || p.l2Reference().isBlank()) {
+                return null;
+            }
+            String situation = p.situation() == null ? "" : p.situation().trim();
+            return new GeneratedExercise(situation, p.l2Reference().trim());
+        } catch (Exception e) {
+            log.warn("Ollama compose parse failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
     private String generate(String prompt) {
         try {
             Map<String, Object> body = Map.of("model", model, "prompt", prompt, "stream", false);

@@ -36,4 +36,8 @@ public class ScenarioStub extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     String l1PromptTemplate;
+
+    /** Provenance marker: null/"SEED" for hand-seeded, "GENERATED" for AI-composed. */
+    @Column(length = 20)
+    String source;
 }

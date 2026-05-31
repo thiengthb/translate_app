@@ -41,6 +41,37 @@ public class PromptService {
         return cache;
     }
 
+    /**
+     * Persist a freshly AI-generated exercise (reference + scenario + prompt cache)
+     * for the given grammar point and return the cached prompt. Kept short and
+     * transactional; the slow LLM call happens before this in the caller.
+     */
+    @Transactional
+    public PromptCache persistGenerated(GrammarSubUse subUse, String situation, String l1Prompt,
+                                        String l2Reference, String register) {
+        ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                .subUse(subUse)
+                .l1Text(situation)
+                .l2Text(l2Reference)
+                .source("GENERATED")
+                .build());
+
+        ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                .subUse(subUse)
+                .register(register)
+                .situationContext(situation)
+                .l1PromptTemplate(l1Prompt)
+                .source("GENERATED")
+                .build());
+
+        return promptCacheRepository.save(PromptCache.builder()
+                .subUse(subUse)
+                .scenario(scenario)
+                .referenceSentence(ref)
+                .l1Prompt(l1Prompt)
+                .build());
+    }
+
     private PromptCache generateAndCache(GrammarSubUse subUse, ScenarioStub scenario, ReferenceSentence reference) {
         String l1Prompt = scenario.getL1PromptTemplate();
         if (l1Prompt == null || l1Prompt.isBlank()) {
