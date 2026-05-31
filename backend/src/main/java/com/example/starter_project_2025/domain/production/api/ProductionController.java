@@ -84,7 +84,7 @@ public class ProductionController {
             @Valid @RequestBody GenerateExerciseRequest req) {
 
         return ResponseEntity.ok(generationService.generate(
-                principal.getId(), req.getSubUseId(), req.getSource(), req.getTarget()));
+                principal.getId(), req.getSubUseId(), req.getSource()));
     }
 
     @GetMapping("/vocab")
