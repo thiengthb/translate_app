@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { deckApi, flashcardApi } from "@/api";
 import { fileApi } from "@/api/features/file.api";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import {
   Loader2,
   Mic,
   Save,
+  SquarePen,
   Trash2,
   Type,
   Video,
@@ -214,13 +216,25 @@ export default function AnkiCardEditPage() {
     }
   };
 
+  // Save is only allowed when BOTH sides carry at least one non-empty
+  // text/cloze content — a card needs a front and a back to be studyable.
+  const sideHasContent = (s: SideDraft | undefined) =>
+    !!s &&
+    s.contents.some(
+      (c) => (c.contentType === "TEXT" || c.contentType === "CLOZE") && c.contentValue.trim().length > 0
+    );
+  const bothSidesFilled =
+    sideHasContent(sides.find((s) => s.side === "FRONT")) &&
+    sideHasContent(sides.find((s) => s.side === "BACK"));
+
   return (
     <MainLayout
       parentCrumb={{ href: "/library", title: "My Library" }}
+      breadcrumbIcon={<SquarePen className="size-4 text-primary" />}
       ignorePaths={["deck", "card", String(flashcardId)]}
       pathName={{
         [`/deck/${deckId}`]: deckTitle || "Deck",
-        [`/deck/${deckId}/card/${flashcardId}/edit`]: "Edit card",
+        [`/deck/${deckId}/card/${flashcardId}/edit`]: "Sửa thẻ",
       }}
     >
       <div className="flex h-full min-h-0 w-full flex-col gap-4 py-2">
@@ -229,7 +243,11 @@ export default function AnkiCardEditPage() {
           <Button variant="outline" onClick={() => navigate(backTo)} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving || !dirty}>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !dirty || !bothSidesFilled}
+            title={!bothSidesFilled ? "Cả mặt trước và mặt sau đều cần có nội dung" : undefined}
+          >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             Save
           </Button>
@@ -248,7 +266,7 @@ export default function AnkiCardEditPage() {
               return (
                 <section
                   key={target}
-                  className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                  className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm"
                 >
                   {/* Header */}
                   <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
@@ -265,8 +283,8 @@ export default function AnkiCardEditPage() {
                     </span>
                   </div>
 
-                  {/* Body — scrolls when content is long */}
-                  <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+                  {/* Body — scrolls (with hint arrows) when content is long */}
+                  <ScrollHintContainer axis="vertical" className="min-h-0 flex-1" viewportClassName="space-y-2 p-4">
                     {side.contents.length === 0 ? (
                       <p className="py-6 text-center text-xs text-muted-foreground/70">
                         Chưa có nội dung. Thêm bằng các nút bên dưới.
@@ -282,17 +300,19 @@ export default function AnkiCardEditPage() {
                         />
                       ))
                     )}
-                  </div>
+                  </ScrollHintContainer>
 
                   {/* Footer — add content */}
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border bg-muted/20 px-4 py-2.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Add</span>
+                    <span className="mr-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Thêm
+                    </span>
                     {CONTENT_TYPES.map((ct) => (
                       <Button
                         key={ct.value}
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-1 px-2 text-[11px]"
+                        className="h-7 gap-1.5 px-2.5 text-[11px]"
                         onClick={() => addContent(sideIdx, ct.value)}
                       >
                         {ct.icon}
@@ -342,89 +362,87 @@ function ContentRow({
     e.target.value = "";
   };
 
-  const typeIcon = CONTENT_TYPES.find((t) => t.value === content.contentType)?.icon ?? null;
+  const typeMeta = CONTENT_TYPES.find((t) => t.value === content.contentType);
   const isMedia =
     content.contentType === "IMAGE" || content.contentType === "AUDIO" || content.contentType === "VIDEO";
 
   return (
-    <div className="group flex items-start gap-2">
-      <div className="mt-2 shrink-0 text-muted-foreground" title={content.contentType}>
-        {typeIcon}
+    <div className="space-y-2 rounded-md border border-border bg-background/50 p-2.5">
+      {/* Row header: type chip + remove */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+          {typeMeta?.icon}
+          {typeMeta?.label ?? content.contentType}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          disabled={!canRemove}
+          title="Xoá nội dung"
+          className="size-7 text-muted-foreground hover:text-destructive disabled:opacity-30"
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
       </div>
 
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <Input
-          value={content.label ?? ""}
-          onChange={(e) => onChange({ label: e.target.value })}
-          placeholder="Label (optional, e.g. Example, Reading…)"
-          className="h-8 text-xs"
+      <Input
+        value={content.label ?? ""}
+        onChange={(e) => onChange({ label: e.target.value })}
+        placeholder="Nhãn (tuỳ chọn — vd: Ví dụ, Cách đọc…)"
+        className="h-8 text-xs"
+      />
+
+      {(content.contentType === "TEXT" || content.contentType === "CLOZE") && (
+        <Textarea
+          value={content.contentValue}
+          onChange={(e) => onChange({ contentValue: e.target.value })}
+          placeholder={
+            content.contentType === "CLOZE" ? "Dùng {{c1::đáp án}} để tạo cloze…" : "Nhập nội dung…"
+          }
+          rows={2}
+          className="resize-none"
         />
+      )}
 
-        {(content.contentType === "TEXT" || content.contentType === "CLOZE") && (
-          <Textarea
-            value={content.contentValue}
-            onChange={(e) => onChange({ contentValue: e.target.value })}
-            placeholder={
-              content.contentType === "CLOZE" ? "Use {{c1::answer}} to mark a cloze deletion…" : "Enter text…"
-            }
-            rows={2}
-            className="resize-none"
-          />
-        )}
-
-        {isMedia && (
-          <div className="flex items-center gap-3">
-            {content.contentValue ? (
-              <div className="flex flex-1 items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
-                {content.contentType === "IMAGE" && (
-                  <img src={content.contentValue} alt="" className="size-12 rounded border border-border object-cover" />
-                )}
-                {content.contentType === "AUDIO" && (
-                  <audio src={content.contentValue} controls className="h-8 max-w-full" />
-                )}
-                {content.contentType === "VIDEO" && (
-                  <video src={content.contentValue} controls className="h-16 rounded border border-border" />
-                )}
-                <span className="flex-1 truncate text-xs text-muted-foreground">
-                  {content.file?.name ?? content.contentValue.split("/").pop() ?? "Attached"}
-                </span>
-                <button
-                  onClick={() => onChange({ contentValue: "", file: undefined })}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                  title="Remove"
-                >
-                  <X className="size-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 border-dashed"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {content.contentType === "IMAGE" && <ImageIcon className="size-4" />}
-                {content.contentType === "AUDIO" && <Mic className="size-4" />}
-                {content.contentType === "VIDEO" && <Video className="size-4" />}
-                Upload {content.contentType.toLowerCase()}
-              </Button>
+      {isMedia &&
+        (content.contentValue ? (
+          <div className="flex items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
+            {content.contentType === "IMAGE" && (
+              <img src={content.contentValue} alt="" className="size-12 rounded border border-border object-cover" />
             )}
-
-            <input ref={fileInputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
+            {content.contentType === "AUDIO" && (
+              <audio src={content.contentValue} controls className="h-8 max-w-full" />
+            )}
+            {content.contentType === "VIDEO" && (
+              <video src={content.contentValue} controls className="h-16 rounded border border-border" />
+            )}
+            <span className="flex-1 truncate text-xs text-muted-foreground">
+              {content.file?.name ?? content.contentValue.split("/").pop() ?? "Đã đính kèm"}
+            </span>
+            <button
+              onClick={() => onChange({ contentValue: "", file: undefined })}
+              className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+              title="Xoá tệp"
+            >
+              <X className="size-3.5" />
+            </button>
           </div>
-        )}
-      </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 border-dashed"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {content.contentType === "IMAGE" && <ImageIcon className="size-4" />}
+            {content.contentType === "AUDIO" && <Mic className="size-4" />}
+            {content.contentType === "VIDEO" && <Video className="size-4" />}
+            Tải lên {content.contentType.toLowerCase()}
+          </Button>
+        ))}
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onRemove}
-        disabled={!canRemove}
-        title="Remove content"
-        className="mt-1 size-8 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 disabled:opacity-20"
-      >
-        <Trash2 className="size-3.5" />
-      </Button>
+      {isMedia && <input ref={fileInputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />}
     </div>
   );
 }

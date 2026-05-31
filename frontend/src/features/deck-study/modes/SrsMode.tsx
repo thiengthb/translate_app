@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ankiStudyApi, flashcardApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, Brush, HelpCircle, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, HelpCircle, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardRenderDTO } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TemplateCardFace } from "../TemplateCardFace";
+import { StudyMessage } from "../StudyMessage";
 
 /** Keyboard shortcuts shown in the card's help tooltip. */
 const SHORTCUTS: { keys: string; desc: string }[] = [
@@ -53,36 +52,78 @@ const RATING_CONFIG: { rating: AnkiRating; label: string; shortcut: string }[] =
   { rating: "EASY", label: "Easy", shortcut: "4" },
 ];
 
-type QueueStats = { new: number; learning: number; review: number };
+type QueueStats = { new: number; learning: number; review: number; dueToday: number; dueReview: number };
 
 function isLearningState(card: AnkiStudyCard) {
   return card.state === "LEARNING" || card.state === "RELEARNING";
 }
 
-function returnsTodayOrEarlier(nextReviewAt?: string) {
-  if (!nextReviewAt) return true;
+function returnsNowOrEarlier(nextReviewAt?: string) {
+  if (!nextReviewAt) return false;
   const nextReview = new Date(nextReviewAt);
-  if (Number.isNaN(nextReview.getTime())) return true;
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-  return nextReview <= endOfToday;
+  if (Number.isNaN(nextReview.getTime())) return false;
+  return nextReview <= new Date();
 }
 
 function shouldTrackAsSessionLearning(card: AnkiStudyCard) {
-  return isLearningState(card) && returnsTodayOrEarlier(card.nextReviewAt);
+  return isLearningState(card);
 }
 
-function countMainQueueStats(cards: AnkiStudyCard[]): QueueStats {
-  return cards.reduce<QueueStats>(
-    (acc, card) => {
-      if (card.state === "NEW") acc.new += 1;
-      else if (isLearningState(card)) acc.learning += 1;
-      else acc.review += 1;
-      return acc;
-    },
-    { new: 0, learning: 0, review: 0 }
-  );
+function stateBucket(card: AnkiStudyCard): "new" | "learning" | "review" | null {
+  if (card.state === "NEW") return "new";
+  if (shouldTrackAsSessionLearning(card)) return "learning";
+  if (card.state === "REVIEW") return "review";
+  return null;
 }
+
+function isDueToday(card: AnkiStudyCard) {
+  return card.state === "REVIEW" && returnsNowOrEarlier(card.nextReviewAt);
+}
+
+function isDueReview(card: AnkiStudyCard) {
+  return isDueToday(card);
+}
+
+function applyReviewDelta(stats: QueueStats, before: AnkiStudyCard, after: AnkiStudyCard): QueueStats {
+  const next = { ...stats };
+  const beforeBucket = stateBucket(before);
+  const afterBucket = stateBucket(after);
+
+  if (beforeBucket) next[beforeBucket] = Math.max(0, next[beforeBucket] - 1);
+  if (isDueToday(before)) next.dueToday = Math.max(0, next.dueToday - 1);
+  if (isDueReview(before)) next.dueReview = Math.max(0, next.dueReview - 1);
+
+  if (afterBucket) next[afterBucket] += 1;
+  if (isDueToday(after)) next.dueToday += 1;
+  if (isDueReview(after)) next.dueReview += 1;
+
+  return next;
+}
+
+function totalStats(stats: QueueStats) {
+  return stats.new + stats.learning + stats.dueReview;
+}
+
+/**
+ * Module-level cache of the in-progress SRS session, keyed by deck. Switching
+ * to another study mode unmounts SrsMode; without this, remounting would reload
+ * the queue from the server and drop session-learning cards (short intervals
+ * that aren't "due" yet, so the queue endpoint omits them) — making the live
+ * "Learning" count vanish. We resume the cached session if it's recent.
+ */
+interface CachedSrsSession {
+  cachedAt: number;
+  queue: AnkiStudyCard[];
+  againQueue: AnkiStudyCard[];
+  totalStudied: number;
+  totalNew: number;
+  totalLearning: number;
+  totalReview: number;
+  totalDue: number;
+  sessionStats: QueueStats;
+}
+const srsSessionCache = new Map<number, CachedSrsSession>();
+const SRS_CACHE_TTL_MS = 10 * 60 * 1000; // resume within 10 min, else reload fresh
 
 interface SrsModeProps {
   deckId: number;
@@ -90,6 +131,8 @@ interface SrsModeProps {
   onToggleFullView: () => void;
   /** Report the due-card count up to the shell so the mode bar can badge it. */
   onDueCount?: (total: number) => void;
+  /** Report the current card up to the shell so its edit menu can target it. */
+  onCurrentCard?: (flashcardId: number | null) => void;
 }
 
 /**
@@ -98,8 +141,7 @@ interface SrsModeProps {
  * the former AnkiStudyPage; the unified shell now provides the layout + full
  * view, so this renders just the study surface.
  */
-export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsModeProps) {
-  const navigate = useNavigate();
+export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurrentCard }: SrsModeProps) {
 
   const [queue, setQueue] = useState<AnkiStudyCard[]>([]);
   const [againQueue, setAgainQueue] = useState<AnkiStudyCard[]>([]);
@@ -111,7 +153,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
   const [totalLearning, setTotalLearning] = useState(0);
   const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
-  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0 });
+  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0, dueToday: 0, dueReview: 0 });
   const [renderData, setRenderData] = useState<FlashcardRenderDTO | null>(null);
 
   const loadQueue = (showSpinner = true) => {
@@ -121,12 +163,18 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       .then((data) => {
         setQueue(data.cards);
         setAgainQueue([]);
-        setSessionStats(countMainQueueStats(data.cards));
+        setSessionStats({
+          new: data.totalNew,
+          learning: data.totalLearning ?? 0,
+          review: data.totalReview ?? 0,
+          dueToday: data.dueReviewCards ?? 0,
+          dueReview: data.dueReviewCards ?? 0,
+        });
         setTotalNew(data.totalNew);
         setTotalLearning(data.totalLearning ?? 0);
-        setTotalReview(data.totalReview ?? data.totalDue);
-        setTotalDue(data.totalDue);
-        onDueCount?.(data.totalDue + data.totalNew);
+        setTotalReview(data.totalReview ?? 0);
+        setTotalDue(data.dueReviewCards ?? 0);
+        onDueCount?.(data.totalNew + (data.totalLearning ?? 0) + (data.dueReviewCards ?? 0));
       })
       .catch(() => toast.error("Failed to load study queue."))
       .finally(() => {
@@ -134,10 +182,42 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       });
   };
 
+  // On mount: resume a recent in-progress session (e.g. came back from another
+  // mode) instead of reloading — otherwise session-learning cards are lost.
   useEffect(() => {
-    loadQueue();
+    const cached = srsSessionCache.get(deckId);
+    if (cached && Date.now() - cached.cachedAt < SRS_CACHE_TTL_MS) {
+      setQueue(cached.queue);
+      setAgainQueue(cached.againQueue);
+      setTotalStudied(cached.totalStudied);
+      setTotalNew(cached.totalNew);
+      setTotalLearning(cached.totalLearning);
+      setTotalReview(cached.totalReview);
+      setTotalDue(cached.totalDue);
+      setSessionStats(cached.sessionStats);
+      setLoading(false);
+      onDueCount?.(cached.totalDue + cached.totalNew);
+    } else {
+      loadQueue();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
+
+  // Persist the live session so it survives a mode switch (remount).
+  useEffect(() => {
+    if (loading) return;
+    srsSessionCache.set(deckId, {
+      cachedAt: Date.now(),
+      queue,
+      againQueue,
+      totalStudied,
+      totalNew,
+      totalLearning,
+      totalReview,
+      totalDue,
+      sessionStats,
+    });
+  }, [deckId, loading, queue, againQueue, totalStudied, totalNew, totalLearning, totalReview, totalDue, sessionStats]);
 
   /* Keyboard: Space flip, 1-4 rate */
   useEffect(() => {
@@ -180,6 +260,12 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
     };
   }, [currentFlashcardId]);
 
+  // Surface the current card to the shell (for its "Edit card" menu item).
+  useEffect(() => {
+    onCurrentCard?.(currentFlashcardId);
+  }, [currentFlashcardId, onCurrentCard]);
+  useEffect(() => () => onCurrentCard?.(null), [onCurrentCard]);
+
   const handleRate = async (rating: AnkiRating) => {
     if (submitting || queue.length === 0) return;
     const card = queue[0];
@@ -200,8 +286,12 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       }
       setQueue(nextQueue);
       setAgainQueue(nextAgainQueue);
-      const mainStats = countMainQueueStats(nextQueue);
-      setSessionStats({ ...mainStats, learning: mainStats.learning + nextAgainQueue.length });
+      const nextStats = applyReviewDelta(sessionStats, card, updated);
+      setSessionStats(nextStats);
+      setTotalNew(nextStats.new);
+      setTotalLearning(nextStats.learning);
+      setTotalReview(nextStats.review);
+      onDueCount?.(totalStats(nextStats));
     } catch {
       toast.error("Failed to submit review.");
     } finally {
@@ -222,39 +312,22 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
 
   if (isDone) {
     return (
-      <div className="flex h-full min-h-60 items-center justify-center">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-muted-foreground">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Brain size={26} />
-          </div>
-          <div className="max-w-md text-center">
-            <p className="font-medium text-foreground">Session complete!</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You reviewed {totalStudied} card{totalStudied !== 1 ? "s" : ""}. Scheduled with SM2 spaced repetition.
-            </p>
-          </div>
-          <Button size="sm" onClick={() => loadQueue()}>
-            <RotateCcw className="size-4" />
-            Reload queue
-          </Button>
-        </div>
-      </div>
+      <StudyMessage
+        icon={<Brain size={26} />}
+        title="Session complete!"
+        description={`You reviewed ${totalStudied} card${totalStudied !== 1 ? "s" : ""}. Scheduled with SM2 spaced repetition.`}
+        action={{ label: "Reload queue", icon: <RotateCcw className="size-4" />, onClick: () => loadQueue() }}
+      />
     );
   }
 
   if (!current) {
     return (
-      <div className="flex h-full min-h-60 items-center justify-center">
-        <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-muted-foreground">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <BookOpen size={26} />
-          </div>
-          <div className="max-w-md text-center">
-            <p className="font-medium text-foreground">No cards due for review</p>
-            <p className="mt-1 text-sm text-muted-foreground">You're all caught up — check back later.</p>
-          </div>
-        </div>
-      </div>
+      <StudyMessage
+        icon={<BookOpen size={26} />}
+        title="No cards due for review"
+        description="You're all caught up — check back later."
+      />
     );
   }
 
@@ -362,8 +435,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
       {/* Controls — question: New/Learning/Review; answer: Again/Hard/Good/Easy.
           Fixed height (== rating buttons + the time labels above them) so the
           card above keeps a constant size when flipping between the two. */}
-      <div className="flex h-16 shrink-0 items-center gap-2">
-        <div className="flex-1" />
+      <div className="flex h-16 shrink-0 items-center justify-center">
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           {flipped ? (
             RATING_CONFIG.map(({ rating, label, shortcut }) => (
@@ -385,7 +457,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
             <QueueStatsBar
               liveNew={sessionStats.new}
               liveLearning={sessionStats.learning}
-              liveReview={sessionStats.review}
+              liveDueToday={sessionStats.dueToday}
               totalNew={totalNew}
               totalLearning={totalLearning}
               totalReview={totalReview}
@@ -393,53 +465,15 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount }: SrsM
             />
           )}
         </div>
-        <div className="flex flex-1 items-center justify-end gap-1.5">
-          <ChromeButton
-            icon={Pencil}
-            label="Edit card"
-            onClick={() => navigate(`/deck/${deckId}/card/${current.flashcardId}/edit`)}
-            title="Edit this card"
-          />
-          <ChromeButton
-            icon={Brush}
-            label="Template"
-            onClick={() => navigate(`/deck/${deckId}/anki/template`)}
-            title="Edit template (affects all cards using this template)"
-          />
-        </div>
       </div>
     </div>
-  );
-}
-
-/* ── Toolbar chrome button ── */
-function ChromeButton({
-  icon: Icon,
-  label,
-  onClick,
-  title,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  onClick: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title ?? label}
-      className="flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-    >
-      <Icon className="size-3.5" />
-      <span className="hidden sm:inline">{label}</span>
-    </button>
   );
 }
 
 function QueueStatsBar({
   liveNew,
   liveLearning,
-  liveReview,
+  liveDueToday,
   totalNew,
   totalLearning,
   totalReview,
@@ -447,7 +481,7 @@ function QueueStatsBar({
 }: {
   liveNew: number;
   liveLearning: number;
-  liveReview: number;
+  liveDueToday: number;
   totalNew: number;
   totalLearning: number;
   totalReview: number;
@@ -456,13 +490,13 @@ function QueueStatsBar({
   return (
     <div
       className="mx-auto flex w-fit items-center gap-3 text-xs font-normal text-muted-foreground/60"
-      title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
+      title={`State counts: ${totalNew} new, ${totalLearning} learning, ${totalReview} review. Due now: ${totalDue}`}
     >
       <StatChip label="New" value={liveNew} />
       <span className="text-muted-foreground/25">·</span>
       <StatChip label="Learning" value={liveLearning} />
       <span className="text-muted-foreground/25">·</span>
-      <StatChip label="Review" value={liveReview} />
+      <StatChip label="Due Today" value={liveDueToday} />
     </div>
   );
 }

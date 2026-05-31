@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Check, GraduationCap, RotateCcw, X } from "lucide-react";
 import { quizletStudyApi } from "@/api";
+import type { QuizletProgressDTO } from "@/api";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { CardFace } from "../CardFace";
+import { StudyMessage } from "../StudyMessage";
 import { buildChoices } from "../quizUtils";
 import type { StudyCard, StudyModeProps } from "../types";
 
@@ -14,8 +16,22 @@ interface Question {
   answer: string;
 }
 
-function buildQueue(cards: StudyCard[]): StudyCard[] {
-  return [...cards];
+/**
+ * In-memory cache of the Learn queue per deck so switching to another mode and
+ * back resumes instead of restarting. (Each answer is also persisted to the
+ * backend Quizlet progress, which seeds the queue on a cold start / reload.)
+ */
+const learnSessionCache = new Map<number, { cachedAt: number; queue: StudyCard[] }>();
+const LEARN_CACHE_TTL_MS = 10 * 60 * 1000;
+
+/** A card is "learned" (kept out of the queue) when its last saved answer was correct. */
+function isLearned(card: StudyCard, progress?: Map<number, QuizletProgressDTO>): boolean {
+  const id = card.flashcard.id;
+  return id != null && progress?.get(id)?.lastAnswerCorrect === true;
+}
+
+function buildQueue(cards: StudyCard[], progress?: Map<number, QuizletProgressDTO>): StudyCard[] {
+  return cards.filter((c) => !isLearned(c, progress));
 }
 
 /**
@@ -23,20 +39,39 @@ function buildQueue(cards: StudyCard[]): StudyCard[] {
  * from four options; wrong cards cycle back until every card is answered
  * correctly. Each answer is recorded to the Quizlet tables — never SRS.
  */
-export function LearnMode({ deckId, cards, fullView }: StudyModeProps) {
-  const [queue, setQueue] = useState<StudyCard[]>(() => buildQueue(cards));
-  const [mastered, setMastered] = useState(0);
+export function LearnMode({ deckId, cards, fullView, progress, onCurrentCard }: StudyModeProps) {
+  const [queue, setQueue] = useState<StudyCard[]>(() => buildQueue(cards, progress));
   const [picked, setPicked] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
 
+  // Resume: use the cached session (recent mode switch) if fresh, otherwise
+  // seed from the backend progress so already-learned cards are skipped.
   useEffect(() => {
-    setQueue(buildQueue(cards));
-    setMastered(0);
+    const cached = learnSessionCache.get(deckId);
+    if (cached && Date.now() - cached.cachedAt < LEARN_CACHE_TTL_MS) {
+      setQueue(cached.queue);
+    } else {
+      setQueue(buildQueue(cards, progress));
+    }
     setPicked(null);
-    setDone(false);
-  }, [cards]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deckId]);
+
+  // Persist the live queue so it survives a mode switch (remount).
+  useEffect(() => {
+    learnSessionCache.set(deckId, { cachedAt: Date.now(), queue });
+  }, [deckId, queue]);
 
   const current = queue[0] ?? null;
+  // Derived (never a separate counter) so the total can't be exceeded.
+  const mastered = Math.max(0, cards.length - queue.length);
+  const done = queue.length === 0;
+
+  /* Report the prompted card up to the shell so "Sửa thẻ hiện tại" targets it,
+     and clear it on unmount so the next mode starts from a clean target. */
+  useEffect(() => {
+    onCurrentCard?.(current?.flashcard.id ?? null);
+  }, [current?.flashcard.id, onCurrentCard]);
+  useEffect(() => () => onCurrentCard?.(null), [onCurrentCard]);
 
   const question = useMemo<Question | null>(() => {
     if (!current) return null;
@@ -58,27 +93,21 @@ export function LearnMode({ deckId, cards, fullView }: StudyModeProps) {
 
   const choose = (option: string) => {
     if (picked != null || !question) return;
-    setPicked(option);
     const correct = option === question.answer;
+    setPicked(option);
     record(question.card, correct);
 
     window.setTimeout(() => {
       setPicked(null);
+      // Pure update: correct removes the card, wrong recycles it to the back.
       setQueue((prev) => {
-        const [, ...rest] = prev;
-        if (correct) {
-          setMastered((m) => m + 1);
-          if (rest.length === 0) {
-            setDone(true);
-            return rest;
-          }
-          return rest;
-        }
-        // Wrong: send the card to the back of the queue to revisit.
-        return [...rest, prev[0]];
+        const [head, ...rest] = prev;
+        return correct ? rest : [...rest, head];
       });
     }, 650);
   };
+
+  const restart = () => setQueue([...cards]);
 
   /* Keyboard 1-4 to pick */
   useEffect(() => {
@@ -94,31 +123,17 @@ export function LearnMode({ deckId, cards, fullView }: StudyModeProps) {
 
   if (done) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center gap-6 py-16">
-        <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
-          <GraduationCap className="size-10 text-primary" />
-        </div>
-        <div className="space-y-1 text-center">
-          <h2 className="text-2xl font-bold text-foreground">Learned!</h2>
-          <p className="text-sm text-muted-foreground">You answered all {cards.length} cards correctly.</p>
-        </div>
-        <button
-          onClick={() => {
-            setQueue(buildQueue(cards));
-            setMastered(0);
-            setDone(false);
-          }}
-          className="flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <RotateCcw className="size-4" />
-          Learn again
-        </button>
-      </motion.div>
+      <StudyMessage
+        icon={<GraduationCap size={26} />}
+        title="Learned!"
+        description={`You answered all ${cards.length} cards correctly.`}
+        action={{ label: "Learn again", icon: <RotateCcw className="size-4" />, onClick: restart }}
+      />
     );
   }
 
   if (!current || !question) return null;
-  const progress = cards.length > 0 ? (mastered / cards.length) * 100 : 0;
+  const progressPct = cards.length > 0 ? (mastered / cards.length) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -132,7 +147,7 @@ export function LearnMode({ deckId, cards, fullView }: StudyModeProps) {
           </span>
         </div>
         <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-          <motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
+          <motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progressPct}%` }} transition={{ duration: 0.3 }} />
         </div>
       </div>
 

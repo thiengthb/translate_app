@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.library.flashcard;
 
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
+import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,14 @@ import lombok.experimental.SuperBuilder;
 )
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("FLASHCARD_TEMPLATE")
+@ResourceMenu(
+        title = "Card templates",
+        group = "Library",
+        icon = "layers",
+        url = "/card-templates",
+        order = 2,
+        permission = "FLASHCARD_TEMPLATE_READ"
+)
 @Searchable(fields = {"name", "description"})
 @Filterable(fields = {"cardType", "isSystem", "isDefault"})
 @AutoCrud(path = "flashcard-templates")
