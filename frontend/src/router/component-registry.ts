@@ -31,6 +31,7 @@ import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
 import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
 import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
@@ -66,6 +67,7 @@ export const routes: RouteConfig[] = [
   { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+  { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
   { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
