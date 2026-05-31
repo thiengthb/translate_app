@@ -31,8 +31,9 @@ public class AnkiStatsDTO {
 
     /* ── Today ── */
     int studiedToday;
-    int dueToday;      // already-past or today
+    int dueToday;      // REVIEW cards due now; learning/relearning is not included
     int dueTomorrow;
+    int dueReviewCards; // same meaning as dueToday; explicit for UI clarity
 
     /* ── Aggregates ── */
     double avgMemoryScore;
