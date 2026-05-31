@@ -13,10 +13,23 @@ import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TagChips, TagCreateInline } from "./QuestionTags";
 
-const QUESTION_TYPES: QuestionType[] = [
-  "SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK", "WRITING", "MATCHING", "ORDERING", "LISTENING",
+// Only these four types can be created for now.
+const ACTIVE_QUESTION_TYPES: QuestionType[] = [
+  "SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK",
 ];
-const NO_OPTION_TYPES: QuestionType[] = ["WRITING"];
+// Future types (hidden until implemented):
+// "WRITING", "MATCHING", "ORDERING", "LISTENING"
+
+// FILL_BLANK uses a dedicated "accepted answers" input instead of options.
+const NO_OPTION_TYPES: QuestionType[] = ["FILL_BLANK"];
+
+// Friendly labels for the type dropdown (and badges elsewhere).
+const TYPE_LABELS: Record<string, string> = {
+  SINGLE_CHOICE: "Single Choice",
+  MULTIPLE_CHOICE: "Multiple Choice",
+  TRUE_FALSE: "True / False",
+  FILL_BLANK: "Fill in the Blank",
+};
 
 interface OptionDraft {
   uid: string;
@@ -26,6 +39,14 @@ interface OptionDraft {
 }
 
 const makeOption = (): OptionDraft => ({ uid: crypto.randomUUID(), content: "", isCorrect: false, explanation: "" });
+
+const trueFalseOptions = (): OptionDraft[] => [
+  { uid: "true", content: "True", isCorrect: true, explanation: "" },
+  { uid: "false", content: "False", isCorrect: false, explanation: "" },
+];
+
+const isTrueFalseShape = (opts: OptionDraft[]): boolean =>
+  opts.length === 2 && opts[0].content === "True" && opts[1].content === "False";
 
 /**
  * Presentational create/edit form for a question-bank entry.
@@ -47,6 +68,8 @@ export function QuestionForm({
   const [hint, setHint] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [options, setOptions] = useState<OptionDraft[]>([makeOption(), makeOption()]);
+  // FILL_BLANK: list of accepted answers (each compared case-insensitively).
+  const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>([""]);
 
   /* ── Tags ── */
   const [allTags, setAllTags] = useState<QuestionTagDTO[]>([]);
@@ -66,20 +89,27 @@ export function QuestionForm({
       setHint(question.hint ?? "");
       setDifficulty(question.difficultyLevel ?? "");
       setSelectedTagIds(new Set((question.tags ?? []).map((t) => t.id)));
-      setOptions(
-        (question.options ?? []).map((o) => ({
-          uid: crypto.randomUUID(),
-          content: o.content,
-          isCorrect: o.isCorrect,
-          explanation: o.explanation ?? "",
-        }))
-      );
+      const opts = (question.options ?? []).map((o) => ({
+        uid: crypto.randomUUID(),
+        content: o.content,
+        isCorrect: o.isCorrect,
+        explanation: o.explanation ?? "",
+      }));
+      setOptions(opts);
+      // FILL_BLANK stores its accepted answers as correct options.
+      if (question.questionType === "FILL_BLANK") {
+        const acc = (question.options ?? []).filter((o) => o.isCorrect).map((o) => o.content);
+        setAcceptedAnswers(acc.length ? acc : [""]);
+      } else {
+        setAcceptedAnswers([""]);
+      }
     } else {
       setQuestionType("SINGLE_CHOICE");
       setPrompt(""); setPromptAudioUrl(""); setPromptImageUrl("");
       setExplanation(""); setHint(""); setDifficulty("");
       setSelectedTagIds(new Set());
       setOptions([makeOption(), makeOption()]);
+      setAcceptedAnswers([""]);
     }
   }, [question]);
 
@@ -90,20 +120,74 @@ export function QuestionForm({
       return next;
     });
 
-  const needsOptions = !NO_OPTION_TYPES.includes(questionType);
+  // Seed sensible defaults when the user switches type (kept here, not in an
+  // effect, so it never fights the edit-load effect above by wiping loaded data).
+  const handleTypeChange = (next: QuestionType) => {
+    setQuestionType(next);
+    if (next === "TRUE_FALSE") {
+      setOptions(trueFalseOptions());
+    } else if (next === "FILL_BLANK") {
+      setOptions([]);
+      setAcceptedAnswers([""]);
+    } else if (next === "SINGLE_CHOICE" || next === "MULTIPLE_CHOICE") {
+      // Only reset when coming from the fixed True/False options.
+      setOptions((prev) => (isTrueFalseShape(prev) ? [makeOption(), makeOption()] : (prev.length ? prev : [makeOption(), makeOption()])));
+    }
+  };
 
-  const updateOption = (uid: string, patch: Partial<OptionDraft>) =>
-    setOptions((arr) => arr.map((o) => (o.uid === uid ? { ...o, ...patch } : o)));
+  const needsOptions = !NO_OPTION_TYPES.includes(questionType);
+  const isTrueFalse = questionType === "TRUE_FALSE";
+  const isFillBlank = questionType === "FILL_BLANK";
+
+  // SINGLE_CHOICE / TRUE_FALSE behave like radios: turning one option correct
+  // turns the rest off.
+  const updateOption = (uid: string, patch: Partial<OptionDraft>) => {
+    setOptions((arr) =>
+      arr.map((o) => {
+        if (o.uid !== uid) {
+          if (patch.isCorrect && (questionType === "SINGLE_CHOICE" || questionType === "TRUE_FALSE")) {
+            return { ...o, isCorrect: false };
+          }
+          return o;
+        }
+        return { ...o, ...patch };
+      })
+    );
+  };
+
+  const updateAcceptedAnswer = (i: number, val: string) =>
+    setAcceptedAnswers((a) => a.map((x, idx) => (idx === i ? val : x)));
+  const removeAcceptedAnswer = (i: number) =>
+    setAcceptedAnswers((a) => a.filter((_, idx) => idx !== i));
 
   const handleSave = async () => {
     if (!prompt.trim()) { toast.error("Prompt is required."); return; }
-    const filled = options.filter((o) => o.content.trim());
-    if (needsOptions) {
+
+    let payloadOptions: NonNullable<QuestionBankDTO["options"]>;
+    if (isFillBlank) {
+      const answers = acceptedAnswers.map((a) => a.trim()).filter(Boolean);
+      if (answers.length === 0) { toast.error("Add at least one accepted answer."); return; }
+      payloadOptions = answers.map((a, i) => ({
+        id: 0, questionId: 0, isActive: true,
+        content: a,
+        contentAudioUrl: null, contentImageUrl: null,
+        isCorrect: true,
+        explanation: null,
+        orderIndex: i,
+      }));
+    } else {
+      const filled = options.filter((o) => o.content.trim());
       if (filled.length < 2) { toast.error("Add at least 2 options."); return; }
-      if (!filled.some((o) => o.isCorrect) && questionType !== "ORDERING" && questionType !== "MATCHING") {
+      if (!filled.some((o) => o.isCorrect)) {
         toast.error("Mark at least one correct option."); return;
       }
+      payloadOptions = filled.map((o, i) => ({
+        id: 0, questionId: 0, isActive: true, content: o.content.trim(),
+        contentAudioUrl: null, contentImageUrl: null,
+        isCorrect: o.isCorrect, explanation: o.explanation.trim() || null, orderIndex: i,
+      }));
     }
+
     setSaving(true);
     try {
       const payload: Partial<QuestionBankDTO> = {
@@ -117,13 +201,7 @@ export function QuestionForm({
         difficultyLevel: (difficulty || null) as QuestionBankDTO["difficultyLevel"],
         defaultScore: 1,
         tagIds: Array.from(selectedTagIds),
-        options: needsOptions
-          ? filled.map((o, i) => ({
-              id: 0, questionId: 0, isActive: true, content: o.content.trim(),
-              contentAudioUrl: null, contentImageUrl: null,
-              isCorrect: o.isCorrect, explanation: o.explanation.trim() || null, orderIndex: i,
-            }))
-          : [],
+        options: payloadOptions,
       };
       const saved = question
         ? await assessmentApi.updateQuestion(question.id, payload)
@@ -142,10 +220,10 @@ export function QuestionForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Type</Label>
-          <Select value={questionType} onValueChange={(v) => setQuestionType(v as QuestionType)}>
+          <Select value={questionType} onValueChange={(v) => handleTypeChange(v as QuestionType)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {QUESTION_TYPES.map((t) => <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>)}
+              {ACTIVE_QUESTION_TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABELS[t] ?? t}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -177,6 +255,7 @@ export function QuestionForm({
         </div>
       </div>
 
+      {/* Options (SINGLE_CHOICE / MULTIPLE_CHOICE / TRUE_FALSE) */}
       {needsOptions && (
         <div className="space-y-2">
           <Label>Options</Label>
@@ -187,21 +266,62 @@ export function QuestionForm({
                 Correct
               </label>
               <div className="flex-1 space-y-1.5">
-                <Input value={o.content} onChange={(e) => updateOption(o.uid, { content: e.target.value })} placeholder="Option text" />
-                <Input value={o.explanation} onChange={(e) => updateOption(o.uid, { explanation: e.target.value })} placeholder="Explanation (optional)" className="text-xs" />
+                <Input
+                  value={o.content}
+                  disabled={isTrueFalse}
+                  onChange={(e) => updateOption(o.uid, { content: e.target.value })}
+                  placeholder="Option text"
+                />
+                {!isTrueFalse && (
+                  <Input value={o.explanation} onChange={(e) => updateOption(o.uid, { explanation: e.target.value })} placeholder="Explanation (optional)" className="text-xs" />
+                )}
               </div>
-              <Button variant="ghost" size="sm" className="text-destructive shrink-0"
-                disabled={options.length <= 1}
-                onClick={() => setOptions((arr) => arr.filter((x) => x.uid !== o.uid))}>
-                <Trash2 className="size-4" />
-              </Button>
+              {!isTrueFalse && (
+                <Button variant="ghost" size="sm" className="text-destructive shrink-0"
+                  disabled={options.length <= 1}
+                  onClick={() => setOptions((arr) => arr.filter((x) => x.uid !== o.uid))}>
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
             </div>
           ))}
-          {options.length < 6 && (
+          {isTrueFalse ? (
+            <p className="text-xs text-muted-foreground">True/False options are fixed.</p>
+          ) : options.length < 6 ? (
             <Button variant="outline" size="sm" onClick={() => setOptions((arr) => [...arr, makeOption()])}>
               <Plus className="size-4 mr-1" />Add option
             </Button>
+          ) : null}
+        </div>
+      )}
+
+      {/* Accepted answers (FILL_BLANK) */}
+      {isFillBlank && (
+        <div className="space-y-2">
+          <Label>Accepted answers (case-insensitive)</Label>
+          {acceptedAnswers.map((ans, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                value={ans}
+                onChange={(e) => updateAcceptedAnswer(i, e.target.value)}
+                placeholder={`Accepted answer ${i + 1}`}
+              />
+              {acceptedAnswers.length > 1 && (
+                <Button variant="ghost" size="sm" className="text-destructive shrink-0"
+                  onClick={() => removeAcceptedAnswer(i)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {acceptedAnswers.length < 5 && (
+            <Button variant="outline" size="sm" onClick={() => setAcceptedAnswers((a) => [...a, ""])}>
+              <Plus className="size-4 mr-1" />Add answer
+            </Button>
           )}
+          <p className="text-xs text-muted-foreground">
+            All listed answers will be accepted. Comparison ignores case and trims spaces.
+          </p>
         </div>
       )}
 

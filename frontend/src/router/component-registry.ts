@@ -34,7 +34,6 @@ import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
 import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
 import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
-import QuestionTagsPage from "@/pages/assessment/QuestionTagsPage";
 import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
 import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
 import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
@@ -72,7 +71,9 @@ export const routes: RouteConfig[] = [
   { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
   { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
   { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
-  { path: "/question-tags", component: QuestionTagsPage, isModuleDriven: true },
+  // /question-tags is now driven by the entityConfig at
+  // pages/management/assessment/question-tag/index.tsx (ProTable via AutoCrudPage),
+  // auto-registered through buildEntityRoutes() — same pattern as the Users page.
   { path: "/quizzes", component: QuizListPage, isModuleDriven: true },
   { path: "/quizzes/create", component: QuizCreateEditPage, requiredPermission: "QUIZ_CREATE" },
   { path: "/quizzes/:quizId", component: QuizDetailPage, requiredPermission: "QUIZ_READ" },

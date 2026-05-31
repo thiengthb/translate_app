@@ -4,7 +4,6 @@ import { useQuizSession } from "@/hooks/useQuizSession";
 import type { QuizAttemptQuestionDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -116,7 +115,7 @@ export default function QuizSessionPage() {
           </div>
 
           {/* Answer area by type */}
-          {q.questionType === "SINGLE_CHOICE" || q.questionType === "TRUE_FALSE" || q.questionType === "LISTENING" ? (
+          {q.questionType === "SINGLE_CHOICE" || q.questionType === "TRUE_FALSE" ? (
             <RadioGroup
               value={draft.optionId != null ? String(draft.optionId) : ""}
               onValueChange={(v) => { const optionId = Number(v); setDraft(q.id, { optionId }); void saveAnswer(q, { optionId }); }}
@@ -164,16 +163,34 @@ export default function QuizSessionPage() {
               })}
             </div>
           ) : q.questionType === "FILL_BLANK" ? (
-            <div className="flex gap-2">
-              <Input
-                value={draft.text ?? ""}
-                disabled={revealed}
-                onChange={(e) => setDraft(q.id, { text: e.target.value })}
-                placeholder="Type your answer…"
-              />
-              <Button variant="outline" disabled={revealed || !(draft.text ?? "").trim()} onClick={() => saveAnswer(q, { text: draft.text })}>Check</Button>
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <Input
+                  value={draft.text ?? ""}
+                  disabled={revealed}
+                  onChange={(e) => setDraft(q.id, { text: e.target.value })}
+                  placeholder="Type your answer…"
+                />
+                <Button variant="outline" disabled={revealed || !(draft.text ?? "").trim()} onClick={() => saveAnswer(q, { text: draft.text })}>Check</Button>
+              </div>
+              {revealed && acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Accepted: {acceptedAnswers(q.correctAnswerSnapshot).join(" / ")}
+                </p>
+              )}
             </div>
-          ) : q.questionType === "WRITING" ? (
+          ) : (
+            /* Question type not yet supported in this interface (WRITING /
+               MATCHING / ORDERING / LISTENING are hidden for now). */
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground text-center">
+              This question type ({q.questionType}) is not yet supported.
+            </div>
+          )}
+          {/*
+            ── Hidden question-type renderers (kept for easy re-enabling) ──
+            Re-add `import { Textarea } from "@/components/ui/textarea";` when restoring WRITING.
+
+            WRITING — free response:
             <div className="space-y-2">
               <Textarea
                 value={draft.text ?? ""}
@@ -184,8 +201,8 @@ export default function QuizSessionPage() {
               />
               <p className="text-xs text-muted-foreground">Free-response — will be reviewed after submission.</p>
             </div>
-          ) : (
-            /* ORDERING / MATCHING — click options in the correct order */
+
+            ORDERING / MATCHING — click options in the correct order:
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Tap options in the correct order.</p>
               {options.map((o) => {
@@ -207,7 +224,7 @@ export default function QuizSessionPage() {
                 );
               })}
             </div>
-          )}
+          */}
 
           {/* Reveal explanation */}
           {revealed && q.isCorrect != null && (
