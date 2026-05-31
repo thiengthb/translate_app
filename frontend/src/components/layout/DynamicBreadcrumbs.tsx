@@ -30,6 +30,9 @@ type Props = {
     parentCrumb?: { href: string; title: string };
     /** Override the ⓘ tooltip description for the last (current) segment. */
     pageDescription?: string;
+    /** Custom icon rendered to the left of the last (current) crumb title.
+     *  Takes precedence over the sidebar-module icon. */
+    leadingIcon?: React.ReactNode;
 };
 
 function formatPath(path: string) {
@@ -63,6 +66,7 @@ export default function DynamicBreadcrumbs({
     ignorePaths = [],
     parentCrumb,
     pageDescription,
+    leadingIcon,
 }: Props) {
     const location = useLocation();
     const { data: moduleGroups } = useActiveModuleGroups();
@@ -188,12 +192,14 @@ export default function DynamicBreadcrumbs({
 
                             {isLast && hasPage ? (
                                 <span className="flex items-center gap-2 px-2 py-1 rounded-md">
-                                    {ModuleIcon && (
+                                    {leadingIcon ? (
+                                        leadingIcon
+                                    ) : ModuleIcon ? (
                                         <ModuleIcon
                                             className="size-[18px] text-primary shrink-0"
                                             aria-hidden
                                         />
-                                    )}
+                                    ) : null}
                                     {(() => {
                                         // Only wrap in a tooltip when the title
                                         // is actually truncated; only attach the

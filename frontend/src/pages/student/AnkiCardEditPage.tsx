@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { flashcardApi } from "@/api";
+import { deckApi, flashcardApi } from "@/api";
 import { fileApi } from "@/api/features/file.api";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
-  ChevronLeft,
   Image as ImageIcon,
   Loader2,
   Mic,
   Save,
-  Square,
   Trash2,
   Type,
   Video,
@@ -46,8 +47,13 @@ const CONTENT_TYPES: {
   { value: "IMAGE", label: "Image", icon: <ImageIcon className="size-3.5" /> },
   { value: "AUDIO", label: "Audio", icon: <Mic className="size-3.5" /> },
   { value: "VIDEO", label: "Video", icon: <Video className="size-3.5" /> },
-  { value: "CLOZE", label: "Cloze", icon: <Square className="size-3.5" /> },
 ];
+
+const SIDE_BADGE: Record<FlashcardSideType, string> = {
+  FRONT: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  BACK: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  HINT: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+};
 
 const makeContent = (
   contentType: FlashcardContentType = "TEXT",
@@ -59,27 +65,34 @@ const makeContent = (
 });
 
 /**
- * Full-page editor for a single Anki flashcard (front/back/hint contents +
- * hint & explanation). Reached from the Anki study toolbar's "Edit card"
- * action — replaces the former modal so editing gets its own route and
- * the URL is shareable / back-button friendly.
+ * Full-page editor for a single flashcard (front/back/hint contents + hint &
+ * explanation). Reached from the SRS study toolbar's "Edit card" action.
+ *
+ * Route + breadcrumb follow the app's edit-page convention
+ * (`Home › My Library › <Deck> › Edit card`), matching QuestionFormPage etc.
  */
 export default function AnkiCardEditPage() {
-  const { deckId, flashcardId } = useParams<{
-    deckId: string;
-    flashcardId: string;
-  }>();
+  const { deckId, flashcardId } = useParams<{ deckId: string; flashcardId: string }>();
   const navigate = useNavigate();
-  const backTo = `/deck/${deckId}/anki`;
+  const backTo = `/deck/${deckId}`;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [hint, setHint] = useState("");
-  const [explanation, setExplanation] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [deckTitle, setDeckTitle] = useState("");
   const [sides, setSides] = useState<SideDraft[]>([]);
   const [original, setOriginal] = useState<FlashcardDTO | null>(null);
 
-  /* ── Load on mount ── */
+  /* ── Deck title (for the breadcrumb + back button) ── */
+  useEffect(() => {
+    if (!deckId) return;
+    deckApi
+      .getById(deckId)
+      .then((d) => setDeckTitle(d.title ?? ""))
+      .catch(() => {});
+  }, [deckId]);
+
+  /* ── Load card ── */
   useEffect(() => {
     if (!flashcardId) return;
     setLoading(true);
@@ -87,8 +100,7 @@ export default function AnkiCardEditPage() {
       .getById(String(flashcardId))
       .then((fc) => {
         setOriginal(fc);
-        setHint(fc.hint ?? "");
-        setExplanation(fc.explanation ?? "");
+        setDirty(false);
         setSides(
           (fc.sides ?? []).map((s) => ({
             side: s.side,
@@ -105,40 +117,38 @@ export default function AnkiCardEditPage() {
       .finally(() => setLoading(false));
   }, [flashcardId]);
 
-  /* ── Mutators ── */
-  const addContent = (sideIdx: number, ct: FlashcardContentType) =>
+  /* ── Mutators (any change marks the form dirty → enables Save) ── */
+  const addContent = (sideIdx: number, ct: FlashcardContentType) => {
+    setDirty(true);
     setSides((p) =>
-      p.map((s, i) =>
-        i === sideIdx ? { ...s, contents: [...s.contents, makeContent(ct)] } : s
-      )
+      p.map((s, i) => (i === sideIdx ? { ...s, contents: [...s.contents, makeContent(ct)] } : s))
     );
+  };
 
-  const updateContent = (sideIdx: number, uid: string, patch: Partial<ContentDraft>) =>
+  const updateContent = (sideIdx: number, uid: string, patch: Partial<ContentDraft>) => {
+    setDirty(true);
     setSides((p) =>
       p.map((s, i) =>
         i === sideIdx
-          ? {
-              ...s,
-              contents: s.contents.map((c) => (c.uid === uid ? { ...c, ...patch } : c)),
-            }
+          ? { ...s, contents: s.contents.map((c) => (c.uid === uid ? { ...c, ...patch } : c)) }
           : s
       )
     );
+  };
 
-  const removeContent = (sideIdx: number, uid: string) =>
+  const removeContent = (sideIdx: number, uid: string) => {
+    setDirty(true);
     setSides((p) =>
       p.map((s, i) =>
-        i === sideIdx
-          ? { ...s, contents: s.contents.filter((c) => c.uid !== uid) }
-          : s
+        i === sideIdx ? { ...s, contents: s.contents.filter((c) => c.uid !== uid) } : s
       )
     );
+  };
 
   /* ── Save ── */
   const handleSave = async () => {
     if (!original) return;
 
-    // Validate FRONT/BACK have at least one TEXT/CLOZE
     for (const target of ["FRONT", "BACK"] as const) {
       const s = sides.find((x) => x.side === target);
       if (!s) {
@@ -164,18 +174,12 @@ export default function AnkiCardEditPage() {
           let value = co.contentValue;
 
           if (
-            (co.contentType === "IMAGE" ||
-              co.contentType === "AUDIO" ||
-              co.contentType === "VIDEO") &&
+            (co.contentType === "IMAGE" || co.contentType === "AUDIO" || co.contentType === "VIDEO") &&
             co.file
           ) {
             try {
               const fieldName =
-                co.contentType === "IMAGE"
-                  ? "imageUrl"
-                  : co.contentType === "AUDIO"
-                    ? "audioUrl"
-                    : "videoUrl";
+                co.contentType === "IMAGE" ? "imageUrl" : co.contentType === "AUDIO" ? "audioUrl" : "videoUrl";
               const attachment = await fileApi.upload(co.file, "flashcard", 0, fieldName);
               value = attachment.url;
             } catch {
@@ -198,8 +202,6 @@ export default function AnkiCardEditPage() {
 
       await flashcardApi.update(String(flashcardId), {
         ...original,
-        hint: hint.trim() || undefined,
-        explanation: explanation.trim() || undefined,
         sides: builtSides,
       });
 
@@ -214,75 +216,63 @@ export default function AnkiCardEditPage() {
 
   return (
     <MainLayout
-      parentCrumb={{ href: backTo, title: "Study" }}
-      ignorePaths={["deck", String(deckId), "anki", "card", String(flashcardId)]}
+      parentCrumb={{ href: "/library", title: "My Library" }}
+      ignorePaths={["deck", "card", String(flashcardId)]}
       pathName={{
-        [`/deck/${deckId}/anki/card/${flashcardId}/edit`]: "Edit card",
+        [`/deck/${deckId}`]: deckTitle || "Deck",
+        [`/deck/${deckId}/card/${flashcardId}/edit`]: "Edit card",
       }}
     >
-      <div className="mx-auto w-full max-w-2xl pb-16 pt-2">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 py-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <button
-                onClick={() => navigate(backTo)}
-                className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                title="Back to study"
-                aria-label="Back to study"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <h1 className="truncate text-base font-bold text-foreground">Edit card</h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                onClick={() => navigate(backTo)}
-                disabled={saving}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || loading}
-                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save
-              </button>
-            </div>
-          </div>
+      <div className="flex h-full min-h-0 w-full flex-col gap-4 py-2">
+        {/* Actions — top right. Save stays disabled until something changes. */}
+        <div className="flex shrink-0 items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => navigate(backTo)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving || !dirty}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Save
+          </Button>
+        </div>
 
-          {/* Body */}
-          <div className="space-y-4 px-5 py-4">
-            {loading ? (
-              <div className="flex h-40 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <>
-                {sides.map((side, sideIdx) => (
-                  <div
-                    key={`${side.side}-${sideIdx}`}
-                    className="space-y-3 rounded-lg border border-border bg-background/40 p-4"
-                  >
+        {loading ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
+            {(["FRONT", "BACK"] as const).map((target) => {
+              const sideIdx = sides.findIndex((s) => s.side === target);
+              if (sideIdx < 0) return null;
+              const side = sides[sideIdx];
+              return (
+                <section
+                  key={target}
+                  className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                >
+                  {/* Header */}
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
                     <span
                       className={cn(
-                        "inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                        side.side === "FRONT" &&
-                          "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                        side.side === "BACK" &&
-                          "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                        side.side === "HINT" &&
-                          "bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                        SIDE_BADGE[side.side]
                       )}
                     >
-                      {side.side}
+                      {side.side === "FRONT" ? "Mặt trước" : side.side === "BACK" ? "Mặt sau" : side.side}
                     </span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {side.contents.length} mục
+                    </span>
+                  </div>
 
-                    <div className="space-y-2">
-                      {side.contents.map((co) => (
+                  {/* Body — scrolls when content is long */}
+                  <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+                    {side.contents.length === 0 ? (
+                      <p className="py-6 text-center text-xs text-muted-foreground/70">
+                        Chưa có nội dung. Thêm bằng các nút bên dưới.
+                      </p>
+                    ) : (
+                      side.contents.map((co) => (
                         <ContentRow
                           key={co.uid}
                           content={co}
@@ -290,57 +280,31 @@ export default function AnkiCardEditPage() {
                           onRemove={() => removeContent(sideIdx, co.uid)}
                           canRemove={side.contents.length > 1}
                         />
-                      ))}
-                    </div>
+                      ))
+                    )}
+                  </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Add:
-                      </span>
-                      {CONTENT_TYPES.map((ct) => (
-                        <button
-                          key={ct.value}
-                          onClick={() => addContent(sideIdx, ct.value)}
-                          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          {ct.icon}
-                          {ct.label}
-                        </button>
-                      ))}
-                    </div>
+                  {/* Footer — add content */}
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-border bg-muted/20 px-4 py-2.5">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Add</span>
+                    {CONTENT_TYPES.map((ct) => (
+                      <Button
+                        key={ct.value}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-[11px]"
+                        onClick={() => addContent(sideIdx, ct.value)}
+                      >
+                        {ct.icon}
+                        {ct.label}
+                      </Button>
+                    ))}
                   </div>
-                ))}
-
-                <div className="grid grid-cols-1 gap-3 pt-2 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Hint
-                    </label>
-                    <textarea
-                      value={hint}
-                      onChange={(e) => setHint(e.target.value)}
-                      placeholder="Optional hint…"
-                      rows={2}
-                      className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      Explanation
-                    </label>
-                    <textarea
-                      value={explanation}
-                      onChange={(e) => setExplanation(e.target.value)}
-                      placeholder="Why is this the answer?…"
-                      rows={2}
-                      className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
+                </section>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
     </MainLayout>
   );
@@ -378,102 +342,89 @@ function ContentRow({
     e.target.value = "";
   };
 
-  const typeIcon =
-    CONTENT_TYPES.find((t) => t.value === content.contentType)?.icon ?? null;
+  const typeIcon = CONTENT_TYPES.find((t) => t.value === content.contentType)?.icon ?? null;
+  const isMedia =
+    content.contentType === "IMAGE" || content.contentType === "AUDIO" || content.contentType === "VIDEO";
 
   return (
-    <div className="flex items-start gap-2 group">
-      <div className="shrink-0 mt-2 text-muted-foreground" title={content.contentType}>
+    <div className="group flex items-start gap-2">
+      <div className="mt-2 shrink-0 text-muted-foreground" title={content.contentType}>
         {typeIcon}
       </div>
 
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <input
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Input
           value={content.label ?? ""}
           onChange={(e) => onChange({ label: e.target.value })}
           placeholder="Label (optional, e.g. Example, Reading…)"
-          className="w-full text-xs rounded-md border border-input bg-background px-2.5 py-1 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 text-xs"
         />
 
         {(content.contentType === "TEXT" || content.contentType === "CLOZE") && (
-          <textarea
+          <Textarea
             value={content.contentValue}
             onChange={(e) => onChange({ contentValue: e.target.value })}
             placeholder={
-              content.contentType === "CLOZE"
-                ? "Use {{c1::answer}} to mark a cloze deletion…"
-                : "Enter text…"
+              content.contentType === "CLOZE" ? "Use {{c1::answer}} to mark a cloze deletion…" : "Enter text…"
             }
             rows={2}
-            className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+            className="resize-none"
           />
         )}
 
-        {(content.contentType === "IMAGE" ||
-          content.contentType === "AUDIO" ||
-          content.contentType === "VIDEO") && (
+        {isMedia && (
           <div className="flex items-center gap-3">
             {content.contentValue ? (
-              <div className="flex-1 flex items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
+              <div className="flex flex-1 items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
                 {content.contentType === "IMAGE" && (
-                  <img
-                    src={content.contentValue}
-                    alt=""
-                    className="size-12 object-cover rounded border border-border"
-                  />
+                  <img src={content.contentValue} alt="" className="size-12 rounded border border-border object-cover" />
                 )}
                 {content.contentType === "AUDIO" && (
                   <audio src={content.contentValue} controls className="h-8 max-w-full" />
                 )}
                 {content.contentType === "VIDEO" && (
-                  <video
-                    src={content.contentValue}
-                    controls
-                    className="h-16 rounded border border-border"
-                  />
+                  <video src={content.contentValue} controls className="h-16 rounded border border-border" />
                 )}
-                <span className="text-xs text-muted-foreground truncate flex-1">
+                <span className="flex-1 truncate text-xs text-muted-foreground">
                   {content.file?.name ?? content.contentValue.split("/").pop() ?? "Attached"}
                 </span>
                 <button
                   onClick={() => onChange({ contentValue: "", file: undefined })}
-                  className="text-muted-foreground hover:text-destructive shrink-0"
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
                   title="Remove"
                 >
                   <X className="size-3.5" />
                 </button>
               </div>
             ) : (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-dashed"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 text-sm px-3 py-2 rounded-md border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
               >
                 {content.contentType === "IMAGE" && <ImageIcon className="size-4" />}
                 {content.contentType === "AUDIO" && <Mic className="size-4" />}
                 {content.contentType === "VIDEO" && <Video className="size-4" />}
                 Upload {content.contentType.toLowerCase()}
-              </button>
+              </Button>
             )}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={accept}
-              className="hidden"
-              onChange={handleFile}
-            />
+            <input ref={fileInputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
           </div>
         )}
       </div>
 
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onRemove}
         disabled={!canRemove}
-        className="shrink-0 mt-1.5 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors opacity-0 group-hover:opacity-100"
         title="Remove content"
+        className="mt-1 size-8 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 disabled:opacity-20"
       >
         <Trash2 className="size-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }

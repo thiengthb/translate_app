@@ -136,13 +136,10 @@ export default function DeckPreviewPage() {
     try {
       const cloned = await deckApi.clone(deck.id);
       toast.success(`Saved "${cloned.title}" to your library.`);
-      // Navigate into the cloned deck — user can study it right away
+      // Navigate into the cloned deck — the unified study screen lets the user
+      // pick any mode (it defaults to the deck's recommended one).
       if (cloned.id) {
-        navigate(
-          cloned.studyMode === "ANKI"
-            ? `/deck/${cloned.id}/anki`
-            : `/deck/${cloned.id}`
-        );
+        navigate(`/deck/${cloned.id}`);
       } else {
         navigate("/library");
       }
@@ -269,11 +266,7 @@ export default function DeckPreviewPage() {
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                   {isOwnDeck ? (
                     <button
-                      onClick={() =>
-                        navigate(
-                          isAnki ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`
-                        )
-                      }
+                      onClick={() => navigate(`/deck/${deck.id}`)}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
                       <BookOpen className="size-4" />

@@ -731,7 +731,7 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
         "relative flex items-center gap-4 px-4 py-3.5 rounded-lg hover:bg-accent group border border-transparent hover:border-border/40 transition-colors",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
       <div
         className="shrink-0 size-11 rounded-lg flex items-center justify-center shadow-sm"
@@ -794,7 +794,7 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
         "group relative rounded-xl overflow-hidden border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card flex flex-col",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
       {/* Gradient header */}
       <div className="relative h-24 overflow-hidden shrink-0" style={gradStyle}>

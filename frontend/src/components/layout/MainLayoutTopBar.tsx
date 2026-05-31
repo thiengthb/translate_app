@@ -9,6 +9,7 @@ interface MainLayoutTopBarProps {
     parentCrumb?: { href: string; title: string };
     ignorePaths?: string[];
     pageDescription?: string;
+    breadcrumbIcon?: React.ReactNode;
 }
 
 /**
@@ -38,6 +39,7 @@ export function MainLayoutTopBar({
     parentCrumb,
     ignorePaths,
     pageDescription,
+    breadcrumbIcon,
 }: MainLayoutTopBarProps) {
     return (
         <header className="flex h-14 shrink-0 items-center gap-2 px-3 sm:px-4 lg:px-6 min-w-0">
@@ -52,6 +54,7 @@ export function MainLayoutTopBar({
                     parentCrumb={parentCrumb}
                     ignorePaths={ignorePaths}
                     pageDescription={pageDescription}
+                    leadingIcon={breadcrumbIcon}
                 />
             </div>
             {headerExtra && (
