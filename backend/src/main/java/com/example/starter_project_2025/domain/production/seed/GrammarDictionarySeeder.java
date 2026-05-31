@@ -198,7 +198,7 @@ public class GrammarDictionarySeeder implements CommandLineRunner {
                     "たら(どう)?|だら"),
             new Entry("spot_n4_saseru", "～させる (sai khiến)", "N4",
                     "Thể sai khiến: bắt/để ai đó làm gì.",
-                    "させる|させます|させた|させて|さ せられ"),
+                    "させる|させます|させた|させて|させられ"),
             new Entry("spot_n4_aida", "～間に", "N4",
                     "Trong lúc/khoảng thời gian đang… thì…",
                     "間に|あいだに"),
