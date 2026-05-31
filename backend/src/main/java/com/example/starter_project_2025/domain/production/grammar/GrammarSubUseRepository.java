@@ -11,4 +11,10 @@ public interface GrammarSubUseRepository extends BaseCrudRepository<GrammarSubUs
     boolean existsByDetectorKey(String detectorKey);
 
     List<GrammarSubUse> findByJlptLevel(String jlptLevel);
+
+    /** Usages not yet attached to a parent expression — drives the backfill. */
+    List<GrammarSubUse> findByGrammarIsNull();
+
+    /** Usages of an expression, in display order (①②…). */
+    List<GrammarSubUse> findByGrammarIdOrderByOrderNoAsc(Long grammarId);
 }

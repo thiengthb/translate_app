@@ -8,6 +8,9 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseR
 import com.example.starter_project_2025.domain.production.grammar.ScenarioStubRepository;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptService;
+import com.example.starter_project_2025.domain.production.vocab.VocabSelectionService;
+import com.example.starter_project_2025.domain.production.vocab.VocabSource;
+import com.example.starter_project_2025.domain.production.vocab.VocabWord;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +41,7 @@ public class ProductionController {
     private final PromptService promptService;
     private final GradingService gradingService;
     private final ExerciseGenerationService generationService;
+    private final VocabSelectionService vocabService;
 
     @GetMapping("/exercise")
     @Operation(summary = "Get a production exercise prompt")
@@ -79,8 +83,22 @@ public class ProductionController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody GenerateExerciseRequest req) {
 
-        return ResponseEntity.ok(
-                generationService.generate(principal.getId(), req.getSubUseId(), req.getSource()));
+        return ResponseEntity.ok(generationService.generate(
+                principal.getId(), req.getSubUseId(), req.getSource(), req.getTarget()));
+    }
+
+    @GetMapping("/vocab")
+    @Operation(summary = "List all vocabulary words for a source (drives the coverage-drill setup)")
+    public ResponseEntity<List<VocabWord>> listVocab(
+            @RequestParam String type,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) Long deckId) {
+
+        VocabSource source = new VocabSource();
+        source.setType(type);
+        source.setLevel(level);
+        source.setDeckId(deckId);
+        return ResponseEntity.ok(vocabService.fetchAll(source));
     }
 
     @GetMapping("/prompts/pending")

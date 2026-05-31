@@ -28,13 +28,30 @@ public class VocabSelectionService {
     private final DeckItemRepository deckItemRepository;
     private final FlashcardRepository flashcardRepository;
 
+    /** All words for the source (no sampling) — drives the coverage-drill selector. */
+    @Transactional(readOnly = true)
+    public List<VocabWord> fetchAll(VocabSource source) {
+        return resolveWords(source).stream()
+                .map(w -> new VocabWord(w.getWord(), w.getReading(), firstGloss(w)))
+                .toList();
+    }
+
     /** Fetch up to {@code limit} words for the given source (random sample). */
     @Transactional(readOnly = true)
     public List<VocabWord> fetch(VocabSource source, int limit) {
+        List<VocabWord> all = new ArrayList<>(fetchAll(source));
+        if (all.isEmpty() || limit <= 0 || all.size() <= limit) {
+            return all;
+        }
+        Collections.shuffle(all);
+        return new ArrayList<>(all.subList(0, limit));
+    }
+
+    private List<Word> resolveWords(VocabSource source) {
         if (source == null || source.getType() == null) {
             return List.of();
         }
-        List<Word> words = switch (source.getType().trim().toUpperCase()) {
+        return switch (source.getType().trim().toUpperCase()) {
             case "LEVEL" -> (source.getLevel() == null || source.getLevel().isBlank())
                     ? List.of()
                     : wordRepository.findByLevelCode(source.getLevel().trim());
@@ -43,7 +60,6 @@ public class VocabSelectionService {
                     : wordsFromDeck(source.getDeckId());
             default -> List.of();
         };
-        return sample(words, limit);
     }
 
     private List<Word> wordsFromDeck(Long deckId) {
@@ -63,22 +79,6 @@ public class VocabSelectionService {
                 .distinct()
                 .toList();
         return wordIds.isEmpty() ? List.of() : wordRepository.findAllById(wordIds);
-    }
-
-    private List<VocabWord> sample(List<Word> words, int limit) {
-        if (words.isEmpty()) {
-            return List.of();
-        }
-        List<Word> shuffled = new ArrayList<>(words);
-        Collections.shuffle(shuffled);
-        List<VocabWord> out = new ArrayList<>(Math.min(limit, shuffled.size()));
-        for (Word w : shuffled) {
-            if (out.size() >= limit) {
-                break;
-            }
-            out.add(new VocabWord(w.getWord(), w.getReading(), firstGloss(w)));
-        }
-        return out;
     }
 
     private String firstGloss(Word w) {

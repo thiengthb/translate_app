@@ -14,6 +14,7 @@ import {
   type ExerciseResponse,
   type GrammarOption,
   type VocabSource,
+  type VocabWordItem,
 } from "@/api/features/production.api";
 
 const VERDICT_STYLE: Record<string, string> = {
@@ -36,7 +37,13 @@ interface DeckOption {
   title: string;
 }
 
-type Phase = "setup" | "drilling";
+type Phase = "setup" | "drilling" | "done";
+type DrillMode = "count" | "coverage";
+
+interface Step {
+  grammarId: number;
+  target?: VocabWordItem;
+}
 
 export default function DrillPage() {
   // ── setup data ──
@@ -50,10 +57,17 @@ export default function DrillPage() {
   const [level, setLevel] = useState("N5");
   const [deckId, setDeckId] = useState<number | null>(null);
   const [countPer, setCountPer] = useState(2);
+  const [mode, setMode] = useState<DrillMode>("count");
+  // coverage mode (drill until the chosen vocab set is exhausted)
+  const [vocabAll, setVocabAll] = useState<VocabWordItem[]>([]);
+  const [vocabLoading, setVocabLoading] = useState(false);
+  const [wordCount, setWordCount] = useState(0); // 0 = all
+  const [manualPick, setManualPick] = useState(false);
+  const [pickedWords, setPickedWords] = useState<Set<string>>(new Set());
 
   // ── drill runtime ──
   const [phase, setPhase] = useState<Phase>("setup");
-  const [queue, setQueue] = useState<number[]>([]);
+  const [queue, setQueue] = useState<Step[]>([]);
   const [index, setIndex] = useState(0);
   const [exercise, setExercise] = useState<ExerciseResponse | null>(null);
   const [answer, setAnswer] = useState("");

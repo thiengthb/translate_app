@@ -23,7 +23,7 @@ grade pipeline.
 - **Ollama running** with the configured model so generation works:
   ```
   ollama serve
-  ollama pull qwen2.5-coder:3b      # or whatever ollama.model is set to
+  ollama pull qwen2.5:3b            # or whatever ollama.model is set to
   ```
   Default URL `http://localhost:11434/api/generate` (see `ollama.api-url` / `ollama.model`).
 - **Vocabulary seeded** — for the JLPT-level source to return words, the `words`

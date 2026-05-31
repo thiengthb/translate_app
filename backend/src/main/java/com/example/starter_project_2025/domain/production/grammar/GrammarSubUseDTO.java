@@ -28,4 +28,15 @@ public class GrammarSubUseDTO extends BaseDTO {
     String detectorKey;
 
     List<CommonMistake> commonMistakes;
+
+    // Dictionary usage fields (grammar relation is set server-side, not via this DTO).
+    Integer orderNo;
+
+    String structurePattern;
+
+    String exampleJp;
+
+    String exampleVi;
+
+    String exampleNote;
 }

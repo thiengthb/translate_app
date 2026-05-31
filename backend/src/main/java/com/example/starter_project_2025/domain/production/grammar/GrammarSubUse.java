@@ -43,4 +43,30 @@ public class GrammarSubUse extends BaseEntity {
     @Convert(converter = CommonMistakesConverter.class)
     @Column(columnDefinition = "TEXT")
     List<CommonMistake> commonMistakes;
+
+    // ── Dictionary: this row is ONE usage (①②) of its parent expression ──
+
+    /** Parent grammar expression this usage belongs to (nullable until backfilled). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grammar_id")
+    Grammar grammar;
+
+    /** Display order within the expression (①=1, ②=2, …). */
+    Integer orderNo;
+
+    /** Structure note shown under the meaning, e.g. "(Trong lúc / trước khi ~ thì …)". */
+    @Column(columnDefinition = "TEXT")
+    String structurePattern;
+
+    /** "Ví dụ dễ nhớ": the Japanese example sentence. */
+    @Column(columnDefinition = "TEXT")
+    String exampleJp;
+
+    /** Vietnamese translation of {@link #exampleJp}. */
+    @Column(columnDefinition = "TEXT")
+    String exampleVi;
+
+    /** Optional italic note under the example. */
+    @Column(columnDefinition = "TEXT")
+    String exampleNote;
 }

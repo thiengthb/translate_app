@@ -26,4 +26,7 @@ public class ExerciseResponse {
 
     /** True when this prompt was freshly AI-composed; false for a seeded fallback. */
     private boolean generated;
+
+    /** Coverage drill only: whether the requested target word appears in the answer. */
+    private Boolean targetUsed;
 }

@@ -10,6 +10,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class OllamaClient {
+
+    /** How long Ollama keeps the model resident in memory between calls. */
+    private static final String KEEP_ALIVE = "30m";
 
     private final RestClient restClient;
     private final String apiUrl;
@@ -26,11 +30,11 @@ public class OllamaClient {
     public OllamaClient(
             RestClient.Builder builder,
             @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
-            @Value("${ollama.model:qwen2.5-coder:3b}") String model,
+            @Value("${ollama.model:qwen2.5:3b}") String model,
             ObjectMapper mapper) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(3000);   // fail fast if Ollama isn't running
-        requestFactory.setReadTimeout(25000);      // generous: small model can be slow on first call
+        requestFactory.setConnectTimeout(3000);    // fail fast if Ollama isn't running
+        requestFactory.setReadTimeout(60000);      // the first (cold) generation on CPU can take ~30-60s
         this.restClient = builder.requestFactory(requestFactory).build();
         this.apiUrl = apiUrl;
         this.model = model;
@@ -43,6 +47,25 @@ public class OllamaClient {
 
     public boolean isAvailable() {
         return true;
+    }
+
+    /**
+     * Pre-load the model into memory so the first real drill request doesn't pay the
+     * cold model-load cost. Best-effort: safe to call when Ollama is offline.
+     */
+    public void warmUp() {
+        try {
+            Map<String, Object> payload = Map.of(
+                    "model", model,
+                    "prompt", "ok",
+                    "stream", false,
+                    "keep_alive", KEEP_ALIVE,
+                    "options", Map.of("num_predict", 1));
+            readResponseField(payload);
+            log.info("Ollama warm-up complete (model {})", model);
+        } catch (Exception e) {
+            log.warn("Ollama warm-up skipped: {}", e.getMessage());
+        }
     }
 
     public JudgeResult judge(String refL2, String answer, String nuance, List<CommonMistake> commonMistakes) {
@@ -84,25 +107,23 @@ public class OllamaClient {
                 """.formatted(safe(refL2), safe(answer), safe(nuance), mistakes.toString());
 
         try {
-            Map<String, Object> body = Map.of(
+            Map<String, Object> payload = Map.of(
                     "model", model,
                     "prompt", prompt,
-                    "stream", false);
+                    "stream", false,
+                    "keep_alive", KEEP_ALIVE,
+                    "options", Map.of(
+                            "temperature", 0.2,    // grading wants to be near-deterministic
+                            "num_predict", 200));
 
-            OllamaRawResponse raw = restClient.post()
-                    .uri(apiUrl)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(OllamaRawResponse.class);
+            String response = readResponseField(payload);
+            if (response == null) return null;
 
-            if (raw == null || raw.response() == null) return null;
-
-            String json = extractJson(raw.response().trim());
+            String json = extractJson(response.trim());
             log.info("Ollama raw response: {}", json);
 
-            OllamaJudgePayload payload = mapper.readValue(json, OllamaJudgePayload.class);
-            return toJudgeResult(payload);
+            OllamaJudgePayload judged = mapper.readValue(json, OllamaJudgePayload.class);
+            return toJudgeResult(judged);
 
         } catch (Exception e) {
             log.warn("Ollama judge failed: {}", e.getMessage());
@@ -163,35 +184,44 @@ public class OllamaClient {
      * the learner's vocabulary. Returns {@code null} when Ollama is unavailable or
      * the response cannot be parsed (the caller decides the fallback).
      */
-    public GeneratedExercise compose(String jlptLevel, String nuance, String register, List<String> vocab) {
+    public GeneratedExercise compose(String jlptLevel, String nuance, String register,
+                                     List<String> vocab, String mandatoryWord) {
         String vocabList = (vocab == null || vocab.isEmpty())
                 ? "(any common words)"
                 : String.join(", ", vocab);
 
+        boolean hasMandatory = mandatoryWord != null && !mandatoryWord.isBlank();
+        String wordLine = hasMandatory
+                ? "MANDATORY vocabulary — the sentence MUST naturally include this exact word: " + mandatoryWord
+                : "Suggested vocabulary (use AT LEAST ONE — one is enough; do NOT force the others): " + vocabList;
+        String wordBullet = hasMandatory
+                ? "- It MUST clearly use the grammar point AND include the mandatory word above."
+                : "- It MUST clearly use the grammar point, and use at least one suggested word.";
+
         String prompt = """
-                You are a Japanese teacher creating ONE translation practice item for a JLPT %s
-                learner whose native language is Vietnamese.
+                You are a Japanese teacher creating ONE short translation practice item for a
+                JLPT %s learner whose native language is Vietnamese.
 
                 MANDATORY grammar point (the Japanese answer MUST use it): %s
                 Register: %s
-                Suggested vocabulary the learner is studying: %s
+                %s
 
-                Naturalness rules (most important):
-                - The grammar point above is REQUIRED — the Japanese answer must clearly use it.
-                - Use the suggested vocabulary ONLY where it sounds natural. You do NOT have to use
-                  all of them. If you cannot fit the vocabulary naturally while keeping the grammar,
-                  drop the vocabulary and just write a natural sentence that uses the grammar.
-                - Never force vocabulary in a way that makes the sentence awkward.
+                Keep it SIMPLE and on-point — this is the most important rule:
+                - "l2Reference" must be exactly ONE short, natural sentence (a single clause,
+                  two at most). NEVER multiple sentences.
+                - It must express ONLY what the situation asks — NO greetings, NO apologies,
+                  NO self-introduction, NO "よろしく…" pleasantries, NO flowery or over-humble
+                  keigo. Plain polite (です/ます) is preferred.
+                %s
 
                 Produce:
-                1. "situation": ONE short real-life situation in VIETNAMESE (1-2 sentences, addressed to
-                   the learner as "Bạn ..."), that naturally REQUIRES the target grammar to respond.
-                2. "l2Reference": a natural JAPANESE model answer that (a) clearly uses the target grammar,
-                   (b) matches the register, (c) is a valid response to the situation.
+                1. "situation": ONE short everyday situation in VIETNAMESE (1 sentence, addressed
+                   to the learner as "Bạn ..."), answerable with the target grammar.
+                2. "l2Reference": the single short Japanese sentence that answers it.
 
                 Reply with ONLY this JSON, no other text:
                 {"situation": "<vietnamese>", "l2Reference": "<japanese>"}
-                """.formatted(safe(jlptLevel), safe(nuance), safe(register), vocabList);
+                """.formatted(safe(jlptLevel), safe(nuance), safe(register), wordLine, wordBullet);
 
         String raw = generate(prompt);
         if (raw == null) {
@@ -214,22 +244,45 @@ public class OllamaClient {
         try {
             // A little temperature for variety; compose/alternatives want diverse output
             // (the strict judge builds its own deterministic request separately).
-            Map<String, Object> body = Map.of(
+            Map<String, Object> payload = Map.of(
                     "model", model,
                     "prompt", prompt,
                     "stream", false,
-                    "options", Map.of("temperature", 0.7));
-            OllamaRawResponse raw = restClient.post()
-                    .uri(apiUrl)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(OllamaRawResponse.class);
-            return raw == null ? null : raw.response();
+                    "keep_alive", KEEP_ALIVE,     // keep the model resident → fast subsequent calls
+                    "options", Map.of(
+                            "temperature", 0.7,
+                            "num_predict", 200));  // cap output: the item is one short sentence
+            return readResponseField(payload);
         } catch (Exception e) {
             log.warn("Ollama generate failed: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * POST to Ollama and return its {@code response} text. Reads the raw response
+     * body straight off the stream via {@code exchange()} and parses it ourselves —
+     * bypassing HttpMessageConverter content-type negotiation, because some Ollama
+     * builds reply with {@code application/octet-stream} which the converters reject.
+     */
+    private String readResponseField(Map<String, Object> payload) {
+        return restClient.post()
+                .uri(apiUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .exchange((request, response) -> {
+                    if (!response.getStatusCode().is2xxSuccessful()) {
+                        log.warn("Ollama HTTP {}", response.getStatusCode());
+                        return null;
+                    }
+                    byte[] bytes = response.getBody().readAllBytes();
+                    if (bytes.length == 0) {
+                        return null;
+                    }
+                    OllamaRawResponse raw = mapper.readValue(
+                            new String(bytes, StandardCharsets.UTF_8), OllamaRawResponse.class);
+                    return raw == null ? null : raw.response();
+                });
     }
 
     private JsonNode parseJsonArray(String raw) {

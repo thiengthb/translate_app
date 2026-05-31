@@ -10,6 +10,15 @@ export interface ExerciseResponse {
   words?: string[];
   /** True when AI-composed; false when it fell back to a seeded exercise. */
   generated?: boolean;
+  /** Coverage drill only: whether the requested target word appears in the answer. */
+  targetUsed?: boolean | null;
+}
+
+/** A vocabulary word (coverage-drill setup + target). */
+export interface VocabWordItem {
+  surface: string;
+  reading?: string | null;
+  gloss?: string | null;
 }
 
 export interface AttemptResult {
@@ -66,9 +75,28 @@ export const productionApi = {
     return res.data;
   },
 
-  /** Generate one vocab-driven practice prompt for a selected grammar point. */
-  generateExercise: async (subUseId: number, source: VocabSource): Promise<ExerciseResponse> => {
-    const res = await axiosInstance.post<ExerciseResponse>("/production/generate", { subUseId, source });
+  /**
+   * Generate one vocab-driven practice prompt for a selected grammar point.
+   * Pass {@code target} (coverage drill) to force the answer to use that exact word.
+   */
+  generateExercise: async (
+    subUseId: number,
+    source: VocabSource,
+    target?: VocabWordItem,
+  ): Promise<ExerciseResponse> => {
+    const res = await axiosInstance.post<ExerciseResponse>("/production/generate", {
+      subUseId,
+      source,
+      target,
+    });
+    return res.data;
+  },
+
+  /** All vocabulary words for a source (drives the coverage-drill word selector). */
+  listVocab: async (source: VocabSource): Promise<VocabWordItem[]> => {
+    const res = await axiosInstance.get<VocabWordItem[]>("/production/vocab", {
+      params: { type: source.type, level: source.level, deckId: source.deckId },
+    });
     return res.data;
   },
 
