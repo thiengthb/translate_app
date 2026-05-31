@@ -260,7 +260,7 @@ export default function AnkiStatsPage() {
                 {stats.studiedToday > 0 && (
                   <StatRow label="Studied today" value={stats.studiedToday} tone="text-primary" />
                 )}
-                <StatRow label="Due today"        value={stats.dueToday}     tone={stats.dueToday > 0 ? "text-amber-500" : undefined} />
+                <StatRow label="Due review cards" value={stats.dueReviewCards} tone={stats.dueReviewCards > 0 ? "text-green-600" : undefined} />
                 <StatRow label="Due tomorrow"     value={stats.dueTomorrow} />
                 <StatRow label="Average memory"   value={`${stats.avgMemoryScore.toFixed(0)}%`} tone={memTone} />
                 <StatRow label="Total reviews"    value={stats.totalReviews} />

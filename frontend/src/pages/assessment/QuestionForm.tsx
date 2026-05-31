@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { TagChips, TagCreateInline } from "./QuestionTags";
 
 // Only these four types can be created for now.
@@ -40,6 +40,14 @@ interface OptionDraft {
 
 const makeOption = (): OptionDraft => ({ uid: crypto.randomUUID(), content: "", isCorrect: false, explanation: "" });
 
+// Two blank options with the first pre-marked correct, so a choice question
+// always starts with an answer selected (a question must always have one).
+const defaultChoiceOptions = (): OptionDraft[] => {
+  const first = makeOption();
+  first.isCorrect = true;
+  return [first, makeOption()];
+};
+
 const trueFalseOptions = (): OptionDraft[] => [
   { uid: "true", content: "True", isCorrect: true, explanation: "" },
   { uid: "false", content: "False", isCorrect: false, explanation: "" },
@@ -67,7 +75,7 @@ export function QuestionForm({
   const [explanation, setExplanation] = useState("");
   const [hint, setHint] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [options, setOptions] = useState<OptionDraft[]>([makeOption(), makeOption()]);
+  const [options, setOptions] = useState<OptionDraft[]>(defaultChoiceOptions());
   // FILL_BLANK: list of accepted answers (each compared case-insensitively).
   const [acceptedAnswers, setAcceptedAnswers] = useState<string[]>([""]);
 
@@ -108,7 +116,7 @@ export function QuestionForm({
       setPrompt(""); setPromptAudioUrl(""); setPromptImageUrl("");
       setExplanation(""); setHint(""); setDifficulty("");
       setSelectedTagIds(new Set());
-      setOptions([makeOption(), makeOption()]);
+      setOptions(defaultChoiceOptions());
       setAcceptedAnswers([""]);
     }
   }, [question]);
@@ -128,32 +136,51 @@ export function QuestionForm({
       setOptions(trueFalseOptions());
     } else if (next === "FILL_BLANK") {
       setOptions([]);
-      setAcceptedAnswers([""]);
-    } else if (next === "SINGLE_CHOICE" || next === "MULTIPLE_CHOICE") {
-      // Only reset when coming from the fixed True/False options.
-      setOptions((prev) => (isTrueFalseShape(prev) ? [makeOption(), makeOption()] : (prev.length ? prev : [makeOption(), makeOption()])));
+      setAcceptedAnswers((a) => (a.length ? a : [""]));
+    } else {
+      // SINGLE_CHOICE / MULTIPLE_CHOICE — keep current options unless they're
+      // the fixed True/False pair (then start fresh). Single choice is a radio,
+      // so collapse to exactly one correct answer.
+      setOptions((prev) => {
+        let base = prev.length && !isTrueFalseShape(prev) ? prev : defaultChoiceOptions();
+        if (next === "SINGLE_CHOICE") {
+          const idx = base.findIndex((o) => o.isCorrect);
+          const keep = idx >= 0 ? idx : 0;
+          base = base.map((o, i) => ({ ...o, isCorrect: i === keep }));
+        }
+        return base;
+      });
     }
   };
 
   const needsOptions = !NO_OPTION_TYPES.includes(questionType);
   const isTrueFalse = questionType === "TRUE_FALSE";
   const isFillBlank = questionType === "FILL_BLANK";
+  const isMultiple = questionType === "MULTIPLE_CHOICE";
 
-  // SINGLE_CHOICE / TRUE_FALSE behave like radios: turning one option correct
-  // turns the rest off.
-  const updateOption = (uid: string, patch: Partial<OptionDraft>) => {
+  const updateOption = (uid: string, patch: Partial<OptionDraft>) =>
+    setOptions((arr) => arr.map((o) => (o.uid === uid ? { ...o, ...patch } : o)));
+
+  // Mark an option correct. MULTIPLE_CHOICE toggles (many allowed); SINGLE_CHOICE
+  // and TRUE_FALSE behave like radios — exactly one stays selected.
+  const setCorrect = (uid: string) =>
     setOptions((arr) =>
-      arr.map((o) => {
-        if (o.uid !== uid) {
-          if (patch.isCorrect && (questionType === "SINGLE_CHOICE" || questionType === "TRUE_FALSE")) {
-            return { ...o, isCorrect: false };
-          }
-          return o;
-        }
-        return { ...o, ...patch };
-      })
+      arr.map((o) =>
+        isMultiple
+          ? (o.uid === uid ? { ...o, isCorrect: !o.isCorrect } : o)
+          : { ...o, isCorrect: o.uid === uid },
+      ),
     );
-  };
+
+  // Remove an option, keeping a correct answer selected for radio types.
+  const removeOption = (uid: string) =>
+    setOptions((arr) => {
+      const next = arr.filter((x) => x.uid !== uid);
+      if (!isMultiple && next.length > 0 && !next.some((o) => o.isCorrect)) {
+        next[0] = { ...next[0], isCorrect: true };
+      }
+      return next;
+    });
 
   const updateAcceptedAnswer = (i: number, val: string) =>
     setAcceptedAnswers((a) => a.map((x, idx) => (idx === i ? val : x)));
@@ -215,6 +242,14 @@ export function QuestionForm({
     }
   };
 
+  // ── Validity (a question must always have an answer) ──
+  const filledOptions = options.filter((o) => o.content.trim());
+  const hasCorrect = options.some((o) => o.isCorrect && o.content.trim());
+  const optionsValid = isFillBlank
+    ? acceptedAnswers.some((a) => a.trim() !== "")
+    : filledOptions.length >= 2 && hasCorrect;
+  const canSave = prompt.trim() !== "" && optionsValid;
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -258,13 +293,36 @@ export function QuestionForm({
       {/* Options (SINGLE_CHOICE / MULTIPLE_CHOICE / TRUE_FALSE) */}
       {needsOptions && (
         <div className="space-y-2">
-          <Label>Options</Label>
+          <div className="flex items-center justify-between">
+            <Label>Options</Label>
+            <span className="text-xs text-muted-foreground">
+              {isMultiple ? "Tick every correct answer" : "Select the correct answer"}
+            </span>
+          </div>
           {options.map((o) => (
-            <div key={o.uid} className="flex items-start gap-2">
-              <label className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground shrink-0">
-                <Switch checked={o.isCorrect} onCheckedChange={(c) => updateOption(o.uid, { isCorrect: c })} />
-                Correct
-              </label>
+            <div
+              key={o.uid}
+              className={cn(
+                "flex items-start gap-2 rounded-lg border p-2 transition-colors",
+                o.isCorrect ? "border-green-500/50 bg-green-500/5" : "border-border",
+              )}
+            >
+              {/* Correct toggle — radio for single/TF, checkbox for multiple */}
+              <button
+                type="button"
+                onClick={() => setCorrect(o.uid)}
+                aria-pressed={o.isCorrect}
+                title={o.isCorrect ? "Correct answer" : "Mark as correct"}
+                className={cn(
+                  "mt-1.5 shrink-0 flex size-5 items-center justify-center border transition-colors",
+                  isMultiple ? "rounded-md" : "rounded-full",
+                  o.isCorrect
+                    ? "bg-green-600 border-green-600 text-white"
+                    : "border-muted-foreground/40 text-transparent hover:border-green-500/60",
+                )}
+              >
+                <Check className="size-3.5" />
+              </button>
               <div className="flex-1 space-y-1.5">
                 <Input
                   value={o.content}
@@ -278,8 +336,8 @@ export function QuestionForm({
               </div>
               {!isTrueFalse && (
                 <Button variant="ghost" size="sm" className="text-destructive shrink-0"
-                  disabled={options.length <= 1}
-                  onClick={() => setOptions((arr) => arr.filter((x) => x.uid !== o.uid))}>
+                  disabled={options.length <= 2}
+                  onClick={() => removeOption(o.uid)}>
                   <Trash2 className="size-4" />
                 </Button>
               )}
@@ -292,6 +350,12 @@ export function QuestionForm({
               <Plus className="size-4 mr-1" />Add option
             </Button>
           ) : null}
+          {/* "Always an answer" guard */}
+          {!isTrueFalse && filledOptions.length >= 2 && !hasCorrect && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              Select the correct answer{isMultiple ? "(s)" : ""} for this question.
+            </p>
+          )}
         </div>
       )}
 
@@ -322,6 +386,11 @@ export function QuestionForm({
           <p className="text-xs text-muted-foreground">
             All listed answers will be accepted. Comparison ignores case and trims spaces.
           </p>
+          {!optionsValid && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              Add at least one accepted answer.
+            </p>
+          )}
         </div>
       )}
 
@@ -355,7 +424,7 @@ export function QuestionForm({
 
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving || !canSave}>
           {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}Save question
         </Button>
       </div>

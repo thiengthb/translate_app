@@ -78,6 +78,7 @@ public class AnkiStudyController {
                     .totalNew(0)
                     .totalLearning(0)
                     .totalReview(0)
+                    .dueReviewCards(0)
                     .totalDue(0)
                     .build());
         }
@@ -114,6 +115,7 @@ public class AnkiStudyController {
         int totalNew = 0;
         int totalLearning = 0;
         int totalReview = 0;
+        int dueReviewCards = 0;
         int totalDue = 0;
 
         for (DeckItem item : items) {
@@ -122,23 +124,26 @@ public class AnkiStudyController {
 
             AnkiSrsProgress progress = progressMap.get(fc.getId());
 
-            boolean isNew = (progress == null);
+            boolean isNew = progress == null || "NEW".equals(progress.getState());
             boolean isDue = !isNew && isDue(progress, now);
-
-            if (!isNew && !isDue) continue;
 
             if (isNew) {
                 totalNew++;
                 if (queuedNew >= newLimit) continue;
                 queuedNew++;
             } else {
-                totalDue++;
                 if ("LEARNING".equals(progress.getState()) || "RELEARNING".equals(progress.getState())) {
                     totalLearning++;
+                    if (!isDue) continue;
                 } else if ("REVIEW".equals(progress.getState())) {
                     totalReview++;
+                    if (!isDue) continue;
+                    totalDue++;
+                    dueReviewCards++;
                     if (queuedDue >= dueLimit) continue;
                     queuedDue++;
+                } else {
+                    if (!isDue) continue;
                 }
             }
 
@@ -151,6 +156,7 @@ public class AnkiStudyController {
                 .totalNew(totalNew)
                 .totalLearning(totalLearning)
                 .totalReview(totalReview)
+                .dueReviewCards(dueReviewCards)
                 .totalDue(totalDue)
                 .build());
     }
@@ -692,12 +698,16 @@ public class AnkiStudyController {
         Long userId = principal.getId();
         Deck deck = deckRepository.findById(deckId).orElseThrow();
 
+        List<DeckItem> items = deckItemRepository.findByDeckIdOrderByOrderIndexAsc(deckId);
         List<AnkiSrsProgress> rows = progressRepository.findByUserIdAndDeckId(userId, deckId);
+        Map<Long, AnkiSrsProgress> progressMap = rows.stream()
+                .collect(Collectors.toMap(p -> p.getFlashcard().getId(), p -> p));
 
-        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
 
         int newC = 0, learning = 0, relearning = 0, review = 0;
-        int studiedToday = 0, dueToday = 0, dueTomorrow = 0;
+        int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
         double sumMemory = 0, sumEase = 0, sumInterval = 0;
         int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
 
@@ -705,7 +715,13 @@ public class AnkiStudyController {
         List<Integer> intervals = new ArrayList<>();
         List<Double> easeFactors = new ArrayList<>();
 
-        for (AnkiSrsProgress p : rows) {
+        for (DeckItem item : items) {
+            AnkiSrsProgress p = progressMap.get(item.getFlashcard().getId());
+            if (p == null || "NEW".equals(p.getState())) {
+                newC++;
+                continue;
+            }
+
             switch (p.getState()) {
                 case "NEW"        -> newC++;
                 case "LEARNING"   -> learning++;
@@ -717,11 +733,16 @@ public class AnkiStudyController {
                 studiedToday++;
             }
 
-            if (p.getNextReviewAt() != null) {
-                LocalDate due = p.getNextReviewAt().toLocalDate();
+            if ("REVIEW".equals(p.getState()) && p.getNextReviewAt() != null) {
+                LocalDateTime nextReviewAt = p.getNextReviewAt();
+                LocalDate due = nextReviewAt.toLocalDate();
                 long diff = ChronoUnit.DAYS.between(today, due);
-                if (diff <= 0)   dueToday++;
-                else if (diff == 1) dueTomorrow++;
+                if (!nextReviewAt.isAfter(now)) {
+                    dueToday++;
+                    dueReviewCards++;
+                } else if (diff == 1) {
+                    dueTomorrow++;
+                }
                 if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
             }
 
@@ -738,8 +759,8 @@ public class AnkiStudyController {
             }
         }
 
-        int    total       = rows.size();
-        double avgMem      = total       > 0 ? Math.round(sumMemory   / total       * 10.0) / 10.0 : 0;
+        int    total       = items.size();
+        double avgMem      = rows.size() > 0 ? Math.round(sumMemory   / rows.size() * 10.0) / 10.0 : 0;
         double avgEase     = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
         double avgInterval = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
 
@@ -759,6 +780,7 @@ public class AnkiStudyController {
                 .studiedToday(studiedToday)
                 .dueToday(dueToday)
                 .dueTomorrow(dueTomorrow)
+                .dueReviewCards(dueReviewCards)
                 .avgMemoryScore(avgMem)
                 .avgEaseFactor(avgEase)
                 .avgIntervalDays(avgInterval)

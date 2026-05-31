@@ -52,35 +52,56 @@ const RATING_CONFIG: { rating: AnkiRating; label: string; shortcut: string }[] =
   { rating: "EASY", label: "Easy", shortcut: "4" },
 ];
 
-type QueueStats = { new: number; learning: number; review: number };
+type QueueStats = { new: number; learning: number; review: number; dueToday: number; dueReview: number };
 
 function isLearningState(card: AnkiStudyCard) {
   return card.state === "LEARNING" || card.state === "RELEARNING";
 }
 
-function returnsTodayOrEarlier(nextReviewAt?: string) {
-  if (!nextReviewAt) return true;
+function returnsNowOrEarlier(nextReviewAt?: string) {
+  if (!nextReviewAt) return false;
   const nextReview = new Date(nextReviewAt);
-  if (Number.isNaN(nextReview.getTime())) return true;
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-  return nextReview <= endOfToday;
+  if (Number.isNaN(nextReview.getTime())) return false;
+  return nextReview <= new Date();
 }
 
 function shouldTrackAsSessionLearning(card: AnkiStudyCard) {
-  return isLearningState(card) && returnsTodayOrEarlier(card.nextReviewAt);
+  return isLearningState(card);
 }
 
-function countMainQueueStats(cards: AnkiStudyCard[]): QueueStats {
-  return cards.reduce<QueueStats>(
-    (acc, card) => {
-      if (card.state === "NEW") acc.new += 1;
-      else if (isLearningState(card)) acc.learning += 1;
-      else acc.review += 1;
-      return acc;
-    },
-    { new: 0, learning: 0, review: 0 }
-  );
+function stateBucket(card: AnkiStudyCard): "new" | "learning" | "review" | null {
+  if (card.state === "NEW") return "new";
+  if (shouldTrackAsSessionLearning(card)) return "learning";
+  if (card.state === "REVIEW") return "review";
+  return null;
+}
+
+function isDueToday(card: AnkiStudyCard) {
+  return card.state === "REVIEW" && returnsNowOrEarlier(card.nextReviewAt);
+}
+
+function isDueReview(card: AnkiStudyCard) {
+  return isDueToday(card);
+}
+
+function applyReviewDelta(stats: QueueStats, before: AnkiStudyCard, after: AnkiStudyCard): QueueStats {
+  const next = { ...stats };
+  const beforeBucket = stateBucket(before);
+  const afterBucket = stateBucket(after);
+
+  if (beforeBucket) next[beforeBucket] = Math.max(0, next[beforeBucket] - 1);
+  if (isDueToday(before)) next.dueToday = Math.max(0, next.dueToday - 1);
+  if (isDueReview(before)) next.dueReview = Math.max(0, next.dueReview - 1);
+
+  if (afterBucket) next[afterBucket] += 1;
+  if (isDueToday(after)) next.dueToday += 1;
+  if (isDueReview(after)) next.dueReview += 1;
+
+  return next;
+}
+
+function totalStats(stats: QueueStats) {
+  return stats.new + stats.learning + stats.dueReview;
 }
 
 /**
@@ -132,7 +153,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
   const [totalLearning, setTotalLearning] = useState(0);
   const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
-  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0 });
+  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0, dueToday: 0, dueReview: 0 });
   const [renderData, setRenderData] = useState<FlashcardRenderDTO | null>(null);
 
   const loadQueue = (showSpinner = true) => {
@@ -142,12 +163,18 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
       .then((data) => {
         setQueue(data.cards);
         setAgainQueue([]);
-        setSessionStats(countMainQueueStats(data.cards));
+        setSessionStats({
+          new: data.totalNew,
+          learning: data.totalLearning ?? 0,
+          review: data.totalReview ?? 0,
+          dueToday: data.dueReviewCards ?? 0,
+          dueReview: data.dueReviewCards ?? 0,
+        });
         setTotalNew(data.totalNew);
         setTotalLearning(data.totalLearning ?? 0);
-        setTotalReview(data.totalReview ?? data.totalDue);
-        setTotalDue(data.totalDue);
-        onDueCount?.(data.totalDue + data.totalNew);
+        setTotalReview(data.totalReview ?? 0);
+        setTotalDue(data.dueReviewCards ?? 0);
+        onDueCount?.(data.totalNew + (data.totalLearning ?? 0) + (data.dueReviewCards ?? 0));
       })
       .catch(() => toast.error("Failed to load study queue."))
       .finally(() => {
@@ -259,8 +286,12 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
       }
       setQueue(nextQueue);
       setAgainQueue(nextAgainQueue);
-      const mainStats = countMainQueueStats(nextQueue);
-      setSessionStats({ ...mainStats, learning: mainStats.learning + nextAgainQueue.length });
+      const nextStats = applyReviewDelta(sessionStats, card, updated);
+      setSessionStats(nextStats);
+      setTotalNew(nextStats.new);
+      setTotalLearning(nextStats.learning);
+      setTotalReview(nextStats.review);
+      onDueCount?.(totalStats(nextStats));
     } catch {
       toast.error("Failed to submit review.");
     } finally {
@@ -426,7 +457,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
             <QueueStatsBar
               liveNew={sessionStats.new}
               liveLearning={sessionStats.learning}
-              liveReview={sessionStats.review}
+              liveDueToday={sessionStats.dueToday}
               totalNew={totalNew}
               totalLearning={totalLearning}
               totalReview={totalReview}
@@ -442,7 +473,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
 function QueueStatsBar({
   liveNew,
   liveLearning,
-  liveReview,
+  liveDueToday,
   totalNew,
   totalLearning,
   totalReview,
@@ -450,7 +481,7 @@ function QueueStatsBar({
 }: {
   liveNew: number;
   liveLearning: number;
-  liveReview: number;
+  liveDueToday: number;
   totalNew: number;
   totalLearning: number;
   totalReview: number;
@@ -459,13 +490,13 @@ function QueueStatsBar({
   return (
     <div
       className="mx-auto flex w-fit items-center gap-3 text-xs font-normal text-muted-foreground/60"
-      title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
+      title={`State counts: ${totalNew} new, ${totalLearning} learning, ${totalReview} review. Due now: ${totalDue}`}
     >
       <StatChip label="New" value={liveNew} />
       <span className="text-muted-foreground/25">·</span>
       <StatChip label="Learning" value={liveLearning} />
       <span className="text-muted-foreground/25">·</span>
-      <StatChip label="Review" value={liveReview} />
+      <StatChip label="Due Today" value={liveDueToday} />
     </div>
   );
 }

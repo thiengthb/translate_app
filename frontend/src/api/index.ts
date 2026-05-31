@@ -30,6 +30,7 @@ export * from "./features/menu/module.api";
 export * from "./features/menu/module_group.api";
 export * from "./features/metadata.api";
 export * from "./features/notification.api";
+export * from "./features/reward.api";
 export * from "./features/rbac/permission.api";
 export * from "./features/rbac/role.api";
 export * from "./features/rbac/user.api";

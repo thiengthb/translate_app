@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
+    Coins,
     Keyboard,
     LogOut,
     Settings2,
+    Trophy,
     User as UserIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -19,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { profileApi } from "@/api/features/profile.api";
+import { rewardApi, type RewardBalance } from "@/api/features/reward.api";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useLogout } from "@/hooks/useLogout";
 import { SHORTCUTS_PAGE_PATH } from "@/lib/keyboard-shortcuts";
@@ -79,6 +82,7 @@ export function UserDropdownMenu({
         (state: RootState) => state.auth,
     );
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+    const [balance, setBalance] = useState<RewardBalance | null>(null);
     const { t } = useTranslation();
     const handleLogout = useLogout();
 
@@ -98,6 +102,12 @@ export function UserDropdownMenu({
             .getProfile()
             .then((data) => {
                 if (active) setAvatarUrl(data.avatarUrl);
+            })
+            .catch(() => {});
+        rewardApi
+            .getMe()
+            .then((data) => {
+                if (active) setBalance(data);
             })
             .catch(() => {});
         return () => {
@@ -153,6 +163,64 @@ export function UserDropdownMenu({
                         </p>
                     </div>
                 </DropdownMenuLabel>
+
+                {/* ── XP / Level / Coins ───────────────────────────────── */}
+                {balance && (() => {
+                    // Mirror the backend level curve. Cumulative XP to reach a
+                    // level is the triangular number 100 * (lvl-1) * lvl / 2.
+                    // Everything is guarded so a missing/NaN field never renders.
+                    const expForLevel = (lvl: number) =>
+                        lvl <= 1 ? 0 : (100 * (lvl - 1) * lvl) / 2;
+                    const levelForExp = (xp: number) => {
+                        let lvl = 1;
+                        while (lvl < 100 && expForLevel(lvl + 1) <= xp) lvl++;
+                        return lvl;
+                    };
+                    const exp = Number.isFinite(balance.exp) ? balance.exp : 0;
+                    const coins = Number.isFinite(balance.coins) ? balance.coins : 0;
+                    // Prefer the backend level; fall back to deriving it from exp.
+                    const level =
+                        Number.isFinite(balance.level) && balance.level > 0
+                            ? balance.level
+                            : levelForExp(exp);
+                    const currentLevelExp = expForLevel(level);
+                    const nextLevelExp = expForLevel(level + 1);
+                    const levelSpan = Math.max(1, nextLevelExp - currentLevelExp);
+                    const expIntoLevel = Math.max(0, exp - currentLevelExp);
+                    const expToNext = Number.isFinite(balance.expToNext)
+                        ? balance.expToNext
+                        : Math.max(0, nextLevelExp - exp);
+                    const progressPct = level >= 100
+                        ? 100
+                        : Math.min(100, Math.max(0, Math.round((expIntoLevel / levelSpan) * 100)));
+                    return (
+                        <div className="px-2 pt-0.5 pb-2 space-y-1.5">
+                            {/* Level + coins — their own row */}
+                            <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                                    <Trophy className="size-3" />Lv {level}
+                                </span>
+                                <span className="inline-flex items-center gap-1 rounded-md bg-yellow-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-yellow-600 dark:text-yellow-400">
+                                    <Coins className="size-3" />{coins}
+                                </span>
+                            </div>
+                            {/* XP progress — its own row */}
+                            <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground tabular-nums">
+                                <span>{exp} XP</span>
+                                <span>{expToNext === 0 ? "Max level" : `${expToNext} XP to Lv ${level + 1}`}</span>
+                            </div>
+                            <div
+                                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                                title={`${expIntoLevel} / ${levelSpan} XP into Level ${level}`}
+                            >
+                                <div
+                                    className="h-full rounded-full bg-primary transition-[width]"
+                                    style={{ width: `${progressPct}%` }}
+                                />
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 <DropdownMenuSeparator />
 

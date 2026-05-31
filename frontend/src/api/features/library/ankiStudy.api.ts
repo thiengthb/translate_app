@@ -33,6 +33,7 @@ export interface AnkiStudyQueue {
   totalNew: number;
   totalLearning?: number;
   totalReview?: number;
+  dueReviewCards?: number;
   totalDue: number;
 }
 
@@ -68,6 +69,7 @@ export interface AnkiStatsDTO {
   studiedToday: number;
   dueToday: number;
   dueTomorrow: number;
+  dueReviewCards: number;
   avgMemoryScore: number;
   avgEaseFactor: number;
   avgIntervalDays: number;
