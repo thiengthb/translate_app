@@ -4,7 +4,7 @@ import { deckApi, deckItemApi, flashcardApi, flashcardTemplateApi } from "@/api"
 import { fileApi } from "@/api/features/file.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { Brush, Globe, GraduationCap, Layers, Loader2, Lock, Plus, Upload } from "lucide-react";
+import { Brush, Globe, GraduationCap, Layers, Loader2, Lock, Plus, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -100,26 +100,30 @@ export default function CreateDeckPage() {
   const [importOpen, setImportOpen]   = useState(false);
   const [savedTemplates, setSavedTemplates] = useState<FlashcardTemplateDTO[]>([]);
   const [templatesLoaded, setTemplatesLoaded] = useState(false);
+  // When set, the deck REUSES this existing template (attach its id) instead of
+  // generating a new one on save. Cleared when the user starts a fresh structure.
+  const [selectedTemplate, setSelectedTemplate] = useState<FlashcardTemplateDTO | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
 
   /* ── Structure ── */
   const applyPreset = (build: () => FieldDef[]) => {
     const f = build();
+    setSelectedTemplate(null); // a fresh preset structure → generate a new template on save
     setFields(f);
     setCards([makeFieldCard(f), makeFieldCard(f)]); // fresh cards keyed to the new fields
   };
 
-  /** Adopt a saved template's structure (reuse) — replaces fields + resets cards. */
+  /** Adopt a saved template (reuse): remember its id so we ATTACH it on save —
+   *  never create a duplicate — and seed the matching field structure. */
   const seedFromTemplate = (tpl: FlashcardTemplateDTO, notify = true) => {
+    setSelectedTemplate(tpl);
     const f = fieldsFromBuilderConfig(tpl.builderConfigJson);
-    if (f.length === 0) {
-      if (notify) toast.error("Mẫu này không có cấu trúc trường để dùng lại.");
-      return;
+    if (f.length > 0) {
+      setFields(f);
+      setCards([makeFieldCard(f), makeFieldCard(f)]);
     }
-    setFields(f);
-    setCards([makeFieldCard(f), makeFieldCard(f)]);
-    if (notify) toast.success(`Đã dùng cấu trúc từ "${tpl.name}".`);
+    if (notify) toast.success(`Đang dùng mẫu "${tpl.name}".`);
   };
 
   /** Lazy-load the user's saved templates the first time the picker opens. */
@@ -128,7 +132,8 @@ export default function CreateDeckPage() {
     setTemplatesLoaded(true);
     flashcardTemplateApi
       .listForUser(userId ?? undefined)
-      .then(setSavedTemplates)
+      // Only shared masters are reusable; deck-local copies stay private.
+      .then((list) => setSavedTemplates(list.filter((t) => t.deckId == null)))
       .catch((err) => logger.warn("Failed to load templates", err));
   };
 
@@ -241,6 +246,8 @@ export default function CreateDeckPage() {
       builderConfigJson: JSON.stringify(state),
       isSystem: false,
       isDefault: false,
+      visibility: "PRIVATE",
+      isActive: true, // BaseDTO requires @NotNull(isActive) on create
     } as FlashcardTemplateDTO);
     if (created.id != null) await deckApi.applyTemplate(deckId, created.id);
   };
@@ -286,10 +293,17 @@ export default function CreateDeckPage() {
         await pLimit(chunk.map((card, j) => () => saveOne(card, start + j)), CONCURRENCY);
       }
 
-      // Auto-generate the render template from the structure (non-fatal).
+      // Attach the render template (non-fatal). REUSE the chosen existing
+      // template when one was picked — otherwise generate a fresh one from the
+      // structure. This is what stops reuse from silently creating a duplicate.
       if (deck.id != null) {
-        try { await applyAutoTemplate(deck.id); }
-        catch { /* deck + cards already saved; template is a best-effort extra */ }
+        try {
+          if (selectedTemplate?.id != null) {
+            await deckApi.applyTemplate(deck.id, selectedTemplate.id);
+          } else {
+            await applyAutoTemplate(deck.id);
+          }
+        } catch { /* deck + cards already saved; template is a best-effort extra */ }
       }
 
       toast.success("Deck đã được tạo!");
@@ -439,6 +453,26 @@ export default function CreateDeckPage() {
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Reuse banner — shows when the deck will ATTACH an existing template. */}
+          {selectedTemplate && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+              <span className="flex min-w-0 items-center gap-1.5 text-xs text-foreground">
+                <Layers className="size-3.5 shrink-0 text-primary" />
+                Đang dùng lại mẫu:{" "}
+                <span className="truncate font-semibold">{selectedTemplate.name}</span>
+              </span>
+              <button
+                onClick={() => setSelectedTemplate(null)}
+                title="Bỏ chọn — sẽ tự tạo mẫu mới từ cấu trúc này"
+                className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X className="size-3.5" />
+                Bỏ chọn
+              </button>
+            </div>
+          )}
+
           <FieldStructureEditor fields={fields} onChange={setFields} />
         </div>
 

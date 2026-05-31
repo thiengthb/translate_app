@@ -5,6 +5,7 @@ import {
     Sparkles, Trash2, AlertCircle, Languages,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { EmptyState } from "@/components/common/EmptyState";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type {
     WordSearchResult, WordSuggestion, DictionaryKanjiInfo,
@@ -480,17 +481,16 @@ export default function DictionaryPage() {
 
                 {/* ── No results ── */}
                 {!loading && noResults && (
-                    <Card>
-                        <CardContent className="flex flex-col items-center py-10 gap-2">
-                            <Search className="h-10 w-10 text-muted-foreground/30" />
-                            <p className="font-semibold text-foreground">Không tìm thấy kết quả</p>
-                            <p className="text-xs text-muted-foreground text-center max-w-xs">
-                                {searchMode === "kanji"
-                                    ? "Thử nhập từ vựng, kanji, kana hoặc romaji"
-                                    : "Thử nhập kanji, kana, romaji hoặc nghĩa tiếng Việt"}
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        className="py-10"
+                        icon={<Search className="size-7" />}
+                        title="Không tìm thấy kết quả"
+                        description={
+                            searchMode === "kanji"
+                                ? "Thử nhập từ vựng, kanji, kana hoặc romaji"
+                                : "Thử nhập kanji, kana, romaji hoặc nghĩa tiếng Việt"
+                        }
+                    />
                 )}
             </div>
         </MainLayout>
@@ -1294,15 +1294,16 @@ function SavedSection({
 }) {
     if (savedWords.length === 0 && savedKanjis.length === 0) {
         return (
-            <Card>
-                <CardContent className="flex flex-col items-center py-12 gap-3">
-                    <Bookmark className="h-9 w-9 text-muted-foreground/30" />
-                    <p className="font-semibold text-foreground">Chưa có từ nào được lưu</p>
-                    <p className="text-xs text-muted-foreground text-center max-w-xs">
+            <EmptyState
+                className="py-12"
+                icon={<Bookmark className="size-7" />}
+                title="Chưa có từ nào được lưu"
+                description={
+                    <>
                         Nhấn nút <Bookmark className="inline h-3 w-3 mx-0.5 align-middle" /> trên kết quả tìm kiếm để bookmark từ yêu thích
-                    </p>
-                </CardContent>
-            </Card>
+                    </>
+                }
+            />
         );
     }
 

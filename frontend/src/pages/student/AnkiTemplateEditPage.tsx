@@ -21,13 +21,13 @@ import type {
   TemplateSide,
 } from "@/features/card-template-designer/types";
 import type {
-  CreateUpdateTemplateRequest,
   DeckDTO,
   FlashcardDTO,
   FlashcardSideContentDTO,
   FlashcardSideType,
   FlashcardTemplateDTO,
 } from "@/types";
+import { getCurrentUserId } from "@/utils/auth.utils";
 
 const PREVIEW_DEBOUNCE_MS = 120;
 const DEFAULT_TEMPLATE_NAME = "Deck template";
@@ -210,6 +210,10 @@ export default function AnkiTemplateEditPage() {
   const [removing, setRemoving] = useState(false);
   const [deck, setDeck] = useState<DeckDTO | null>(null);
   const [templateId, setTemplateId] = useState<number | null>(null);
+  // The `deckId` of the currently-loaded template. If it equals THIS deck, the
+  // template is this deck's own private copy → safe to edit in place. Otherwise
+  // (a shared master / system template / another deck's) editing must fork.
+  const [templateDeckId, setTemplateDeckId] = useState<number | null>(null);
   const [flashcard, setFlashcard] = useState<FlashcardDTO | null>(null);
   const [draft, setDraft] = useState<TemplateDraftFields>(EMPTY_DRAFT);
   const [debouncedDraft, setDebouncedDraft] = useState<TemplateDraftFields>(EMPTY_DRAFT);
@@ -281,6 +285,7 @@ export default function AnkiTemplateEditPage() {
         setBuilderState(state);
         setCustomCode(hasCustomCode);
         setTemplateId(template?.id ?? null);
+        setTemplateDeckId(template?.deckId ?? null);
 
         if (template) {
           const generated = generateTemplates(state);
@@ -350,28 +355,41 @@ export default function AnkiTemplateEditPage() {
       return;
     }
 
+    // Edit in place ONLY when this template is already this deck's own private
+    // copy. A shared master / system template / another deck's copy must be
+    // forked so the original is never mutated (copy-on-write).
+    const isOwnLocalCopy = templateId != null && templateDeckId != null && templateDeckId === deckId;
+
     setSaving(true);
     try {
-      const payload: CreateUpdateTemplateRequest = {
-        name: draft.name.trim(),
+      const dto = {
+        userId: getCurrentUserId(),
+        deckId, // this deck's local copy
         cardType: null,
+        name: draft.name.trim(),
         description: draft.description.trim() || null,
         frontTemplate: draft.frontTemplate || null,
         backTemplate: draft.backTemplate || null,
         styling: draft.styling || null,
         builderConfigJson: customCode ? null : JSON.stringify(builderState),
+        isSystem: false,
+        isDefault: false,
+        visibility: "PRIVATE", // deck-local copy — hidden from the library anyway
         isActive: true,
-      };
+      } as FlashcardTemplateDTO;
 
-      if (templateId != null) {
-        await flashcardTemplateApi.updateTemplate(templateId, payload);
+      if (isOwnLocalCopy) {
+        await flashcardTemplateApi.update(String(templateId), dto);
       } else {
-        const created = await flashcardTemplateApi.createTemplate(payload);
+        const created = await flashcardTemplateApi.create(dto);
         if (created.id == null) throw new Error("Template was created without an id.");
         await deckApi.applyTemplate(deckId, created.id);
+        // From now on this deck owns the new copy — subsequent saves edit it in place.
+        setTemplateId(created.id);
+        setTemplateDeckId(deckId);
       }
 
-      toast.success("Template saved.");
+      toast.success(isOwnLocalCopy ? "Đã lưu mẫu của deck." : "Đã lưu bản sao riêng cho deck (mẫu gốc giữ nguyên).");
       navigate(backTo);
     } catch {
       toast.error("Failed to save template.");
@@ -391,6 +409,7 @@ export default function AnkiTemplateEditPage() {
       setBuilderState(state);
       setDraft({ ...EMPTY_DRAFT, ...generated });
       setTemplateId(null);
+      setTemplateDeckId(null);
       setDeck((current) => (current ? { ...current, templateId: null } : current));
       setCustomCode(false);
       setDirty(false);

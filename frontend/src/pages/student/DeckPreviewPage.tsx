@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { RevealMore } from "@/components/common/RevealMore";
+import { EmptyState } from "@/components/common/EmptyState";
 
 const CARDS_INITIAL_VISIBLE = 30;
 
@@ -187,21 +188,14 @@ export default function DeckPreviewPage() {
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : accessDenied ? (
-          <div className="flex flex-col items-center justify-center h-60 gap-4 text-center">
-            <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
-              <Users className="size-7 text-muted-foreground/40" />
-            </div>
-            <div className="space-y-1 max-w-xs">
-              <p className="text-sm font-medium text-foreground">Bộ thẻ này là riêng tư</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Chủ sở hữu đã đặt bộ thẻ này ở chế độ riêng tư và không thể xem được.
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            className="h-60"
+            icon={<Users className="size-7" />}
+            title="Bộ thẻ này là riêng tư"
+            description="Chủ sở hữu đã đặt bộ thẻ này ở chế độ riêng tư và không thể xem được."
+          />
         ) : !deck ? (
-          <div className="flex items-center justify-center h-60 text-muted-foreground text-sm">
-            Deck not found.
-          </div>
+          <EmptyState className="h-60" title="Deck not found." />
         ) : (
           <>
             {/* ── Deck header ── */}

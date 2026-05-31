@@ -1,9 +1,7 @@
 /**
  * Render a saved flashcard template to a self-contained iframe `srcdoc` for
  * preview, using sample values derived from the template's builder config (or,
- * as a fallback, the `{{token}}`s found in the template HTML). Shared by the
- * template library page and the reuse pickers so previews look identical to the
- * designer's own preview.
+ * as a fallback, the `{{token}}`s found in the template HTML).
  */
 import { parseBuilderConfig } from "./template-generation";
 import type { TemplateSide } from "./types";
@@ -22,11 +20,10 @@ function appForegroundColor(): string {
   return v || "#1f2937";
 }
 
-/** A representative value for a field, by content type. */
 function sampleFor(contentType: string, label: string): string {
   switch (contentType) {
     case "IMAGE":
-      return '<span style="display:inline-block;width:72px;height:48px;border-radius:8px;background:#d1d5db;"></span>';
+      return '<span style="display:inline-block;width:96px;height:60px;border-radius:8px;background:#d1d5db;"></span>';
     case "AUDIO":
       return "🔊";
     case "VIDEO":
@@ -70,6 +67,7 @@ function createIframeDoc(bodyHtml: string, styling: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light dark; }
 html, body { margin: 0; height: 100%; background: transparent; color: ${appForegroundColor()}; }
+.card { padding: 16px; }
 ${styling}
 </style></head><body>${body}</body></html>`;
 }

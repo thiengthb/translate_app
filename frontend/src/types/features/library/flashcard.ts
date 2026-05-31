@@ -46,6 +46,8 @@ export interface FlashcardFilter extends BaseFilter {
 
 export interface FlashcardTemplateDTO extends BaseDTO {
   userId: number | null;
+  /** Non-null = deck-local copy (hidden from library); null = shared master. */
+  deckId: number | null;
   cardType: string | null;
   name: string;
   description: string | null;
@@ -55,13 +57,17 @@ export interface FlashcardTemplateDTO extends BaseDTO {
   builderConfigJson?: string | null;
   isSystem: boolean;
   isDefault: boolean;
+  /** PUBLIC = shareable to community, PRIVATE = owner-only. */
+  visibility: "PUBLIC" | "PRIVATE" | null;
 }
 
 export interface FlashcardTemplateFilter extends BaseFilter {
   userId?: number;
+  deckId?: number;
   cardType?: string;
   isSystem?: boolean;
   isDefault?: boolean;
+  visibility?: string;
 }
 
 export interface CreateUpdateTemplateRequest {

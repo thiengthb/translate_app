@@ -4,6 +4,7 @@ import { ankiStudyApi, deckApi } from "@/api";
 import type { AnkiBucketCount, AnkiDayCount, AnkiStatsDTO } from "@/api/features/library/ankiStudy.api";
 import type { DeckDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { EmptyState } from "@/components/common/EmptyState";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -233,10 +234,11 @@ export default function AnkiStatsPage() {
 
       {/* ── Empty / Loading ── */}
       {!selectedDeckId && !loading && (
-        <div className="flex flex-col items-center justify-center h-60 gap-2 text-muted-foreground">
-          <Brain className="size-12 opacity-20" />
-          <p className="text-sm">Select an Anki deck above to view statistics.</p>
-        </div>
+        <EmptyState
+          className="h-60"
+          icon={<Brain className="size-7" />}
+          title="Select an Anki deck above to view statistics."
+        />
       )}
       {loading && (
         <div className="flex items-center justify-center h-60">

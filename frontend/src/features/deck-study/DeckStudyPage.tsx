@@ -18,6 +18,7 @@ import { LearnMode } from "./modes/LearnMode";
 import { MatchMode } from "./modes/MatchMode";
 import { SrsMode } from "./modes/SrsMode";
 import { useDeckStudyData } from "./useDeckStudyData";
+import { EmptyState } from "@/components/common/EmptyState";
 import type { StudyMode } from "./types";
 
 const VALID_MODES: StudyMode[] = ["FLASHCARD", "LEARN", "MATCH", "SRS"];
@@ -123,12 +124,7 @@ export default function DeckStudyPage() {
       );
     }
     if (cards.length === 0) {
-      return (
-        <div className="flex h-64 flex-col items-center justify-center gap-3">
-          <BookOpen className="size-10 text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">This deck has no cards yet.</p>
-        </div>
-      );
+      return <EmptyState className="h-64" icon={<BookOpen className="size-7" />} title="This deck has no cards yet." />;
     }
     const props = {
       deckId: Number(deckId),
@@ -176,21 +172,13 @@ export default function DeckStudyPage() {
             <div className="size-6 animate-spin rounded-full border-2 border-border border-t-foreground" />
           </div>
         ) : accessDenied ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/60">
-              <X className="size-7 text-muted-foreground/50" />
-            </div>
-            <p className="text-sm font-medium text-foreground">Bộ thẻ này là riêng tư</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Bạn không có quyền truy cập bộ thẻ này. Chỉ chủ sở hữu mới có thể xem.
-            </p>
-            <button
-              onClick={() => navigate("/library")}
-              className="mt-2 h-9 rounded-lg border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              Về thư viện
-            </button>
-          </div>
+          <EmptyState
+            className="h-64"
+            icon={<X className="size-7" />}
+            title="Bộ thẻ này là riêng tư"
+            description="Bạn không có quyền truy cập bộ thẻ này. Chỉ chủ sở hữu mới có thể xem."
+            action={{ label: "Về thư viện", onClick: () => navigate("/library") }}
+          />
         ) : (
           <>
             {/* Header row — hidden in full view. The mode tabs sit on the left,

@@ -27,7 +27,8 @@ import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
-import FlashcardTemplateLibraryPage from "@/pages/student/FlashcardTemplateLibraryPage";
+import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
+import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
 import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
 import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
 import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
@@ -62,9 +63,13 @@ export const routes: RouteConfig[] = [
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
-  // Reusable card-template library. Module-driven: the @ResourceMenu on the
-  // FlashcardTemplate entity seeds the sidebar item + route at this URL.
-  { path: "/card-templates", component: FlashcardTemplateLibraryPage, isModuleDriven: true, requiredPermission: "FLASHCARD_TEMPLATE_READ" },
+  // Card-template management is the base-CRUD ProTable (entityConfig at
+  // pages/management/library/card-template/index.tsx, auto-registered via
+  // buildEntityRoutes + the @ResourceMenu module). Create / Edit route to the
+  // standalone, deck-independent designer below.
+  { path: "/card-templates/new", component: CardTemplateEditPage, requiredPermission: "FLASHCARD_TEMPLATE_CREATE" },
+  { path: "/card-templates/:templateId/preview", component: CardTemplatePreviewPage, requiredPermission: "FLASHCARD_TEMPLATE_READ" },
+  { path: "/card-templates/:templateId/edit", component: CardTemplateEditPage, requiredPermission: "FLASHCARD_TEMPLATE_UPDATE" },
   { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId", component: DeckStudyPage, requiredPermission: "DECK_READ" },
   // Legacy alias — the unified study screen detects the `/anki` suffix and
