@@ -13,32 +13,53 @@ import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 
 /* ─────────────────────────────────────────
-   Bar chart — CSS-only, no library
+   Bar chart — CSS-only, fills parent height
 ───────────────────────────────────────── */
 function BarChart({
-  data, colorFn, height = 140, labelEvery = 1,
+  data, colorFn, labelEvery = 1,
 }: {
   data: { label: string; value: number }[];
   colorFn?: (i: number) => string;
-  height?: number;
   labelEvery?: number;
 }) {
-  const max = Math.max(...data.map((d) => d.value), 1);
+  const max = Math.max(...data.map(d => d.value), 1);
+
   return (
-    <div className="w-full space-y-1">
-      <div className="flex items-end gap-px" style={{ height }}>
+    <div className="flex flex-col flex-1 min-h-0 w-full">
+      {/* bars — grow to fill available height */}
+      <div className="flex items-end gap-0.75 flex-1 min-h-25">
         {data.map((d, i) => {
-          const h = Math.max(d.value > 0 ? 2 : 0, Math.round((d.value / max) * height));
+          const pct = (d.value / max) * 100;
+          const color = colorFn ? colorFn(i) : "bg-primary";
           return (
-            <div key={i} className="flex-1 flex items-end min-w-0" title={`${d.label}: ${d.value}`}>
-              <div className={cn("w-full rounded-t-sm", colorFn ? colorFn(i) : "bg-primary")} style={{ height: h }} />
+            <div
+              key={i}
+              className="flex-1 flex flex-col items-center justify-end h-full min-w-0"
+              title={`${d.label}: ${d.value}`}
+            >
+              {d.value > 0 && (
+                <span className="text-[9px] tabular-nums text-foreground/60 mb-0.5 leading-none shrink-0">
+                  {d.value}
+                </span>
+              )}
+              <div
+                className={cn("w-full rounded-t-sm transition-all", d.value > 0 ? color : "bg-transparent")}
+                style={{ height: d.value > 0 ? `${Math.max(pct, 5)}%` : "0%" }}
+              />
             </div>
           );
         })}
       </div>
-      <div className="flex gap-px text-[9px] text-muted-foreground">
+      {/* x-axis labels */}
+      <div className="flex gap-0.75 shrink-0 pt-1.5 mt-1.5 border-t border-border/30">
         {data.map((d, i) => (
-          <div key={i} className="flex-1 text-center truncate min-w-0">
+          <div
+            key={i}
+            className={cn(
+              "flex-1 text-center min-w-0 truncate leading-tight text-[10px]",
+              d.value > 0 ? "text-foreground/75 font-semibold" : "text-muted-foreground/40"
+            )}
+          >
             {i % labelEvery === 0 ? d.label : ""}
           </div>
         ))}
@@ -115,7 +136,7 @@ function Panel({ title, subtitle, footer, children }: {
         <h2 className="text-lg font-bold tracking-tight">{title}</h2>
         {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
-      <div className="px-5 py-4 flex-1">{children}</div>
+      <div className="px-5 py-4 flex-1 flex flex-col min-h-0">{children}</div>
       {footer && (
         <div className="px-5 py-2.5 border-t border-border/50 text-center text-xs text-muted-foreground">
           {footer}
@@ -169,13 +190,16 @@ export default function AnkiStatsPage() {
   };
 
   /* Data prep */
-  const futureDue = (stats?.futureReviews ?? []).map((d: AnkiDayCount, i) => ({
+  const futureDue = (stats?.futureReviews ?? []).map((d: AnkiDayCount) => ({
     label: d.dayOffset === 0 ? "T" : d.dayOffset % 5 === 0 ? `+${d.dayOffset}` : "",
     value: d.count,
-    i,
   }));
   const intervals = (stats?.intervalBuckets ?? []).map((b: AnkiBucketCount) => ({ label: b.label, value: b.count }));
-  const eases     = (stats?.easeBuckets ?? []).map((b: AnkiBucketCount)     => ({ label: b.label, value: b.count }));
+  // shorten "130-160%" → "130%", "310%+" stays as-is
+  const eases = (stats?.easeBuckets ?? []).map((b: AnkiBucketCount) => ({
+    label: b.label.replace(/^(\d+)-\d+%$/, "$1%"),
+    value: b.count,
+  }));
 
   const totalFuture   = futureDue.reduce((s, d) => s + d.value, 0);
   const memScore      = stats?.avgMemoryScore ?? 0;
@@ -225,7 +249,7 @@ export default function AnkiStatsPage() {
         <div className="space-y-4">
 
           {/* Row 1: Today | Future Due | Card Counts */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:auto-rows-[minmax(300px,auto)]">
 
             {/* Today */}
             <Panel title="Today">
@@ -258,7 +282,6 @@ export default function AnkiStatsPage() {
               <BarChart
                 data={futureDue}
                 colorFn={(i) => i === 0 ? "bg-amber-400" : i === 1 ? "bg-green-500" : "bg-primary/70"}
-                height={140}
               />
             </Panel>
 
@@ -275,7 +298,7 @@ export default function AnkiStatsPage() {
           </div>
 
           {/* Row 2: Review Intervals | Card Ease | Memory Score */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:auto-rows-[minmax(300px,auto)]">
 
             {/* Review Intervals */}
             <Panel
@@ -286,7 +309,6 @@ export default function AnkiStatsPage() {
               <BarChart
                 data={intervals}
                 colorFn={() => "bg-sky-500"}
-                height={140}
               />
             </Panel>
 
@@ -299,7 +321,6 @@ export default function AnkiStatsPage() {
               <BarChart
                 data={eases}
                 colorFn={(i) => i <= 1 ? "bg-red-400" : i <= 3 ? "bg-green-500" : "bg-blue-400"}
-                height={140}
               />
             </Panel>
 
