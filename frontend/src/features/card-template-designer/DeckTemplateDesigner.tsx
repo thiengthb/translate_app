@@ -100,6 +100,9 @@ interface DeckTemplateDesignerProps {
   onSave: () => void;
   onCancel: () => void;
   onRemoveTemplate: () => void;
+  /** Root height/container override. Defaults to `h-[92vh]` (modal use);
+   *  pass e.g. `h-svh` to fill a full-screen editor page. */
+  className?: string;
 }
 
 const LAYOUT_OPTIONS: Array<{ value: TemplateLayoutMode; label: string; icon: typeof AlignCenter }> = [
@@ -153,6 +156,7 @@ export function DeckTemplateDesigner({
   onSave,
   onCancel,
   onRemoveTemplate,
+  className,
 }: DeckTemplateDesignerProps) {
   const [activeSide, setActiveSide] = useState<TemplateSide>("FRONT");
 
@@ -171,7 +175,7 @@ export function DeckTemplateDesigner({
   };
 
   return (
-    <div className="flex h-[92vh] flex-col bg-background text-foreground">
+    <div className={cn("flex flex-col bg-background text-foreground", className ?? "h-[92vh]")}>
       {/* ════════ HEADER ════════ */}
       <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-3 shrink-0">
         <div className="min-w-0">

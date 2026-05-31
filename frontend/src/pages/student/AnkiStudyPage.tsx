@@ -5,11 +5,9 @@ import { ankiStudyApi, flashcardApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api/features/library/ankiStudy.api";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, Brush, ChevronLeft, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, Brush, Maximize2, Minimize2, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardRenderDTO } from "@/types";
-import { AnkiCardEditModal } from "./AnkiCardEditModal";
-import { TemplateEditorModal } from "./TemplateEditorModal";
 
 /* ── SM2 preview: interval each button would produce (display only) ── */
 function fallbackPreview(card: AnkiStudyCard, rating: AnkiRating): string {
@@ -141,8 +139,6 @@ export default function AnkiStudyPage() {
   const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
   const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0 });
-  const [editOpen, setEditOpen] = useState(false);
-  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [fullView, setFullView] = useState(false);
   const [renderData, setRenderData] = useState<FlashcardRenderDTO | null>(null);
 
@@ -173,16 +169,11 @@ export default function AnkiStudyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
 
-  /* ── Keyboard shortcuts — disabled while a modal is open or while editing a field ── */
+  /* ── Keyboard shortcuts — disabled while editing a field ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't capture shortcuts while a dialog is open — the user might be typing
-      // template/CSS code, card text, etc. and {1,2,3,4} or Space would otherwise
-      // accidentally rate the current card and end the session.
-      if (editOpen || templateEditorOpen) return;
-
-      // Also skip if focus is inside any editable element (defensive, in case a
-      // non-Dialog editor opens later).
+      // Skip if focus is inside any editable element so {1,2,3,4} / Space
+      // don't accidentally rate the current card while the user types.
       const target = e.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName;
@@ -214,7 +205,7 @@ export default function AnkiStudyPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [flipped, submitting, queue, fullView, editOpen, templateEditorOpen]);
+  }, [flipped, submitting, queue, fullView]);
 
   /* ── Lock scroll while in full view ── */
   useEffect(() => {
@@ -247,14 +238,6 @@ export default function AnkiStudyPage() {
       cancelled = true;
     };
   }, [currentFlashcardId]);
-
-  const refetchRender = () => {
-    if (currentFlashcardId == null) return;
-    flashcardApi
-      .getRender(currentFlashcardId)
-      .then((data) => setRenderData(data))
-      .catch(() => setRenderData(null));
-  };
 
   /* ── Rate current card ── */
   const handleRate = async (rating: AnkiRating) => {
@@ -303,256 +286,215 @@ export default function AnkiStudyPage() {
   const remaining = queue.length + againQueue.length;
 
   const content = (
-      <div className={cn(
-        "w-full space-y-6",
-        fullView
-          ? "px-4 py-6 sm:py-10"
-          : "pb-16 pt-2"
-      )}>
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          {fullView ? (
-            <span />
-          ) : (
-            <button
-              onClick={() => navigate("/library")}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="size-4" />
-              Back to library
-            </button>
-          )}
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setFullView((v) => !v)}
-              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              title={fullView ? "Exit full view (Esc)" : "Full view"}
-            >
-              {fullView ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-              {fullView ? "Exit full view" : "Full view"}
-            </button>
-          </div>
+    <div
+      className={cn(
+        "mx-auto w-full",
+        fullView ? "max-w-4xl px-4 py-6 sm:py-10" : "max-w-3xl pb-16 pt-2",
+      )}
+    >
+      {/* ── Loading ── */}
+      {loading && (
+        <div className="flex items-center justify-center h-72">
+          <div className="size-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
         </div>
+      )}
 
-        {/* Deck title */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-            <Brain className="size-6 text-primary" />
-            {deckTitle || "Loading…"}
-          </h1>
-          {!loading && !isDone && (
-            <AnkiQueueSummary
-              remaining={remaining}
-              liveNew={sessionStats.new}
-              liveLearning={sessionStats.learning}
-              liveReview={sessionStats.review}
-              totalNew={totalNew}
-              totalLearning={totalLearning}
-              totalReview={totalReview}
-              totalDue={totalDue}
-            />
-          )}
-        </div>
-
-        {/* ── Loading ── */}
-        {loading && (
-          <div className="flex items-center justify-center h-64">
-            <div className="size-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
+      {/* ── Done ── */}
+      {isDone && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center gap-6 py-20"
+        >
+          <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <Brain className="size-10 text-primary" />
           </div>
-        )}
-
-        {/* ── Empty (no cards due) ── */}
-        {!loading && queue.length === 0 && !isDone && (
-          <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <BookOpen className="size-10 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">No cards due for review.</p>
+          <div className="text-center space-y-1.5">
+            <h2 className="text-2xl font-bold text-foreground">Session complete!</h2>
+            <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+              You reviewed {totalStudied} card{totalStudied !== 1 ? "s" : ""}.
+              Cards scheduled with SM2 spaced repetition.
+            </p>
           </div>
-        )}
-
-        {/* ── Done ── */}
-        {isDone && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center gap-6 py-16"
+          <button
+            onClick={() => navigate("/library")}
+            className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
-            <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Brain className="size-10 text-primary" />
-            </div>
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-bold text-foreground">Session complete!</h2>
-              <p className="text-sm text-muted-foreground">
-                You reviewed {totalStudied} card{totalStudied !== 1 ? "s" : ""}.
-                Cards scheduled with SM2 spaced repetition.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/library")}
-              className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-            >
-              <RotateCcw className="size-4" />
-              Back to library
-            </button>
-          </motion.div>
-        )}
+            <RotateCcw className="size-4" />
+            Back to library
+          </button>
+        </motion.div>
+      )}
 
-        {/* ── Study UI ── */}
-        {!loading && current && !isDone && (
-          <>
-            {/* State badge + edit */}
-            <div className="flex items-center gap-2">
-              <StateBadge state={current.state} />
-              {current.reviewCount > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  Interval: {current.intervalDays}d · Reviews: {current.reviewCount}
-                </span>
-              )}
-              <button
-                onClick={() => setEditOpen(true)}
-                className="ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                title="Edit this card"
-              >
-                <Pencil className="size-3.5" />
-                Edit card
-              </button>
-              <button
-                onClick={() => setTemplateEditorOpen(true)}
-                className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                title="Edit template (affects all cards using this template)"
-              >
-                <Brush className="size-3.5" />
-                Edit template
-              </button>
-            </div>
+      {/* ── Active session ── */}
+      {!loading && !isDone && (
+        <div className="space-y-5">
+          {current ? (
+            <>
+              {/* Toolbar — session progress (left) + card actions (right) */}
+              <div className="flex items-center gap-3">
+                <SessionProgress studied={totalStudied} remaining={remaining} />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <ChromeButton
+                    icon={Pencil}
+                    label="Edit card"
+                    onClick={() =>
+                      navigate(
+                        `/deck/${deckId}/anki/card/${current.flashcardId}/edit`,
+                      )
+                    }
+                    title="Edit this card"
+                  />
+                  <ChromeButton
+                    icon={Brush}
+                    label="Template"
+                    onClick={() => navigate(`/deck/${deckId}/anki/template`)}
+                    title="Edit template (affects all cards using this template)"
+                  />
+                  <ChromeButton
+                    icon={fullView ? Minimize2 : Maximize2}
+                    label={fullView ? "Exit" : "Full view"}
+                    onClick={() => setFullView((v) => !v)}
+                    title={fullView ? "Exit full view (Esc)" : "Full view"}
+                  />
+                </div>
+              </div>
 
-            {/* Open field — content shows directly on the page (no card chrome).
-               Switching sides uses a "deck shuffle" depth motion: the current
-               side pushes back into the stack while the new side comes forward. */}
-            <div
-              className={cn(
-                "relative cursor-pointer select-none",
-                fullView ? "min-h-[60vh]" : "min-h-64"
-              )}
-              onClick={() => !submitting && setFlipped((f) => !f)}
-              style={{ perspective: 1400 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${current.flashcardId}-${flipped}`}
-                  initial={{ opacity: 0, scale: 0.9, y: 28, z: -160 }}
-                  animate={{ opacity: 1, scale: 1, y: 0, z: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: -28, z: -160 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformStyle: "preserve-3d" }}
-                  className="p-0"
-                >
-                  <div className="flex flex-col">
-                    <span className="shrink-0 pt-1 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      {flipped ? "Answer" : "Question"}
+              {/* Card surface — content lives inside a clean bordered panel.
+                 Switching sides uses a "deck shuffle" depth motion: the current
+                 side pushes back into the stack while the new side comes forward. */}
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                {/* Meta strip */}
+                <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
+                  <StateBadge state={current.state} />
+                  {current.reviewCount > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      Interval {current.intervalDays}d · {current.reviewCount} review
+                      {current.reviewCount !== 1 ? "s" : ""}
                     </span>
-                    <span className="mx-auto mt-2 mb-1 h-px w-12 bg-border/70" />
+                  )}
+                </div>
 
-                    {hasTemplateRender(renderData, flipped) ? (
-                      <TemplateSideRender
-                        html={flipped ? renderData!.backHtml : renderData!.frontHtml}
-                        styling={renderData!.styling}
-                        fullView={fullView}
-                        onFlip={() => !submitting && setFlipped((f) => !f)}
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-3 px-10 py-6">
-                        <PlainSideRender
-                          card={current}
-                          flipped={flipped}
-                          fullView={fullView}
-                        />
-                      </div>
-                    )}
-
-                    {!flipped && (
-                      <p className="shrink-0 pb-3 text-center text-[10px] text-muted-foreground/50">
-                        Click to reveal · Space
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Rating buttons — visible after flip */}
-            <AnimatePresence>
-              {flipped && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-stretch justify-center gap-3"
+                {/* Flip area */}
+                <div
+                  className={cn(
+                    "relative cursor-pointer select-none",
+                    fullView ? "min-h-[55vh]" : "min-h-72",
+                  )}
+                  onClick={() => !submitting && setFlipped((f) => !f)}
+                  style={{ perspective: 1400 }}
                 >
-                  {RATING_CONFIG.map(({ rating, label, shortcut, className }) => (
-                    <button
-                      key={rating}
-                      onClick={() => handleRate(rating)}
-                      disabled={submitting}
-                      className={cn(
-                        "flex flex-col items-center gap-1.5 px-6 py-3 rounded-xl border-2 text-sm font-semibold transition-colors disabled:opacity-50 min-w-20",
-                        className
-                      )}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${current.flashcardId}-${flipped}`}
+                      initial={{ opacity: 0, scale: 0.9, y: 28, z: -160 }}
+                      animate={{ opacity: 1, scale: 1, y: 0, z: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: -28, z: -160 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ transformStyle: "preserve-3d" }}
+                      className="p-0"
                     >
-                      <span className="text-xs font-normal opacity-70">
-                        {ratingPreview(current, rating)}
-                      </span>
-                      <span>{label}</span>
-                      <span className="text-[10px] opacity-50">[{shortcut}]</span>
-                    </button>
-                  ))}
-                </motion.div>
+                      <div className="flex flex-col">
+                        <span className="shrink-0 pt-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {flipped ? "Answer" : "Question"}
+                        </span>
+                        <span className="mx-auto mt-2 mb-1 h-px w-12 bg-border/70" />
+
+                        {hasTemplateRender(renderData, flipped) ? (
+                          <TemplateSideRender
+                            html={flipped ? renderData!.backHtml : renderData!.frontHtml}
+                            styling={renderData!.styling}
+                            fullView={fullView}
+                            onFlip={() => !submitting && setFlipped((f) => !f)}
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-3 px-10 py-6">
+                            <PlainSideRender
+                              card={current}
+                              flipped={flipped}
+                              fullView={fullView}
+                            />
+                          </div>
+                        )}
+
+                        {!flipped && (
+                          <p className="shrink-0 pb-4 text-center text-[10px] text-muted-foreground/50">
+                            Click to reveal · Space
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Rating buttons — visible after flip */}
+              <AnimatePresence>
+                {flipped && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-stretch justify-center gap-2 sm:gap-3"
+                  >
+                    {RATING_CONFIG.map(({ rating, label, shortcut, className }) => (
+                      <button
+                        key={rating}
+                        onClick={() => handleRate(rating)}
+                        disabled={submitting}
+                        className={cn(
+                          "group flex flex-1 max-w-[150px] flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 transition-all duration-150 disabled:opacity-50 active:scale-[0.97]",
+                          className,
+                        )}
+                      >
+                        <span className="text-[11px] font-medium tabular-nums opacity-60">
+                          {ratingPreview(current, rating)}
+                        </span>
+                        <span className="text-sm font-semibold">{label}</span>
+                        <kbd className="flex h-4 min-w-4 items-center justify-center rounded bg-current/10 px-1 text-[10px] font-bold leading-none opacity-70">
+                          {shortcut}
+                        </kbd>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Reveal hint — only before the card is flipped */}
+              {!flipped && (
+                <p className="text-center text-[10px] text-muted-foreground/40">
+                  Space / Enter to reveal
+                </p>
               )}
-            </AnimatePresence>
 
-            {/* Keyboard hint */}
-            {!flipped && (
-              <p className="text-center text-[10px] text-muted-foreground/40">
-                Space / Enter to reveal
-              </p>
-            )}
-            {flipped && (
-              <p className="text-center text-[10px] text-muted-foreground/40">
-                Keys: 1 Again · 2 Hard · 3 Good · 4 Easy
-              </p>
-            )}
-          </>
-        )}
-      </div>
-  );
-
-  const modal = current && (
-    <>
-      <AnkiCardEditModal
-        flashcardId={current.flashcardId}
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        onSaved={() => {
-          loadQueue(false);
-          refetchRender();
-        }}
-      />
-      <TemplateEditorModal
-        deckId={Number(deckId)}
-        open={templateEditorOpen}
-        onClose={() => setTemplateEditorOpen(false)}
-        onSaved={() => refetchRender()}
-      />
-    </>
+              {/* Queue stats — moved below the rating buttons */}
+              <QueueStatsBar
+                liveNew={sessionStats.new}
+                liveLearning={sessionStats.learning}
+                liveReview={sessionStats.review}
+                totalNew={totalNew}
+                totalLearning={totalLearning}
+                totalReview={totalReview}
+                totalDue={totalDue}
+              />
+            </>
+          ) : (
+            /* No cards due */
+            <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border">
+              <BookOpen className="size-10 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">No cards due for review.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 
   if (fullView) {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
         {content}
-        {modal}
       </div>
     );
   }
@@ -564,7 +506,6 @@ export default function AnkiStudyPage() {
       pathName={{ [`/deck/${deckId}/anki`]: deckTitle || "Anki Study" }}
     >
       {content}
-      {modal}
     </MainLayout>
   );
 }
@@ -573,8 +514,70 @@ export default function AnkiStudyPage() {
 /** Resolve the app's theme foreground colour so iframe content stays readable
  *  on both light and dark backgrounds (the iframe is isolated and can't see the
  *  app's CSS variables, and bare `inherit` falls back to the UA default black). */
-function AnkiQueueSummary({
+/* ── Toolbar chrome button ── */
+/** Compact bordered action button used in the study toolbar. The text label
+ *  collapses on small screens so the toolbar stays icon-only and tidy. */
+function ChromeButton({
+  icon: Icon,
+  label,
+  onClick,
+  title,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title ?? label}
+      className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      <Icon className="size-3.5" />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
+
+/* ── Session progress bar ── */
+/** Slim progress bar showing how far through the session the user is
+ *  (cards rated vs. the total they'll see). Replaces the old
+ *  "N cards remaining" text. */
+function SessionProgress({
+  studied,
   remaining,
+}: {
+  studied: number;
+  remaining: number;
+}) {
+  const total = studied + remaining;
+  const pct = total > 0 ? Math.min(100, Math.round((studied / total) * 100)) : 0;
+
+  return (
+    <div className="min-w-0 flex-1">
+      <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+        <span>
+          <span className="text-foreground tabular-nums">{studied}</span>
+          {" / "}
+          <span className="tabular-nums">{total}</span> đã học
+        </span>
+        <span className="tabular-nums">{pct}%</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── Queue stats ── */
+/** Segmented stat panel (New / Learning / Review) shown below the rating
+ *  buttons. */
+function QueueStatsBar({
   liveNew,
   liveLearning,
   liveReview,
@@ -583,7 +586,6 @@ function AnkiQueueSummary({
   totalReview,
   totalDue,
 }: {
-  remaining: number;
   liveNew: number;
   liveLearning: number;
   liveReview: number;
@@ -593,25 +595,20 @@ function AnkiQueueSummary({
   totalDue: number;
 }) {
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3">
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{remaining}</span>{" "}
-        card{remaining !== 1 ? "s" : ""} remaining
-      </div>
-
-      <div
-        className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm"
-        title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
-      >
-        <QueueStat label="New" value={liveNew} dotClassName="bg-blue-500" valueClassName="text-blue-500" />
-        <QueueStat label="Learning" value={liveLearning} dotClassName="bg-orange-400" valueClassName="text-orange-500" />
-        <QueueStat label="To Review" value={liveReview} dotClassName="bg-green-500" valueClassName="text-green-600" />
-      </div>
+    <div
+      className="mx-auto flex w-fit items-center rounded-2xl border border-border bg-card p-1 shadow-sm"
+      title={`Available today: ${totalNew} new, ${totalLearning} learning, ${totalReview} to review, ${totalDue} due total`}
+    >
+      <StatChip label="New" value={liveNew} dotClassName="bg-blue-500" valueClassName="text-blue-500" />
+      <span className="h-6 w-px bg-border/70" />
+      <StatChip label="Learning" value={liveLearning} dotClassName="bg-orange-400" valueClassName="text-orange-500" />
+      <span className="h-6 w-px bg-border/70" />
+      <StatChip label="Review" value={liveReview} dotClassName="bg-green-500" valueClassName="text-green-600" />
     </div>
   );
 }
 
-function QueueStat({
+function StatChip({
   label,
   value,
   dotClassName,
@@ -623,11 +620,13 @@ function QueueStat({
   valueClassName: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+    <div className="flex items-center gap-2 rounded-xl px-3.5 py-1.5">
       <span className={cn("size-2 rounded-full", dotClassName)} />
-      <span className="text-muted-foreground">{label}:</span>
-      <span className={cn("font-bold tabular-nums", valueClassName)}>{value}</span>
-    </span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-base font-bold tabular-nums leading-none", valueClassName)}>
+        {value}
+      </span>
+    </div>
   );
 }
 

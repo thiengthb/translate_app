@@ -232,7 +232,7 @@ function MenuRow({
             >
                 <Icon size={15} />
             </span>
-            <span className="flex-1 font-medium">{label}</span>
+            <span className="flex-1 font-normal">{label}</span>
             {hint && (
                 <kbd className="rounded border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums">
                     {hint}
