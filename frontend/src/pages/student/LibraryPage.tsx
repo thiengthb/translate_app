@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { deckApi, tagApi } from "@/api";
@@ -596,6 +597,7 @@ function DeckOverflowMenu({
   onEdit,
   showSettings,
   buttonCls,
+  tagFlyout = false,
 }: {
   menuOpen: boolean;
   tagPickerOpen: boolean;
@@ -610,10 +612,42 @@ function DeckOverflowMenu({
   onEdit: () => void;
   showSettings: boolean;
   buttonCls?: string;
+  /** List view → tag list flies out to the side; card view → expands inline. */
+  tagFlyout?: boolean;
 }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tagBtnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number } | null>(null);
+  const MENU_W = 176; // w-44
+
+  // Position the portal dropdown under the button, clamped to the viewport.
+  useLayoutEffect(() => {
+    if (!menuOpen || !btnRef.current) {
+      setPos(null);
+      return;
+    }
+    const r = btnRef.current.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - MENU_W - 8, Math.max(8, r.right - MENU_W));
+    setPos({ top: r.bottom + 6, left });
+  }, [menuOpen]);
+
+  // Flyout tag panel (list view): sit to the LEFT of the menu, aligned with the row.
+  useLayoutEffect(() => {
+    if (!tagFlyout || !tagPickerOpen || !tagBtnRef.current || !pos) {
+      setFlyoutPos(null);
+      return;
+    }
+    const r = tagBtnRef.current.getBoundingClientRect();
+    let left = pos.left - MENU_W - 6;          // prefer left side
+    if (left < 8) left = pos.left + MENU_W + 6; // flip right if no room
+    setFlyoutPos({ top: r.top, left });
+  }, [tagFlyout, tagPickerOpen, pos]);
+
   return (
     <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button
+        ref={btnRef}
         onClick={onToggleMenu}
         className={cn(
           "p-1.5 rounded-md transition-colors cursor-pointer",
@@ -623,17 +657,18 @@ function DeckOverflowMenu({
         <MoreHorizontal className="size-4" />
       </button>
 
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={onClose} />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ duration: 0.12 }}
-              className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
-            >
+      {/* Rendered in a portal at <body> so it floats above the sidebar / any
+          overflow-clipped ancestor, regardless of where the card sits. */}
+      {menuOpen && pos && createPortal(
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-90" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.12 }}
+            style={{ top: pos.top, left: pos.left }}
+            className="fixed z-91 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
+          >
               {/* Edit deck */}
               <button
                 onClick={() => { onClose(); onEdit(); }}
@@ -658,9 +693,12 @@ function DeckOverflowMenu({
                 </>
               )}
 
-              {/* Tag picker */}
-              <div className="relative">
+              {/* Tag picker.
+                  List view (tagFlyout) → side flyout to the left.
+                  Card view → expands inline so it never clips on edge cards. */}
+              <div>
                 <button
+                  ref={tagBtnRef}
                   onClick={onToggleTagPicker}
                   className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center justify-between cursor-pointer"
                 >
@@ -668,34 +706,43 @@ function DeckOverflowMenu({
                     <Tag className="size-3.5 text-muted-foreground" />
                     Add to tag
                   </span>
-                  <Plus className="size-3 text-muted-foreground" />
+                  {tagFlyout ? (
+                    <Plus className="size-3 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", tagPickerOpen && "rotate-180")} />
+                  )}
                 </button>
 
-                <AnimatePresence>
-                  {tagPickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ duration: 0.1 }}
-                      className="absolute right-full top-0 mr-1 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 z-30"
-                    >
-                      {allTags.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
-                      ) : allTags.map((tag) => (
-                        <button
-                          key={tag.id}
-                          onClick={() => onTagToggle(tag.id!)}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
-                          <span className="flex-1 truncate">{tag.name}</span>
-                          {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Inline expansion (card view) */}
+                {!tagFlyout && (
+                  <AnimatePresence initial={false}>
+                    {tagPickerOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="max-h-44 overflow-y-auto border-y border-border/60 bg-muted/30">
+                          {allTags.length === 0 ? (
+                            <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
+                          ) : allTags.map((tag) => (
+                            <button
+                              key={tag.id}
+                              onClick={() => onTagToggle(tag.id!)}
+                              className="w-full pl-7 pr-3 py-1.5 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
+                              <span className="flex-1 truncate">{tag.name}</span>
+                              {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
               </div>
 
               <div className="my-1 border-t border-border" />
@@ -705,10 +752,35 @@ function DeckOverflowMenu({
               >
                 Remove
               </button>
+          </motion.div>
+
+          {/* Side flyout tag panel (list view) */}
+          {tagFlyout && tagPickerOpen && flyoutPos && (
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.12 }}
+              style={{ top: flyoutPos.top, left: flyoutPos.left }}
+              className="fixed z-92 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground max-h-64 overflow-y-auto"
+            >
+              {allTags.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
+              ) : allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => onTagToggle(tag.id!)}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
+                  <span className="flex-1 truncate">{tag.name}</span>
+                  {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
+                </button>
+              ))}
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -770,6 +842,7 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
           onOpenSettings={onOpenSettings}
           onEdit={onEdit}
           showSettings={deck.studyMode === "ANKI"}
+          tagFlyout
         />
       </div>
     </motion.div>
@@ -791,13 +864,16 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
       whileHover={menuOpen ? undefined : { y: -4, transition: { duration: 0.16, ease: "easeOut" } }}
       whileTap={menuOpen ? undefined : { scale: 0.98 }}
       className={cn(
-        "group relative rounded-xl overflow-hidden border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card flex flex-col",
+        // NOTE: no `overflow-hidden` here — it would clip the overflow menu's
+        // dropdown + the "Add to tag" submenu (which opens leftward). The
+        // gradient header clips its own decorative blobs instead.
+        "group relative rounded-xl border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card flex flex-col",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
       onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
     >
       {/* Gradient header */}
-      <div className="relative h-24 overflow-hidden shrink-0" style={gradStyle}>
+      <div className="relative h-24 overflow-hidden rounded-t-xl shrink-0" style={gradStyle}>
         <div className="absolute -top-5 -right-5 size-20 rounded-full bg-white/10" />
         <div className="absolute top-6 -right-2 size-10 rounded-full bg-white/10" />
         <div className="absolute -bottom-3 left-4 size-14 rounded-full bg-black/10" />

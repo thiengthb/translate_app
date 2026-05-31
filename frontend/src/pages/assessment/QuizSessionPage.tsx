@@ -55,7 +55,6 @@ export default function QuizSessionPage() {
   useEffect(() => { setPage(0); }, [pageSize]);
 
   const questions = attempt?.attemptQuestions ?? [];
-  const showAnswer = quiz?.showAnswerAfterSubmit ?? false;
 
   const saveAnswer = async (q: QuizAttemptQuestionDTO, draft: { optionId?: number; optionIds?: number[]; text?: string }) => {
     await session.submitAnswer({
@@ -118,7 +117,9 @@ export default function QuizSessionPage() {
     const draft = drafts[qq.id] ?? {};
     const snap = qq.questionSnapshot as Record<string, unknown>;
     const options = (qq.optionsSnapshot ?? []) as OptionSnap[];
-    const revealed = qq.isAnswered && showAnswer;
+    // No per-question feedback during the quiz — correctness is only shown
+    // on the result page after the whole quiz is submitted.
+    const revealed = false;
 
     return (
       <div key={qq.id} id={`q-${gi}`} className="scroll-mt-4 space-y-4 border-b border-border/60 pb-8 last:border-0 last:pb-0">
@@ -316,8 +317,7 @@ export default function QuizSessionPage() {
                 <button key={qq.id} onClick={() => goToQuestion(i)}
                   className={cn("relative size-9 rounded-md text-xs font-medium transition-colors",
                     i >= pageStart && i < pageEnd && "ring-2 ring-primary",
-                    qq.isAnswered && (qq.isCorrect === false ? "bg-red-500/20 text-red-600" : "bg-green-500/20 text-green-600"),
-                    !qq.isAnswered && "bg-muted text-muted-foreground hover:bg-accent")}>
+                    qq.isAnswered ? "bg-green-500/20 text-green-600" : "bg-muted text-muted-foreground hover:bg-accent")}>
                   {i + 1}
                   {flagged.has(qq.id) && (
                     <Star className="absolute -top-1 -right-1 size-3 fill-amber-400 text-amber-500" />
