@@ -11,7 +11,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
-  Brain,
   ChevronLeft,
   Download,
   Heart,
@@ -41,6 +40,7 @@ export default function DeckPreviewPage() {
   const [cards, setCards] = useState<PreviewCard[]>([]);
   const [favorite, setFavorite] = useState<FavoriteDeckDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [togglingFav, setTogglingFav] = useState(false);
   const [visibleCards, setVisibleCards] = useState(CARDS_INITIAL_VISIBLE);
@@ -105,8 +105,12 @@ export default function DeckPreviewPage() {
             /* non-fatal */
           }
         }
-      } catch {
-        if (!cancelled) toast.error("Failed to load deck preview.");
+      } catch (err: any) {
+        if (!cancelled) {
+          const status = err?.response?.status ?? err?.status;
+          if (status === 403 || status === 401) setAccessDenied(true);
+          else toast.error("Không thể tải xem trước deck.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -122,8 +126,6 @@ export default function DeckPreviewPage() {
     () => deck != null && deck.userId != null && deck.userId === currentUserId,
     [deck, currentUserId]
   );
-  const isAnki = deck?.studyMode === "ANKI";
-
   /* ── Actions ── */
   const handleClone = async () => {
     if (!deck?.id) return;
@@ -131,13 +133,10 @@ export default function DeckPreviewPage() {
     try {
       const cloned = await deckApi.clone(deck.id);
       toast.success(`Saved "${cloned.title}" to your library.`);
-      // Navigate into the cloned deck — user can study it right away
+      // Navigate into the cloned deck — the unified study screen lets the user
+      // pick any mode (it defaults to the deck's recommended one).
       if (cloned.id) {
-        navigate(
-          cloned.studyMode === "ANKI"
-            ? `/deck/${cloned.id}/anki`
-            : `/deck/${cloned.id}`
-        );
+        navigate(`/deck/${cloned.id}`);
       } else {
         navigate("/library");
       }
@@ -168,10 +167,9 @@ export default function DeckPreviewPage() {
   /* ── Render ── */
   return (
     <MainLayout
-      pathName={{
-        "/community": "Community",
-        [`/deck/${deckId}/preview`]: deck?.title ?? "Deck preview",
-      }}
+      parentCrumb={{ href: "/community", title: "Shared" }}
+      ignorePaths={["deck", String(deckId)]}
+      pathName={{ [`/deck/${deckId}/preview`]: deck?.title ?? "Preview" }}
     >
       <div className="w-full pb-16 space-y-6 pt-2">
 
@@ -188,6 +186,18 @@ export default function DeckPreviewPage() {
           <div className="flex items-center justify-center h-60">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
+        ) : accessDenied ? (
+          <div className="flex flex-col items-center justify-center h-60 gap-4 text-center">
+            <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+              <Users className="size-7 text-muted-foreground/40" />
+            </div>
+            <div className="space-y-1 max-w-xs">
+              <p className="text-sm font-medium text-foreground">Bộ thẻ này là riêng tư</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Chủ sở hữu đã đặt bộ thẻ này ở chế độ riêng tư và không thể xem được.
+              </p>
+            </div>
+          </div>
         ) : !deck ? (
           <div className="flex items-center justify-center h-60 text-muted-foreground text-sm">
             Deck not found.
@@ -196,25 +206,11 @@ export default function DeckPreviewPage() {
           <>
             {/* ── Deck header ── */}
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-              <div
-                className={cn(
-                  "h-28 bg-linear-to-br relative",
-                  isAnki
-                    ? "from-indigo-500 to-blue-600"
-                    : "from-violet-500 to-purple-600"
-                )}
-              >
+              <div className="relative h-28 bg-linear-to-br from-violet-500 to-purple-600">
                 <div className="absolute -top-5 -right-5 size-24 rounded-full bg-white/10" />
                 <div className="absolute -bottom-3 left-8 size-14 rounded-full bg-black/10" />
-                <span className="absolute top-3 left-5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-                  {isAnki ? "ANKI" : "QUIZLET"}
-                </span>
                 <div className="absolute bottom-3 left-5 size-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                  {isAnki ? (
-                    <Brain className="size-6 text-white" />
-                  ) : (
-                    <BookOpen className="size-6 text-white" />
-                  )}
+                  <BookOpen className="size-6 text-white" />
                 </div>
               </div>
 
@@ -253,11 +249,7 @@ export default function DeckPreviewPage() {
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                   {isOwnDeck ? (
                     <button
-                      onClick={() =>
-                        navigate(
-                          isAnki ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`
-                        )
-                      }
+                      onClick={() => navigate(`/deck/${deck.id}`)}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
                       <BookOpen className="size-4" />

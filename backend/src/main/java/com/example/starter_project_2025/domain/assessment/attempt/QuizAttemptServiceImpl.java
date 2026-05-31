@@ -10,6 +10,7 @@ import com.example.starter_project_2025.domain.assessment.quiz.QuizRepository;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestion;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
+import com.example.starter_project_2025.system.reward.RewardService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,6 +42,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     QuizAttemptRepository attemptRepository;
     QuizAttemptQuestionRepository attemptQuestionRepository;
     UserQuizProgressRepository progressRepository;
+    RewardService rewardService;
 
     /* ──────────────────────────────────────────
        Start a new attempt — snapshots every question
@@ -383,7 +385,6 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     ────────────────────────────────────────── */
     private QuizAttemptDTO assembleDto(QuizAttempt attempt, Quiz quiz) {
         boolean submitted = "SUBMITTED".equals(attempt.getStatus());
-        boolean showAfterAnswer = quiz != null && quiz.isShowAnswerAfterSubmit();
 
         QuizAttemptDTO dto = QuizAttemptDTO.builder()
                 .userId(attempt.getUserId())
@@ -410,8 +411,8 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         attempt.getAttemptQuestions().stream()
                 .sorted(java.util.Comparator.comparingInt(QuizAttemptQuestion::getOrderIndex))
                 .forEach(aq -> {
-                    boolean reveal = submitted || (showAfterAnswer && aq.isAnswered());
-                    dto.getAttemptQuestions().add(toQuestionDto(aq, reveal));
+                    // Never reveal correctness mid-attempt — only after the whole quiz is submitted.
+                    dto.getAttemptQuestions().add(toQuestionDto(aq, submitted));
                 });
         return dto;
     }
@@ -485,6 +486,10 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             progress.setStatus("FAILED");
         }
         progressRepository.save(progress);
+
+        // Grant exp + coins for classroom quiz completion (no-op for free-play
+        // quizzes and idempotent for repeated calls on the same attempt).
+        rewardService.grantForAttempt(attempt);
     }
 
     /* ──────────────────────────────────────────

@@ -36,4 +36,10 @@ public class UserDTO extends BaseDTO {
 
     @NotEmpty(groups = OnCreate.class, message = "At least one role is required")
     Set<Long> roleIds;
+
+    // Gamification balances (read-only in practice; never null-overwritten on
+    // update thanks to UserMapper's nullValuePropertyMappingStrategy = IGNORE).
+    Long exp;
+
+    Long coins;
 }

@@ -676,6 +676,126 @@ public class AnkiStudyController {
             double value = node.asDouble(fallback);
             return Math.max(min, Math.min(max, value));
         }
+    }   // end SchedulingConfig
+
+    /* ──────────────────────────────────────────
+       GET /api/anki/study/{deckId}/stats
+       Anki-style statistics aggregated from SRS progress rows.
+    ────────────────────────────────────────── */
+    @GetMapping("/{deckId}/stats")
+    @PreAuthorize("hasAuthority('ANKI_SRS_PROGRESS_READ')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AnkiStatsDTO> stats(
+            @PathVariable Long deckId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal.getId();
+        Deck deck = deckRepository.findById(deckId).orElseThrow();
+
+        List<AnkiSrsProgress> rows = progressRepository.findByUserIdAndDeckId(userId, deckId);
+
+        LocalDate today = LocalDate.now();
+
+        int newC = 0, learning = 0, relearning = 0, review = 0;
+        int studiedToday = 0, dueToday = 0, dueTomorrow = 0;
+        double sumMemory = 0, sumEase = 0, sumInterval = 0;
+        int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
+
+        int[] futureDue = new int[31];
+        List<Integer> intervals = new ArrayList<>();
+        List<Double> easeFactors = new ArrayList<>();
+
+        for (AnkiSrsProgress p : rows) {
+            switch (p.getState()) {
+                case "NEW"        -> newC++;
+                case "LEARNING"   -> learning++;
+                case "RELEARNING" -> relearning++;
+                case "REVIEW"     -> review++;
+            }
+
+            if (p.getLastReviewedAt() != null && today.equals(p.getLastReviewedAt().toLocalDate())) {
+                studiedToday++;
+            }
+
+            if (p.getNextReviewAt() != null) {
+                LocalDate due = p.getNextReviewAt().toLocalDate();
+                long diff = ChronoUnit.DAYS.between(today, due);
+                if (diff <= 0)   dueToday++;
+                else if (diff == 1) dueTomorrow++;
+                if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
+            }
+
+            sumMemory    += p.getMemoryScore();
+            totalReviews += p.getReviewCount();
+            totalLapses  += p.getLapses();
+
+            if (!"NEW".equals(p.getState())) {
+                sumEase += p.getEaseFactor();
+                sumInterval += p.getIntervalDays();
+                intervals.add(p.getIntervalDays());
+                easeFactors.add(p.getEaseFactor());
+                hasEaseCount++;
+            }
+        }
+
+        int    total       = rows.size();
+        double avgMem      = total       > 0 ? Math.round(sumMemory   / total       * 10.0) / 10.0 : 0;
+        double avgEase     = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
+        double avgInterval = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
+
+        List<AnkiStatsDTO.DayCount> futureDueList = new ArrayList<>();
+        for (int d = 0; d <= 30; d++) {
+            futureDueList.add(new AnkiStatsDTO.DayCount(d, futureDue[d]));
+        }
+
+        return ResponseEntity.ok(AnkiStatsDTO.builder()
+                .deckId(deck.getId())
+                .deckTitle(deck.getTitle())
+                .totalCards(total)
+                .newCards(newC)
+                .learningCards(learning)
+                .relearningCards(relearning)
+                .reviewCards(review)
+                .studiedToday(studiedToday)
+                .dueToday(dueToday)
+                .dueTomorrow(dueTomorrow)
+                .avgMemoryScore(avgMem)
+                .avgEaseFactor(avgEase)
+                .avgIntervalDays(avgInterval)
+                .totalReviews(totalReviews)
+                .totalLapses(totalLapses)
+                .futureReviews(futureDueList)
+                .intervalBuckets(buildIntervalBuckets(intervals))
+                .easeBuckets(buildEaseBuckets(easeFactors))
+                .build());
+    }
+
+    private List<AnkiStatsDTO.BucketCount> buildIntervalBuckets(List<Integer> intervals) {
+        int[][] ranges = {{1,1},{2,3},{4,7},{8,14},{15,30},{31,90},{91,180},{181,365},{366,Integer.MAX_VALUE}};
+        String[] labels = {"1d","2-3d","4-7d","8-14d","15-30d","1-3mo","3-6mo","6-12mo","1yr+"};
+        int[] counts = new int[labels.length];
+        for (int v : intervals) {
+            for (int i = 0; i < ranges.length; i++) {
+                if (v >= ranges[i][0] && v <= ranges[i][1]) { counts[i]++; break; }
+            }
+        }
+        List<AnkiStatsDTO.BucketCount> r = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) r.add(new AnkiStatsDTO.BucketCount(labels[i], counts[i]));
+        return r;
+    }
+
+    private List<AnkiStatsDTO.BucketCount> buildEaseBuckets(List<Double> eases) {
+        double[] upper = {1.60, 1.90, 2.20, 2.50, 2.80, 3.10, Double.MAX_VALUE};
+        String[] labels = {"130-160%","161-190%","191-220%","221-250%","251-280%","281-310%","310%+"};
+        int[] counts = new int[labels.length];
+        for (double v : eases) {
+            for (int i = 0; i < upper.length; i++) {
+                if (v <= upper[i]) { counts[i]++; break; }
+            }
+        }
+        List<AnkiStatsDTO.BucketCount> r = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) r.add(new AnkiStatsDTO.BucketCount(labels[i], counts[i]));
+        return r;
     }
 
 }

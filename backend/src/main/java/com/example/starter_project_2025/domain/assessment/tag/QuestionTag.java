@@ -22,7 +22,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "question_tags")
+@Table(name = "question_tags",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"created_by_user", "code"}))
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("QUESTION_TAG")
 @ResourceMenu(
@@ -47,7 +48,8 @@ public class QuestionTag extends BaseEntity {
                placeholder = "e.g. te-form", group = "Basic Info")
     String name;
 
-    @Column(unique = true, length = 150)
+    // Unique per owner — see the table-level (created_by_user, code) constraint.
+    @Column(length = 150)
     @FieldMeta(label = "Code", type = "text", order = 2,
                placeholder = "slug, e.g. te_form", group = "Basic Info")
     String code;

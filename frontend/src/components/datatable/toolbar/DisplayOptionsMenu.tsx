@@ -30,6 +30,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import type { Density } from "@/components/datatable/hook/useDensity";
 import {
@@ -165,7 +166,7 @@ function ColumnsSubMenu({
                 <Columns3 size={14} />
                 <span>Hiển thị cột</span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-56 max-h-80 overflow-y-auto">
+            <DropdownMenuSubContent className="w-56">
                 <DropdownMenuLabel className="text-xs">
                     Hiện / ẩn cột
                 </DropdownMenuLabel>
@@ -273,7 +274,11 @@ function SavedViewsSubMenu({
                         Chưa có view nào được lưu.
                     </div>
                 ) : (
-                    <div className="max-h-60 overflow-y-auto">
+                    <ScrollHintContainer
+                        axis="vertical"
+                        scrollStep={120}
+                        viewportClassName="flex-none max-h-60"
+                    >
                         {views.map((v) => (
                             <ViewRow
                                 key={v.id}
@@ -282,7 +287,7 @@ function SavedViewsSubMenu({
                                 onRemove={() => remove(v.id)}
                             />
                         ))}
-                    </div>
+                    </ScrollHintContainer>
                 )}
 
                 <DropdownMenuSeparator />

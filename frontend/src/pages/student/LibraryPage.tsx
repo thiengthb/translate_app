@@ -1,48 +1,31 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { deckApi, tagApi } from "@/api";
 import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { FlashcardSettingsModal } from "@/pages/student/FlashcardSettingsModal";
-import { PaginationBar } from "@/components/common/PaginationBar";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { DataPagination } from "@/components/common/DataPagination";
 import { cn } from "@/lib/utils";
+import {
+  BookOpen, Check, ChevronDown, ChevronUp, LayoutGrid, List,
+  MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
+} from "lucide-react";
+import { getCurrentUserId } from "@/utils/auth.utils";
 
 const DECKS_PER_PAGE = 12;
 
-/* Directional horizontal slide for page changes (next → slide left, prev → slide right). */
+type ViewMode = "list" | "grid";
+
 const pageSlideVariants = {
   enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
 };
-import {
-  BookOpen, Brain, Check, ChevronDown, ChevronUp, LayoutGrid, List,
-  MoreHorizontal, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
-} from "lucide-react";
-import { getCurrentUserId } from "@/utils/auth.utils";
 
-type ViewMode = "list" | "grid";
-
-/* ── Deck gradient palette (picked by deck.id % length) ── */
-const GRADIENTS = [
-  "from-violet-500 to-purple-600",
-  "from-blue-500 to-cyan-500",
-  "from-amber-400 to-orange-500",
-  "from-emerald-400 to-teal-500",
-  "from-rose-400 to-pink-500",
-  "from-indigo-500 to-blue-600",
-  "from-sky-400 to-blue-500",
-  "from-fuchsia-500 to-violet-500",
-  "from-lime-400 to-green-500",
-  "from-red-400 to-rose-500",
-];
-
-function getDeckGradient(id?: number) {
-  if (id == null) return GRADIENTS[0];
-  return GRADIENTS[id % GRADIENTS.length];
-}
+import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
 
 /* ── Shared deck-item props ── */
 interface DeckItemProps {
@@ -54,6 +37,7 @@ interface DeckItemProps {
   onDelete: () => void;
   onTagToggle: (tagId: number) => void;
   onOpenSettings: () => void;
+  onEdit: () => void;
 }
 
 /* ─────────────────────────────────────────
@@ -69,10 +53,10 @@ export default function LibraryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [openDeckMenu, setOpenDeckMenu] = useState<number | null>(null);
   const [settingsDeck, setSettingsDeck] = useState<DeckDTO | null>(null);
-  const [page, setPage] = useState(1); // 1-based
-  const [pageDir, setPageDir] = useState(0); // 1 = next, -1 = prev (drives slide direction)
+  const [page, setPage] = useState(1);
+  const [pageDir, setPageDir] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "list"; } catch { return "list"; }
+    try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "grid"; } catch { return "grid"; }
   });
 
   /* ── New tag modal ── */
@@ -135,7 +119,6 @@ export default function LibraryPage() {
     setViewMode(mode);
     try { localStorage.setItem("libraryViewMode", mode); } catch {}
   };
-
   const nextViewMode: ViewMode = viewMode === "list" ? "grid" : "list";
 
   const handleCreateTag = async () => {
@@ -177,14 +160,15 @@ export default function LibraryPage() {
     onDelete: () => deck.id != null && handleDeleteDeck(deck.id),
     onTagToggle: (tagId) => handleTagToggle(deck, tagId),
     onOpenSettings: () => setSettingsDeck(deck),
+    onEdit: () => deck.id != null && navigate(`/deck/${deck.id}/edit`),
   });
 
   return (
-    <MainLayout pathName={{ "/library": "Your Library" }}>
+    <MainLayout>
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
-        {/* ════════ TOP — Tags + Create ════════ */}
-        <div className="flex items-start gap-3 px-6 pt-5 pb-3 border-b border-border shrink-0">
+        {/* ════════ TOP — Tags + Search + Create ════════ */}
+        <div className="flex items-start gap-2 px-1 pt-2 pb-3 shrink-0">
           <TagFilterBar
             tags={tags}
             selectedTagId={selectedTagId}
@@ -192,74 +176,55 @@ export default function LibraryPage() {
             onNewTag={() => setNewTagOpen(true)}
           />
 
+          {/* Search */}
+          <div className="relative shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm deck…"
+              className="w-44 sm:w-52 pl-9 pr-8 py-1.5 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* View mode toggle */}
+          <button
+            onClick={() => changeViewMode(nextViewMode)}
+            title={`Chuyển sang ${nextViewMode === "grid" ? "lưới" : "danh sách"}`}
+            className="shrink-0 inline-flex size-[34px] items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={nextViewMode}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.12 }}
+              >
+                {nextViewMode === "grid" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+
           <button
             onClick={() => navigate("/create-deck")}
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
           >
             <Sparkles className="size-3.5" />
             Create deck
           </button>
         </div>
 
-        {/* ════════ TOOLBAR — Count + View + Search ════════ */}
-        <div className="flex items-center justify-between px-6 py-3 shrink-0">
-          <p className="text-sm text-muted-foreground">
-            {filteredDecks.length} {filteredDecks.length === 1 ? "deck" : "decks"}
-            {selectedTagId != null && (
-              <span className="ml-1">
-                in <span className="font-medium text-foreground">{tags.find((t) => t.id === selectedTagId)?.name}</span>
-              </span>
-            )}
-          </p>
-
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <button
-              onClick={() => changeViewMode(nextViewMode)}
-              title={`Switch to ${nextViewMode} view`}
-              aria-label={`Switch to ${nextViewMode} view`}
-              className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                  key={nextViewMode}
-                  initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, rotate: 8 }}
-                  transition={{ duration: 0.12 }}
-                >
-                  {nextViewMode === "grid" ? (
-                    <LayoutGrid className="size-4" />
-                  ) : (
-                    <List className="size-4" />
-                  )}
-                </motion.span>
-              </AnimatePresence>
-            </button>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search decks…"
-                className="w-52 pl-9 pr-8 py-2 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* ════════ CONTENT ════════ */}
-        <ScrollHintContainer axis="vertical" viewportClassName="px-6">
+        <ScrollHintContainer axis="vertical" viewportClassName="px-1">
           {isLoading && decks.length === 0 ? (
             <div className="flex items-center justify-center h-40">
               <div className="size-5 border-2 border-border border-t-foreground rounded-full animate-spin" />
@@ -273,14 +238,13 @@ export default function LibraryPage() {
               <BookOpen className="size-8 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">
                 {searchQuery
-                  ? "No decks match your search"
+                  ? "Không tìm thấy deck phù hợp"
                   : selectedTagId != null
-                  ? "No decks in this tag"
-                  : "No decks yet — create one!"}
+                  ? "Không có deck nào trong tag này"
+                  : "Chưa có deck — hãy tạo một cái!"}
               </p>
             </motion.div>
           ) : (
-            /* ─── Sliding page container (direction follows next/prev) ─── */
             <AnimatePresence mode="wait" custom={pageDir} initial={false}>
               <motion.div
                 key={safePage}
@@ -292,27 +256,17 @@ export default function LibraryPage() {
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {viewMode === "list" ? (
-                  /* ─── LIST VIEW (Quizlet-style) ─── */
-                  <ul className="space-y-1 py-2 pb-6">
+                  <ul className="space-y-1 py-2 pb-4">
                     {pagedDecks.map((deck) => (
-                      <li
-                        key={deck.id}
-                        className="relative"
-                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                      >
+                      <li key={deck.id} className="relative" style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}>
                         <DeckRow {...itemProps(deck)} />
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  /* ─── GRID VIEW (Mazii-style) ─── */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-2 pb-4">
                     {pagedDecks.map((deck) => (
-                      <div
-                        key={deck.id}
-                        className="relative"
-                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                      >
+                      <div key={deck.id} className="relative" style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}>
                         <DeckCard {...itemProps(deck)} />
                       </div>
                     ))}
@@ -323,17 +277,18 @@ export default function LibraryPage() {
           )}
         </ScrollHintContainer>
 
-        {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
-        {!isLoading && totalPages > 1 && (
-          <div className="shrink-0 border-t border-border bg-background px-6 py-2 flex justify-end">
-            <PaginationBar
-              currentPage={safePage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              totalItems={filteredDecks.length}
-            />
-          </div>
-        )}
+        {/* ════════ FOOTER — total (left) + pagination (right) ════════ */}
+        <div className="shrink-0 border-t border-border bg-background px-2 py-1.5 flex items-center justify-between min-h-[44px]">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Tổng:{" "}
+            <span className="font-semibold text-foreground">{filteredDecks.length}</span>
+          </span>
+          <DataPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
 
       {/* ════════ MODAL — New tag ════════ */}
@@ -529,32 +484,6 @@ function TagFilterBar({
 }
 
 /* ─────────────────────────────────────────
-   Mode badge
-───────────────────────────────────────── */
-function ModeBadge({ mode, ghost }: { mode?: string; ghost?: boolean }) {
-  if (!mode) return null;
-  if (ghost) {
-    return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-        {mode}
-      </span>
-    );
-  }
-  if (mode === "ANKI") {
-    return (
-      <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-500 border border-sky-500/20">
-        Anki
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-500 border border-indigo-500/20">
-      Quizlet
-    </span>
-  );
-}
-
-/* ─────────────────────────────────────────
    Shared overflow menu (tag picker + delete)
 ───────────────────────────────────────── */
 function DeckOverflowMenu({
@@ -568,8 +497,10 @@ function DeckOverflowMenu({
   onTagToggle,
   onDelete,
   onOpenSettings,
+  onEdit,
   showSettings,
   buttonCls,
+  tagFlyout = false,
 }: {
   menuOpen: boolean;
   tagPickerOpen: boolean;
@@ -581,12 +512,45 @@ function DeckOverflowMenu({
   onTagToggle: (id: number) => void;
   onDelete: () => void;
   onOpenSettings: () => void;
+  onEdit: () => void;
   showSettings: boolean;
   buttonCls?: string;
+  /** List view → tag list flies out to the side; card view → expands inline. */
+  tagFlyout?: boolean;
 }) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tagBtnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [flyoutPos, setFlyoutPos] = useState<{ top: number; left: number } | null>(null);
+  const MENU_W = 176; // w-44
+
+  // Position the portal dropdown under the button, clamped to the viewport.
+  useLayoutEffect(() => {
+    if (!menuOpen || !btnRef.current) {
+      setPos(null);
+      return;
+    }
+    const r = btnRef.current.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - MENU_W - 8, Math.max(8, r.right - MENU_W));
+    setPos({ top: r.bottom + 6, left });
+  }, [menuOpen]);
+
+  // Flyout tag panel (list view): sit to the LEFT of the menu, aligned with the row.
+  useLayoutEffect(() => {
+    if (!tagFlyout || !tagPickerOpen || !tagBtnRef.current || !pos) {
+      setFlyoutPos(null);
+      return;
+    }
+    const r = tagBtnRef.current.getBoundingClientRect();
+    let left = pos.left - MENU_W - 6;          // prefer left side
+    if (left < 8) left = pos.left + MENU_W + 6; // flip right if no room
+    setFlyoutPos({ top: r.top, left });
+  }, [tagFlyout, tagPickerOpen, pos]);
+
   return (
     <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button
+        ref={btnRef}
         onClick={onToggleMenu}
         className={cn(
           "p-1.5 rounded-md transition-colors cursor-pointer",
@@ -596,17 +560,28 @@ function DeckOverflowMenu({
         <MoreHorizontal className="size-4" />
       </button>
 
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={onClose} />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ duration: 0.12 }}
-              className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
-            >
+      {/* Rendered in a portal at <body> so it floats above the sidebar / any
+          overflow-clipped ancestor, regardless of where the card sits. */}
+      {menuOpen && pos && createPortal(
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-90" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.12 }}
+            style={{ top: pos.top, left: pos.left }}
+            className="fixed z-91 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
+          >
+              {/* Edit deck */}
+              <button
+                onClick={() => { onClose(); onEdit(); }}
+                className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center gap-2 cursor-pointer"
+              >
+                <Pencil className="size-3.5 text-muted-foreground" />
+                Chỉnh sửa
+              </button>
+              <div className="my-1 border-t border-border" />
+
               {/* Study settings — per-deck (Anki only) */}
               {showSettings && (
                 <>
@@ -621,9 +596,12 @@ function DeckOverflowMenu({
                 </>
               )}
 
-              {/* Tag picker */}
-              <div className="relative">
+              {/* Tag picker.
+                  List view (tagFlyout) → side flyout to the left.
+                  Card view → expands inline so it never clips on edge cards. */}
+              <div>
                 <button
+                  ref={tagBtnRef}
                   onClick={onToggleTagPicker}
                   className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center justify-between cursor-pointer"
                 >
@@ -631,34 +609,43 @@ function DeckOverflowMenu({
                     <Tag className="size-3.5 text-muted-foreground" />
                     Add to tag
                   </span>
-                  <Plus className="size-3 text-muted-foreground" />
+                  {tagFlyout ? (
+                    <Plus className="size-3 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", tagPickerOpen && "rotate-180")} />
+                  )}
                 </button>
 
-                <AnimatePresence>
-                  {tagPickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ duration: 0.1 }}
-                      className="absolute right-full top-0 mr-1 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 z-30"
-                    >
-                      {allTags.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
-                      ) : allTags.map((tag) => (
-                        <button
-                          key={tag.id}
-                          onClick={() => onTagToggle(tag.id!)}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
-                          <span className="flex-1 truncate">{tag.name}</span>
-                          {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Inline expansion (card view) */}
+                {!tagFlyout && (
+                  <AnimatePresence initial={false}>
+                    {tagPickerOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="max-h-44 overflow-y-auto border-y border-border/60 bg-muted/30">
+                          {allTags.length === 0 ? (
+                            <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
+                          ) : allTags.map((tag) => (
+                            <button
+                              key={tag.id}
+                              onClick={() => onTagToggle(tag.id!)}
+                              className="w-full pl-7 pr-3 py-1.5 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
+                              <span className="flex-1 truncate">{tag.name}</span>
+                              {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
               </div>
 
               <div className="my-1 border-t border-border" />
@@ -668,10 +655,35 @@ function DeckOverflowMenu({
               >
                 Remove
               </button>
+          </motion.div>
+
+          {/* Side flyout tag panel (list view) */}
+          {tagFlyout && tagPickerOpen && flyoutPos && (
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.12 }}
+              style={{ top: flyoutPos.top, left: flyoutPos.left }}
+              className="fixed z-92 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground max-h-64 overflow-y-auto"
+            >
+              {allTags.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
+              ) : allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => onTagToggle(tag.id!)}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
+                  <span className="flex-1 truncate">{tag.name}</span>
+                  {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
+                </button>
+              ))}
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -679,10 +691,11 @@ function DeckOverflowMenu({
 /* ─────────────────────────────────────────
    LIST VIEW — Quizlet-style row
 ───────────────────────────────────────── */
-function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
+function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings, onEdit }: DeckItemProps) {
   const navigate = useNavigate();
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
-  const gradient = getDeckGradient(deck.id);
+  const gradStyle  = deckBgStyle(deck);
+  const DeckIcon   = deckIconComponent(deck);
   const deckTagIds = new Set<number>(deck.tagIds ?? []);
 
   return (
@@ -690,26 +703,21 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
       whileHover={menuOpen ? undefined : { x: 3 }}
       transition={{ duration: 0.1 }}
       className={cn(
-        "relative flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-accent group border border-transparent hover:border-border/40 transition-colors",
+        "relative flex items-center gap-4 px-4 py-3.5 rounded-lg hover:bg-accent group border border-transparent hover:border-border/40 transition-colors",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
-      {/* Colored icon */}
-      <motion.div
-        whileHover={{ scale: 1.08 }}
-        className={cn("shrink-0 size-11 rounded-xl bg-linear-to-br flex items-center justify-center shadow-sm", gradient)}
+      <div
+        className="shrink-0 size-11 rounded-lg flex items-center justify-center shadow-sm"
+        style={gradStyle}
       >
-        {deck.studyMode === "ANKI"
-          ? <Brain className="size-5 text-white" />
-          : <BookOpen className="size-5 text-white" />}
-      </motion.div>
+        <DeckIcon className="size-5 text-white" />
+      </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
-          <ModeBadge mode={deck.studyMode} />
         </div>
         <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
           <p className="text-xs text-muted-foreground">{deck.totalCards ?? 0} terms</p>
@@ -722,7 +730,6 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
         </div>
       </div>
 
-      {/* Menu */}
       <div className={cn("shrink-0 transition-opacity", menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
         <DeckOverflowMenu
           menuOpen={menuOpen}
@@ -735,7 +742,9 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
           onTagToggle={onTagToggle}
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
-          showSettings={deck.studyMode === "ANKI"}
+          onEdit={onEdit}
+          showSettings={true}
+          tagFlyout
         />
       </div>
     </motion.div>
@@ -745,44 +754,38 @@ function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, o
 /* ─────────────────────────────────────────
    GRID VIEW — Mazii-style card
 ───────────────────────────────────────── */
-function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
+function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings, onEdit }: DeckItemProps) {
   const navigate = useNavigate();
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
-  const gradient = getDeckGradient(deck.id);
+  const gradStyle  = deckBgStyle(deck);
+  const DeckIcon   = deckIconComponent(deck);
   const deckTagIds = new Set<number>(deck.tagIds ?? []);
 
   return (
     <motion.div
-      whileHover={menuOpen ? undefined : { y: -5, transition: { duration: 0.18, ease: "easeOut" } }}
+      whileHover={menuOpen ? undefined : { y: -4, transition: { duration: 0.16, ease: "easeOut" } }}
       whileTap={menuOpen ? undefined : { scale: 0.98 }}
       className={cn(
-        "group relative rounded-2xl border border-border/60 shadow-sm hover:shadow-xl transition-shadow bg-card",
+        // NOTE: no `overflow-hidden` here — it would clip the overflow menu's
+        // dropdown + the "Add to tag" submenu (which opens leftward). The
+        // gradient header clips its own decorative blobs instead.
+        "group relative rounded-xl border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card flex flex-col",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
-      {/* ── Gradient header ── */}
-      <div className={cn("relative h-24 bg-linear-to-br overflow-hidden rounded-t-2xl", gradient)}>
-        {/* Decorative blobs */}
+      {/* Gradient header */}
+      <div className="relative h-24 overflow-hidden rounded-t-xl shrink-0" style={gradStyle}>
         <div className="absolute -top-5 -right-5 size-20 rounded-full bg-white/10" />
         <div className="absolute top-6 -right-2 size-10 rounded-full bg-white/10" />
         <div className="absolute -bottom-3 left-4 size-14 rounded-full bg-black/10" />
 
-        {/* Icon */}
-        <div className="absolute bottom-3 left-4 size-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
-          {deck.studyMode === "ANKI"
-            ? <Brain className="size-5 text-white" />
-            : <BookOpen className="size-5 text-white" />}
-        </div>
-
-        {/* Mode badge */}
-        <div className="absolute top-2.5 left-4">
-          <ModeBadge mode={deck.studyMode} ghost />
+        <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
+          <DeckIcon className="size-5 text-white" />
         </div>
       </div>
 
-      {/* Menu — appears on hover. Kept OUTSIDE the overflow-hidden header
-          so the open dropdown isn't clipped (and stays clickable). */}
+      {/* Menu — outside overflow-hidden so dropdown isn't clipped */}
       <div className={cn(
         "absolute top-1.5 right-1.5 z-20 transition-opacity",
         menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -798,20 +801,21 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
           onTagToggle={onTagToggle}
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
-          showSettings={deck.studyMode === "ANKI"}
+          onEdit={onEdit}
+          showSettings={true}
           buttonCls="p-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/20 transition-colors"
         />
       </div>
 
-      {/* ── Card body ── */}
-      <div className="p-4 space-y-2">
-        <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug min-h-10">
+      {/* Card body */}
+      <div className="p-3.5 space-y-2 flex-1 flex flex-col">
+        <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug flex-1">
           {deck.title ?? "Untitled"}
         </p>
 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground font-medium">
-            {deck.totalCards ?? 0} terms
+            {deck.totalCards ?? 0} thẻ
           </span>
           {allTags.filter((t) => t.id != null && deckTagIds.has(t.id!)).map((t) => (
             <span
@@ -826,9 +830,8 @@ function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, 
         </div>
       </div>
 
-      {/* Hover glow effect on card bottom */}
       <div className={cn(
-        "absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+        "absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300",
         "ring-2 ring-inset ring-primary/10"
       )} />
     </motion.div>

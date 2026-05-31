@@ -34,7 +34,8 @@ public class AuditLogService {
 
     private static final ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -138,6 +139,13 @@ public class AuditLogService {
         try {
             return mapper.writeValueAsString(obj);
         } catch (Exception e) {
+            // Fallback: if serialization fails (e.g. Hibernate lazy-load proxy
+            // after session closed in @Async context), return entity id only.
+            try {
+                if (obj instanceof BaseEntity base) {
+                    return "{\"id\":" + base.getId() + "}";
+                }
+            } catch (Exception ignored) {}
             return "{}";
         }
     }

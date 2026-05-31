@@ -9,10 +9,22 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { QuestionFormModal } from "./QuestionFormModal";
+import { QuestionForm } from "./QuestionForm";
 import { TagBadges, TagChips } from "./QuestionTags";
+
+const TYPE_LABELS: Record<string, string> = {
+  SINGLE_CHOICE: "Single Choice",
+  MULTIPLE_CHOICE: "Multiple Choice",
+  TRUE_FALSE: "True / False",
+  FILL_BLANK: "Fill in the Blank",
+  // Hidden types — kept for data display only
+  WRITING: "Writing",
+  MATCHING: "Matching",
+  ORDERING: "Ordering",
+  LISTENING: "Listening",
+};
 
 export function QuestionPickerModal({
   open, onClose, onAdd, excludeIds = [],
@@ -69,9 +81,30 @@ export function QuestionPickerModal({
   const excluded = new Set(excludeIds);
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+        {formOpen ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(false)}
+                  className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4 mr-1" /> Back
+                </button>
+                New question
+              </DialogTitle>
+              <DialogDescription>Create a question and add it to this quiz.</DialogDescription>
+            </DialogHeader>
+            <QuestionForm
+              onCancel={() => setFormOpen(false)}
+              onSaved={(q) => { setFormOpen(false); load(); onAdd(q.id); }}
+            />
+          </>
+        ) : (
+          <>
           <DialogHeader>
             <DialogTitle>Add questions</DialogTitle>
             <DialogDescription>Pick from the question bank or create a new one.</DialogDescription>
@@ -123,7 +156,7 @@ export function QuestionPickerModal({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{q.prompt}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="outline" className="text-[10px]">{q.questionType.replace("_", " ")}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{TYPE_LABELS[q.questionType] ?? q.questionType}</Badge>
                         <span className="text-xs text-muted-foreground">{q.options.length} options</span>
                         <TagBadges tags={q.tags} />
                       </div>
@@ -136,10 +169,9 @@ export function QuestionPickerModal({
               })
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <QuestionFormModal open={formOpen} onClose={() => setFormOpen(false)} onSaved={(q) => { setFormOpen(false); load(); onAdd(q.id); }} />
-    </>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

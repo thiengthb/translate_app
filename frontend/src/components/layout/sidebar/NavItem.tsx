@@ -157,7 +157,7 @@ export function NavItem({
                             : "text-primary-foreground"),
                 )}
             />
-            <span className="flex-1 truncate">{item.title}</span>
+            <span className="flex-1 truncate font-medium">{item.title}</span>
             {item.badge !== undefined && (
                 <Badge
                     className={cn(

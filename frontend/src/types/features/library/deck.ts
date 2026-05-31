@@ -8,8 +8,9 @@ export interface DeckDTO extends BaseDTO {
   title?: string;
   description?: string;
   visibility?: string;
-  studyMode?: "QUIZLET" | "ANKI";
   coverImageUrl?: string;
+  deckIcon?: string;
+  deckColor?: string;
   sourceLanguage?: string;
   targetLanguage?: string;
   totalCards?: number;
@@ -24,7 +25,6 @@ export interface DeckFilter extends BaseFilter {
   folderId?: number;
   title?: string;
   visibility?: string;
-  studyMode?: "QUIZLET" | "ANKI";
 }
 
 export interface ApplyTemplateRequest {

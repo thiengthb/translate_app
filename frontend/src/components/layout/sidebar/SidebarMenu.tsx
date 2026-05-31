@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ChevronsDownUp, ChevronsUpDown, Search as SearchIcon } from "lucide-react";
 
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { Button } from "@/components/ui/button";
 
 import {
     Sidebar,
@@ -22,11 +23,13 @@ import { RecentSection } from "./RecentSection";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { SidebarBranding } from "./SidebarBranding";
 import { SidebarSearch } from "./SidebarSearch";
+import { SidebarSettings } from "./SidebarSettings";
 import type { SidebarNavGroup, SidebarNavItem } from "./types";
 
 import { useFilteredNavGroups } from "./hooks/useFilteredNavGroups";
 import { useGroupCollapseState } from "./hooks/useGroupCollapseState";
 import { useSidebarFavorites } from "./hooks/useSidebarFavorites";
+import { useSidebarPreferences } from "./hooks/useSidebarPreferences";
 import { useSidebarRecent } from "./hooks/useSidebarRecent";
 
 /**
@@ -53,6 +56,7 @@ export function SidebarMenu() {
     const isCollapsed = state !== "expanded";
 
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const { preferences, setPreference } = useSidebarPreferences();
     const { isFavorite, toggle: toggleFavorite } = useSidebarFavorites();
     const {
         isOpen: isGroupOpen,
@@ -168,8 +172,10 @@ export function SidebarMenu() {
                                 : ChevronsUpDown;
                             return (
                                 <TooltipWrapper content={nextLabel}>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="default"
+                                        size="icon"
                                         onClick={() =>
                                             setAllGroups(
                                                 navGroups.map((g) => g.name),
@@ -177,10 +183,10 @@ export function SidebarMenu() {
                                             )
                                         }
                                         aria-label={nextLabel}
-                                        className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+                                        className="shrink-0 h-7 w-7"
                                     >
                                         <Icon size={14} />
-                                    </button>
+                                    </Button>
                                 </TooltipWrapper>
                             );
                         })()
@@ -188,30 +194,34 @@ export function SidebarMenu() {
                 />
 
                 <ScrollHintContainer>
-                    {showSecondarySections && favoriteItems.length > 0 && (
-                        <>
-                            <PinnedSection
-                                items={favoriteItems}
-                                favoriteFor={favoriteFor}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showPinned &&
+                        favoriteItems.length > 0 && (
+                            <>
+                                <PinnedSection
+                                    items={favoriteItems}
+                                    favoriteFor={favoriteFor}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
-                    {showSecondarySections && recentItems.length > 0 && (
-                        <>
-                            <RecentSection
-                                items={recentItems}
-                                onRemoveItem={removeRecentItem}
-                                onClearAll={clearRecentAll}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showRecent &&
+                        recentItems.length > 0 && (
+                            <>
+                                <RecentSection
+                                    items={recentItems}
+                                    onRemoveItem={removeRecentItem}
+                                    onClearAll={clearRecentAll}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
                     {isSearching && !hasSearchResults && !isCollapsed && (
                         <div className="px-4 py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
@@ -261,6 +271,11 @@ export function SidebarMenu() {
                     ))}
                 </ScrollHintContainer>
             </SidebarContent>
+
+            <SidebarSettings
+                preferences={preferences}
+                setPreference={setPreference}
+            />
         </Sidebar>
     );
 }

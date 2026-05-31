@@ -27,10 +27,15 @@ import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
 import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
+import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
-import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
-import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
+import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
+import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
+import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
+import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
+import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
 import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
 import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
 import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
@@ -60,10 +65,22 @@ export const routes: RouteConfig[] = [
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
-  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+  { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  // Legacy alias — the unified study screen detects the `/anki` suffix and
+  // defaults to SRS mode, keeping old links + the Anki editors' backTo working.
+  { path: "/deck/:deckId/anki", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  { path: "/deck/:deckId/card/:flashcardId/edit", component: AnkiCardEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
+  { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
+  { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
+  { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
+  // /question-tags is now driven by the entityConfig at
+  // pages/management/assessment/question-tag/index.tsx (ProTable via AutoCrudPage),
+  // auto-registered through buildEntityRoutes() — same pattern as the Users page.
   { path: "/quizzes", component: QuizListPage, isModuleDriven: true },
   { path: "/quizzes/create", component: QuizCreateEditPage, requiredPermission: "QUIZ_CREATE" },
   { path: "/quizzes/:quizId", component: QuizDetailPage, requiredPermission: "QUIZ_READ" },

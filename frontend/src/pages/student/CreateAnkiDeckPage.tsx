@@ -237,7 +237,6 @@ export default function CreateAnkiDeckPage() {
         title: title.trim(),
         description: description.trim() || undefined,
         visibility,
-        studyMode: "ANKI",
         totalCards: cards.length,
         isActive: true,
       });

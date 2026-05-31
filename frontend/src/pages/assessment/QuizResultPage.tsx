@@ -54,10 +54,31 @@ export default function QuizResultPage() {
 
   return (
     <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz?.title ?? "Quiz" }}>
-      <div className="space-y-6 max-w-3xl mx-auto">
-        <button onClick={() => navigate(`/quizzes/${id}`)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> Back to quiz
-        </button>
+      <div className="space-y-6 w-full max-w-3xl mx-auto">
+        {/* Nav bar (mirrors the quiz session header) */}
+        <header className="flex items-center justify-between gap-4 border-b border-border pb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => navigate(`/quizzes/${id}`)} aria-label="Back to quiz">
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate">{quiz?.title ?? "Quiz"}</p>
+              <p className={cn("text-xs font-medium", passed ? "text-green-600" : "text-red-600")}>
+                {passed ? "Passed" : "Not passed"} · {attempt.percentage.toFixed(0)}%
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setShowReview((s) => !s)}>
+              {showReview ? "Hide" : "Review"} answers
+            </Button>
+            {(quiz?.allowRetake ?? true) && (
+              <Button size="sm" onClick={retake} disabled={retaking}>
+                {retaking ? <Loader2 className="size-4 animate-spin mr-1" /> : <RotateCcw className="size-4 mr-1" />}Retake
+              </Button>
+            )}
+          </div>
+        </header>
 
         {/* Result banner */}
         <Card className={cn("p-6 text-center space-y-3", passed ? "bg-green-500/5" : "bg-red-500/5")}>
@@ -75,17 +96,6 @@ export default function QuizResultPage() {
           <Stat label="Wrong" value={attempt.wrongQuestions} tone="text-red-600" />
           <Stat label="Skipped" value={attempt.skippedQuestions} tone="text-muted-foreground" />
           <Stat label="Time" value={formatSeconds(attempt.timeSpentSeconds)} />
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2 justify-center">
-          <Button variant="outline" onClick={() => setShowReview((s) => !s)}>{showReview ? "Hide" : "Review"} answers</Button>
-          {(quiz?.allowRetake ?? true) && (
-            <Button onClick={retake} disabled={retaking}>
-              {retaking ? <Loader2 className="size-4 animate-spin mr-1" /> : <RotateCcw className="size-4 mr-1" />}Retake
-            </Button>
-          )}
-          <Button variant="ghost" onClick={() => navigate(`/quizzes/${id}`)}>Back to quiz</Button>
         </div>
 
         {/* Review */}

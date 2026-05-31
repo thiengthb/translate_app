@@ -97,6 +97,19 @@ public class User extends BaseEntity {
                 inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<Role> roles = new HashSet<>();
 
+    /**
+     * Gamification balances. Primitive {@code long} (not {@code Long}) so the
+     * MapStruct AutoCrud create path — which builds via the no-arg constructor
+     * and null-guards boxed setters — leaves these at 0 instead of null.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    long exp = 0L;
+
+    @Builder.Default
+    @Column(nullable = false)
+    long coins = 0L;
+
     public String getFullName() {
         return firstName + (lastName != null ? " " + lastName : "");
     }
