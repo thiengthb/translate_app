@@ -55,7 +55,7 @@ export default function ClassroomDetailPage() {
 
   if (loading || !classroom) {
     return (
-      <MainLayout pathName={{ "/classrooms": "Classrooms" }}>
+      <MainLayout pathName={{ "/classrooms": "Groups" }}>
         <div className="flex items-center justify-center h-60">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
@@ -91,13 +91,13 @@ export default function ClassroomDetailPage() {
   };
 
   return (
-    <MainLayout pathName={{ "/classrooms": "Classrooms", [`/classrooms/${cid}`]: classroom.name }}>
+    <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
         <button
           onClick={() => navigate("/classrooms")}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="size-4" /> Back to classrooms
+          <ChevronLeft className="size-4" /> Back to groups
         </button>
 
         {/* ── Hero Header ── */}
@@ -457,7 +457,7 @@ function DeckPickerDialog({
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add a deck</DialogTitle>
-          <DialogDescription>Share one of your decks with this class.</DialogDescription>
+          <DialogDescription>Share one of your decks with this group.</DialogDescription>
         </DialogHeader>
         {loading ? (
           <div className="flex items-center justify-center h-32">
@@ -526,15 +526,15 @@ function SettingsForm({
   };
 
   const remove = async () => {
-    if (!confirm("Delete this class permanently?")) return;
-    try { await classroomApi.deleteClassroom(classroomId); toast.success("Class deleted."); onDeleted(); }
+    if (!confirm("Delete this group permanently? This cannot be undone.")) return;
+    try { await classroomApi.deleteClassroom(classroomId); toast.success("Group deleted."); onDeleted(); }
     catch { toast.error("Failed to delete."); }
   };
 
   return (
     <Card className="p-6 space-y-5 max-w-xl">
       <div className="space-y-1.5">
-        <Label>Class name</Label>
+        <Label>Group name</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </div>
       <div className="space-y-1.5">
@@ -554,7 +554,7 @@ function SettingsForm({
       <Separator />
       <div className="flex justify-between pt-1">
         <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={remove}>
-          <Trash2 className="size-4 mr-1.5" />Delete class
+          <Trash2 className="size-4 mr-1.5" />Delete group
         </Button>
         <Button onClick={save} disabled={saving}>
           {saving ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}Save changes
