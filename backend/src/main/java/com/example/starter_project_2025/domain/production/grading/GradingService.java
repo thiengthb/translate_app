@@ -9,7 +9,7 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentence;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
 import com.example.starter_project_2025.domain.production.llm.JudgeResult;
-import com.example.starter_project_2025.domain.production.llm.OllamaClient;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptCacheRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
@@ -35,7 +35,7 @@ public class GradingService {
     private final GrammarMarkerRepository markerRepository;
     private final DetectorRegistry detectorRegistry;
     private final GrammarSpotterService grammarSpotter;
-    private final OllamaClient ollamaClient;
+    private final GeminiClient geminiClient;
     private final TranslationAttemptRepository attemptRepository;
 
     @Transactional
@@ -47,7 +47,7 @@ public class GradingService {
         ReferenceSentence reference = prompt.getReferenceSentence();
 
         // Signal 1: grammar detection.
-        // Prefer a hand-written Kuromoji detector; if the sub-use has none (most
+        // Prefer a hand-written MeCab detector; if the sub-use has none (most
         // data-seeded grammar points), fall back to the regex-backed grammar bank.
         DetectionResult detection = detectorRegistry.run(subUse.getDetectorKey(), answer);
         boolean detectorPassed = detection.isPassed();
@@ -56,8 +56,8 @@ public class GradingService {
         }
         GrammarMarker markerUsed = resolveMarker(subUse.getId(), detection.getMarkerPattern());
 
-        // Signal 2: LLM judge (Ollama offline), may be null on network/parse error
-        JudgeResult judge = ollamaClient.judge(
+        // Signal 2: LLM judge (Gemini), may be null on network/parse error or no API key
+        JudgeResult judge = geminiClient.judge(
                 reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
 
         String finalVerdict;

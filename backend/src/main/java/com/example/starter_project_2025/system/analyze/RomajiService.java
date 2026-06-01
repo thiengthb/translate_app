@@ -1,7 +1,5 @@
 package com.example.starter_project_2025.system.analyze;
 
-import com.atilika.kuromoji.ipadic.Token;
-import com.atilika.kuromoji.ipadic.Tokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +9,7 @@ import java.util.Map;
  * Converts Japanese text into word-spaced Hepburn romaji (Google-Translate
  * style, e.g. {@code "Watashi wa kare ni jogen suru..."}).
  *
- * Uses the shared Kuromoji {@link Tokenizer} bean to get per-word readings, then
+ * Uses the shared {@link SudachiTokenizer} bean to get per-word readings, then
  * {@link JapaneseTextUtils#kanaToRomaji(String)} to romanise each reading. Word
  * boundaries from the tokenizer become spaces; punctuation hugs the previous word.
  */
@@ -19,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RomajiService {
 
-    private final Tokenizer tokenizer;
+    private final SudachiTokenizer tokenizer;
 
     private static final Map<String, String> PUNCT = Map.of(
             "、", ",", "。", ".", "，", ",", "．", ".",
@@ -34,7 +32,7 @@ public class RomajiService {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
 
-        for (Token token : tokenizer.tokenize(text)) {
+        for (SudachiToken token : tokenizer.tokenize(text)) {
             String surface = token.getSurface();
             String pos = token.getPartOfSpeechLevel1();
             boolean punctuation = "記号".equals(pos);
@@ -57,8 +55,8 @@ public class RomajiService {
         return capitalize(sb.toString().trim().replaceAll(" +", " "));
     }
 
-    private String wordRomaji(Token token, String surface, String pos) {
-        // The three classic particle readings Kuromoji spells phonetically.
+    private String wordRomaji(SudachiToken token, String surface, String pos) {
+        // The three classic particle readings MeCab spells phonetically.
         if ("助詞".equals(pos)) {
             switch (surface) {
                 case "は": return "wa";

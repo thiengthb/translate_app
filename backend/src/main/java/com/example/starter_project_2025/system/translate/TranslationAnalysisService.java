@@ -2,7 +2,7 @@ package com.example.starter_project_2025.system.translate;
 
 import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService.GrammarHit;
-import com.example.starter_project_2025.domain.production.llm.OllamaClient;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.system.analyze.RomajiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Builds the translate-page analysis: romaji (Kuromoji, deterministic),
+ * Builds the translate-page analysis: romaji (MeCab, deterministic),
  * alternative translations (Ollama), and JLPT Grammar Spotter results
  * (fully deterministic dictionary — no Ollama at grammar-scan runtime).
  *
@@ -29,7 +29,7 @@ public class TranslationAnalysisService {
 
     private final RomajiService romajiService;
     private final GrammarSpotterService grammarSpotter;
-    private final OllamaClient ollamaClient;
+    private final GeminiClient geminiClient;
 
     private static final Map<String, String> LANGUAGE_NAMES = Map.of(
             "JA", "Japanese", "EN", "English", "VI", "Vietnamese",
@@ -56,7 +56,7 @@ public class TranslationAnalysisService {
         if (translated.isBlank()) {
             return alternatives;
         }
-        for (String alt : ollamaClient.alternatives(source, translated, languageName(target))) {
+        for (String alt : geminiClient.alternatives(source, translated, languageName(target))) {
             alternatives.add(new AlternativeDTO(alt, japanese ? romajiService.toRomaji(alt) : null));
         }
         return alternatives;

@@ -15,57 +15,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * LLM client backed by the Google Gemini generateContent REST API. Replaces
+ * the previous Anthropic Claude provider — same public surface (judge / alternatives /
+ * compose) so callers are unchanged.
+ *
+ * <p>Auth uses the {@code GEMINI_API_KEY} env var via {@code x-goog-api-key} header.
+ * When the key is blank every call returns {@code null} and callers fall back exactly
+ * as they did when the previous LLM was offline — no crash, just degraded UX.
+ */
 @Slf4j
 @Component
-public class OllamaClient {
+public class GeminiClient {
 
-    /** How long Ollama keeps the model resident in memory between calls. */
-    private static final String KEEP_ALIVE = "30m";
+    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
     private final RestClient restClient;
-    private final String apiUrl;
+    private final String apiKey;
     private final String model;
     private final ObjectMapper mapper;
 
-    public OllamaClient(
+    public GeminiClient(
             RestClient.Builder builder,
-            @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
-            @Value("${ollama.model:qwen2.5:3b}") String model,
+            @Value("${gemini.api-key:}") String apiKey,
+            @Value("${gemini.model:gemini-2.0-flash}") String model,
             ObjectMapper mapper) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(3000);    // fail fast if Ollama isn't running
-        requestFactory.setReadTimeout(60000);      // the first (cold) generation on CPU can take ~30-60s
+        requestFactory.setConnectTimeout(5000);
+        requestFactory.setReadTimeout(60000);
         this.restClient = builder.requestFactory(requestFactory).build();
-        this.apiUrl = apiUrl;
+        this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model;
         this.mapper = mapper;
     }
 
-    private record OllamaRawResponse(String response) {}
-
-    private record OllamaJudgePayload(int meaningScore, String feedback) {}
+    private record JudgePayload(int meaningScore, String feedback) {}
 
     public boolean isAvailable() {
-        return true;
-    }
-
-    /**
-     * Pre-load the model into memory so the first real drill request doesn't pay the
-     * cold model-load cost. Best-effort: safe to call when Ollama is offline.
-     */
-    public void warmUp() {
-        try {
-            Map<String, Object> payload = Map.of(
-                    "model", model,
-                    "prompt", "ok",
-                    "stream", false,
-                    "keep_alive", KEEP_ALIVE,
-                    "options", Map.of("num_predict", 1));
-            readResponseField(payload);
-            log.info("Ollama warm-up complete (model {})", model);
-        } catch (Exception e) {
-            log.warn("Ollama warm-up skipped: {}", e.getMessage());
-        }
+        return !apiKey.isBlank();
     }
 
     public JudgeResult judge(String refL2, String answer, String nuance, List<CommonMistake> commonMistakes) {
@@ -107,31 +94,22 @@ public class OllamaClient {
                 """.formatted(safe(refL2), safe(answer), safe(nuance), mistakes.toString());
 
         try {
-            Map<String, Object> payload = Map.of(
-                    "model", model,
-                    "prompt", prompt,
-                    "stream", false,
-                    "keep_alive", KEEP_ALIVE,
-                    "options", Map.of(
-                            "temperature", 0.2,    // grading wants to be near-deterministic
-                            "num_predict", 200));
-
-            String response = readResponseField(payload);
+            String response = generate(prompt, 0.2, 200);
             if (response == null) return null;
 
             String json = extractJson(response.trim());
-            log.info("Ollama raw response: {}", json);
+            log.info("Gemini raw response: {}", json);
 
-            OllamaJudgePayload judged = mapper.readValue(json, OllamaJudgePayload.class);
+            JudgePayload judged = mapper.readValue(json, JudgePayload.class);
             return toJudgeResult(judged);
 
         } catch (Exception e) {
-            log.warn("Ollama judge failed: {}", e.getMessage());
+            log.warn("Gemini judge failed: {}", e.getMessage());
             return null;
         }
     }
 
-    private JudgeResult toJudgeResult(OllamaJudgePayload p) {
+    private JudgeResult toJudgeResult(JudgePayload p) {
         int clamped = Math.max(0, Math.min(100, p.meaningScore()));
         double score = clamped / 100.0;
         String verdict = clamped >= 80 ? "PASS" : (clamped >= 50 ? "PARTIAL" : "FAIL");
@@ -140,7 +118,7 @@ public class OllamaClient {
                 .pointUsed(clamped >= 60)
                 .grammarOk(clamped >= 60)
                 .verdict(verdict)
-                .feedback("[AI Offline] " + (p.feedback() == null ? "" : p.feedback()))
+                .feedback(p.feedback() == null ? "" : p.feedback())
                 .build();
     }
 
@@ -155,7 +133,7 @@ public class OllamaClient {
                 Reply with ONLY a JSON array of strings and nothing else, e.g. ["...", "..."].
                 """.formatted(safe(sourceText), targetLangName, safe(referenceTranslation), targetLangName);
 
-        JsonNode node = parseJsonArray(generate(prompt));
+        JsonNode node = parseJsonArray(generate(prompt, 0.7, 200));
         List<String> out = new ArrayList<>();
         if (node != null && node.isArray()) {
             for (JsonNode n : node) {
@@ -174,14 +152,14 @@ public class OllamaClient {
 
     // ── Production drill: compose a prompt + reference from vocab + grammar ───
 
-    /** A generated practice item: an English situation and a Japanese model answer. */
+    /** A generated practice item: a situation in Vietnamese and a Japanese model answer. */
     public record GeneratedExercise(String situation, String l2Reference) {}
 
     private record ComposePayload(String situation, String l2Reference) {}
 
     /**
      * Compose ONE practice item for a target grammar point, optionally seeded with
-     * the learner's vocabulary. Returns {@code null} when Ollama is unavailable or
+     * the learner's vocabulary. Returns {@code null} when Gemini is unavailable or
      * the response cannot be parsed (the caller decides the fallback).
      */
     public GeneratedExercise compose(String jlptLevel, String nuance, String register,
@@ -223,7 +201,7 @@ public class OllamaClient {
                 {"situation": "<vietnamese>", "l2Reference": "<japanese>"}
                 """.formatted(safe(jlptLevel), safe(nuance), safe(register), wordLine, wordBullet);
 
-        String raw = generate(prompt);
+        String raw = generate(prompt, 0.7, 200);
         if (raw == null) {
             return null;
         }
@@ -235,54 +213,78 @@ public class OllamaClient {
             String situation = p.situation() == null ? "" : p.situation().trim();
             return new GeneratedExercise(situation, p.l2Reference().trim());
         } catch (Exception e) {
-            log.warn("Ollama compose parse failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private String generate(String prompt) {
-        try {
-            // A little temperature for variety; compose/alternatives want diverse output
-            // (the strict judge builds its own deterministic request separately).
-            Map<String, Object> payload = Map.of(
-                    "model", model,
-                    "prompt", prompt,
-                    "stream", false,
-                    "keep_alive", KEEP_ALIVE,     // keep the model resident → fast subsequent calls
-                    "options", Map.of(
-                            "temperature", 0.7,
-                            "num_predict", 200));  // cap output: the item is one short sentence
-            return readResponseField(payload);
-        } catch (Exception e) {
-            log.warn("Ollama generate failed: {}", e.getMessage());
+            log.warn("Gemini compose parse failed: {}", e.getMessage());
             return null;
         }
     }
 
     /**
-     * POST to Ollama and return its {@code response} text. Reads the raw response
-     * body straight off the stream via {@code exchange()} and parses it ourselves —
-     * bypassing HttpMessageConverter content-type negotiation, because some Ollama
-     * builds reply with {@code application/octet-stream} which the converters reject.
+     * POST one user message to the Gemini generateContent REST API and return the
+     * first text part of the reply. Returns {@code null} when no API key is configured
+     * or the call fails, so every caller degrades to its offline fallback.
      */
-    private String readResponseField(Map<String, Object> payload) {
-        return restClient.post()
-                .uri(apiUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .exchange((request, response) -> {
-                    if (!response.getStatusCode().is2xxSuccessful()) {
-                        log.warn("Ollama HTTP {}", response.getStatusCode());
-                        return null;
-                    }
-                    byte[] bytes = response.getBody().readAllBytes();
-                    if (bytes.length == 0) {
-                        return null;
-                    }
-                    OllamaRawResponse raw = mapper.readValue(
-                            new String(bytes, StandardCharsets.UTF_8), OllamaRawResponse.class);
-                    return raw == null ? null : raw.response();
-                });
+    private String generate(String prompt, double temperature, int maxTokens) {
+        if (apiKey.isBlank()) {
+            log.warn("Gemini call skipped: GEMINI_API_KEY is not set");
+            return null;
+        }
+        try {
+            String url = BASE_URL + model + ":generateContent";
+            Map<String, Object> payload = Map.of(
+                    "contents", List.of(Map.of(
+                            "role", "user",
+                            "parts", List.of(Map.of("text", prompt)))),
+                    "generationConfig", Map.of(
+                            "temperature", temperature,
+                            "maxOutputTokens", maxTokens));
+
+            return restClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("x-goog-api-key", apiKey)
+                    .body(payload)
+                    .exchange((request, response) -> {
+                        if (!response.getStatusCode().is2xxSuccessful()) {
+                            byte[] err = response.getBody().readAllBytes();
+                            log.warn("Gemini HTTP {}: {}", response.getStatusCode(),
+                                    new String(err, StandardCharsets.UTF_8));
+                            return null;
+                        }
+                        byte[] bytes = response.getBody().readAllBytes();
+                        if (bytes.length == 0) {
+                            return null;
+                        }
+                        return extractText(new String(bytes, StandardCharsets.UTF_8));
+                    });
+        } catch (Exception e) {
+            log.warn("Gemini generate failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Parse the Gemini response body and concatenate all text parts from the first
+     * candidate's content.
+     * Response shape: {@code {"candidates":[{"content":{"parts":[{"text":"..."}]}}]}}
+     */
+    private String extractText(String body) {
+        try {
+            JsonNode parts = mapper.readTree(body)
+                    .path("candidates").path(0)
+                    .path("content").path("parts");
+            if (!parts.isArray()) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            for (JsonNode part : parts) {
+                sb.append(part.path("text").asText(""));
+            }
+            String text = sb.toString();
+            return text.isBlank() ? null : text;
+        } catch (Exception e) {
+            log.warn("Gemini response parse failed: {}", e.getMessage());
+            return null;
+        }
     }
 
     private JsonNode parseJsonArray(String raw) {
@@ -296,7 +298,7 @@ public class OllamaClient {
         try {
             return mapper.readTree(json);
         } catch (Exception e) {
-            log.warn("Ollama JSON-array parse failed: {}", e.getMessage());
+            log.warn("Gemini JSON-array parse failed: {}", e.getMessage());
             return null;
         }
     }

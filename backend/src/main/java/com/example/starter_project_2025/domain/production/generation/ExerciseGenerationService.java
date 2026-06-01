@@ -7,7 +7,7 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
 import com.example.starter_project_2025.domain.production.grammar.ScenarioStubRepository;
-import com.example.starter_project_2025.domain.production.llm.OllamaClient;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptService;
 import com.example.starter_project_2025.domain.production.vocab.VocabSelectionService;
@@ -45,7 +45,7 @@ public class ExerciseGenerationService {
     private final ScenarioStubRepository scenarioRepository;
     private final ReferenceSentenceRepository referenceRepository;
     private final VocabSelectionService vocabService;
-    private final OllamaClient ollamaClient;
+    private final GeminiClient geminiClient;
     private final DetectorRegistry detectorRegistry;
     private final GrammarSpotterService grammarSpotter;
     private final PromptService promptService;
@@ -82,8 +82,8 @@ public class ExerciseGenerationService {
         // The slow LLM call runs outside any DB transaction so it never pins a connection.
         // lastNonNullGen tracks the best AI output seen so we can serve it even when the
         // grammar quality gate is too strict (incomplete regex patterns, unexpected conjugation).
-        OllamaClient.GeneratedExercise lastNonNullGen = null;
-        OllamaClient.GeneratedExercise gen = compose(subUse, toPromptList(vocab), mandatory);
+        GeminiClient.GeneratedExercise lastNonNullGen = null;
+        GeminiClient.GeneratedExercise gen = compose(subUse, toPromptList(vocab), mandatory);
         if (gen != null) lastNonNullGen = gen;
 
         // Quality gate: the reference must use the target grammar (and, in coverage
@@ -175,8 +175,8 @@ public class ExerciseGenerationService {
         return reading != null && !reading.isBlank() && reference.contains(reading);
     }
 
-    private OllamaClient.GeneratedExercise compose(GrammarSubUse subUse, List<String> vocab, String mandatoryWord) {
-        return ollamaClient.compose(
+    private GeminiClient.GeneratedExercise compose(GrammarSubUse subUse, List<String> vocab, String mandatoryWord) {
+        return geminiClient.compose(
                 subUse.getJlptLevel(), subUse.getNuanceDescription(), DEFAULT_REGISTER, vocab, mandatoryWord);
     }
 
