@@ -20,13 +20,22 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  BookOpen, Check, ChevronLeft, Copy, GraduationCap, Loader2, Play, Plus, RefreshCw, Trash2, UserMinus,
+  BookOpen, CalendarClock, Check, ChevronLeft, ClipboardList, Copy,
+  Eye, GraduationCap, Loader2, Play, Plus, RefreshCw, Trash2, Users, UserMinus,
 } from "lucide-react";
+import { COLOR_PRESETS } from "@/lib/color-presets";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { CreateEditAssignmentModal } from "./CreateEditAssignmentModal";
 import { GradebookModal } from "./GradebookModal";
 import { formatDateTime } from "@/pages/assessment/_shared";
+
+const STATUS_STYLE: Record<string, { badge: string; border: string }> = {
+  DRAFT:     { badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300", border: "border-l-slate-400" },
+  PUBLISHED: { badge: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400", border: "border-l-green-500" },
+  CLOSED:    { badge: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400", border: "border-l-zinc-400" },
+};
 
 export default function ClassroomDetailPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
@@ -47,7 +56,9 @@ export default function ClassroomDetailPage() {
   if (loading || !classroom) {
     return (
       <MainLayout pathName={{ "/classrooms": "Classrooms" }}>
-        <div className="flex items-center justify-center h-60"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center h-60">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        </div>
       </MainLayout>
     );
   }
@@ -61,7 +72,9 @@ export default function ClassroomDetailPage() {
   };
 
   const visibleAssignments = isOwner ? assignments : assignments.filter((a) => a.status === "PUBLISHED");
-  const filteredMembers = members.filter((m) => m.displayName.toLowerCase().includes(memberSearch.toLowerCase()));
+  const filteredMembers = members.filter((m) =>
+    m.displayName.toLowerCase().includes(memberSearch.toLowerCase())
+  );
 
   const startAssignment = async (a: ClassAssignmentDTO) => {
     try {
@@ -73,121 +86,255 @@ export default function ClassroomDetailPage() {
   };
 
   const assignmentAction = async (fn: () => Promise<unknown>, msg: string) => {
-    try { await fn(); toast.success(msg); await cls.refreshAssignments(); } catch { toast.error("Action failed."); }
+    try { await fn(); toast.success(msg); await cls.refreshAssignments(); }
+    catch { toast.error("Action failed."); }
   };
 
   return (
     <MainLayout pathName={{ "/classrooms": "Classrooms", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
-        <button onClick={() => navigate("/classrooms")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <button
+          onClick={() => navigate("/classrooms")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
           <ChevronLeft className="size-4" /> Back to classrooms
         </button>
 
-        {/* Header */}
-        <Card className="overflow-hidden p-0">
-          <div className="h-24 bg-linear-to-br from-violet-500 to-indigo-600 relative">
-            {classroom.coverImageUrl && <img src={classroom.coverImageUrl} alt="" className="w-full h-full object-cover" />}
-          </div>
-          <div className="p-5 space-y-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                  <GraduationCap className="size-6 text-primary" />{classroom.name}
-                </h1>
-                {classroom.description && <p className="text-sm text-muted-foreground mt-1">{classroom.description}</p>}
+        {/* ── Hero Header ── */}
+        <Card className="overflow-hidden p-0 border-0 shadow-md">
+          {/* Cover banner */}
+          <div className="relative h-44 bg-linear-to-br from-violet-500 to-indigo-600">
+            {classroom.coverImageUrl && (
+              <img src={classroom.coverImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 px-6 pb-4 flex items-end justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-12 rounded-2xl bg-white/20 backdrop-blur-sm ring-2 ring-white/30 flex items-center justify-center shrink-0">
+                  <GraduationCap className="size-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white leading-tight">{classroom.name}</h1>
+                  {classroom.description && (
+                    <p className="text-sm text-white/70 line-clamp-1 mt-0.5">{classroom.description}</p>
+                  )}
+                </div>
               </div>
-              <Badge variant="outline">{classroom.memberCount} members</Badge>
+              <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm shrink-0">
+                <Users className="size-3 mr-1" />
+                {classroom.memberCount} members
+              </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Invite code:</span>
-              <code className="px-2 py-1 rounded bg-muted font-mono text-sm tracking-widest">{classroom.inviteCode}</code>
-              <Button variant="ghost" size="sm" onClick={copyCode}><Copy className="size-3.5" /></Button>
-              {isOwner && <Button variant="ghost" size="sm" onClick={regenerate}><RefreshCw className="size-3.5" /></Button>}
+          </div>
+
+          {/* Invite code bar */}
+          <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-t border-border/50 bg-card">
+            <span className="text-xs text-muted-foreground font-medium">Invite code</span>
+            <div className="flex items-center gap-1.5">
+              <code className="px-3 py-1 rounded-lg bg-muted font-mono text-sm tracking-[0.2em] font-semibold">
+                {classroom.inviteCode}
+              </code>
+              <Button variant="ghost" size="sm" className="size-8 p-0" onClick={copyCode} title="Copy code">
+                <Copy className="size-3.5" />
+              </Button>
+              {isOwner && (
+                <Button variant="ghost" size="sm" className="size-8 p-0" onClick={regenerate} title="Regenerate code">
+                  <RefreshCw className="size-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </Card>
 
+        {/* ── Tabs ── */}
         <Tabs defaultValue="assignments">
-          <TabsList>
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="materials">Materials</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            {isOwner && <TabsTrigger value="settings">Settings</TabsTrigger>}
+          <TabsList className="w-full justify-start gap-1 h-auto p-1">
+            <TabsTrigger value="assignments" className="gap-1.5">
+              <ClipboardList className="size-4" />Assignments
+            </TabsTrigger>
+            <TabsTrigger value="materials" className="gap-1.5">
+              <BookOpen className="size-4" />Materials
+            </TabsTrigger>
+            <TabsTrigger value="members" className="gap-1.5">
+              <Users className="size-4" />Members
+            </TabsTrigger>
+            {isOwner && (
+              <TabsTrigger value="settings" className="gap-1.5">Settings</TabsTrigger>
+            )}
           </TabsList>
 
-          {/* Assignments */}
+          {/* ── Assignments ── */}
           <TabsContent value="assignments" className="mt-4 space-y-3">
             {isOwner && (
               <div className="flex justify-end">
                 <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
-                  <Plus className="size-4 mr-1" />Create assignment
+                  <Plus className="size-4 mr-1.5" />Create assignment
                 </Button>
               </div>
             )}
             {visibleAssignments.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No assignments yet.</p>
+              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
+                <ClipboardList className="size-8 opacity-40" />
+                <p className="text-sm">No assignments yet.</p>
+              </div>
             ) : (
-              visibleAssignments.map((a) => (
-                <Card key={a.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{a.title}</p>
-                      <Badge variant="outline" className="text-[10px]">{a.status}</Badge>
+              <div className="space-y-2">
+                {visibleAssignments.map((a) => {
+                  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
+                  return (
+                    <div
+                      key={a.id}
+                      className={cn(
+                        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-l-4 bg-card px-4 py-3.5 transition-shadow hover:shadow-sm",
+                        st.border
+                      )}
+                    >
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm leading-tight">{a.title}</p>
+                          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
+                            {a.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground/70">{a.quizTitle}</span>
+                          {a.deadline && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1">
+                                <CalendarClock className="size-3" />
+                                Due {formatDateTime(a.deadline)}
+                              </span>
+                            </>
+                          )}
+                          {a.maxAttempts != null && (
+                            <>
+                              <span>·</span>
+                              <span>{a.maxAttempts} attempt{a.maxAttempts !== 1 ? "s" : ""}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isOwner ? (
+                          <>
+                            {a.status === "DRAFT" && (
+                              <Button size="sm" variant="outline" onClick={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}>
+                                Edit
+                              </Button>
+                            )}
+                            {a.status === "DRAFT" && (
+                              <Button
+                                size="sm" variant="outline"
+                                className="text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                onClick={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
+                              >
+                                Publish
+                              </Button>
+                            )}
+                            {a.status === "PUBLISHED" && (
+                              <Button size="sm" variant="outline"
+                                onClick={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
+                              >
+                                Close
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => setGradebookId(a.id)}>
+                              Gradebook
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" onClick={() => startAssignment(a)}>
+                            <Play className="size-4 mr-1.5" />Start
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {a.quizTitle} · {a.deadline ? `Due ${formatDateTime(a.deadline)}` : "No deadline"}
-                      {a.maxAttempts != null && ` · ${a.maxAttempts} attempts`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isOwner ? (
-                      <>
-                        {a.status === "DRAFT" && <Button size="sm" variant="outline" onClick={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}>Edit</Button>}
-                        {a.status === "DRAFT" && <Button size="sm" variant="outline" onClick={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}>Publish</Button>}
-                        {a.status === "PUBLISHED" && <Button size="sm" variant="outline" onClick={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}>Close</Button>}
-                        <Button size="sm" variant="outline" onClick={() => setGradebookId(a.id)}>Gradebook</Button>
-                      </>
-                    ) : (
-                      <Button size="sm" onClick={() => startAssignment(a)}><Play className="size-4 mr-1" />Start</Button>
-                    )}
-                  </div>
-                </Card>
-              ))
+                  );
+                })}
+              </div>
             )}
           </TabsContent>
 
-          {/* Materials */}
-          <TabsContent value="materials" className="mt-4 space-y-3">
+          {/* ── Materials ── */}
+          <TabsContent value="materials" className="mt-4 space-y-4">
             {isOwner && (
               <div className="flex justify-end">
-                <Button size="sm" onClick={() => setDeckPickerOpen(true)}><Plus className="size-4 mr-1" />Add deck</Button>
+                <Button size="sm" onClick={() => setDeckPickerOpen(true)}>
+                  <Plus className="size-4 mr-1.5" />Add deck
+                </Button>
               </div>
             )}
             {decks.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No decks shared yet.</p>
+              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
+                <BookOpen className="size-8 opacity-40" />
+                <p className="text-sm">No decks shared yet.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {decks.map((d) => (
-                  <Card key={d.id} className="p-4 flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center"><BookOpen className="size-4 text-primary" /></div>
-                    <span className="flex-1 text-sm font-medium line-clamp-1">{d.deckTitle}</span>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/deck/${d.deckId}/preview`)}>Open</Button>
-                    {isOwner && (
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={async () => { await cls.removeDeck(d.deckId); toast.success("Removed."); }}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    )}
-                  </Card>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {decks.map((d) => {
+                  const color = COLOR_PRESETS[d.deckId % COLOR_PRESETS.length].swatch;
+                  return (
+                    <div
+                      key={d.id}
+                      className="group relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm cursor-pointer hover:border-primary/40 hover:shadow-lg transition-[box-shadow,border-color] duration-200"
+                      onClick={() => navigate(`/deck/${d.deckId}/preview`)}
+                    >
+                      {/* Gradient header — same style as Library */}
+                      <div className="relative h-24 overflow-hidden rounded-t-xl shrink-0" style={{ background: color }}>
+                        <div className="absolute -top-5 -right-5 size-20 rounded-full bg-white/10" />
+                        <div className="absolute top-6 -right-2 size-10 rounded-full bg-white/10" />
+                        <div className="absolute -bottom-3 left-4 size-14 rounded-full bg-black/10" />
+                        <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
+                          <BookOpen className="size-5 text-white" />
+                        </div>
+                        {isOwner && (
+                          <button
+                            type="button"
+                            title="Remove from class"
+                            className="absolute top-2 right-2 size-7 rounded-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-all"
+                            onClick={(e) => { e.stopPropagation(); cls.removeDeck(d.deckId).then(() => toast.success("Removed.")); }}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Card body */}
+                      <div className="p-3.5 flex-1 flex flex-col gap-1.5">
+                        <p className="text-sm font-semibold line-clamp-2 leading-snug">{d.deckTitle}</p>
+                        <div className="mt-auto pt-1">
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/deck/${d.deckId}/preview`); }}
+                          >
+                            <Eye className="size-3.5" />Open deck
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Hover ring */}
+                      <div className="absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity ring-2 ring-inset ring-primary/10" />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
 
-          {/* Members */}
+          {/* ── Members ── */}
           <TabsContent value="members" className="mt-4 space-y-3">
             <div className="flex items-center gap-2">
-              <Input value={memberSearch} onChange={(e) => setMemberSearch(e.target.value)} placeholder="Search members…" className="max-w-xs" />
-              {isOwner && <AddMemberInline onAdd={async (uid) => { await cls.addMember(uid); toast.success("Member added."); }} />}
+              <Input
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search members…"
+                className="max-w-xs"
+              />
+              {isOwner && (
+                <AddMemberInline onAdd={async (uid) => { await cls.addMember(uid); toast.success("Member added."); }} />
+              )}
             </div>
             <Table>
               <TableHeader>
@@ -203,17 +350,26 @@ export default function ClassroomDetailPage() {
                 {filteredMembers.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="size-7"><AvatarImage src={m.avatarUrl ?? undefined} /><AvatarFallback>{m.displayName.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
-                        <span className="text-sm">{m.displayName}</span>
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="size-8">
+                          <AvatarImage src={m.avatarUrl ?? undefined} />
+                          <AvatarFallback className="text-xs">{m.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{m.displayName}</span>
                       </div>
                     </TableCell>
-                    <TableCell><Badge variant="outline" className="text-[10px]">{m.role}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px]">{m.role}</Badge>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{m.joinedVia}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDateTime(m.joinedAt)}</TableCell>
                     {isOwner && (
                       <TableCell>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={async () => { await cls.removeMember(m.userId); toast.success("Removed."); }}>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={async () => { await cls.removeMember(m.userId); toast.success("Removed."); }}
+                        >
                           <UserMinus className="size-4" />
                         </Button>
                       </TableCell>
@@ -224,12 +380,18 @@ export default function ClassroomDetailPage() {
             </Table>
           </TabsContent>
 
-          {/* Settings */}
+          {/* ── Settings ── */}
           {isOwner && (
             <TabsContent value="settings" className="mt-4">
-              <SettingsForm classroomId={cid} initialName={classroom.name} initialDescription={classroom.description ?? ""}
-                initialMax={classroom.maxMembers} initialCover={classroom.coverImageUrl ?? ""}
-                onSaved={() => cls.refreshAll()} onDeleted={() => navigate("/classrooms")} />
+              <SettingsForm
+                classroomId={cid}
+                initialName={classroom.name}
+                initialDescription={classroom.description ?? ""}
+                initialMax={classroom.maxMembers}
+                initialCover={classroom.coverImageUrl ?? ""}
+                onSaved={() => cls.refreshAll()}
+                onDeleted={() => navigate("/classrooms")}
+              />
             </TabsContent>
           )}
         </Tabs>
@@ -242,9 +404,17 @@ export default function ClassroomDetailPage() {
         onClose={() => setAssignmentModalOpen(false)}
         onSaved={() => cls.refreshAssignments()}
       />
-      <GradebookModal assignmentId={gradebookId} open={gradebookId != null} onClose={() => setGradebookId(null)} />
-      <DeckPickerDialog open={deckPickerOpen} onClose={() => setDeckPickerOpen(false)} excludeIds={decks.map((d) => d.deckId)}
-        onAdd={async (deckId) => { await cls.addDeck(deckId); toast.success("Deck added."); }} />
+      <GradebookModal
+        assignmentId={gradebookId}
+        open={gradebookId != null}
+        onClose={() => setGradebookId(null)}
+      />
+      <DeckPickerDialog
+        open={deckPickerOpen}
+        onClose={() => setDeckPickerOpen(false)}
+        excludeIds={decks.map((d) => d.deckId)}
+        onAdd={async (deckId) => { await cls.addDeck(deckId); toast.success("Deck added."); }}
+      />
     </MainLayout>
   );
 }
@@ -285,20 +455,40 @@ function DeckPickerDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Add a deck</DialogTitle><DialogDescription>Share one of your decks with this class.</DialogDescription></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Add a deck</DialogTitle>
+          <DialogDescription>Share one of your decks with this class.</DialogDescription>
+        </DialogHeader>
         {loading ? (
-          <div className="flex items-center justify-center h-32"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           <div className="space-y-2">
             {decks.map((d) => {
               const added = d.id != null && excluded.has(d.id);
+              const color = COLOR_PRESETS[(d.id ?? 0) % COLOR_PRESETS.length].swatch;
               return (
-                <Card key={d.id} className="p-3 flex items-center gap-3">
-                  <span className="flex-1 text-sm line-clamp-1">{d.title}</span>
-                  <Button size="sm" variant={added ? "ghost" : "outline"} disabled={added} onClick={() => d.id != null && onAdd(d.id)}>
-                    {added ? <Check className="size-4" /> : "Add"}
+                <div key={d.id} className={cn(
+                  "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+                  added ? "bg-muted/30 border-muted opacity-70" : "hover:bg-muted/30"
+                )}>
+                  <div
+                    className="size-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+                    style={{ background: color }}
+                  >
+                    <BookOpen className="size-4 text-white" />
+                  </div>
+                  <span className="flex-1 text-sm font-medium line-clamp-1">{d.title}</span>
+                  <Button
+                    size="sm" variant={added ? "ghost" : "outline"}
+                    disabled={added}
+                    className={added ? "text-green-600 gap-1" : ""}
+                    onClick={() => d.id != null && onAdd(d.id)}
+                  >
+                    {added ? <><Check className="size-3.5" />Added</> : "Add"}
                   </Button>
-                </Card>
+                </div>
               );
             })}
           </div>
@@ -312,7 +502,8 @@ function DeckPickerDialog({
 function SettingsForm({
   classroomId, initialName, initialDescription, initialMax, initialCover, onSaved, onDeleted,
 }: {
-  classroomId: number; initialName: string; initialDescription: string; initialMax: number | null; initialCover: string;
+  classroomId: number; initialName: string; initialDescription: string;
+  initialMax: number | null; initialCover: string;
   onSaved: () => void; onDeleted: () => void;
 }) {
   const [name, setName] = useState(initialName);
@@ -325,8 +516,10 @@ function SettingsForm({
     setSaving(true);
     try {
       await classroomApi.updateClassroom(classroomId, {
-        name: name.trim(), description: description.trim() || null,
-        maxMembers: maxMembers ? Number(maxMembers) : null, coverImageUrl: coverImageUrl.trim() || null,
+        name: name.trim(),
+        description: description.trim() || null,
+        maxMembers: maxMembers ? Number(maxMembers) : null,
+        coverImageUrl: coverImageUrl.trim() || null,
       });
       toast.success("Saved."); onSaved();
     } catch { toast.error("Failed to save."); } finally { setSaving(false); }
@@ -339,18 +532,34 @@ function SettingsForm({
   };
 
   return (
-    <Card className="p-5 space-y-4 max-w-xl">
-      <div className="space-y-1.5"><Label>Class name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-      <div className="space-y-1.5"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5"><Label className="text-xs">Max members (blank = ∞)</Label><Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} /></div>
-        <div className="space-y-1.5"><Label className="text-xs">Cover image URL</Label><Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} /></div>
+    <Card className="p-6 space-y-5 max-w-xl">
+      <div className="space-y-1.5">
+        <Label>Class name</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      <div className="flex justify-between pt-2">
-        <Button variant="outline" className="text-destructive" onClick={remove}><Trash2 className="size-4 mr-1" />Delete class</Button>
-        <Button onClick={save} disabled={saving}>{saving ? <Loader2 className="size-4 animate-spin mr-1" /> : null}Save changes</Button>
+      <div className="space-y-1.5">
+        <Label>Description</Label>
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
+          <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Cover image URL</Label>
+          <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://…" />
+        </div>
       </div>
       <Separator />
+      <div className="flex justify-between pt-1">
+        <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={remove}>
+          <Trash2 className="size-4 mr-1.5" />Delete class
+        </Button>
+        <Button onClick={save} disabled={saving}>
+          {saving ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}Save changes
+        </Button>
+      </div>
     </Card>
   );
 }

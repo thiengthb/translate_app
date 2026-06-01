@@ -38,4 +38,7 @@ public class QuizAttemptQuestionDTO extends BaseDTO {
     Double earnedScore;
 
     LocalDateTime answeredAt;
+
+    /** User's own answer — only revealed after submit (same gate as correctAnswerSnapshot). */
+    Map<String, Object> userAnswerSnapshot;
 }

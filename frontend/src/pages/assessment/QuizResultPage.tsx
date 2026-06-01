@@ -8,7 +8,10 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Check, ChevronLeft, Loader2, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
-import { acceptedAnswers, formatSeconds, isCorrectOption } from "./_shared";
+import {
+  acceptedAnswers, formatSeconds, getUserAnswerText,
+  getUserSelectedOptionId, getUserSelectedOptionIds, isCorrectOption,
+} from "./_shared";
 
 type OptionSnap = { id: number; content: string };
 
@@ -100,44 +103,121 @@ export default function QuizResultPage() {
 
         {/* Review */}
         {showReview && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {attempt.attemptQuestions.map((q, i) => {
               const snap = q.questionSnapshot as Record<string, unknown>;
               const options = (q.optionsSnapshot ?? []) as OptionSnap[];
+              const userSnap = q.userAnswerSnapshot;
+              const userSelId = getUserSelectedOptionId(userSnap);
+              const userSelIds = getUserSelectedOptionIds(userSnap);
+              const userText = getUserAnswerText(userSnap);
+              const isMulti = q.questionType === "MULTIPLE_CHOICE";
+
+              const userPicked = (id: number) =>
+                isMulti ? userSelIds.includes(id) : userSelId === id;
+
               return (
-                <Card key={q.id} className="p-4 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <span className="text-sm font-semibold text-muted-foreground">{i + 1}.</span>
-                    <p className="flex-1 text-sm font-medium">{String(snap.prompt ?? "")}</p>
+                <Card key={q.id} className="overflow-hidden p-0">
+                  {/* Question header */}
+                  <div className={cn(
+                    "flex items-start gap-3 px-4 py-3 border-b border-border/60",
+                    q.isCorrect == null ? "bg-amber-500/5" : q.isCorrect ? "bg-green-500/5" : "bg-red-500/5"
+                  )}>
+                    <span className={cn(
+                      "shrink-0 mt-0.5 size-6 rounded-full flex items-center justify-center text-xs font-bold",
+                      q.isCorrect == null ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : q.isCorrect ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    )}>
+                      {i + 1}
+                    </span>
+                    <p className="flex-1 text-sm font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
                     {q.isCorrect == null ? (
-                      <span className="text-xs text-amber-600">Pending</span>
+                      <span className="text-xs font-medium text-amber-600 shrink-0">Pending</span>
                     ) : q.isCorrect ? (
-                      <Check className="size-4 text-green-600" />
+                      <span className="flex items-center gap-1 text-xs font-medium text-green-600 shrink-0"><Check className="size-3.5" />Correct</span>
                     ) : (
-                      <X className="size-4 text-red-600" />
+                      <span className="flex items-center gap-1 text-xs font-medium text-red-600 shrink-0"><X className="size-3.5" />Wrong</span>
                     )}
                   </div>
+
+                  {/* Options */}
                   {options.length > 0 && (
-                    <div className="space-y-1 pl-6">
+                    <div className="px-4 py-3 space-y-2">
                       {options.map((o) => {
                         const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
+                        const picked = userPicked(o.id);
+                        const variant =
+                          correct && picked ? "selected-correct"
+                          : correct && !picked ? "correct"
+                          : !correct && picked ? "selected-wrong"
+                          : "neutral";
                         return (
-                          <div key={o.id} className={cn("text-sm rounded px-2 py-1",
-                            correct ? "bg-green-500/10 text-green-700 dark:text-green-400" : "text-muted-foreground")}>
-                            {correct && <Check className="size-3.5 inline mr-1" />}{o.content}
+                          <div key={o.id} className={cn(
+                            "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors",
+                            variant === "selected-correct" && "border-green-500 bg-green-500/10",
+                            variant === "correct"          && "border-green-300 bg-green-500/5 dark:border-green-800",
+                            variant === "selected-wrong"   && "border-red-400 bg-red-500/10",
+                            variant === "neutral"          && "border-border bg-muted/30 text-muted-foreground",
+                          )}>
+                            <span className={cn(
+                              "shrink-0 size-5 rounded-full border-2 flex items-center justify-center",
+                              variant === "selected-correct" && "border-green-500 bg-green-500 text-white",
+                              variant === "correct"          && "border-green-400",
+                              variant === "selected-wrong"   && "border-red-400 bg-red-400 text-white",
+                              variant === "neutral"          && "border-muted-foreground/30",
+                            )}>
+                              {(variant === "selected-correct" || variant === "correct") && <Check className="size-3" />}
+                              {variant === "selected-wrong" && <X className="size-3" />}
+                            </span>
+                            <span className="flex-1 leading-snug">{o.content}</span>
+                            {picked && variant === "selected-correct" && (
+                              <span className="text-[10px] font-semibold text-green-600 shrink-0">Your answer</span>
+                            )}
+                            {picked && variant === "selected-wrong" && (
+                              <span className="text-[10px] font-semibold text-red-600 shrink-0">Your answer</span>
+                            )}
+                            {!picked && variant === "correct" && (
+                              <span className="text-[10px] font-medium text-green-600 shrink-0">Correct answer</span>
+                            )}
                           </div>
                         );
                       })}
                     </div>
                   )}
-                  {q.questionType === "FILL_BLANK" && acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
-                    <p className="text-xs pl-6 text-green-700 dark:text-green-400">
-                      <Check className="size-3.5 inline mr-1" />
-                      Accepted: {acceptedAnswers(q.correctAnswerSnapshot).join(", ")}
-                    </p>
+
+                  {/* FILL_BLANK */}
+                  {q.questionType === "FILL_BLANK" && (
+                    <div className="px-4 pb-3 space-y-2">
+                      {userText && (
+                        <div className={cn(
+                          "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
+                          q.isCorrect ? "border-green-400 bg-green-500/10" : "border-red-400 bg-red-500/10"
+                        )}>
+                          {q.isCorrect ? <Check className="size-4 text-green-600 shrink-0" /> : <X className="size-4 text-red-600 shrink-0" />}
+                          <span className="flex-1">{userText}</span>
+                          <span className="text-[10px] font-semibold text-muted-foreground shrink-0">Your answer</span>
+                        </div>
+                      )}
+                      {acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
+                        <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-500/5 px-3 py-2 text-sm dark:border-green-800">
+                          <Check className="size-4 text-green-600 shrink-0" />
+                          <span className="flex-1 text-green-700 dark:text-green-400">
+                            {acceptedAnswers(q.correctAnswerSnapshot).join(" · ")}
+                          </span>
+                          <span className="text-[10px] font-medium text-green-600 shrink-0">Correct answer</span>
+                        </div>
+                      )}
+                    </div>
                   )}
+
+                  {/* Explanation */}
                   {typeof snap.explanation === "string" && snap.explanation && (
-                    <p className="text-xs text-muted-foreground pl-6">💡 {snap.explanation}</p>
+                    <div className="px-4 pb-3 pt-0">
+                      <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+                        💡 {snap.explanation}
+                      </p>
+                    </div>
                   )}
                 </Card>
               );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { assessmentApi } from "@/api";
 import type { QuestionBankDTO, QuestionTagDTO, QuestionType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,101 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Check, ImageIcon, Loader2, Music, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TagChips, TagCreateInline } from "./QuestionTags";
+
+/* ── Media URL input with file-picker + inline preview ── */
+function MediaInput({
+  label, value, onChange, type,
+}: {
+  label: string; value: string; onChange: (v: string) => void; type: "image" | "audio";
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [previewSrc, setPreviewSrc] = useState<string>("");
+
+  /* Sync external URL → preview */
+  useEffect(() => {
+    if (value.startsWith("http") || value.startsWith("data:") || value.startsWith("blob:")) {
+      setPreviewSrc(value);
+    } else {
+      setPreviewSrc("");
+    }
+  }, [value]);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    if (type === "image") {
+      if (file.size > 3 * 1024 * 1024) {
+        toast.error("Image too large (max 3 MB). Upload to a host and paste the URL.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        onChange(dataUrl);
+        setPreviewSrc(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      /* Audio: object URL for preview only — data: URIs for audio are too large. */
+      const url = URL.createObjectURL(file);
+      setPreviewSrc(url);
+      toast.info("Audio preview shown. Upload to a file host and paste the URL to save.");
+    }
+  };
+
+  const clear = () => { onChange(""); setPreviewSrc(""); };
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs flex items-center gap-1">
+        {type === "image" ? <ImageIcon className="size-3.5" /> : <Music className="size-3.5" />}
+        {label}
+      </Label>
+      <div className="flex gap-1.5">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://…"
+          className="flex-1 text-xs"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 px-2"
+          title={`Pick ${type} file`}
+          onClick={() => fileRef.current?.click()}
+        >
+          {type === "image" ? <ImageIcon className="size-4" /> : <Music className="size-4" />}
+        </Button>
+        {value && (
+          <Button type="button" variant="ghost" size="sm" className="shrink-0 px-2 text-muted-foreground" onClick={clear}>
+            <X className="size-4" />
+          </Button>
+        )}
+        <input ref={fileRef} type="file" accept={type === "image" ? "image/*" : "audio/*"} className="hidden" onChange={handleFile} />
+      </div>
+      {/* Preview */}
+      {previewSrc && type === "image" && (
+        <img
+          src={previewSrc}
+          alt="preview"
+          onError={() => setPreviewSrc("")}
+          className="max-h-40 rounded-md border border-border object-contain bg-muted/30"
+        />
+      )}
+      {previewSrc && type === "audio" && (
+        <audio controls src={previewSrc} className="w-full h-9" />
+      )}
+    </div>
+  );
+}
 
 // Only these four types can be created for now.
 const ACTIVE_QUESTION_TYPES: QuestionType[] = [
@@ -280,14 +371,8 @@ export function QuestionForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Audio URL (optional)</Label>
-          <Input value={promptAudioUrl} onChange={(e) => setPromptAudioUrl(e.target.value)} placeholder="https://…" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Image URL (optional)</Label>
-          <Input value={promptImageUrl} onChange={(e) => setPromptImageUrl(e.target.value)} placeholder="https://…" />
-        </div>
+        <MediaInput label="Audio (optional)" value={promptAudioUrl} onChange={setPromptAudioUrl} type="audio" />
+        <MediaInput label="Image (optional)" value={promptImageUrl} onChange={setPromptImageUrl} type="image" />
       </div>
 
       {/* Options (SINGLE_CHOICE / MULTIPLE_CHOICE / TRUE_FALSE) */}

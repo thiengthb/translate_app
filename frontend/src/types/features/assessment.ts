@@ -173,6 +173,8 @@ export interface QuizAttemptQuestionDTO {
   isCorrect: boolean | null;
   earnedScore: number;
   answeredAt: string | null;
+  /** User's own answer — only populated after submit / reveal. */
+  userAnswerSnapshot?: Record<string, unknown> | null;
 }
 
 export interface QuizAttemptDTO {

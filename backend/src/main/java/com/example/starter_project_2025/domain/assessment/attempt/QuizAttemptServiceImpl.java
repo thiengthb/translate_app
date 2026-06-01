@@ -443,6 +443,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 .isCorrect(reveal ? aq.getIsCorrect() : null)
                 .earnedScore(reveal ? aq.getEarnedScore() : 0)
                 .answeredAt(aq.getAnsweredAt())
+                .userAnswerSnapshot(reveal ? aq.getUserAnswerSnapshot() : null)
                 .build();
         dto.setId(aq.getId());
         return dto;

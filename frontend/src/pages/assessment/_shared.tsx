@@ -70,3 +70,24 @@ export function isCorrectOption(
 export function acceptedAnswers(correct: CorrectAnswerSnapshot | null | undefined): string[] {
   return correct?.acceptedAnswers ?? [];
 }
+
+/** The single option id the user picked (SINGLE_CHOICE / TRUE_FALSE). */
+export function getUserSelectedOptionId(snap: Record<string, unknown> | null | undefined): number | null {
+  if (!snap) return null;
+  const v = snap.selectedOptionId;
+  return typeof v === "number" ? v : null;
+}
+
+/** The option ids the user picked (MULTIPLE_CHOICE). */
+export function getUserSelectedOptionIds(snap: Record<string, unknown> | null | undefined): number[] {
+  if (!snap) return [];
+  const v = snap.selectedOptionIds;
+  return Array.isArray(v) ? (v as unknown[]).map(Number) : [];
+}
+
+/** Free-text answer the user typed (FILL_BLANK). */
+export function getUserAnswerText(snap: Record<string, unknown> | null | undefined): string | null {
+  if (!snap) return null;
+  const v = snap.answerText;
+  return typeof v === "string" ? v : null;
+}
