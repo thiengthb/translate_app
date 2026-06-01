@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Puzzle } from "lucide-react";
+import { Lightbulb, Puzzle } from "lucide-react";
 
 import { useKanjiGame } from "./useKanjiGame";
 import { GAME_CONFIG } from "./engine";
@@ -51,12 +51,34 @@ export function GameBoard() {
                 <div className="relative flex flex-1 min-h-0 flex-col gap-3 lg:flex-row">
                     {/* centre stage: prompt + thrown cards */}
                     <div className="flex flex-1 min-h-0 flex-col items-center gap-2">
-                        <PromptStand prompt={state.prompt} />
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/50 px-3 py-1 text-xs text-slate-400 ring-1 ring-white/10">
-                            <Puzzle className="size-3.5 text-amber-400" />
-                            Cần tìm{" "}
-                            <b className="text-amber-300">{radicalCount}</b> bộ thủ
-                        </span>
+                        <PromptStand prompt={state.prompt} revealed={state.hintUsed} />
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/50 px-3 py-1 text-xs text-slate-400 ring-1 ring-white/10">
+                                <Puzzle className="size-3.5 text-amber-400" />
+                                Cần tìm{" "}
+                                <b className="text-amber-300">{radicalCount}</b> bộ thủ
+                            </span>
+                            <button
+                                type="button"
+                                onClick={game.useHint}
+                                disabled={!game.canHint}
+                                title={
+                                    state.hintUsed
+                                        ? "Đã dùng gợi ý lượt này"
+                                        : `Hé lộ chữ Kanji (giữ lại ${Math.round(
+                                              GAME_CONFIG.hintPenalty * 100,
+                                          )}% điểm lượt này)`
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-amber-500/15 text-amber-200 ring-amber-400/40 hover:bg-amber-500/25"
+                            >
+                                <Lightbulb className="size-3.5" />
+                                {state.hintUsed
+                                    ? "Đã gợi ý"
+                                    : `Gợi ý (−${Math.round(
+                                          (1 - GAME_CONFIG.hintPenalty) * 100,
+                                      )}%)`}
+                            </button>
+                        </div>
                         <PlayArea played={state.played} floats={state.floats} />
                     </div>
 

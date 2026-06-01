@@ -28,6 +28,11 @@ export const GAME_CONFIG = {
     baseMult: 1,
     /** From the 2nd consecutive correct card, mult ×= this each time. */
     chainDelta: 1.5,
+    /**
+     * When the player reveals the kanji via the hint button, the turn's
+     * earned score is multiplied by this (i.e. they keep 50%).
+     */
+    hintPenalty: 0.5,
 } as const;
 
 const LEVEL_BONUS: Record<JlptLevel, { point?: number; mult?: number }> = {
@@ -149,6 +154,7 @@ export function createInitialState(): GameState {
         prompt,
         hand: generateHand(prompt),
         selectedIds: [],
+        hintUsed: false,
         played: [],
         floats: [],
         readout: { point: 0, mult: 0, turnScore: 0 },

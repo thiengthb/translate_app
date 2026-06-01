@@ -10,6 +10,7 @@ const KIND_STYLE: Record<FloatingTextType["kind"], string> = {
     mult: "text-cyan-300",
     chain: "text-orange-300",
     fail: "text-rose-400",
+    penalty: "text-rose-300",
 };
 
 export function FloatingText({ float }: { float: FloatingTextType }) {

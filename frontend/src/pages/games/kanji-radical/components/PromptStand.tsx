@@ -14,7 +14,14 @@ const LEVEL_TINT: Record<string, string> = {
     N1: "bg-rose-500/20 text-rose-200 ring-rose-400/40",
 };
 
-export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
+export function PromptStand({
+    prompt,
+    revealed = false,
+}: {
+    prompt: KanjiPrompt;
+    /** When true the kanji glyph is shown (player used a hint). */
+    revealed?: boolean;
+}) {
     return (
         <div className="flex flex-col items-center gap-1 text-center">
             <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
@@ -38,18 +45,32 @@ export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
                         {prompt.hiragana}
                     </span>
 
-                    {/* the kanji — focal point; smaller so it fits without scrolling */}
-                    <span
-                        className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[4.5rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.25)] sm:text-[5.5rem]"
-                        style={{ fontFamily: JP_SERIF }}
-                    >
-                        {prompt.kanji}
-                    </span>
-
-                    <div className="mt-0.5 flex items-center gap-2">
-                        <span className="text-lg font-bold text-amber-300 sm:text-xl">
+                    {/* Hán-Việt name — focal point. The kanji glyph itself is
+                        hidden on purpose: the player must recall which radicals
+                        compose this word from the reading/meaning alone — unless
+                        they spend a hint to reveal it. */}
+                    {revealed ? (
+                        <motion.span
+                            initial={{ opacity: 0, scale: 0.8, rotateX: -40 }}
+                            animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                            className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[4.5rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.3)] sm:text-[5.5rem]"
+                            style={{ fontFamily: JP_SERIF }}
+                        >
+                            {prompt.kanji}
+                        </motion.span>
+                    ) : (
+                        <span className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[3rem] font-bold leading-tight text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.25)] sm:text-[4rem]">
                             {prompt.hanViet}
                         </span>
+                    )}
+
+                    <div className="mt-1 flex items-center gap-2">
+                        {revealed && (
+                            <span className="text-lg font-bold text-amber-300 sm:text-xl">
+                                {prompt.hanViet}
+                            </span>
+                        )}
                         <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ring-1 ${
                                 LEVEL_TINT[prompt.level] ?? LEVEL_TINT.N5
@@ -59,7 +80,7 @@ export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
                             {prompt.level}
                         </span>
                     </div>
-                    <span className="text-xs text-slate-400">
+                    <span className="mt-0.5 text-sm text-slate-300">
                         {prompt.meaning}
                     </span>
                 </motion.div>

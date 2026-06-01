@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -15,41 +15,23 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { logger } from "@/lib/logger";
-import { translateApi, type LanguageOption } from "@/api/features/translate.api";
+import { translateApi } from "@/api/features/translate.api";
 
-const AUTO = "auto";
 const MAX_CHARS = 5000;
 
-/** Resolve a code in `list`, tolerating DeepL's regional split
- *  (target "EN-US" ↔ source "EN"). */
-function findCode(list: LanguageOption[], wanted: string): string | undefined {
-  const base = wanted.split("-")[0];
-  return (
-    list.find((l) => l.code === wanted)?.code ??
-    list.find((l) => l.code === base)?.code ??
-    list.find((l) => l.code.split("-")[0] === base)?.code
-  );
-}
+const LANG_VI = "VI";
+const LANG_JA = "JA";
+
+const LANG_NAMES: Record<string, string> = {
+  VI: "Tiếng Việt",
+  JA: "Tiếng Nhật",
+};
 
 // ─── Text-to-speech (Web Speech API, like DictionaryPage) ──────────────────
 const SPEECH_LANG: Record<string, string> = {
   JA: "ja-JP",
-  EN: "en-US",
-  "EN-US": "en-US",
-  "EN-GB": "en-GB",
   VI: "vi-VN",
-  ZH: "zh-CN",
-  KO: "ko-KR",
-  FR: "fr-FR",
-  DE: "de-DE",
 };
 
 function speechLang(code: string): string {
@@ -140,37 +122,13 @@ function levelBadgeClass(level?: string | null): string {
 export default function AnalyzePage() {
   // ─── Live input state (không tự động trigger API) ─────────────────────────
   const [sourceText, setSourceText] = useState("");
-  const [sourceLang, setSourceLang] = useState<string>(AUTO);
-  const [targetLang, setTargetLang] = useState<string>("");
+  const [sourceLang, setSourceLang] = useState<string>(LANG_VI);
+  const [targetLang, setTargetLang] = useState<string>(LANG_JA);
 
   // ─── Submitted state — snapshot tại thời điểm nhấn nút Dịch ─────────────
-  // Chỉ khi submitted* thay đổi thì API mới được gọi
   const [submittedText, setSubmittedText] = useState("");
-  const [submittedSourceLang, setSubmittedSourceLang] = useState<string>(AUTO);
-  const [submittedTargetLang, setSubmittedTargetLang] = useState<string>("");
-
-  // ─── Supported-language lists (straight from DeepL) ─────────────────────
-  const { data: sourceLanguages = [] } = useQuery({
-    queryKey: ["translate-languages", "source"],
-    queryFn: () => translateApi.getLanguages("source"),
-    staleTime: Infinity,
-  });
-  const { data: targetLanguages = [] } = useQuery({
-    queryKey: ["translate-languages", "target"],
-    queryFn: () => translateApi.getLanguages("target"),
-    staleTime: Infinity,
-  });
-
-  // Default the target to Japanese — the page is tuned for VI/EN → JA (romaji +
-  // JLPT Grammar Spotter). Fall back to the first language if JA is missing.
-  useEffect(() => {
-    if (!targetLang && targetLanguages.length > 0) {
-      const preferred =
-        targetLanguages.find((l) => l.code.toUpperCase().startsWith("JA")) ??
-        targetLanguages[0];
-      setTargetLang(preferred.code);
-    }
-  }, [targetLanguages, targetLang]);
+  const [submittedSourceLang, setSubmittedSourceLang] = useState<string>(LANG_VI);
+  const [submittedTargetLang, setSubmittedTargetLang] = useState<string>(LANG_JA);
 
   // isJa dựa trên submittedTargetLang (những gì đã thực sự được dịch)
   const isJa = submittedTargetLang.toUpperCase().startsWith("JA");
@@ -185,10 +143,10 @@ export default function AnalyzePage() {
     queryFn: () =>
       translateApi.translate({
         text: submittedText,
-        sourceLang: submittedSourceLang === AUTO ? undefined : submittedSourceLang,
+        sourceLang: submittedSourceLang,
         targetLang: submittedTargetLang,
       }),
-    enabled: submittedText.length > 0 && Boolean(submittedTargetLang),
+    enabled: submittedText.length > 0,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -211,7 +169,7 @@ export default function AnalyzePage() {
       translateApi.analyze({
         text: submittedText,
         translatedText,
-        sourceLang: submittedSourceLang === AUTO ? undefined : submittedSourceLang,
+        sourceLang: submittedSourceLang,
         targetLang: submittedTargetLang,
       }),
     enabled: isJa && translatedText.length > 0,
@@ -224,15 +182,14 @@ export default function AnalyzePage() {
   const grammar = analysis?.grammar ?? [];
 
   const detectedName = useMemo(() => {
-    if (submittedSourceLang !== AUTO || !result?.detectedSourceLang) return null;
-    const code = result.detectedSourceLang;
-    return sourceLanguages.find((l) => l.code === code)?.name ?? code;
-  }, [submittedSourceLang, result, sourceLanguages]);
+    if (!result?.detectedSourceLang) return null;
+    return null;
+  }, [result]);
 
   // ─── Nút Dịch ────────────────────────────────────────────────────────────
   const handleTranslate = () => {
     const trimmed = sourceText.trim();
-    if (!trimmed || !targetLang) return;
+    if (!trimmed) return;
     setSubmittedText(trimmed);
     setSubmittedSourceLang(sourceLang);
     setSubmittedTargetLang(targetLang);
@@ -246,20 +203,16 @@ export default function AnalyzePage() {
     }
   };
 
-  // ─── Swap ─────────────────────────────────────────────────────────────────
-  const canSwap = sourceLang !== AUTO;
-
+  // ─── Swap VI ↔ JA ────────────────────────────────────────────────────────
   const onSwap = () => {
-    if (!canSwap) return;
-    const newSource = findCode(sourceLanguages, targetLang) ?? sourceLang;
-    const newTarget = findCode(targetLanguages, sourceLang) ?? targetLang;
+    const newSource = targetLang;
+    const newTarget = sourceLang;
     setSourceLang(newSource);
     setTargetLang(newTarget);
     setSourceText(translatedText);
-    // Reset submitted state — user phải nhấn Dịch lại với văn bản mới
     setSubmittedText("");
-    setSubmittedSourceLang(AUTO);
-    setSubmittedTargetLang("");
+    setSubmittedSourceLang(newSource);
+    setSubmittedTargetLang(newTarget);
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -270,44 +223,22 @@ export default function AnalyzePage() {
         <Card className="p-0 overflow-hidden gap-0">
           {/* Language bar */}
           <div className="flex items-center gap-2 px-4 py-3 border-b">
-            <Select value={sourceLang} onValueChange={setSourceLang}>
-              <SelectTrigger className="flex-1 border-0 shadow-none font-medium">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={AUTO}>Detect language</SelectItem>
-                {sourceLanguages.map((l) => (
-                  <SelectItem key={l.code} value={l.code}>
-                    {l.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex-1 text-center font-medium text-sm">
+              {LANG_NAMES[sourceLang] ?? sourceLang}
+            </div>
 
             <Button
               variant="ghost"
               size="icon"
               onClick={onSwap}
-              disabled={!canSwap}
-              title={
-                canSwap ? "Hoán đổi ngôn ngữ" : "Chọn ngôn ngữ nguồn để hoán đổi"
-              }
+              title="Hoán đổi ngôn ngữ"
             >
               <ArrowLeftRight size={18} />
             </Button>
 
-            <Select value={targetLang} onValueChange={setTargetLang}>
-              <SelectTrigger className="flex-1 border-0 shadow-none font-medium">
-                <SelectValue placeholder="Ngôn ngữ đích" />
-              </SelectTrigger>
-              <SelectContent>
-                {targetLanguages.map((l) => (
-                  <SelectItem key={l.code} value={l.code}>
-                    {l.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex-1 text-center font-medium text-sm">
+              {LANG_NAMES[targetLang] ?? targetLang}
+            </div>
           </div>
 
           {/* Two panes */}
@@ -339,7 +270,7 @@ export default function AnalyzePage() {
                 </span>
                 <Button
                   onClick={handleTranslate}
-                  disabled={!sourceText.trim() || !targetLang || isFetching}
+                  disabled={!sourceText.trim() || isFetching}
                   size="sm"
                 >
                   {isFetching && (

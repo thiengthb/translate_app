@@ -60,7 +60,7 @@ export interface FloatingText {
     id: string;
     cardId: string;
     text: string;
-    kind: "base" | "point" | "mult" | "chain" | "fail" | "level";
+    kind: "base" | "point" | "mult" | "chain" | "fail" | "level" | "penalty";
 }
 
 /** A card that has been thrown to the centre play area this turn. */
@@ -93,6 +93,13 @@ export interface GameState {
     prompt: KanjiPrompt;
     hand: RadicalCard[];
     selectedIds: string[];
+
+    /**
+     * Whether the player revealed the kanji glyph for the current prompt via
+     * the hint button. Resets each new prompt; while true the turn's earned
+     * score is penalised (see GAME_CONFIG.hintPenalty).
+     */
+    hintUsed: boolean;
 
     /** Transient turn-resolution view-state. */
     played: PlayedCard[];

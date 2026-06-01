@@ -35,6 +35,7 @@ const STEP = 320;
 
 type Action =
     | { type: "TOGGLE_SELECT"; id: string }
+    | { type: "USE_HINT" }
     | { type: "BEGIN_PLAY"; played: PlayedCard[] }
     | { type: "SET_READOUT"; readout: ScoreReadout }
     | { type: "SET_PLAYED_STATE"; cardId: string; state: PlayedCard["state"] }
@@ -81,6 +82,11 @@ function reducer(state: GameState, action: Action): GameState {
                   ? [...state.selectedIds, action.id]
                   : state.selectedIds;
             return { ...state, selectedIds: selected };
+        }
+
+        case "USE_HINT": {
+            if (state.phase !== "playing" || state.hintUsed) return state;
+            return { ...state, hintUsed: true };
         }
 
         case "BEGIN_PLAY": {
@@ -153,6 +159,7 @@ function reducer(state: GameState, action: Action): GameState {
                 turnsLeft,
                 prompt,
                 hand: generateHand(prompt),
+                hintUsed: false,
                 played: [],
                 floats: [],
                 readout: { point: 0, mult: 0, turnScore: 0 },
@@ -188,6 +195,7 @@ function reducer(state: GameState, action: Action): GameState {
                 discardsLeft: state.maxDiscards,
                 prompt,
                 hand: generateHand(prompt),
+                hintUsed: false,
                 played: [],
                 floats: [],
                 readout: { point: 0, mult: 0, turnScore: 0 },
@@ -208,10 +216,12 @@ export interface KanjiGameApi {
     highScore: number;
     canPlay: boolean;
     canDiscard: boolean;
+    canHint: boolean;
     isBusy: boolean;
     toggleSelect: (id: string) => void;
     play: () => void;
     discard: () => void;
+    useHint: () => void;
     nextRound: () => void;
     newGame: () => void;
 }
@@ -369,6 +379,26 @@ export function useKanjiGame(): KanjiGameApi {
             await wait(STEP);
         }
 
+        // Hint penalty: if the player revealed the kanji this prompt, they keep
+        // only a fraction of what they earned (no effect when turnScore is 0).
+        if (cur.hintUsed && turnScore > 0) {
+            const kept = Math.round(turnScore * GAME_CONFIG.hintPenalty);
+            const lost = turnScore - kept;
+            const anchorId =
+                [...played].reverse().find((p) => p.correct)?.card.id ??
+                played[0]?.card.id;
+            if (anchorId && lost > 0) {
+                emitFloat(anchorId, `Gợi ý −${lost}`, "penalty");
+                playSfx("fail");
+                dispatch({
+                    type: "SET_READOUT",
+                    readout: { point: 0, mult: 0, turnScore: kept },
+                });
+                await wait(STEP);
+            }
+            turnScore = kept;
+        }
+
         await wait(STEP);
         if (!mountedRef.current) {
             busyRef.current = false;
@@ -403,6 +433,13 @@ export function useKanjiGame(): KanjiGameApi {
         playSfx(willWin ? "win" : "correct");
     }, []);
 
+    const useHint = useCallback(() => {
+        if (busyRef.current || stateRef.current.phase !== "playing") return;
+        if (stateRef.current.hintUsed) return;
+        dispatch({ type: "USE_HINT" });
+        playSfx("select");
+    }, []);
+
     const newGame = useCallback(() => {
         busyRef.current = false;
         dispatch({ type: "NEW_GAME" });
@@ -421,6 +458,7 @@ export function useKanjiGame(): KanjiGameApi {
         state.phase === "playing" &&
         state.selectedIds.length > 0 &&
         state.discardsLeft > 0;
+    const canHint = state.phase === "playing" && !state.hintUsed;
 
     return {
         state,
@@ -428,10 +466,12 @@ export function useKanjiGame(): KanjiGameApi {
         highScore,
         canPlay,
         canDiscard,
+        canHint,
         isBusy: state.phase === "scoring",
         toggleSelect,
         play,
         discard,
+        useHint,
         nextRound,
         newGame,
     };
