@@ -25,6 +25,8 @@ public interface DeckMapper extends BaseCrudMapper<Deck, DeckDTO> {
     @Mapping(target = "folderId", source = "folder.id")
     @Mapping(target = "originalDeckId", source = "originalDeck.id")
     @Mapping(target = "tagIds", expression = "java(mapTagIds(deck))")
+    @Mapping(target = "ownerName", expression = "java(deck.getUser() != null ? deck.getUser().getFullName() : null)")
+    @Mapping(target = "ownerIsAdmin", expression = "java(mapOwnerIsAdmin(deck))")
     DeckDTO toResponse(Deck deck);
 
     @Override
@@ -38,5 +40,12 @@ public interface DeckMapper extends BaseCrudMapper<Deck, DeckDTO> {
     default Set<Long> mapTagIds(Deck deck) {
         if (deck.getTags() == null) return null;
         return deck.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
+    }
+
+    /** True when the deck owner holds the ADMIN role (→ FE shows "Shared by community"). */
+    default Boolean mapOwnerIsAdmin(Deck deck) {
+        if (deck.getUser() == null || deck.getUser().getRoles() == null) return false;
+        return deck.getUser().getRoles().stream()
+                .anyMatch(r -> r.getName() != null && "ADMIN".equalsIgnoreCase(r.getName()));
     }
 }

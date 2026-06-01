@@ -11,10 +11,11 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
-  ChevronLeft,
   Download,
+  Eye,
   Heart,
   Loader2,
+  User,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -174,15 +175,6 @@ export default function DeckPreviewPage() {
     >
       <div className="w-full pb-16 space-y-6 pt-2">
 
-        {/* Back link */}
-        <button
-          onClick={() => navigate("/community")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="size-4" />
-          Back to community
-        </button>
-
         {loading ? (
           <div className="flex items-center justify-center h-60">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -221,22 +213,36 @@ export default function DeckPreviewPage() {
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="size-3.5" />
-                    Shared by community
-                  </span>
+                  {deck.ownerIsAdmin || !deck.ownerName ? (
+                    <span className="flex items-center gap-1">
+                      <Users className="size-3.5" />
+                      Shared by community
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <User className="size-3.5" />
+                      Shared by {deck.ownerName}
+                    </span>
+                  )}
                   <span>·</span>
                   <span className="font-medium">
                     {cards.length} {cards.length === 1 ? "card" : "cards"}
                   </span>
-                  {deck.sourceLanguage && deck.targetLanguage && (
-                    <>
-                      <span>·</span>
-                      <span className="font-mono uppercase text-[10px]">
-                        {deck.sourceLanguage} → {deck.targetLanguage}
-                      </span>
-                    </>
-                  )}
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt xem">
+                    <Eye className="size-3.5" />
+                    {deck.viewCount ?? 0}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt thích">
+                    <Heart className="size-3.5" />
+                    {deck.favoriteCount ?? 0}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt tải">
+                    <Download className="size-3.5" />
+                    {deck.cloneCount ?? 0}
+                  </span>
                 </div>
 
                 {/* Actions */}
@@ -289,22 +295,14 @@ export default function DeckPreviewPage() {
                     </button>
                   )}
                 </div>
-
-                {!isOwnDeck && (
-                  <p className="text-[11px] text-muted-foreground/80 pt-1">
-                    Save this deck to your library to start studying with it.
-                  </p>
-                )}
               </div>
             </div>
 
-            {/* ── Card list ── */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {cards.length} {cards.length === 1 ? "Card" : "Cards"} in this deck
-                </h2>
-              </div>
+            {/* ── Card list — mirrors My Library's flashcard "Terms in this set" ── */}
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                Terms in this set ({cards.length})
+              </h2>
 
               {cards.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -312,10 +310,10 @@ export default function DeckPreviewPage() {
                 </div>
               ) : (
                 <>
-                  <ul className="space-y-2">
+                  <div className="space-y-2">
                     <AnimatePresence initial={false}>
                       {cards.slice(0, visibleCards).map((entry, i) => (
-                        <motion.li
+                        <motion.div
                           key={entry.flashcard.id ?? i}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -326,10 +324,10 @@ export default function DeckPreviewPage() {
                           }}
                         >
                           <PreviewCardRow index={i + 1} card={entry.flashcard} />
-                        </motion.li>
+                        </motion.div>
                       ))}
                     </AnimatePresence>
-                  </ul>
+                  </div>
 
                   <RevealMore
                     total={cards.length}
@@ -347,7 +345,8 @@ export default function DeckPreviewPage() {
 }
 
 /* ─────────────────────────────────────────
-   One preview row (front / back side-by-side)
+   One preview row — same numbered front/back grid as the
+   "Terms in this set" list in My Library's flashcard study view.
 ───────────────────────────────────────── */
 function PreviewCardRow({
   index,
@@ -358,94 +357,45 @@ function PreviewCardRow({
 }) {
   const frontText = useMemo(() => sideText(card, "FRONT"), [card]);
   const backText = useMemo(() => sideText(card, "BACK"), [card]);
-  const frontImages = useMemo(() => sideMedia(card, "FRONT", "IMAGE"), [card]);
-  const backImages = useMemo(() => sideMedia(card, "BACK", "IMAGE"), [card]);
 
   return (
-    <div className="rounded-xl border border-border bg-card hover:border-foreground/20 hover:shadow-sm transition-all overflow-hidden">
-      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
-        {/* Front */}
-        <div className="p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-              Front
-            </span>
-            <span className="text-[10px] text-muted-foreground/70">
-              #{index}
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {frontText.length > 0 ? (
-              frontText.map((line, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    "leading-snug text-foreground",
-                    i === 0
-                      ? "text-base font-semibold"
-                      : "text-sm text-foreground/80"
-                  )}
-                >
-                  {line}
-                </p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground/60 italic">(empty)</p>
-            )}
-            {frontImages.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {frontImages.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    className="max-h-20 rounded-md border border-border object-contain"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Back */}
-        <div className="p-4 space-y-2 bg-muted/20">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-              Back
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {backText.length > 0 ? (
-              backText.map((line, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    "leading-snug text-foreground",
-                    i === 0
-                      ? "text-base font-semibold"
-                      : "text-sm text-foreground/80"
-                  )}
-                >
-                  {line}
-                </p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground/60 italic">(empty)</p>
-            )}
-            {backImages.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {backImages.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    className="max-h-20 rounded-md border border-border object-contain"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="grid grid-cols-[32px_1fr_1fr] gap-px overflow-hidden rounded-xl border border-border bg-border">
+      <div className="flex select-none items-center justify-center bg-muted/50 text-xs font-semibold text-muted-foreground">
+        {index}
+      </div>
+      <div className="bg-card px-5 py-4">
+        {frontText.length > 0 ? (
+          frontText.map((t, j) => (
+            <p
+              key={j}
+              className={cn(
+                "leading-snug text-foreground",
+                j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+              )}
+            >
+              {t}
+            </p>
+          ))
+        ) : (
+          <p className="text-sm italic text-muted-foreground/60">(empty)</p>
+        )}
+      </div>
+      <div className="bg-card px-5 py-4">
+        {backText.length > 0 ? (
+          backText.map((t, j) => (
+            <p
+              key={j}
+              className={cn(
+                "leading-snug text-foreground",
+                j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+              )}
+            >
+              {t}
+            </p>
+          ))
+        ) : (
+          <p className="text-sm italic text-muted-foreground/60">(empty)</p>
+        )}
       </div>
     </div>
   );
@@ -465,17 +415,4 @@ function sideText(card: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
   }
   const legacy = side === "FRONT" ? card.front : card.back;
   return legacy ? legacy.split("\n").filter(Boolean) : [];
-}
-
-function sideMedia(
-  card: FlashcardDTO,
-  side: "FRONT" | "BACK",
-  type: "IMAGE" | "AUDIO" | "VIDEO"
-): string[] {
-  const found = card.sides?.find((s) => s.side === side);
-  if (!found?.contents) return [];
-  return found.contents
-    .filter((c) => c.contentType === type)
-    .map((c) => c.contentValue)
-    .filter(Boolean) as string[];
 }

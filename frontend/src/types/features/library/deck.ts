@@ -18,6 +18,10 @@ export interface DeckDTO extends BaseDTO {
   favoriteCount?: number;
   viewCount?: number;
   templateId?: number | null;
+  /** Read-only owner display name (firstName + lastName). */
+  ownerName?: string;
+  /** Read-only: true when the owner holds the ADMIN role. */
+  ownerIsAdmin?: boolean;
 }
 
 export interface DeckFilter extends BaseFilter {

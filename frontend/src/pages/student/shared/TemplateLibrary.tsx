@@ -36,8 +36,30 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { LibrarySortMenu, type LibrarySortOption } from "@/pages/student/shared/LibrarySortMenu";
+import ActionButton from "@/components/datatable/common/ActionButton";
 
 type ViewMode = "grid" | "list";
+
+/* ── Template sort ("filter") options — backed by real template fields ── */
+type TemplateSortKey = "newest" | "recent" | "name" | "oldest";
+
+const TEMPLATE_SORT_OPTIONS: LibrarySortOption<TemplateSortKey>[] = [
+  { value: "newest", label: "Mới nhất" },
+  { value: "recent", label: "Truy cập gần đây" },
+  { value: "name", label: "Tên (A → Z)" },
+  { value: "oldest", label: "Cũ nhất" },
+];
+
+function compareTemplates(a: FlashcardTemplateDTO, b: FlashcardTemplateDTO, key: TemplateSortKey): number {
+  switch (key) {
+    case "oldest": return (a.createdAt ?? "").localeCompare(b.createdAt ?? "");
+    case "recent": return (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "");
+    case "name":   return (a.name ?? "").localeCompare(b.name ?? "");
+    case "newest":
+    default:       return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+  }
+}
 
 function fieldCount(tpl: FlashcardTemplateDTO): number {
   const state = parseBuilderConfig(tpl.builderConfigJson);
@@ -69,6 +91,13 @@ export function TemplateLibrary({ mode }: Props) {
     try { localStorage.setItem("templateViewMode", m); } catch { /* ignore */ }
   };
   const nextViewMode: ViewMode = viewMode === "grid" ? "list" : "grid";
+  const [sortBy, setSortBy] = useState<TemplateSortKey>(() => {
+    try { return (localStorage.getItem("templateSortBy") as TemplateSortKey) ?? "newest"; } catch { return "newest"; }
+  });
+  const changeSortBy = (key: TemplateSortKey) => {
+    setSortBy(key);
+    try { localStorage.setItem("templateSortBy", key); } catch { /* ignore */ }
+  };
 
   const load = useCallback(() => {
     setLoading(true);
@@ -93,17 +122,23 @@ export function TemplateLibrary({ mode }: Props) {
       .filter((t) => !q || (t.name ?? "").toLowerCase().includes(q));
   }, [templates, mode, currentUserId, search]);
 
+  // Sort ("filter") applied on top of the search/visibility filter.
+  const sorted = useMemo(
+    () => [...visible].sort((a, b) => compareTemplates(a, b, sortBy)),
+    [visible, sortBy]
+  );
+
   /* Pagination — page size fills the viewport (same as the deck library). */
   const [page, setPage] = useState(1);
   const gridRef = useRef<HTMLDivElement>(null);
-  const perPage = useFillPageSize(gridRef, [viewMode, visible.length > 0]);
-  const totalPages = Math.max(1, Math.ceil(visible.length / perPage));
+  const perPage = useFillPageSize(gridRef, [viewMode, sorted.length > 0]);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage = Math.min(page, totalPages);
   const paged = useMemo(
-    () => visible.slice((safePage - 1) * perPage, safePage * perPage),
-    [visible, safePage, perPage]
+    () => sorted.slice((safePage - 1) * perPage, safePage * perPage),
+    [sorted, safePage, perPage]
   );
-  useEffect(() => { setPage(1); }, [search, mode]);
+  useEffect(() => { setPage(1); }, [search, mode, sortBy]);
 
   const handleDelete = async (tpl: FlashcardTemplateDTO) => {
     if (tpl.id == null) return;
@@ -137,16 +172,36 @@ export function TemplateLibrary({ mode }: Props) {
 
   return (
     <div className="flex w-full flex-1 flex-col overflow-hidden">
-      {/* Toolbar — search · view toggle · create (owned) */}
+      {/* Toolbar — sort · view toggle · search · create (owned) */}
       <div className="flex items-center gap-2 px-1 pt-2 pb-3 shrink-0">
         <div className="flex-1" />
-        <div className="relative">
+
+        {/* Sort ("filter") */}
+        <LibrarySortMenu value={sortBy} options={TEMPLATE_SORT_OPTIONS} onChange={changeSortBy} />
+
+        {/* View mode toggle */}
+        <TooltipWrapper content={`Chuyển sang dạng ${nextViewMode === "grid" ? "lưới" : "danh sách"}`}>
+          <button
+            onClick={() => changeViewMode(nextViewMode)}
+            aria-label="Đổi kiểu hiển thị"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span key={nextViewMode} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.12 }}>
+                {nextViewMode === "grid" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+        </TooltipWrapper>
+
+        {/* Search */}
+        <div className="relative shrink-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm kiếm mẫu thẻ…"
-            className="w-44 rounded-lg border border-input bg-background py-1.5 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 sm:w-52"
+            className="h-9 w-44 rounded-lg border border-input bg-background pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 sm:w-52"
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -154,25 +209,15 @@ export function TemplateLibrary({ mode }: Props) {
             </button>
           )}
         </div>
-        <button
-          onClick={() => changeViewMode(nextViewMode)}
-          title={`Chuyển sang ${nextViewMode === "grid" ? "lưới" : "danh sách"}`}
-          className="inline-flex size-[34px] shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span key={nextViewMode} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.12 }}>
-              {nextViewMode === "grid" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
-            </motion.span>
-          </AnimatePresence>
-        </button>
+
+        {/* Create — icon-only, like ProTable */}
         {mode === "owned" && (
-          <button
+          <ActionButton
             onClick={() => navigate("/card-templates/new")}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <Sparkles className="size-3.5" />
-            Tạo mẫu
-          </button>
+            tooltip="Tạo mẫu thẻ mới"
+            variant="default"
+            icon={<Plus size={16} />}
+          />
         )}
       </div>
 

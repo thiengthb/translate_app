@@ -51,6 +51,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @ImportHash
     @ImportField(name = "Password", required = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     String passwordHash;
 
     @Column(nullable = false, length = 100)
@@ -78,6 +79,7 @@ public class User extends BaseEntity {
 
     /** Base32-encoded TOTP secret. Null until the user enrolls in 2FA. */
     @Column(length = 64)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     String totpSecret;
 
     /**

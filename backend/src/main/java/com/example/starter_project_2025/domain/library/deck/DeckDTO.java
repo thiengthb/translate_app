@@ -54,4 +54,10 @@ public class DeckDTO extends BaseDTO {
     Integer viewCount;
 
     Long templateId;
+
+    /** Read-only owner display name (firstName + lastName), populated on toResponse. */
+    String ownerName;
+
+    /** Read-only flag: true when the owner holds the ADMIN role. */
+    Boolean ownerIsAdmin;
 }
