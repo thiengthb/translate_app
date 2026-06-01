@@ -423,7 +423,7 @@ export default function DictionaryPage() {
                             </div>
 
                             {/* ── Mode pills + result count ── */}
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="relative flex items-center justify-center gap-2 flex-wrap">
                                 <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
                                     <button
                                         type="button"
@@ -452,7 +452,7 @@ export default function DictionaryPage() {
                                 </div>
 
                                 {searched && (
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-xs text-muted-foreground sm:absolute sm:right-0">
                                         {loading ? (
                                             <span className="flex items-center gap-1.5">
                                                 <Loader2 className="h-3 w-3 animate-spin" />Đang tìm…
@@ -845,8 +845,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
     const [showBreakdown,   setShowBreakdown]   = useState(false);
 
     return (
-        <Card className={`overflow-hidden gap-0 py-0 border-l-4 transition-shadow hover:shadow-md ${jlpt ? jlpt.accent : "border-l-border"}`}>
-            {jlpt && <div className={`h-1.5 ${jlpt.bar}`} />}
+        <Card className="overflow-hidden gap-0 py-0 transition-shadow hover:shadow-md">
 
             {/* Hero */}
             <div className="relative px-6 py-5 overflow-hidden">
@@ -906,7 +905,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                                 </Badge>
                                 <div className="flex flex-wrap gap-1.5">
                                     {onyomiList.map((r) => (
-                                        <span key={r} className="text-sm font-semibold px-2.5 py-1 rounded-md bg-orange-500/10 text-orange-700 dark:text-orange-300 border border-orange-500/20">
+                                        <span key={r} className="text-base font-semibold px-2.5 py-1 rounded-md bg-orange-500/10 text-orange-700 dark:text-orange-300 border border-orange-500/20">
                                             {r}
                                         </span>
                                     ))}
@@ -920,7 +919,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                                 </Badge>
                                 <div className="flex flex-wrap gap-1.5">
                                     {kunyomiList.map((r) => (
-                                        <span key={r} className="text-sm font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                                        <span key={r} className="text-base font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
                                             {r}
                                         </span>
                                     ))}
