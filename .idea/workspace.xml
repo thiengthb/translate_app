@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarDictionarySeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarDictionarySeeder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/StudentLandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/StudentLandingPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -409,7 +409,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780169662480</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary">
+      <option name="closed" value="true" />
+      <created>1780253170901</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1780253170901</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -460,7 +468,8 @@
     <MESSAGE value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
     <MESSAGE value="feat(grammar): update grading logic and thresholds for improved accuracy" />
     <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
+    <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
