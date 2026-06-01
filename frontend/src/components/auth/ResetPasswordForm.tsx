@@ -1,21 +1,28 @@
-import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "../ui/form";
-import { Input } from "../ui/input";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import type { ResetPasswordData } from "@/types";
-import { Button } from "../ui/button";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ResetPasswordData } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { useTranslation } from "@/contexts/I18nContext";
 
 const resetSchema = z
     .object({
-        password: z.string().min(6, "Password must be at least 6 characters"),
+        password: z.string().min(8, "common.passwordTooShort"),
         confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords don't match",
+        message: "common.passwordsNoMatch",
         path: ["confirmPassword"],
     });
 
@@ -27,88 +34,101 @@ interface ResetPasswordFormProps {
 export const ResetPasswordForm = ({ onSubmit, loading }: ResetPasswordFormProps) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const { t } = useTranslation();
     const form = useForm<ResetPasswordData>({
         resolver: zodResolver(resetSchema),
         defaultValues: { password: "", confirmPassword: "" },
     });
 
     return (
-        <div className="p-10 space-y-7">
-            <div className="text-center space-y-3">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">New Password</h1>
-                <p className="text-lg text-gray-500">Please enter your new secure password</p>
-            </div>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem className="space-y-2">
+                            <FormLabel className="text-sm font-medium leading-none">{t("auth.reset.newPassword")}</FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        className="bg-background pr-10"
+                                    />
+                                </FormControl>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                                    aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                                <div className="relative">
-                                    <FormControl>
-                                        <Input
-                                            {...field}
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder="Password"
-                                            className="h-14 text-lg rounded-2xl"
-                                        />
-                                    </FormControl>
-                                    <button
-                                        className="absolute right-3 top-4"
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? <Eye size={22}></Eye> : <EyeOff size={22}></EyeOff>}
-                                    </button>
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                            <FormItem>
-                                <div className="relative">
-                                    <FormControl>
-                                        <Input
-                                            {...field}
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            placeholder="Confirm Password"
-                                            className="h-14 text-lg rounded-2xl"
-                                        />
-                                    </FormControl>
-                                    <button
-                                        className="absolute right-3 top-4"
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    >
-                                        {showConfirmPassword ? <Eye size={22}></Eye> : <EyeOff size={22}></EyeOff>}
-                                    </button>
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                        <FormItem className="space-y-2">
+                            <FormLabel className="text-sm font-medium leading-none">
+                                {t("auth.reset.confirmPassword")}
+                            </FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        className="bg-background pr-10"
+                                    />
+                                </FormControl>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword((v) => !v)}
+                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                                    aria-label={showConfirmPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-13 text-xl font-bold rounded-2xl bg-green-600 hover:bg-green-700"
-                    >
-                        {loading ? (
-                            <Loader2 className="animate-spin" />
-                        ) : (
-                            <>
-                                Update Password <CheckCircle2 className="ml-2" size={22} />
-                            </>
-                        )}
-                    </Button>
-                </form>
-            </Form>
-        </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                        <span className="flex items-center gap-2">
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                />
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                            </svg>
+                            {t("common.updating")}
+                        </span>
+                    ) : (
+                        t("auth.reset.submit")
+                    )}
+                </Button>
+            </form>
+        </Form>
     );
 };

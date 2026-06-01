@@ -1,6 +1,8 @@
-import { Bell, Check, CheckCheck } from "lucide-react";
-import { useState } from "react";
+import { Bell, CheckCheck } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUnreadCount, useUnreadNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +12,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
 const typeColors: Record<string, string> = {
-  INFO: "bg-blue-100 text-blue-700",
+  INFO: "bg-primary/15 text-primary",
   SUCCESS: "bg-green-100 text-green-700",
   WARNING: "bg-yellow-100 text-yellow-700",
   ERROR: "bg-red-100 text-red-700",
@@ -20,10 +22,18 @@ const typeColors: Record<string, string> = {
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: unreadCount = 0 } = useUnreadCount();
   const { data: notifications } = useUnreadNotifications(0, 10);
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
+
+  // Live push: when the BE sends a notification over STOMP, refresh the cached
+  // unread list + count immediately instead of waiting for the 30s poll.
+  const onNotification = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  }, [queryClient]);
+  useWebSocket({ onNotification });
 
   const handleNotificationClick = (notification: any) => {
     markAsRead.mutate(notification.id);
@@ -73,7 +83,7 @@ export default function NotificationCenter() {
             <div className="max-h-80 overflow-y-auto">
               {!notifications?.content?.length ? (
                 <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                  No new notifications
+                  Không có thông báo mới
                 </div>
               ) : (
                 notifications.content.map((n) => (
@@ -104,12 +114,25 @@ export default function NotificationCenter() {
                       </span>
                     </div>
                     {!n.isRead && (
-                      <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                      <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
                     )}
                   </div>
                 ))
               )}
             </div>
+
+            {/* Footer: deep-link to the full inbox so users can browse
+                past notifications, filter unread, mark-all etc. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                navigate("/notifications");
+              }}
+              className="w-full border-t px-4 py-2.5 text-xs font-medium text-center text-primary hover:bg-accent transition-colors cursor-pointer"
+            >
+              Xem tất cả thông báo →
+            </button>
           </div>
         </>
       )}

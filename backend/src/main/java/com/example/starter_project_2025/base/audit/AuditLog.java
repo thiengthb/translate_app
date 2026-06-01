@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.base.audit;
 
+import com.example.starter_project_2025.init.annotation.ResourceMenu;
+import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,6 +19,16 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ResourcePermission("AUDIT")
+@ResourceMenu(
+        title = "Audit Log",
+        group = "System",
+        icon = "shield-check",
+        url = "/audit-logs",
+        description = "Read-only log of every create, update and delete across the system.",
+        order = 10,
+        permission = "AUDIT_READ"
+)
 public class AuditLog {
 
     @Id

@@ -8,6 +8,7 @@ export interface ModuleDTO extends BaseDTO {
     description?: string;
     displayOrder?: number;
     requiredPermission?: string;
+    isPublic?: boolean;
 }
 
 export interface ModuleFilter extends BaseFilter {

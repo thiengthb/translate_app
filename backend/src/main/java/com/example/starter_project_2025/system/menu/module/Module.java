@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.menu.module;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.template.annotation.ImportEntity;
@@ -24,12 +26,20 @@ import lombok.experimental.SuperBuilder;
 @ResourcePermission("MENU")
 @ResourceMenu(
         title = "Modules",
-        group = "System Management",
+        group = "System",
         icon = "menus",
         url = "/menus",
+        description = "Configure the navigation items shown in the sidebar.",
         order = 2,
-    permission = "USER_READ"
+        // Reads of menu metadata are needed by every authenticated user to
+        // render the nav, so MENU_READ is granted broadly (see
+        // RoleDataInitializer). Gating the management UI with MENU_UPDATE
+        // keeps non-admin users out of the CRUD pages while still letting
+        // them fetch their own nav data.
+        permission = "MENU_UPDATE"
 )
+@Searchable(fields = {"title", "url", "description"})
+@AutoCrud(path = "modules")
 public class Module extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,4 +64,8 @@ public class Module extends BaseEntity {
 
     @Column(length = 100)
     String requiredPermission;
+
+    @Builder.Default
+    @Column(nullable = false)
+    Boolean isPublic = false;
 }

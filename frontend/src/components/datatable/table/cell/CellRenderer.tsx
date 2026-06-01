@@ -6,6 +6,7 @@ import { iconMap } from "@/components/datatable/iconMap";
 import type { FieldSchema } from "@/types";
 import { OverflowBadges } from "./OverflowBadges";
 import { formatDateValue } from "./dateFormat";
+import { EditableCell } from "./EditableCell";
 
 // Re-export for backward compatibility
 export type { DateFormatKey } from "./dateFormat";
@@ -19,6 +20,25 @@ interface CellRendererProps {
   onBooleanToggle?: (fieldName: string, newValue: boolean) => void;
   disableBooleanToggle?: boolean;
   dateFormat?: import("./dateFormat").DateFormatKey;
+  /** Optional inline-edit commit handler. When provided, editable types render as click-to-edit. */
+  onInlineEdit?: (fieldName: string, newValue: any) => void | Promise<void>;
+  /** Sticky positioning style when this cell is pinned. */
+  pinStyle?: React.CSSProperties;
+  /** Extra classes for pinned cells. */
+  pinClassName?: string;
+}
+
+/** Field types that support click-to-edit inline. */
+const INLINE_EDITABLE_TYPES = new Set(["string", "text", "number", "relation"]);
+
+/**
+ * Image fields store URLs as strings. `String(null)` would render as
+ * "null" → broken image; this helper normalizes to a clean URL or null.
+ */
+function coerceImageUrl(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  const s = String(value).trim();
+  return s ? s : null;
 }
 
 export function CellRenderer({
@@ -28,12 +48,48 @@ export function CellRenderer({
   onBooleanToggle,
   disableBooleanToggle = false,
   dateFormat,
+  onInlineEdit,
+  pinStyle,
+  pinClassName,
 }: CellRendererProps) {
+  if (field.type === "image") {
+    const url = coerceImageUrl(value);
+    return (
+      <TableCell style={pinStyle} className={pinClassName}>
+        {url ? (
+          <TooltipWrapper content={url}>
+            {/* Compact 32px thumbnail with rounded border — sized to
+                fit the default row height without bloating it. */}
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 w-8 overflow-hidden rounded-md border bg-muted shrink-0 hover:ring-2 hover:ring-primary/40 transition"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={url}
+                alt={field.label}
+                loading="lazy"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </a>
+          </TooltipWrapper>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
+    );
+  }
+
   if (field.type === "boolean") {
     const labels = field.booleanLabels || { true: "Yes", false: "No" };
     const label = value ? labels.true : labels.false;
     return (
-      <TableCell>
+      <TableCell style={pinStyle} className={pinClassName}>
         <TooltipWrapper content={label}>
           <div className="inline-flex">
             <Switch
@@ -58,7 +114,7 @@ export function CellRenderer({
         : null;
 
     return (
-      <TableCell>
+      <TableCell style={pinStyle} className={pinClassName}>
         {Icon ? (
           <TooltipWrapper content={iconKey || "—"}>
             <span className="inline-flex items-center">
@@ -80,7 +136,7 @@ export function CellRenderer({
     const displayText = matchedUser?.email ?? String(value ?? "—");
 
     return (
-      <TableCell>
+      <TableCell style={pinStyle} className={pinClassName}>
         <TruncatedText content={displayText} bold={field.bold} />
       </TableCell>
     );
@@ -97,7 +153,7 @@ export function CellRenderer({
         )
         .filter(Boolean);
       return (
-        <TableCell>
+        <TableCell style={pinStyle} className={pinClassName}>
           {matched.length > 0 ? (
             <OverflowBadges
               items={matched}
@@ -115,9 +171,21 @@ export function CellRenderer({
       (opt) => opt[valueField]?.toString() === value?.toString()
     );
     const displayText = matched ? matched[labelField] : (value ?? "—");
+    const displayNode = <TruncatedText content={String(displayText)} bold={field.bold} />;
     return (
-      <TableCell>
-        <TruncatedText content={String(displayText)} bold={field.bold} />
+      <TableCell style={pinStyle} className={pinClassName}>
+        {onInlineEdit && field.editable !== false ? (
+          <EditableCell
+            value={value}
+            field={field}
+            relationOptions={options}
+            onCommit={(v) => onInlineEdit(field.name, v)}
+          >
+            {displayNode}
+          </EditableCell>
+        ) : (
+          displayNode
+        )}
       </TableCell>
     );
   }
@@ -126,7 +194,7 @@ export function CellRenderer({
   if (Array.isArray(value)) {
     if (value.length === 0) {
       return (
-        <TableCell>
+        <TableCell style={pinStyle} className={pinClassName}>
           <span className="text-muted-foreground">—</span>
         </TableCell>
       );
@@ -144,7 +212,7 @@ export function CellRenderer({
           .join("\n");
 
         return (
-          <TableCell>
+          <TableCell style={pinStyle} className={pinClassName}>
             <TooltipWrapper content={optionsText}>
               <span className="text-muted-foreground cursor-help">
                 {value.length} option{value.length !== 1 ? "s" : ""}
@@ -157,7 +225,7 @@ export function CellRenderer({
 
     // Array of primitives
     return (
-      <TableCell>
+      <TableCell style={pinStyle} className={pinClassName}>
         <TruncatedText content={value.join(", ")} bold={field.bold} />
       </TableCell>
     );
@@ -169,9 +237,26 @@ export function CellRenderer({
       ? formatDateValue(value, dateFormat)
       : String(displayValue);
 
+  const isInlineEditable =
+    onInlineEdit &&
+    field.editable !== false &&
+    INLINE_EDITABLE_TYPES.has(field.type ?? "string");
+
+  const displayNode = <TruncatedText content={displayStr} bold={field.bold} />;
+
   return (
     <TableCell>
-      <TruncatedText content={displayStr} bold={field.bold} />
+      {isInlineEditable ? (
+        <EditableCell
+          value={value}
+          field={field}
+          onCommit={(v) => onInlineEdit!(field.name, v)}
+        >
+          {displayNode}
+        </EditableCell>
+      ) : (
+        displayNode
+      )}
     </TableCell>
   );
 }

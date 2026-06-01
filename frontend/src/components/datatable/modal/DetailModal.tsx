@@ -5,10 +5,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { iconMap } from "@/components/datatable/iconMap";
 import type { EntitySchema, FieldSchema } from "@/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DetailModalProps {
   open: boolean;
@@ -16,6 +19,12 @@ interface DetailModalProps {
   schema: EntitySchema;
   row: any;
   relationOptions?: Record<string, any[]>;
+  /** Optional: navigate to previous row in the current page. */
+  onPrev?: () => void;
+  /** Optional: navigate to next row in the current page. */
+  onNext?: () => void;
+  /** Position info shown in the header — "3 of 25". */
+  position?: { current: number; total: number };
 }
 
 export function DetailModal({
@@ -24,6 +33,9 @@ export function DetailModal({
   schema,
   row,
   relationOptions = {},
+  onPrev,
+  onNext,
+  position,
 }: DetailModalProps) {
   if (!row) return null;
 
@@ -65,6 +77,36 @@ export function DetailModal({
     }
 
     switch (field.type) {
+      case "image": {
+        const url =
+          value === null || value === undefined || value === ""
+            ? null
+            : String(value).trim() || null;
+        if (!url) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        // Detail modal has more vertical room than table/card — show
+        // a larger preview that's still bounded so a very tall image
+        // doesn't push the rest of the detail layout offscreen.
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-md overflow-hidden border bg-muted hover:ring-2 hover:ring-primary/40 transition"
+          >
+            <img
+              src={url}
+              alt={field.label}
+              className="max-h-48 max-w-full object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </a>
+        );
+      }
+
       case "boolean": {
         const labels = field.booleanLabels || { true: "Yes", false: "No" };
         const colorClass = value
@@ -188,10 +230,47 @@ export function DetailModal({
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:max-w-xl">
         <SheetHeader className="border-b">
-          <SheetTitle>Detail</SheetTitle>
+          <div className="flex items-center justify-between gap-3">
+            <SheetTitle>Chi tiết</SheetTitle>
+            {(onPrev || onNext || position) && (
+              <div className="flex items-center gap-1.5 mr-6">
+                {position && (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {position.current} / {position.total}
+                  </span>
+                )}
+                {onPrev && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={onPrev}
+                    aria-label="Previous record"
+                  >
+                    <ChevronLeft size={15} />
+                  </Button>
+                )}
+                {onNext && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={onNext}
+                    aria-label="Next record"
+                  >
+                    <ChevronRight size={15} />
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2">
+        <ScrollHintContainer
+          axis="vertical"
+          className="flex-1"
+          viewportClassName="px-4 py-2"
+        >
           <div className="grid gap-3">
             {schema.fields.filter((f) => f.type !== "password").map((field, index) => (
               <div key={field.name}>
@@ -207,7 +286,7 @@ export function DetailModal({
               </div>
             ))}
           </div>
-        </div>
+        </ScrollHintContainer>
       </SheetContent>
     </Sheet>
   );

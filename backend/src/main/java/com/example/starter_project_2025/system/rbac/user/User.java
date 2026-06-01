@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.rbac.user;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportField;
@@ -30,12 +32,15 @@ import java.util.Set;
 @ResourcePermission("USER")
 @ResourceMenu(
         title = "Users",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "users",
         url = "/users",
+        description = "Manage user accounts, roles and account status.",
         order = 1,
         permission = "USER_READ"
 )
+@Searchable(fields = {"email", "firstName", "lastName"})
+@AutoCrud(path = "users")
 public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)
@@ -46,6 +51,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @ImportHash
     @ImportField(name = "Password", required = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     String passwordHash;
 
     @Column(nullable = false, length = 100)
@@ -56,6 +62,34 @@ public class User extends BaseEntity {
     @Column(length = 100)
     String lastName;
 
+    @Column(length = 20)
+    String phone;
+
+    @Column(length = 500)
+    String bio;
+
+    @Column(length = 512)
+    String avatarUrl;
+
+    @Column(length = 10)
+    String locale;
+
+    @Column(length = 10)
+    String theme;
+
+    /** Base32-encoded TOTP secret. Null until the user enrolls in 2FA. */
+    @Column(length = 64)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    String totpSecret;
+
+    /**
+     * Set to true only after the user confirms their first TOTP code.
+     * Nullable in DB so existing rows from before this migration default to
+     * "not enrolled" without a backfill.
+     */
+    @Column
+    Boolean totpEnabled;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @ExportField(name = "Roles", relation = true, path = "name")
@@ -64,6 +98,19 @@ public class User extends BaseEntity {
                 joinColumns = @JoinColumn(name = "user_id"),
                 inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<Role> roles = new HashSet<>();
+
+    /**
+     * Gamification balances. Primitive {@code long} (not {@code Long}) so the
+     * MapStruct AutoCrud create path — which builds via the no-arg constructor
+     * and null-guards boxed setters — leaves these at 0 instead of null.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    long exp = 0L;
+
+    @Builder.Default
+    @Column(nullable = false)
+    long coins = 0L;
 
     public String getFullName() {
         return firstName + (lastName != null ? " " + lastName : "");

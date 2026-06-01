@@ -1,82 +1,22 @@
+import { authStorage } from "@/lib/auth-storage";
 import type { AuthState, LoginResponse } from "@/types/features/auth";
 import { normalizeAuthRolePayload } from "@/utils/rbac.utils";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-const AUTH_STORAGE_KEYS = [
-    "token",
-    "email",
-    "firstName",
-    "lastName",
-    "role",
-    "roles",
-    "permissions",
-    "rolePermissions",
-];
-
-const parseStringArrayFromStorage = (key: string): string[] => {
-    const rawValue = localStorage.getItem(key);
-    if (!rawValue) {
-        return [];
-    }
-
-    try {
-        const parsed = JSON.parse(rawValue);
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.filter((item): item is string => typeof item === "string");
-    } catch {
-        return [];
-    }
-};
-
-const parseRolePermissionsFromStorage = (): Record<string, string[]> => {
-    const rawRolePermissions = localStorage.getItem("rolePermissions");
-    if (!rawRolePermissions) {
-        return {};
-    }
-
-    try {
-        const parsed = JSON.parse(rawRolePermissions);
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            return {};
-        }
-
-        return Object.entries(parsed).reduce<Record<string, string[]>>((acc, [role, permissions]) => {
-            if (!Array.isArray(permissions)) {
-                return acc;
-            }
-
-            acc[role] = permissions.filter((item): item is string => typeof item === "string");
-            return acc;
-        }, {});
-    } catch {
-        return {};
-    }
-};
-
-const clearAuthStorage = () => {
-    AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-};
-
-const initialAuthData = normalizeAuthRolePayload({
-    role: localStorage.getItem("role") || "",
-    roles: parseStringArrayFromStorage("roles"),
-    permissions: parseStringArrayFromStorage("permissions"),
-    rolePermissions: parseRolePermissionsFromStorage(),
-});
+const hydrated = authStorage.load();
 
 const initialState: AuthState = {
-    token: localStorage.getItem("token") || "",
-    email: localStorage.getItem("email") || "",
-    firstName: localStorage.getItem("firstName") || "",
-    lastName: localStorage.getItem("lastName") || "",
-    role: initialAuthData.role,
-    roles: initialAuthData.roles,
-    permissions: initialAuthData.permissions,
-    rolePermissions: initialAuthData.rolePermissions,
-    isAuthenticated: !!localStorage.getItem("token"),
+    token: hydrated.token,
+    email: hydrated.email,
+    firstName: hydrated.firstName,
+    lastName: hydrated.lastName,
+    role: hydrated.role,
+    locale: hydrated.locale,
+    theme: hydrated.theme,
+    roles: hydrated.roles,
+    permissions: hydrated.permissions,
+    rolePermissions: hydrated.rolePermissions,
+    isAuthenticated: hydrated.isAuthenticated,
 };
 
 const authSlice = createSlice({
@@ -85,14 +25,16 @@ const authSlice = createSlice({
     reducers: {
         setLogin: (state, action: PayloadAction<LoginResponse>) => {
             const {
-                token,
+                token = "",
                 permissions = [],
                 rolePermissions = {},
                 roles = [],
-                email,
-                firstName,
-                lastName,
+                email = "",
+                firstName = "",
+                lastName = "",
                 role,
+                locale = "",
+                theme = "",
             } = action.payload;
 
             const normalized = normalizeAuthRolePayload({
@@ -102,24 +44,49 @@ const authSlice = createSlice({
                 rolePermissions,
             });
 
-            state.token = token || "";
-            state.email = email || "";
+            state.token = token;
+            state.email = email;
             state.permissions = normalized.permissions;
-            state.firstName = firstName || "";
-            state.lastName = lastName || "";
+            state.firstName = firstName;
+            state.lastName = lastName;
             state.role = normalized.role;
+            state.locale = locale;
+            state.theme = theme;
             state.roles = normalized.roles;
             state.rolePermissions = normalized.rolePermissions;
             state.isAuthenticated = !!token;
 
-            localStorage.setItem("token", token || "");
-            localStorage.setItem("email", email || "");
+            authStorage.save({
+                token,
+                email,
+                firstName,
+                lastName,
+                role: normalized.role,
+                locale,
+                theme,
+                roles: normalized.roles,
+                permissions: normalized.permissions,
+                rolePermissions: normalized.rolePermissions,
+            });
+        },
+        setLocale: (state, action: PayloadAction<string>) => {
+            state.locale = action.payload;
+            if (action.payload) {
+                localStorage.setItem("locale", action.payload);
+            }
+        },
+        setTheme: (state, action: PayloadAction<string>) => {
+            state.theme = action.payload;
+            if (action.payload) {
+                localStorage.setItem("themePreference", action.payload);
+            }
+        },
+        updateProfile: (state, action: PayloadAction<{ firstName: string; lastName?: string }>) => {
+            const { firstName, lastName } = action.payload;
+            state.firstName = firstName || "";
+            state.lastName = lastName || "";
             localStorage.setItem("firstName", firstName || "");
             localStorage.setItem("lastName", lastName || "");
-            localStorage.setItem("role", normalized.role);
-            localStorage.setItem("roles", JSON.stringify(normalized.roles));
-            localStorage.setItem("permissions", JSON.stringify(normalized.permissions));
-            localStorage.setItem("rolePermissions", JSON.stringify(normalized.rolePermissions));
         },
         setLogout: (state) => {
             state.token = "";
@@ -127,14 +94,16 @@ const authSlice = createSlice({
             state.firstName = "";
             state.lastName = "";
             state.role = "";
+            state.locale = "";
+            state.theme = "";
             state.roles = [];
             state.permissions = [];
             state.rolePermissions = {};
             state.isAuthenticated = false;
-            clearAuthStorage();
+            authStorage.clear();
         },
     },
 });
 
-export const { setLogin, setLogout } = authSlice.actions;
+export const { setLogin, setLogout, setLocale, setTheme, updateProfile } = authSlice.actions;
 export default authSlice.reducer;

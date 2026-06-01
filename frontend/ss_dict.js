@@ -1,0 +1,18 @@
+﻿import { chromium } from "playwright";
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.goto("http://localhost:5173/login");
+await page.waitForTimeout(1000);
+await page.locator("input[type=email], input[placeholder*=email], input[placeholder*=Email]").fill("student@example.com");
+await page.locator("input[type=password]").fill("password123");
+await page.locator("button[type=submit], button:has-text('Login')").click();
+await page.waitForTimeout(2000);
+await page.goto("http://localhost:5173/dictionary");
+await page.waitForTimeout(2500);
+await page.screenshot({ path: "C:/Users/ADMIN/AppData/Local/Temp/dict_home.png" });
+await page.locator("input").first().fill("taberu");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(3000);
+await page.screenshot({ path: "C:/Users/ADMIN/AppData/Local/Temp/dict_vocab.png", fullPage: true });
+await browser.close();

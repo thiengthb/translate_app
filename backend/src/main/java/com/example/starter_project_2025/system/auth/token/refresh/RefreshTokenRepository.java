@@ -24,4 +24,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     int deleteAllRevokedExpired(@Param("now") Instant now);
 
     List<RefreshToken> findAllByUserId(Long userId);
+
+    List<RefreshToken> findAllByUserIdAndRevokedFalseOrderByLastUsedAtDesc(Long userId);
 }

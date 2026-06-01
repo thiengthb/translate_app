@@ -1,6 +1,7 @@
 package com.example.starter_project_2025.base.notification;
 
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
+import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -15,6 +16,15 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@ResourceMenu(
+        title = "Notifications",
+        group = "Community",
+        icon = "bell",
+        url = "/notifications",
+        description = "User notification inbox records.",
+        order = 3,
+        permission = ""
+)
 public class Notification extends BaseEntity {
 
     @Column(nullable = false)

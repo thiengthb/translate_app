@@ -1,40 +1,9 @@
 import axios from "axios";
 import { store } from "@/store/store";
 import { setLogin, setLogout } from "@/store/slices/auth/authSlice";
-import { normalizeAuthRolePayload } from "@/utils/rbac.utils";
-
-interface BackendAuthenticationResponse {
-    accessToken: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role?: string;
-    roles?: string[];
-    permissions?: string[];
-    rolePermissions?: Record<string, string[]>;
-}
+import { authStorage, mapAuthResponse, type BackendAuthResponse } from "@/lib/auth-storage";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-const mapAuthResponse = (data: BackendAuthenticationResponse) => {
-    const normalized = normalizeAuthRolePayload({
-        role: data.role,
-        roles: data.roles,
-        permissions: data.permissions,
-        rolePermissions: data.rolePermissions,
-    });
-
-    return {
-        token: data.accessToken,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: normalized.role,
-        roles: normalized.roles,
-        permissions: normalized.permissions,
-        rolePermissions: normalized.rolePermissions,
-    };
-};
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -53,12 +22,43 @@ axiosInstance.interceptors.request.use(
         if (token && !isAuthRequest) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Send the user's active locale so the BE can localise dynamic content
+        // (module titles, validation messages, email subjects...). Sourced from
+        // localStorage rather than Redux to avoid coupling axios to the store.
+        const locale = localStorage.getItem("app-locale") || localStorage.getItem("locale");
+        if (locale) {
+            config.headers["Accept-Language"] = locale;
+        }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    },
+    (error) => Promise.reject(error),
 );
+
+// Single-flight refresh: when many requests fail with 401 at once (e.g. on app
+// boot with a stale access token), they must NOT each fire their own
+// /auth/refresh — that creates a "refresh storm" hammering the BE. Instead the
+// first 401 starts one refresh and every concurrent 401 awaits that same
+// promise. `isLoggingOut` guards against repeated clear()/redirect once the
+// refresh has definitively failed.
+let refreshPromise: Promise<string> | null = null;
+let isLoggingOut = false;
+
+const runRefresh = (): Promise<string> => {
+    if (!refreshPromise) {
+        refreshPromise = axios
+            .post<BackendAuthResponse>(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+            .then((res) => {
+                const authData = mapAuthResponse(res.data);
+                store.dispatch(setLogin(authData));
+                return authData.token;
+            })
+            .finally(() => {
+                refreshPromise = null;
+            });
+    }
+    return refreshPromise;
+};
 
 axiosInstance.interceptors.response.use(
     (response) => response,
@@ -78,24 +78,29 @@ axiosInstance.interceptors.response.use(
             !requestUrl.includes("/auth/refresh")
         ) {
             originalReq._retry = true;
-            try {
-                const res = await axios.post<BackendAuthenticationResponse>(
-                    `${API_BASE_URL}/auth/refresh`,
-                    {},
-                    { withCredentials: true },
-                );
-                const authData = mapAuthResponse(res.data);
 
-                store.dispatch(setLogin(authData));
+            try {
+                const token = await runRefresh();
+
                 originalReq.headers = {
                     ...originalReq.headers,
-                    Authorization: `Bearer ${authData.token}`,
+                    Authorization: `Bearer ${token}`,
                 };
 
                 return axiosInstance(originalReq);
             } catch (err) {
-                store.dispatch(setLogout());
-                window.location.href = "/login";
+                // Only the first failed refresh clears state + redirects; later
+                // waiters from the same storm fall through silently.
+                if (!isLoggingOut) {
+                    isLoggingOut = true;
+                    authStorage.clear();
+                    store.dispatch(setLogout());
+                    // Already on /login → don't hard-navigate (would reload the
+                    // page, re-fire the same failing request, and loop).
+                    if (window.location.pathname !== "/login") {
+                        window.location.href = "/login";
+                    }
+                }
                 return Promise.reject(err);
             }
         }

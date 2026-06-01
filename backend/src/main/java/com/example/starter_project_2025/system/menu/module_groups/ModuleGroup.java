@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.menu.module_groups;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.template.annotation.ImportEntity;
@@ -29,12 +31,17 @@ import java.util.List;
 @ResourcePermission("MENU")
 @ResourceMenu(
         title = "Module Groups",
-        group = "System Management",
+        group = "System",
         icon = "menu_groups",
         url = "/menu-groups",
+        description = "Group sidebar menu items into sections.",
         order = 1,
-    permission = "USER_READ"
+        // See the matching note on Module.java — MENU_UPDATE is the manage
+        // gate, MENU_READ is the metadata-read gate granted to every role.
+        permission = "MENU_UPDATE"
 )
+@Searchable(fields = {"name", "description"})
+@AutoCrud(path = "module-groups")
 public class ModuleGroup extends BaseEntity {
 
     @Column(unique = true, nullable = false, length = 100)

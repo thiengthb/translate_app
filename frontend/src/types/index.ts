@@ -7,8 +7,18 @@ export * from "./common/pageable";
 export * from "./common/registry";
 
 // Feature-specific types
+export * from "./features/assessment";
+export * from "./features/classroom";
 export * from "./features/auth";
-export * from "./features/demo/book";
+export * from "./features/words";
+export * from "./features/library/folder";
+export * from "./features/library/deck";
+export * from "./features/library/tag";
+export * from "./features/library/flashcard";
+export * from "./features/library/deck_item";
+export * from "./features/library/favorite_deck";
+export * from "./features/library/srs_algorithm_config";
+export * from "./features/library/anki_srs_setting";
 export * from "./features/menu/module";
 export * from "./features/menu/module_group";
 export * from "./features/rbac/permission";

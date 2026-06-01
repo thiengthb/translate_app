@@ -1,25 +1,25 @@
 import type { EntitySchema } from "@/types/common/datatable";
 
+/**
+ * Schema + API binding for one entity. Files under
+ * {@code src/pages/management/.../<entity>/index.tsx} export this so the
+ * router can wire up a custom {@link AutoCrudPage} for that entity.
+ *
+ * Entities without a per-entity file fall back to
+ * {@code MetadataDrivenCrudPage} which builds the same shape from
+ * {@code /api/meta/entities}.
+ */
 export interface EntityConfig {
     name: string;
     path: string;
     api: any;
     schema: EntitySchema;
-}
-
-const registry: EntityConfig[] = [];
-
-export function registerEntity(entity: EntityConfig) {
-    const existingIndex = registry.findIndex((item) => item.path === entity.path);
-
-    if (existingIndex >= 0) {
-        registry[existingIndex] = entity;
-        return;
-    }
-
-    registry.push(entity);
-}
-
-export function getEntities() {
-    return registry;
+    /** Nếu set, nút "Tạo" sẽ điều hướng tới route này thay vì mở modal tạo mặc định. */
+    createRoute?: string;
+    /**
+     * Nếu set, hành động "Sửa" trên mỗi hàng sẽ điều hướng tới route này thay vì
+     * mở modal sửa mặc định. Dùng `:id` làm placeholder cho id bản ghi
+     * (vd: "/card-templates/:id/edit").
+     */
+    editRoute?: string;
 }

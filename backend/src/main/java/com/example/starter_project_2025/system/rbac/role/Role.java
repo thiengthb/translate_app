@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.system.rbac.role;
 
+import com.example.starter_project_2025.base.annotation.AutoCrud;
+import com.example.starter_project_2025.base.annotation.Searchable;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportEntity;
 import com.example.starter_project_2025.base.dataio.exporter.annotation.ExportField;
@@ -29,12 +31,15 @@ import java.util.Set;
 @ResourcePermission("ROLE")
 @ResourceMenu(
         title = "Roles",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "roles",
         url = "/roles",
+        description = "Sets of permissions assigned to users.",
         order = 2,
         permission = "ROLE_READ"
 )
+@Searchable(fields = {"name", "description"})
+@AutoCrud(path = "roles")
 public class Role extends BaseEntity {
 
     @Column(unique = true, nullable = false, length = 100)

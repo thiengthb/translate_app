@@ -47,14 +47,14 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
 
         OneTimeToken token = oneTimeTokenRepository
                 .findByTokenHashAndType(hash, type)
-                .orElseThrow(() -> new BadRequestException("Invalid token"));
+                .orElseThrow(() -> new BadRequestException("error.token.invalidType"));
 
         if (token.isUsed()) {
-            throw new BadRequestException("Token already used");
+            throw new BadRequestException("error.token.alreadyUsed");
         }
 
         if (token.getExpiryDate().isBefore(Instant.now())) {
-            throw new BadRequestException("Token expired");
+            throw new BadRequestException("error.token.expired");
         }
 
         return token;

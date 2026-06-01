@@ -12,6 +12,7 @@ import {
 import { iconMap } from "@/components/datatable/iconMap";
 import type { FieldSchema } from "@/types";
 import { FieldError } from "./FieldError";
+import { ImageField } from "./ImageField";
 import { MultiRelationSelect } from "./MultiRelationSelect";
 
 interface FormFieldRendererProps {
@@ -20,6 +21,10 @@ interface FormFieldRendererProps {
   errorClass: string;
   fieldErrors?: string[];
   relationOptions?: Record<string, any[]>;
+  /** Optional entity context — forwarded to image upload so the file
+   *  attachment row in BE can be linked to the right entity/field. */
+  entityName?: string;
+  entityId?: number;
   onChange: (name: string, value: any) => void;
 }
 
@@ -32,9 +37,24 @@ export function FormFieldRenderer({
   errorClass,
   fieldErrors,
   relationOptions = {},
+  entityName,
+  entityId,
   onChange,
 }: FormFieldRendererProps) {
   switch (field.type) {
+    case "image":
+      return (
+        <ImageField
+          field={field}
+          value={value}
+          errorClass={errorClass}
+          fieldErrors={fieldErrors}
+          entityName={entityName}
+          entityId={entityId}
+          onChange={onChange}
+        />
+      );
+
     case "boolean":
       return (
         <div className="flex items-center justify-between gap-4 py-1">

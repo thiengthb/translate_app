@@ -2,6 +2,7 @@ import { downloadTemplate } from "@/api/features/dataio/dataio-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TabsContent } from "@/components/ui/tabs";
+import { logger } from "@/lib/logger";
 import { Download, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -67,7 +68,7 @@ export function ImportTab({ loading, onImport, entityName }: ImportTabProps) {
       await downloadTemplate(entityName);
       toast.success("Template downloaded successfully");
     } catch (error) {
-      console.error("Error downloading template:", error);
+      logger.error("Error downloading template:", error);
       toast.error("Unable to download template. Please try again.");
     } finally {
       setDownloadingTemplate(false);
@@ -137,7 +138,7 @@ export function ImportTab({ loading, onImport, entityName }: ImportTabProps) {
             flex flex-col items-center justify-center flex-1
             border-2 border-dashed rounded-xl p-8 text-center gap-3
             transition-colors cursor-pointer
-            ${isDragging ? "border-blue-600 bg-blue-50 dark:bg-blue-950" : "border-muted hover:border-primary hover:bg-accent"}
+            ${isDragging ? "border-primary bg-primary/10 dark:bg-primary/20" : "border-muted hover:border-primary hover:bg-accent"}
             ${loading ? "opacity-50 pointer-events-none" : ""}
           `}
           onClick={() => fileInputRef.current?.click()}

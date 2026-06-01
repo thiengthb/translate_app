@@ -9,17 +9,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import type { ImportResult } from "@/types";
-import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, MinusCircle, XCircle } from "lucide-react";
 
 interface ImportResultContentProps {
   result: ImportResult;
 }
 
 export const ImportResultContent = ({ result }: ImportResultContentProps) => {
+  const skipped = result.skippedCount ?? 0;
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${skipped > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -29,6 +31,18 @@ export const ImportResultContent = ({ result }: ImportResultContentProps) => {
             {result.successCount}
           </p>
         </div>
+
+        {skipped > 0 && (
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <MinusCircle className="h-5 w-5 text-amber-600" />
+              <h4 className="font-semibold">Skipped</h4>
+            </div>
+            <p className="text-3xl font-bold text-center text-amber-700 dark:text-amber-300">
+              {skipped}
+            </p>
+          </div>
+        )}
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -112,9 +126,13 @@ export function ImportResultModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 min-h-0 overflow-y-auto py-4">
+            <ScrollHintContainer
+              axis="vertical"
+              className="flex-1 min-h-0"
+              viewportClassName="py-4"
+            >
               <ImportResultContent result={result} />
-            </div>
+            </ScrollHintContainer>
 
             <DialogFooter>
               <div className="flex-1 flex justify-between gap-2">

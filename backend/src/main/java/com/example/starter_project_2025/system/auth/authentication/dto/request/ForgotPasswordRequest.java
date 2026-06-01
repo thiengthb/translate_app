@@ -7,8 +7,8 @@ import lombok.Builder;
 @Builder
 public record ForgotPasswordRequest(
 
-        @NotBlank(message = "Email is required")
-        @Email(message = "Invalid email format", regexp = ".+@.+\\..+")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.invalid}", regexp = ".+@.+\\..+")
         String email
 ) {
 }
