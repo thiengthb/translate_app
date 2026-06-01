@@ -8,9 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
-  Archive, ChevronLeft, Clock, Copy, FileQuestion, Loader2, Pencil, Play, Send, Trophy,
+  Archive, ChevronLeft, Clock, Copy, FileQuestion, Loader2, Pencil, Play, RotateCcw, Send, Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { AttemptStatusBadge, DifficultyBadge, QuizStatusBadge, formatDateTime, formatSeconds } from "./_shared";
 
@@ -76,6 +77,12 @@ export default function QuizDetailPage() {
   }
   if (!quiz) return null;
 
+  // Attempt usage: how many the user has taken vs. the quiz's limit.
+  const attemptsUsed = attempts.length;
+  const maxAttempts = quiz.maxAttempts; // null → unlimited
+  const attemptsLeft = maxAttempts != null ? Math.max(0, maxAttempts - attemptsUsed) : null;
+  const noAttemptsLeft = attemptsLeft === 0;
+
   return (
     <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz.title }}>
       <div className="space-y-5 max-w-5xl">
@@ -92,17 +99,31 @@ export default function QuizDetailPage() {
               <DifficultyBadge level={quiz.difficultyLevel} />
             </div>
             {quiz.description && <p className="text-sm text-muted-foreground max-w-2xl">{quiz.description}</p>}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1"><FileQuestion className="size-4" />{quiz.totalQuestions} questions</span>
               {quiz.timeLimitMinutes != null && <span className="flex items-center gap-1"><Clock className="size-4" />{quiz.timeLimitMinutes} min</span>}
               <span className="flex items-center gap-1"><Trophy className="size-4" />Pass: {quiz.passScore}</span>
+              <span className="flex items-center gap-1.5">
+                <RotateCcw className="size-4" />
+                Attempts: {attemptsUsed}{maxAttempts != null ? `/${maxAttempts}` : ""}
+                {maxAttempts != null ? (
+                  <span className={cn(
+                    "inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium",
+                    attemptsLeft! > 0 ? "bg-primary/10 text-primary" : "bg-red-500/10 text-red-600",
+                  )}>
+                    {attemptsLeft} left
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">(unlimited)</span>
+                )}
+              </span>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={handleStart} disabled={starting || questions.length === 0}>
+            <Button onClick={handleStart} disabled={starting || questions.length === 0 || noAttemptsLeft}>
               {starting ? <Loader2 className="size-4 animate-spin mr-1" /> : <Play className="size-4 mr-1" />}
-              Start quiz
+              {noAttemptsLeft ? "No attempts left" : "Start quiz"}
             </Button>
             {isCreator && (
               <>
@@ -147,6 +168,11 @@ export default function QuizDetailPage() {
 
           {/* My attempts */}
           <TabsContent value="attempts" className="space-y-2 mt-4">
+            <p className="text-sm text-muted-foreground">
+              {maxAttempts != null
+                ? `You've used ${attemptsUsed} of ${maxAttempts} attempts · ${attemptsLeft} left.`
+                : `You've taken ${attemptsUsed} attempt${attemptsUsed === 1 ? "" : "s"} · unlimited allowed.`}
+            </p>
             {attempts.length === 0 ? (
               <p className="text-sm text-muted-foreground">You haven't attempted this quiz yet.</p>
             ) : (

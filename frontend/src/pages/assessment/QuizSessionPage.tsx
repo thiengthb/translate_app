@@ -128,7 +128,7 @@ export default function QuizSessionPage() {
         key={qq.id}
         id={`q-${gi}`}
         className={cn(
-          "scroll-mt-4 space-y-5 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm transition-colors",
+          "scroll-mt-4 space-y-5 rounded-2xl border border-border/60 bg-card p-5 sm:p-6 shadow-sm transition-colors",
           marked && "border-amber-400/60",
         )}
       >
@@ -264,7 +264,7 @@ export default function QuizSessionPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Main: the current page of questions (scrolls, scrollbar hidden) */}
         <ScrollHintContainer className="flex-1">
-          <div className="max-w-2xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-5">
+          <div className="max-w-2xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-6">
             {pageQuestions.map((qq, li) => renderQuestion(qq, pageStart + li))}
 
             {/* Page navigation */}
@@ -315,7 +315,7 @@ export default function QuizSessionPage() {
                 return (
                   <button key={qq.id} onClick={() => goToQuestion(i)}
                     className={cn("relative flex aspect-square items-center justify-center rounded-lg border text-xs font-semibold tabular-nums transition-colors",
-                      onPage && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                      onPage && "ring-1 ring-primary",
                       qq.isAnswered
                         ? "bg-green-500/15 border-green-500/30 text-green-600"
                         : "bg-background border-border text-muted-foreground hover:bg-accent")}>
@@ -398,7 +398,7 @@ function OptionButton({
       className={cn(
         "w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all",
         selected
-          ? "border-primary bg-primary/5 ring-1 ring-primary/40"
+          ? "border-primary bg-primary/5"
           : "border-border hover:border-primary/40 hover:bg-accent/30",
       )}
     >

@@ -11,9 +11,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Clock, FileQuestion, Loader2, Plus, Search } from "lucide-react";
+import { Clock, FileQuestion, Loader2, Plus, RotateCcw, Search } from "lucide-react";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { DifficultyBadge, QuizStatusBadge } from "./_shared";
@@ -156,6 +157,9 @@ export default function QuizListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-4">
             {pageItems.map((quiz) => {
               const progress = progressMap[quiz.id];
+              const used = progress?.attemptCount ?? 0;
+              const max = quiz.maxAttempts; // null → unlimited
+              const left = max != null ? Math.max(0, max - used) : null;
               return (
                 <Card
                   key={quiz.id}
@@ -169,11 +173,18 @@ export default function QuizListPage() {
                   {quiz.description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">{quiz.description}</p>
                   )}
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-auto">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-auto flex-wrap">
                     <span className="flex items-center gap-1"><FileQuestion className="size-3.5" />{quiz.totalQuestions} Q</span>
                     {quiz.timeLimitMinutes != null && (
                       <span className="flex items-center gap-1"><Clock className="size-3.5" />{quiz.timeLimitMinutes}m</span>
                     )}
+                    <span
+                      className={cn("flex items-center gap-1", max != null && left === 0 && "text-red-600 font-medium")}
+                      title="Your attempts (used / allowed)"
+                    >
+                      <RotateCcw className="size-3.5" />
+                      {max != null ? `${used}/${max} · ${left} left` : `${used} taken`}
+                    </span>
                     <DifficultyBadge level={quiz.difficultyLevel} />
                   </div>
                   {progress && (
