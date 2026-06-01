@@ -11,9 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,12 +64,12 @@ public class SudachiTokenizer implements AutoCloseable {
 
     @PostConstruct
     public void init() throws IOException {
-        URL dictUrl = resolveDictUrl();
-        // Use the modern Config API (preferred over the deprecated JSON-string overload).
-        Config config = Config.defaultConfig().systemDictionary(dictUrl);
+        Path dictPath = resolveDictPath();
+        // Use Path overload — avoids Windows URL path bug (/C:/... invalid on Windows).
+        Config config = Config.defaultConfig().systemDictionary(dictPath);
         dictionary = new DictionaryFactory().create(config);
         tokenizer  = dictionary.create();
-        log.info("Sudachi Core dictionary loaded: {}", dictUrl);
+        log.info("Sudachi Core dictionary loaded: {}", dictPath);
     }
 
     @PreDestroy
@@ -97,20 +101,27 @@ public class SudachiTokenizer implements AutoCloseable {
 
     // ── Dictionary resolution ──────────────────────────────────────────────────
 
-    private URL resolveDictUrl() throws IOException {
+    private Path resolveDictPath() throws IOException {
         // 1. Explicit path override (env SUDACHI_DICT_PATH or property).
         if (dictPathOverride != null && !dictPathOverride.isBlank()) {
             log.info("Sudachi: using configured dict path: {}", dictPathOverride);
-            return Paths.get(dictPathOverride).toUri().toURL();
+            return Paths.get(dictPathOverride);
         }
 
         // 2. Classpath resource placed by the Maven build (generate-resources phase).
-        //    getURL() works for both filesystem and fat-jar classpath — no temp extraction needed.
         ClassPathResource resource = new ClassPathResource(DICT_CLASSPATH);
         if (resource.exists()) {
-            URL url = resource.getURL();
-            log.debug("Sudachi: dict found at classpath URL: {}", url);
-            return url;
+            try {
+                // Running via 'mvnw spring-boot:run' or exploded deployment — file is on disk.
+                // Use getFile().toPath() NOT getURL() — URL.getPath() returns "/C:/..." on
+                // Windows (leading slash) which is invalid for java.nio.file.Path / Sudachi.
+                Path path = resource.getFile().toPath();
+                log.debug("Sudachi: dict found on filesystem: {}", path);
+                return path;
+            } catch (IOException ex) {
+                // Running inside a fat jar — extract to temp file.
+                return extractToTemp(resource);
+            }
         }
 
         // 3. Nothing found — give actionable error.
@@ -120,5 +131,19 @@ public class SudachiTokenizer implements AutoCloseable {
                 + "  ./mvnw generate-resources\n"
                 + "Hoặc set SUDACHI_DICT_PATH=/duong/dan/toi/system_core.dic trong .env"
         );
+    }
+
+    /**
+     * Extracts the classpath resource to a temp file for fat-jar deployment
+     * where {@code getFile()} is not available.
+     */
+    private Path extractToTemp(ClassPathResource resource) throws IOException {
+        File tmp = File.createTempFile("sudachi_system_core_", ".dic");
+        tmp.deleteOnExit();
+        try (InputStream in = resource.getInputStream()) {
+            Files.copy(in, tmp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+        log.info("Sudachi: dict extracted from jar to temp file: {}", tmp);
+        return tmp.toPath();
     }
 }

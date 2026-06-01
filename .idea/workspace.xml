@@ -5,31 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(game): add Kanji Radical game components and integrate game logic">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/backend.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/backend/backend.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/config/KuromojiConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorRegistry.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorSupport.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorSupport.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/GrammarDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/GrammarDetector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/ConditionalBaDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/ConditionalBaDetector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/NakerebaNaranaiDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/NakerebaNaranaiDetector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/TeShimauDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/TeShimauDetector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/YouniPurposeDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/YouniPurposeDetector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSpotterService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSpotterService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaWarmUp.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/ProductionSeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/ProductionSeeder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/RomajiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/RomajiService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/GrammarPointDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/GrammarPointDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/TranslationAnalysisService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/translate/TranslationAnalysisService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/SudachiTokenizer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/SudachiTokenizer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -289,6 +268,8 @@
       <workItem from="1780220722990" duration="7100000" />
       <workItem from="1780288203601" duration="74000" />
       <workItem from="1780288290905" duration="6445000" />
+      <workItem from="1780329301013" duration="164000" />
+      <workItem from="1780329573447" duration="1023000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -442,7 +423,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780253170901</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core">
+      <option name="closed" value="true" />
+      <created>1780328637631</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1780328637631</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -494,7 +483,8 @@
     <MESSAGE value="feat(grammar): update grading logic and thresholds for improved accuracy" />
     <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
     <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
+    <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
+    <option name="LAST_COMMIT_MESSAGE" value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

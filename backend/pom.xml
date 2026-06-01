@@ -277,12 +277,12 @@
                         <configuration>
                             <target>
                                 <mkdir dir="${project.build.outputDirectory}/sudachi"/>
-                                <!-- Only extract if the .dic file doesn't already exist -->
-                                <available file="${project.build.outputDirectory}/sudachi/system_core.dic"
-                                           property="sudachi.dict.present"/>
+                                <!-- Always extract — unzip is fast and idempotent (~0.2 s).
+                                     Ant <unzip> doesn't support the "unless" attribute; use
+                                     the overwrite="false" flag instead so existing file is kept. -->
                                 <unzip src="${project.basedir}/.sudachi-cache/sudachi-dictionary-core.zip"
                                        dest="${project.build.outputDirectory}/sudachi"
-                                       unless="sudachi.dict.present">
+                                       overwrite="false">
                                     <patternset>
                                         <!-- Pull out only the binary dictionary file -->
                                         <include name="**/*.dic"/>
