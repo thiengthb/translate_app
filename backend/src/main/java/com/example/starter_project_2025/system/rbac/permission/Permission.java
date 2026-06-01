@@ -31,9 +31,10 @@ import java.util.Set;
 @ResourcePermission("PERMISSION")
 @ResourceMenu(
         title = "Permissions",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "permissions",
         url = "/permissions",
+        description = "Fine-grained access rights assigned to roles.",
         order = 3,
         permission = "PERMISSION_READ"
 )

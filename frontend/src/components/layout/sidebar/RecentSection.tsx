@@ -44,8 +44,8 @@ export function RecentSection({
                 typography + primary-tinted icon. The right-side
                 clear-all button is the only visual difference, since
                 Recent has a list to manage and Pin doesn't. */}
-            <div className="flex items-center justify-between pr-1">
-                <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-2">
+                <SidebarGroupLabel className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 px-0">
                     <Clock size={11} className="text-primary" />
                     Recent
                 </SidebarGroupLabel>
@@ -54,7 +54,7 @@ export function RecentSection({
                         type="button"
                         onClick={onClearAll}
                         aria-label="Xóa tất cả mục gần đây"
-                        className="p-1 rounded text-muted-foreground/60 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="p-0.5 rounded text-muted-foreground/70 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
                     >
                         <X size={12} />
                     </button>

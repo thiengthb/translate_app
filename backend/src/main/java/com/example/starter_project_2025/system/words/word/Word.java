@@ -17,6 +17,9 @@ import org.hibernate.annotations.BatchSize;
 
 import java.util.List;
 
+// NOTE: Word KHÔNG dùng DataIO generic (@ImportEntity/@ExportEntity) vì cấu trúc
+// phức tạp (nhiều nghĩa đa ngôn ngữ + nhiều ví dụ). Import/export riêng nằm ở
+// WordDataIoService + DictionaryController (/api/dictionary/words/{export,import,template}).
 @Entity
 @Getter
 @Setter
@@ -26,7 +29,7 @@ import java.util.List;
 @Table(name = "words")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("WORD")
-@ResourceMenu(title = "Từ vựng", group = "Tiếng Nhật", icon = "book", url = "/words", order = 1)
+@ResourceMenu(title = "Vocabulary", group = "Language", icon = "book", url = "/words", order = 1, description = "Japanese vocabulary entries with readings and meanings.")
 @AutoCrud(path = "words")
 public class Word extends BaseEntity {
 

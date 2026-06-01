@@ -5,6 +5,7 @@ import {
     Sparkles, Trash2, AlertCircle, Languages,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { EmptyState } from "@/components/common/EmptyState";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type {
     WordSearchResult, WordSuggestion, DictionaryKanjiInfo,
@@ -16,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HandwritingInput } from "./HandwritingInput";
 import { VoiceInput } from "./VoiceInput";
 import { KanjiStrokeOrder } from "./KanjiStrokeOrder";
@@ -138,13 +138,6 @@ export default function DictionaryPage() {
     }, []);
 
     useEffect(() => {
-        setResults(null);
-        setKanjiResults(null);
-        setError(null);
-        setSearched("");
-    }, [searchMode]);
-
-    useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (wrapRef.current && !wrapRef.current.contains(e.target as Node))
                 setShowDrop(false);
@@ -165,6 +158,7 @@ export default function DictionaryPage() {
         const effectiveMode = mode ?? searchMode;
         if (!term) return;
         setShowDrop(false);
+        setShowSaved(false);
         setLoading(true);
         setError(null);
         setResults(null);
@@ -184,6 +178,19 @@ export default function DictionaryPage() {
             setLoading(false);
         }
     }, [query, searchMode]);
+
+    const switchMode = useCallback((newMode: SearchMode) => {
+        if (newMode === searchMode) return;
+        setSearchMode(newMode);
+        const term = searched || query.trim();
+        if (term) {
+            handleSearch(term, newMode);
+        } else {
+            setResults(null);
+            setKanjiResults(null);
+            setError(null);
+        }
+    }, [searchMode, query, searched, handleSearch]);
 
     const selectSuggestion = (s: WordSuggestion) => { setQuery(s.word); handleSearch(s.word); };
 
@@ -238,6 +245,60 @@ export default function DictionaryPage() {
         setSavedKanjis([]);
     };
 
+    // Đối chiếu mục "đã lưu" với server: bỏ những từ/kanji đã bị xóa (hoặc tắt
+    // hoạt động) khỏi localStorage. Lỗi mạng thì GIỮ NGUYÊN để không xóa nhầm.
+    const reconcileSaved = useCallback(async () => {
+        const words  = loadSavedWords();
+        const kanjis = loadSavedKanjis();
+        if (!words.length && !kanjis.length) return;
+
+        const wordChecks = await Promise.all(words.map(async (w) => {
+            try {
+                const res = await dictionaryApi.search(w.word, 50);
+                return res.find((r) => r.id === w.id) ?? null; // null = đã bị xóa → loại
+            } catch {
+                return w; // lỗi mạng → giữ lại bản cũ
+            }
+        }));
+        const liveWords = wordChecks.filter(Boolean) as WordSearchResult[];
+
+        const kanjiChecks = await Promise.all(kanjis.map(async (k) => {
+            try {
+                const res = await dictionaryApi.kanjiSearch(k.character, 10);
+                return res.find((r) => r.character === k.character) ?? null;
+            } catch {
+                return k;
+            }
+        }));
+        const liveKanjis = kanjiChecks.filter(Boolean) as DictionaryKanjiDetail[];
+
+        if (liveWords.length !== words.length) {
+            localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(liveWords));
+            setSavedWords(liveWords);
+        }
+        if (liveKanjis.length !== kanjis.length) {
+            localStorage.setItem(SAVED_KANJIS_KEY, JSON.stringify(liveKanjis));
+            setSavedKanjis(liveKanjis);
+        }
+    }, []);
+
+    // Mở/đóng mục "đã lưu". Khi mở: xóa kết quả tìm kiếm đang hiển thị để danh
+    // sách đã lưu hiện ra, đồng thời đối chiếu server loại các từ đã bị xóa.
+    const toggleSavedView = useCallback(() => {
+        setShowSaved((v) => {
+            const next = !v;
+            if (next) {
+                setResults(null);
+                setKanjiResults(null);
+                setSearched("");
+                setError(null);
+                setShowDrop(false);
+                void reconcileSaved();
+            }
+            return next;
+        });
+    }, [reconcileSaved]);
+
     const hasVocabResults = !loading && results !== null;
     const hasKanjiResults = !loading && kanjiResults !== null;
     const noResults = (hasVocabResults && results!.length === 0) || (hasKanjiResults && kanjiResults!.length === 0);
@@ -245,148 +306,174 @@ export default function DictionaryPage() {
 
     return (
         <MainLayout pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}>
-            <div className="w-full max-w-4xl mx-auto space-y-4">
+            <div className="w-full space-y-4">
 
-                {/* ── Hero / Search card ───────────────────────────── */}
-                <Card className="relative">
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/10 via-background to-background pointer-events-none" />
-                    <CardContent className="relative space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                                    <Book className="h-5 w-5 text-primary" />
-                                    Từ điển Nhật - Việt
-                                </h1>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
-                                </p>
-                            </div>
-                            <Button
-                                variant={showSaved ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setShowSaved((v) => !v)}
-                                className="gap-1.5 shrink-0"
-                            >
-                                <Bookmark className="h-4 w-4" />
-                                <span>Đã lưu</span>
-                                {totalSaved > 0 && (
-                                    <Badge variant={showSaved ? "secondary" : "default"} className="ml-0.5 px-1.5 h-4 text-[10px]">
-                                        {totalSaved}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </div>
+                {/* ── Search hero ───────────────────────────── */}
+                <div>
+                    <div className="relative rounded-2xl border bg-card shadow-sm overflow-visible">
+                        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+                        <div className="relative p-4 sm:p-5 space-y-3.5">
 
-                        {/* ── Search bar ── */}
-                        <div ref={wrapRef} className="relative">
-                            <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                                    <Input
-                                        ref={inputRef}
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        onKeyDown={onKeyDown}
-                                        onFocus={onFocus}
-                                        placeholder={
-                                            searchMode === "kanji"
-                                                ? "成人・seijin・học sinh..."
-                                                : "食べる・taberu・ăn・eat..."
-                                        }
-                                        className="pl-9"
-                                        autoFocus
-                                        autoComplete="off"
-                                    />
+                            {/* Title + saved toggle */}
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                        <Book className="h-[18px] w-[18px]" />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <h1 className="text-base sm:text-lg font-bold leading-tight text-foreground">
+                                            Từ điển Nhật - Việt
+                                        </h1>
+                                        <p className="hidden sm:block text-xs text-muted-foreground">
+                                            Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
+                                        </p>
+                                    </div>
                                 </div>
-                                <HandwritingInput onSelect={(char) => {
-                                    // Append the picked kanji to the existing query so users
-                                    // can compose multi-kanji words (e.g. 成 → 成人).
-                                    const next = query + char;
-                                    setQuery(next);
-                                    handleSearch(next);
-                                }} />
-                                <VoiceInput onSelect={(text) => { setQuery(text); handleSearch(text); }} />
                                 <Button
-                                    onClick={() => handleSearch()}
-                                    disabled={loading || !query.trim()}
-                                    className="shrink-0"
+                                    variant={showSaved ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={toggleSavedView}
+                                    className="gap-1.5 shrink-0"
                                 >
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Tìm"}
+                                    <Bookmark className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Đã lưu</span>
+                                    {totalSaved > 0 && (
+                                        <Badge variant={showSaved ? "secondary" : "default"} className="ml-0.5 px-1.5 h-4 text-[10px]">
+                                            {totalSaved}
+                                        </Badge>
+                                    )}
                                 </Button>
                             </div>
 
-                            {/* Dropdown */}
-                            {showDrop && dropItems.length > 0 && (
-                                <Card className="absolute left-0 right-0 top-full mt-2 z-50 py-0 overflow-hidden shadow-lg">
-                                    {dropMode === "history" ? (
-                                        <>
-                                            <div className="flex items-center justify-between px-4 py-2 border-b">
-                                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                                                    <Clock className="h-3.5 w-3.5" />
-                                                    Gần đây
-                                                </span>
-                                                <button
-                                                    onMouseDown={(e) => { e.preventDefault(); clearAllHistory(); }}
-                                                    className="text-xs text-primary hover:text-primary/80 font-medium"
-                                                >Xóa tất cả</button>
-                                            </div>
-                                            {history.map((term, i) => (
-                                                <HistoryRow key={term} term={term} active={i === activeIdx}
-                                                    onSelect={() => { setQuery(term); handleSearch(term); }}
-                                                    onRemove={() => removeHistoryItem(term)}
-                                                    onHover={() => setActiveIdx(i)} />
-                                            ))}
-                                        </>
-                                    ) : (
-                                        suggestions.map((s, i) => (
-                                            <SuggestionItem key={s.id} suggestion={s} active={i === activeIdx}
-                                                onSelect={() => selectSuggestion(s)} onHover={() => setActiveIdx(i)} />
-                                        ))
-                                    )}
-                                </Card>
-                            )}
-                        </div>
+                            {/* ── Search bar ── */}
+                            <div ref={wrapRef} className="relative">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground pointer-events-none" />
+                                        <Input
+                                            ref={inputRef}
+                                            value={query}
+                                            onChange={(e) => setQuery(e.target.value)}
+                                            onKeyDown={onKeyDown}
+                                            onFocus={onFocus}
+                                            placeholder={
+                                                searchMode === "kanji"
+                                                    ? "成人・seijin・học sinh..."
+                                                    : "食べる・taberu・ăn・eat..."
+                                            }
+                                            className="h-11 pl-10 pr-3 text-base rounded-xl bg-background"
+                                            autoFocus
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                    <HandwritingInput onSelect={(char) => {
+                                        // Append the picked kanji to the existing query so users
+                                        // can compose multi-kanji words (e.g. 成 → 成人).
+                                        const next = query + char;
+                                        setQuery(next);
+                                        handleSearch(next);
+                                    }} />
+                                    <VoiceInput onSelect={(text) => { setQuery(text); handleSearch(text); }} />
+                                    <Button
+                                        onClick={() => handleSearch()}
+                                        disabled={loading || !query.trim()}
+                                        className="h-11 px-4 sm:px-5 rounded-xl shrink-0"
+                                    >
+                                        {loading ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Search className="h-4 w-4 sm:hidden" />
+                                                <span className="hidden sm:inline">Tìm</span>
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
 
-                        {/* ── Mode tabs ── */}
-                        <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as SearchMode)}>
-                            <TabsList className="grid w-full max-w-xs grid-cols-2 mx-auto">
-                                <TabsTrigger value="vocabulary" className="gap-1.5">
-                                    <BookOpen className="h-3.5 w-3.5" />
-                                    Từ vựng
-                                </TabsTrigger>
-                                <TabsTrigger value="kanji" className="gap-1.5">
-                                    <span className="font-black text-sm leading-none">漢</span>
-                                    Kanji
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-                        {/* Result count */}
-                        {searched && (
-                            <div className="flex items-center gap-2 pt-1">
-                                <Separator className="flex-1" />
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {loading ? (
-                                        <span className="flex items-center gap-1.5">
-                                            <Loader2 className="h-3 w-3 animate-spin" />Đang tìm...
-                                        </span>
-                                    ) : noResults ? (
-                                        <>Không tìm thấy <span className="font-semibold text-foreground">「{searched}」</span></>
-                                    ) : (
-                                        <>
-                                            <span className="font-semibold text-foreground">
-                                                {results?.length ?? kanjiResults?.length ?? 0}
-                                            </span>{" "}
-                                            {searchMode === "kanji" ? "kanji" : "kết quả"} cho{" "}
-                                            <span className="font-semibold text-foreground">「{searched}」</span>
-                                        </>
-                                    )}
-                                </span>
-                                <Separator className="flex-1" />
+                                {/* Dropdown */}
+                                {showDrop && dropItems.length > 0 && (
+                                    <Card className="absolute left-0 right-0 top-full mt-2 z-50 py-0 overflow-hidden shadow-lg">
+                                        {dropMode === "history" ? (
+                                            <>
+                                                <div className="flex items-center justify-between px-4 py-2 border-b">
+                                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                                                        <Clock className="h-3.5 w-3.5" />
+                                                        Gần đây
+                                                    </span>
+                                                    <button
+                                                        onMouseDown={(e) => { e.preventDefault(); clearAllHistory(); }}
+                                                        className="text-xs text-primary hover:text-primary/80 font-medium"
+                                                    >Xóa tất cả</button>
+                                                </div>
+                                                {history.map((term, i) => (
+                                                    <HistoryRow key={term} term={term} active={i === activeIdx}
+                                                        onSelect={() => { setQuery(term); handleSearch(term); }}
+                                                        onRemove={() => removeHistoryItem(term)}
+                                                        onHover={() => setActiveIdx(i)} />
+                                                ))}
+                                            </>
+                                        ) : (
+                                            suggestions.map((s, i) => (
+                                                <SuggestionItem key={s.id} suggestion={s} active={i === activeIdx}
+                                                    onSelect={() => selectSuggestion(s)} onHover={() => setActiveIdx(i)} />
+                                            ))
+                                        )}
+                                    </Card>
+                                )}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+
+                            {/* ── Mode pills + result count ── */}
+                            <div className="relative flex items-center justify-center gap-2 flex-wrap">
+                                <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode("vocabulary")}
+                                        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+                                            searchMode === "vocabulary"
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                    >
+                                        <BookOpen className="h-3.5 w-3.5" />
+                                        Từ vựng
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode("kanji")}
+                                        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
+                                            searchMode === "kanji"
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                    >
+                                        <span className="font-black text-sm leading-none">漢</span>
+                                        Kanji
+                                    </button>
+                                </div>
+
+                                {searched && (
+                                    <span className="text-xs text-muted-foreground sm:absolute sm:right-0">
+                                        {loading ? (
+                                            <span className="flex items-center gap-1.5">
+                                                <Loader2 className="h-3 w-3 animate-spin" />Đang tìm…
+                                            </span>
+                                        ) : noResults ? (
+                                            <>Không tìm thấy <span className="font-semibold text-foreground">「{searched}」</span></>
+                                        ) : (
+                                            <>
+                                                <span className="font-semibold text-foreground">
+                                                    {results?.length ?? kanjiResults?.length ?? 0}
+                                                </span>{" "}
+                                                {searchMode === "kanji" ? "kanji" : "kết quả"} cho{" "}
+                                                <span className="font-semibold text-foreground">「{searched}」</span>
+                                            </>
+                                        )}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* ── Error ── */}
                 {error && (
@@ -422,7 +509,7 @@ export default function DictionaryPage() {
                 )}
 
                 {/* ── Saved section ── */}
-                {showSaved && !searched && !loading && (
+                {showSaved && !loading && (
                     <SavedSection
                         savedWords={savedWords}
                         savedKanjis={savedKanjis}
@@ -435,7 +522,7 @@ export default function DictionaryPage() {
                 )}
 
                 {/* ── Featured ── */}
-                {!loading && featured && !showSaved && !searched && (
+                {!loading && featured && !showSaved && (
                     <FeaturedSection
                         featured={featured}
                         onWordClick={quickSearch}
@@ -449,17 +536,16 @@ export default function DictionaryPage() {
 
                 {/* ── No results ── */}
                 {!loading && noResults && (
-                    <Card>
-                        <CardContent className="flex flex-col items-center py-10 gap-2">
-                            <Search className="h-10 w-10 text-muted-foreground/30" />
-                            <p className="font-semibold text-foreground">Không tìm thấy kết quả</p>
-                            <p className="text-xs text-muted-foreground text-center max-w-xs">
-                                {searchMode === "kanji"
-                                    ? "Thử nhập từ vựng, kanji, kana hoặc romaji"
-                                    : "Thử nhập kanji, kana, romaji hoặc nghĩa tiếng Việt"}
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        className="py-10"
+                        icon={<Search className="size-7" />}
+                        title="Không tìm thấy kết quả"
+                        description={
+                            searchMode === "kanji"
+                                ? "Thử nhập từ vựng, kanji, kana hoặc romaji"
+                                : "Thử nhập kanji, kana, romaji hoặc nghĩa tiếng Việt"
+                        }
+                    />
                 )}
             </div>
         </MainLayout>
@@ -587,8 +673,7 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
     };
 
     return (
-        <Card className={`overflow-hidden gap-0 py-0 border-l-4 transition-shadow hover:shadow-md ${jlpt ? jlpt.accent : "border-l-border"}`}>
-            {jlpt && <div className={`h-1 ${jlpt.bar}`} />}
+        <Card className="overflow-hidden gap-0 py-0 transition-shadow hover:shadow-md">
 
             {/* Header */}
             <div className="px-5 py-4">
@@ -760,8 +845,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
     const [showBreakdown,   setShowBreakdown]   = useState(false);
 
     return (
-        <Card className={`overflow-hidden gap-0 py-0 border-l-4 transition-shadow hover:shadow-md ${jlpt ? jlpt.accent : "border-l-border"}`}>
-            {jlpt && <div className={`h-1.5 ${jlpt.bar}`} />}
+        <Card className="overflow-hidden gap-0 py-0 transition-shadow hover:shadow-md">
 
             {/* Hero */}
             <div className="relative px-6 py-5 overflow-hidden">
@@ -821,7 +905,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                                 </Badge>
                                 <div className="flex flex-wrap gap-1.5">
                                     {onyomiList.map((r) => (
-                                        <span key={r} className="text-sm font-semibold px-2.5 py-1 rounded-md bg-orange-500/10 text-orange-700 dark:text-orange-300 border border-orange-500/20">
+                                        <span key={r} className="text-base font-semibold px-2.5 py-1 rounded-md bg-orange-500/10 text-orange-700 dark:text-orange-300 border border-orange-500/20">
                                             {r}
                                         </span>
                                     ))}
@@ -835,7 +919,7 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                                 </Badge>
                                 <div className="flex flex-wrap gap-1.5">
                                     {kunyomiList.map((r) => (
-                                        <span key={r} className="text-sm font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                                        <span key={r} className="text-base font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
                                             {r}
                                         </span>
                                     ))}
@@ -1264,15 +1348,16 @@ function SavedSection({
 }) {
     if (savedWords.length === 0 && savedKanjis.length === 0) {
         return (
-            <Card>
-                <CardContent className="flex flex-col items-center py-12 gap-3">
-                    <Bookmark className="h-9 w-9 text-muted-foreground/30" />
-                    <p className="font-semibold text-foreground">Chưa có từ nào được lưu</p>
-                    <p className="text-xs text-muted-foreground text-center max-w-xs">
+            <EmptyState
+                className="py-12"
+                icon={<Bookmark className="size-7" />}
+                title="Chưa có từ nào được lưu"
+                description={
+                    <>
                         Nhấn nút <Bookmark className="inline h-3 w-3 mx-0.5 align-middle" /> trên kết quả tìm kiếm để bookmark từ yêu thích
-                    </p>
-                </CardContent>
-            </Card>
+                    </>
+                }
+            />
         );
     }
 

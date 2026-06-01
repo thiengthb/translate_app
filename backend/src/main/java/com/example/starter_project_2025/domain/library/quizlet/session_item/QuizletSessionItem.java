@@ -26,8 +26,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Session Items",
         group = "Quizlet",
-        icon = "list-checks",
+        icon = "clipboard-check",
         url = "/quizlet/session-items",
+        description = "Individual items within a Quizlet study session.",
         order = 3,
         permission = "QUIZLET_SESSION_ITEM_READ"
 )

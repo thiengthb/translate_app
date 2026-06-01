@@ -11,15 +11,19 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
-  Brain,
-  ChevronLeft,
   Download,
+  Eye,
   Heart,
   Loader2,
+  User,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import { RevealMore } from "@/components/common/RevealMore";
+import { EmptyState } from "@/components/common/EmptyState";
+
+const CARDS_INITIAL_VISIBLE = 30;
 
 interface PreviewCard {
   orderIndex: number;
@@ -38,8 +42,10 @@ export default function DeckPreviewPage() {
   const [cards, setCards] = useState<PreviewCard[]>([]);
   const [favorite, setFavorite] = useState<FavoriteDeckDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [togglingFav, setTogglingFav] = useState(false);
+  const [visibleCards, setVisibleCards] = useState(CARDS_INITIAL_VISIBLE);
 
   /* ── Bump view count once when this preview opens ── */
   useEffect(() => {
@@ -52,6 +58,7 @@ export default function DeckPreviewPage() {
     if (!deckId) return;
     let cancelled = false;
     setLoading(true);
+    setVisibleCards(CARDS_INITIAL_VISIBLE);
 
     (async () => {
       try {
@@ -100,8 +107,12 @@ export default function DeckPreviewPage() {
             /* non-fatal */
           }
         }
-      } catch {
-        if (!cancelled) toast.error("Failed to load deck preview.");
+      } catch (err: any) {
+        if (!cancelled) {
+          const status = err?.response?.status ?? err?.status;
+          if (status === 403 || status === 401) setAccessDenied(true);
+          else toast.error("Không thể tải xem trước deck.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -117,8 +128,6 @@ export default function DeckPreviewPage() {
     () => deck != null && deck.userId != null && deck.userId === currentUserId,
     [deck, currentUserId]
   );
-  const isAnki = deck?.studyMode === "ANKI";
-
   /* ── Actions ── */
   const handleClone = async () => {
     if (!deck?.id) return;
@@ -126,13 +135,10 @@ export default function DeckPreviewPage() {
     try {
       const cloned = await deckApi.clone(deck.id);
       toast.success(`Saved "${cloned.title}" to your library.`);
-      // Navigate into the cloned deck — user can study it right away
+      // Navigate into the cloned deck — the unified study screen lets the user
+      // pick any mode (it defaults to the deck's recommended one).
       if (cloned.id) {
-        navigate(
-          cloned.studyMode === "ANKI"
-            ? `/deck/${cloned.id}/anki`
-            : `/deck/${cloned.id}`
-        );
+        navigate(`/deck/${cloned.id}`);
       } else {
         navigate("/library");
       }
@@ -163,53 +169,34 @@ export default function DeckPreviewPage() {
   /* ── Render ── */
   return (
     <MainLayout
-      pathName={{
-        "/community": "Community",
-        [`/deck/${deckId}/preview`]: deck?.title ?? "Deck preview",
-      }}
+      parentCrumb={{ href: "/community", title: "Shared" }}
+      ignorePaths={["deck", String(deckId)]}
+      pathName={{ [`/deck/${deckId}/preview`]: deck?.title ?? "Preview" }}
     >
-      <div className="max-w-4xl mx-auto w-full pb-16 space-y-6 pt-2">
-
-        {/* Back link */}
-        <button
-          onClick={() => navigate("/community")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="size-4" />
-          Back to community
-        </button>
+      <div className="w-full pb-16 space-y-6 pt-2">
 
         {loading ? (
           <div className="flex items-center justify-center h-60">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
+        ) : accessDenied ? (
+          <EmptyState
+            className="h-60"
+            icon={<Users className="size-7" />}
+            title="Bộ thẻ này là riêng tư"
+            description="Chủ sở hữu đã đặt bộ thẻ này ở chế độ riêng tư và không thể xem được."
+          />
         ) : !deck ? (
-          <div className="flex items-center justify-center h-60 text-muted-foreground text-sm">
-            Deck not found.
-          </div>
+          <EmptyState className="h-60" title="Deck not found." />
         ) : (
           <>
             {/* ── Deck header ── */}
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-              <div
-                className={cn(
-                  "h-28 bg-linear-to-br relative",
-                  isAnki
-                    ? "from-indigo-500 to-blue-600"
-                    : "from-violet-500 to-purple-600"
-                )}
-              >
+              <div className="relative h-28 bg-linear-to-br from-violet-500 to-purple-600">
                 <div className="absolute -top-5 -right-5 size-24 rounded-full bg-white/10" />
                 <div className="absolute -bottom-3 left-8 size-14 rounded-full bg-black/10" />
-                <span className="absolute top-3 left-5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-                  {isAnki ? "ANKI" : "QUIZLET"}
-                </span>
                 <div className="absolute bottom-3 left-5 size-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                  {isAnki ? (
-                    <Brain className="size-6 text-white" />
-                  ) : (
-                    <BookOpen className="size-6 text-white" />
-                  )}
+                  <BookOpen className="size-6 text-white" />
                 </div>
               </div>
 
@@ -226,33 +213,43 @@ export default function DeckPreviewPage() {
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="size-3.5" />
-                    Shared by community
-                  </span>
+                  {deck.ownerIsAdmin || !deck.ownerName ? (
+                    <span className="flex items-center gap-1">
+                      <Users className="size-3.5" />
+                      Shared by community
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <User className="size-3.5" />
+                      Shared by {deck.ownerName}
+                    </span>
+                  )}
                   <span>·</span>
                   <span className="font-medium">
                     {cards.length} {cards.length === 1 ? "card" : "cards"}
                   </span>
-                  {deck.sourceLanguage && deck.targetLanguage && (
-                    <>
-                      <span>·</span>
-                      <span className="font-mono uppercase text-[10px]">
-                        {deck.sourceLanguage} → {deck.targetLanguage}
-                      </span>
-                    </>
-                  )}
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt xem">
+                    <Eye className="size-3.5" />
+                    {deck.viewCount ?? 0}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt thích">
+                    <Heart className="size-3.5" />
+                    {deck.favoriteCount ?? 0}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1" title="Lượt tải">
+                    <Download className="size-3.5" />
+                    {deck.cloneCount ?? 0}
+                  </span>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                   {isOwnDeck ? (
                     <button
-                      onClick={() =>
-                        navigate(
-                          isAnki ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`
-                        )
-                      }
+                      onClick={() => navigate(`/deck/${deck.id}`)}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
                       <BookOpen className="size-4" />
@@ -298,46 +295,46 @@ export default function DeckPreviewPage() {
                     </button>
                   )}
                 </div>
-
-                {!isOwnDeck && (
-                  <p className="text-[11px] text-muted-foreground/80 pt-1">
-                    Save this deck to your library to start studying with it.
-                  </p>
-                )}
               </div>
             </div>
 
-            {/* ── Card list ── */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {cards.length} {cards.length === 1 ? "Card" : "Cards"} in this deck
-                </h2>
-              </div>
+            {/* ── Card list — mirrors My Library's flashcard "Terms in this set" ── */}
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                Terms in this set ({cards.length})
+              </h2>
 
               {cards.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                   This deck has no cards yet.
                 </div>
               ) : (
-                <ul className="space-y-2">
-                  <AnimatePresence initial={false}>
-                    {cards.map((entry, i) => (
-                      <motion.li
-                        key={entry.flashcard.id ?? i}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{
-                          duration: 0.15,
-                          delay: Math.min(i * 0.02, 0.2),
-                        }}
-                      >
-                        <PreviewCardRow index={i + 1} card={entry.flashcard} />
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
-                </ul>
+                <>
+                  <div className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {cards.slice(0, visibleCards).map((entry, i) => (
+                        <motion.div
+                          key={entry.flashcard.id ?? i}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{
+                            duration: 0.15,
+                            delay: Math.min((i % 30) * 0.02, 0.2),
+                          }}
+                        >
+                          <PreviewCardRow index={i + 1} card={entry.flashcard} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  <RevealMore
+                    total={cards.length}
+                    visibleCount={visibleCards}
+                    onChange={setVisibleCards}
+                  />
+                </>
               )}
             </div>
           </>
@@ -348,7 +345,8 @@ export default function DeckPreviewPage() {
 }
 
 /* ─────────────────────────────────────────
-   One preview row (front / back side-by-side)
+   One preview row — same numbered front/back grid as the
+   "Terms in this set" list in My Library's flashcard study view.
 ───────────────────────────────────────── */
 function PreviewCardRow({
   index,
@@ -359,94 +357,45 @@ function PreviewCardRow({
 }) {
   const frontText = useMemo(() => sideText(card, "FRONT"), [card]);
   const backText = useMemo(() => sideText(card, "BACK"), [card]);
-  const frontImages = useMemo(() => sideMedia(card, "FRONT", "IMAGE"), [card]);
-  const backImages = useMemo(() => sideMedia(card, "BACK", "IMAGE"), [card]);
 
   return (
-    <div className="rounded-xl border border-border bg-card hover:border-foreground/20 hover:shadow-sm transition-all overflow-hidden">
-      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
-        {/* Front */}
-        <div className="p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-              Front
-            </span>
-            <span className="text-[10px] text-muted-foreground/70">
-              #{index}
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {frontText.length > 0 ? (
-              frontText.map((line, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    "leading-snug text-foreground",
-                    i === 0
-                      ? "text-base font-semibold"
-                      : "text-sm text-foreground/80"
-                  )}
-                >
-                  {line}
-                </p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground/60 italic">(empty)</p>
-            )}
-            {frontImages.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {frontImages.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    className="max-h-20 rounded-md border border-border object-contain"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Back */}
-        <div className="p-4 space-y-2 bg-muted/20">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-              Back
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            {backText.length > 0 ? (
-              backText.map((line, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    "leading-snug text-foreground",
-                    i === 0
-                      ? "text-base font-semibold"
-                      : "text-sm text-foreground/80"
-                  )}
-                >
-                  {line}
-                </p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground/60 italic">(empty)</p>
-            )}
-            {backImages.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {backImages.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    className="max-h-20 rounded-md border border-border object-contain"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="grid grid-cols-[32px_1fr_1fr] gap-px overflow-hidden rounded-xl border border-border bg-border">
+      <div className="flex select-none items-center justify-center bg-muted/50 text-xs font-semibold text-muted-foreground">
+        {index}
+      </div>
+      <div className="bg-card px-5 py-4">
+        {frontText.length > 0 ? (
+          frontText.map((t, j) => (
+            <p
+              key={j}
+              className={cn(
+                "leading-snug text-foreground",
+                j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+              )}
+            >
+              {t}
+            </p>
+          ))
+        ) : (
+          <p className="text-sm italic text-muted-foreground/60">(empty)</p>
+        )}
+      </div>
+      <div className="bg-card px-5 py-4">
+        {backText.length > 0 ? (
+          backText.map((t, j) => (
+            <p
+              key={j}
+              className={cn(
+                "leading-snug text-foreground",
+                j === 0 ? "text-sm font-semibold" : "text-xs text-foreground/70"
+              )}
+            >
+              {t}
+            </p>
+          ))
+        ) : (
+          <p className="text-sm italic text-muted-foreground/60">(empty)</p>
+        )}
       </div>
     </div>
   );
@@ -466,17 +415,4 @@ function sideText(card: FlashcardDTO, side: "FRONT" | "BACK"): string[] {
   }
   const legacy = side === "FRONT" ? card.front : card.back;
   return legacy ? legacy.split("\n").filter(Boolean) : [];
-}
-
-function sideMedia(
-  card: FlashcardDTO,
-  side: "FRONT" | "BACK",
-  type: "IMAGE" | "AUDIO" | "VIDEO"
-): string[] {
-  const found = card.sides?.find((s) => s.side === side);
-  if (!found?.contents) return [];
-  return found.contents
-    .filter((c) => c.contentType === type)
-    .map((c) => c.contentValue)
-    .filter(Boolean) as string[];
 }

@@ -23,6 +23,7 @@ import lombok.experimental.SuperBuilder;
         group = "Anki SRS",
         icon = "cpu",
         url = "/anki/algorithm-configs",
+        description = "Spaced-repetition algorithm presets.",
         order = 5,
         permission = "SRS_ALGORITHM_CONFIG_READ"
 )

@@ -1,7 +1,8 @@
 import { format } from "date-fns";
 import { UserPlus } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Badge } from "@/components/ui/badge";
 import { formatRoleLabel } from "@/utils/rbac.utils";
 import type { RecentUser } from "@/types/features/dashboard";
@@ -16,9 +17,8 @@ export function RecentUsersList({ users }: Props) {
             <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                     <UserPlus size={16} className="text-primary" />
-                    Người dùng mới
+                    <InfoLabel title="Người dùng mới" info="10 tài khoản đăng ký gần nhất" />
                 </CardTitle>
-                <CardDescription>10 tài khoản đăng ký gần nhất</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 {users.length === 0 ? (

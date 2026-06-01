@@ -3,7 +3,6 @@ package com.example.starter_project_2025.domain.library.favorite_deck;
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.domain.library.deck.Deck;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.persistence.*;
@@ -20,14 +19,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "favorite_decks", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "deck_id"}))
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("FAVORITE_DECK")
-@ResourceMenu(
-        title = "Favorite Decks",
-        group = "Library",
-        icon = "star",
-        url = "/favorite-decks",
-        order = 6,
-        permission = "FAVORITE_DECK_READ"
-)
 @EntityLabel(name = "Favorite Deck", plural = "Favorite Decks", description = "User favorite deck management")
 @AutoCrud(path = "favorite-decks")
 @Filterable(fields = {"isActive"})

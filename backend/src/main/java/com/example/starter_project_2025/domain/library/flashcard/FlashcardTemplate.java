@@ -21,13 +21,23 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("FLASHCARD_TEMPLATE")
 @Searchable(fields = {"name", "description"})
-@Filterable(fields = {"cardType", "isSystem", "isDefault"})
+@Filterable(fields = {"cardType", "isSystem", "isDefault", "visibility", "userId", "deckId"})
 @AutoCrud(path = "flashcard-templates")
 @SoftDelete
 public class FlashcardTemplate extends BaseEntity {
 
     @Column(name = "user_id")
     Long userId;
+
+    /**
+     * When non-null, this template is a DECK-LOCAL copy owned by that deck
+     * (created when a deck's rendering is edited) and is hidden from the
+     * reusable library. When null, it is a shared master / system template that
+     * may be reused across decks — editing a deck that links to it must fork a
+     * local copy instead of mutating the master.
+     */
+    @Column(name = "deck_id")
+    Long deckId;
 
     @Column(name = "card_type", length = 50)
     String cardType;
@@ -57,4 +67,9 @@ public class FlashcardTemplate extends BaseEntity {
     @Builder.Default
     @Column(name = "is_default", nullable = false)
     boolean isDefault = false;
+
+    /** PUBLIC templates are shareable to the community; PRIVATE are owner-only. */
+    @Builder.Default
+    @Column(length = 20)
+    String visibility = "PRIVATE";
 }

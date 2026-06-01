@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ChevronsDownUp, ChevronsUpDown, Search as SearchIcon } from "lucide-react";
 
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { Button } from "@/components/ui/button";
 
 import {
     Sidebar,
@@ -21,13 +22,14 @@ import { PinnedSection } from "./PinnedSection";
 import { RecentSection } from "./RecentSection";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { SidebarBranding } from "./SidebarBranding";
-import { SidebarFooterPanel } from "./SidebarFooterPanel";
 import { SidebarSearch } from "./SidebarSearch";
+import { SidebarSettings } from "./SidebarSettings";
 import type { SidebarNavGroup, SidebarNavItem } from "./types";
 
 import { useFilteredNavGroups } from "./hooks/useFilteredNavGroups";
 import { useGroupCollapseState } from "./hooks/useGroupCollapseState";
 import { useSidebarFavorites } from "./hooks/useSidebarFavorites";
+import { useSidebarPreferences } from "./hooks/useSidebarPreferences";
 import { useSidebarRecent } from "./hooks/useSidebarRecent";
 
 /**
@@ -48,18 +50,13 @@ import { useSidebarRecent } from "./hooks/useSidebarRecent";
  *   │ [Avatar] User  🌗 ⟨      │ ← footer
  *   └──────────────────────────┘
  */
-interface SidebarMenuProps {
-    /** Forwarded down to SidebarFooterPanel so the avatar dropdown's
-     *  "Phím tắt" entry hits the same global dialog the header opens. */
-    onOpenShortcuts?: () => void;
-}
-
-export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
+export function SidebarMenu() {
     const location = useLocation();
     const { state } = useSidebar();
     const isCollapsed = state !== "expanded";
 
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const { preferences, setPreference } = useSidebarPreferences();
     const { isFavorite, toggle: toggleFavorite } = useSidebarFavorites();
     const {
         isOpen: isGroupOpen,
@@ -175,8 +172,10 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                                 : ChevronsUpDown;
                             return (
                                 <TooltipWrapper content={nextLabel}>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="default"
+                                        size="icon"
                                         onClick={() =>
                                             setAllGroups(
                                                 navGroups.map((g) => g.name),
@@ -184,10 +183,10 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                                             )
                                         }
                                         aria-label={nextLabel}
-                                        className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+                                        className="shrink-0 h-7 w-7"
                                     >
                                         <Icon size={14} />
-                                    </button>
+                                    </Button>
                                 </TooltipWrapper>
                             );
                         })()
@@ -195,30 +194,34 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                 />
 
                 <ScrollHintContainer>
-                    {showSecondarySections && favoriteItems.length > 0 && (
-                        <>
-                            <PinnedSection
-                                items={favoriteItems}
-                                favoriteFor={favoriteFor}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showPinned &&
+                        favoriteItems.length > 0 && (
+                            <>
+                                <PinnedSection
+                                    items={favoriteItems}
+                                    favoriteFor={favoriteFor}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
-                    {showSecondarySections && recentItems.length > 0 && (
-                        <>
-                            <RecentSection
-                                items={recentItems}
-                                onRemoveItem={removeRecentItem}
-                                onClearAll={clearRecentAll}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showRecent &&
+                        recentItems.length > 0 && (
+                            <>
+                                <RecentSection
+                                    items={recentItems}
+                                    onRemoveItem={removeRecentItem}
+                                    onClearAll={clearRecentAll}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
                     {isSearching && !hasSearchResults && !isCollapsed && (
                         <div className="px-4 py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
@@ -269,7 +272,10 @@ export function SidebarMenu({ onOpenShortcuts }: SidebarMenuProps = {}) {
                 </ScrollHintContainer>
             </SidebarContent>
 
-            <SidebarFooterPanel onOpenShortcuts={onOpenShortcuts} />
+            <SidebarSettings
+                preferences={preferences}
+                setPreference={setPreference}
+            />
         </Sidebar>
     );
 }

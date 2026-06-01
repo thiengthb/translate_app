@@ -25,8 +25,9 @@ import java.time.LocalDateTime;
 @ResourceMenu(
         title = "Study Sessions",
         group = "Quizlet",
-        icon = "play-circle",
+        icon = "play",
         url = "/quizlet/sessions",
+        description = "Quizlet study sessions per user.",
         order = 2,
         permission = "QUIZLET_STUDY_SESSION_READ"
 )

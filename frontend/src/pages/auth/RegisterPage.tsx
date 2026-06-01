@@ -42,14 +42,14 @@ export default function RegisterPage() {
 
     return (
         <GuestLayout>
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-center justify-center px-4 py-8">
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.0, ease: "easeOut" }}
-                className="max-w-md w-full border rounded-xl shadow-lg p-8 bg-card text-card-foreground"
+                className="max-w-md w-full border rounded-2xl shadow-lg p-6 sm:p-8 bg-card text-card-foreground"
             >
-                <div className="space-y-2 text-center mb-8">
+                <div className="space-y-2 text-center mb-6">
                     <h2 className="text-3xl font-bold tracking-tight">{t("auth.register.title")}</h2>
                     <p className="text-sm text-muted-foreground">{t("auth.register.subtitle")}</p>
                 </div>

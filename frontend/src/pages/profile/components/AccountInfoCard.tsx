@@ -1,6 +1,7 @@
 import { BadgeCheck, CalendarDays, Hash, IdCard, Shield } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/contexts/I18nContext";
@@ -16,15 +17,14 @@ export function AccountInfoCard({ profile }: Props) {
     const { t } = useTranslation();
     const fmt = useFormat();
     return (
-        <Card>
-            <CardHeader className="pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0">
                 <CardTitle className="text-base flex items-center gap-2">
                     <IdCard size={16} className="text-primary" />
-                    {t("profile.account.title")}
+                    <InfoLabel title={t("profile.account.title")} info={t("profile.account.description")} />
                 </CardTitle>
-                <CardDescription>{t("profile.account.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="px-4 space-y-2.5">
                 <InfoRow icon={<Hash size={14} />} label={t("profile.account.id")}>
                     <span className="font-mono text-foreground">#{profile?.id}</span>
                 </InfoRow>

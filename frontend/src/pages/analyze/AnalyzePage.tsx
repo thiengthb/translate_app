@@ -60,7 +60,7 @@ export default function AnalyzePage() {
 
   return (
     <MainLayout pathName={{ "/analyze": "Phân tích câu" }}>
-      <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
+      <div className="w-full flex flex-col gap-6">
         <Card className="p-6 gap-4">
           <div>
             <h1 className="text-xl font-semibold">Phân tích câu tiếng Nhật</h1>

@@ -32,9 +32,10 @@ import java.util.Set;
 @ResourcePermission("USER")
 @ResourceMenu(
         title = "Users",
-        group = "RBAC Management",
+        group = "RBAC",
         icon = "users",
         url = "/users",
+        description = "Manage user accounts, roles and account status.",
         order = 1,
         permission = "USER_READ"
 )
@@ -50,6 +51,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @ImportHash
     @ImportField(name = "Password", required = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     String passwordHash;
 
     @Column(nullable = false, length = 100)
@@ -77,6 +79,7 @@ public class User extends BaseEntity {
 
     /** Base32-encoded TOTP secret. Null until the user enrolls in 2FA. */
     @Column(length = 64)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     String totpSecret;
 
     /**
@@ -95,6 +98,19 @@ public class User extends BaseEntity {
                 joinColumns = @JoinColumn(name = "user_id"),
                 inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<Role> roles = new HashSet<>();
+
+    /**
+     * Gamification balances. Primitive {@code long} (not {@code Long}) so the
+     * MapStruct AutoCrud create path — which builds via the no-arg constructor
+     * and null-guards boxed setters — leaves these at 0 instead of null.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    long exp = 0L;
+
+    @Builder.Default
+    @Column(nullable = false)
+    long coins = 0L;
 
     public String getFullName() {
         return firstName + (lastName != null ? " " + lastName : "");

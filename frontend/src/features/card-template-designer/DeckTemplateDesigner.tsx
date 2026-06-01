@@ -22,6 +22,8 @@ import {
   AlignRight,
   Bold,
   ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
   ChevronUp,
   Code2,
   Columns2,
@@ -38,13 +40,18 @@ import {
   RotateCcw,
   Rows3,
   Save,
-  Trash2,
   Type,
   Underline,
   Video,
   X,
 } from "lucide-react";
-import { useMemo, useState, type PointerEvent } from "react";
+import { createContext, useContext, useMemo, useState, type PointerEvent } from "react";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { InfoLabel } from "@/components/common/InfoLabel";
+
+/** Drives every Section's initial open state for the "expand/collapse all"
+ *  control. `null` = each Section keeps its own default. */
+const SectionOpenContext = createContext<boolean | null>(null);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +67,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { DEFAULT_CUSTOM_COLORS } from "./presets";
+import { COLOR_PRESETS } from "@/lib/color-presets";
 import type {
   AvailableTemplateField,
   CardTemplateBlock,
@@ -70,7 +77,6 @@ import type {
   FuriganaMode,
   TemplateLayoutMode,
   TemplateSide,
-  TemplateTheme,
 } from "./types";
 
 export interface TemplateDraftFields {
@@ -94,6 +100,8 @@ interface DeckTemplateDesignerProps {
   removing: boolean;
   hasTemplate: boolean;
   hasSampleCard: boolean;
+  /** When explicitly `false`, the Save button is disabled (nothing changed). */
+  dirty?: boolean;
   onDraftChange: (draft: TemplateDraftFields) => void;
   onBuilderChange: (state: CardTemplateBuilderState) => void;
   onPreviewSideChange: (side: TemplateSide) => void;
@@ -102,6 +110,9 @@ interface DeckTemplateDesignerProps {
   onSave: () => void;
   onCancel: () => void;
   onRemoveTemplate: () => void;
+  /** Root height/container override. Defaults to `h-[92vh]` (modal use);
+   *  pass e.g. `h-svh` to fill a full-screen editor page. */
+  className?: string;
 }
 
 const LAYOUT_OPTIONS: Array<{ value: TemplateLayoutMode; label: string; icon: typeof AlignCenter }> = [
@@ -117,15 +128,6 @@ const LAYOUT_OPTIONS: Array<{ value: TemplateLayoutMode; label: string; icon: ty
   { value: "FOCUS", label: "Focus", icon: Maximize },
 ];
 
-const THEME_OPTIONS: Array<{ value: TemplateTheme; label: string; tone: string }> = [
-  { value: "MINIMAL", label: "Minimal", tone: "bg-white border-slate-200 text-slate-900" },
-  { value: "ZEN", label: "Zen", tone: "bg-[#fffaf2] border-[#b9c7ad] text-slate-900" },
-  { value: "MODERN", label: "Modern", tone: "bg-slate-50 border-blue-200 text-slate-900" },
-  { value: "ACADEMIC", label: "Academic", tone: "bg-[#fbf7ef] border-amber-300 text-slate-900" },
-  { value: "DARK", label: "Dark", tone: "bg-slate-900 border-slate-600 text-white" },
-  { value: "JLPT", label: "JLPT", tone: "bg-orange-50 border-orange-300 text-slate-900" },
-];
-
 const FONT_OPTIONS: Array<{ value: FontFamilyKey; label: string }> = [
   { value: "SANS", label: "Sans-serif" },
   { value: "SERIF", label: "Serif" },
@@ -135,16 +137,13 @@ const FONT_OPTIONS: Array<{ value: FontFamilyKey; label: string }> = [
   { value: "JP_MINCHO", label: "Japanese Mincho (明朝)" },
 ];
 
-const COLOR_SWATCHES = [
-  "#1f2937", "#dc2626", "#ea580c", "#d97706", "#16a34a",
-  "#0891b2", "#2563eb", "#7c3aed", "#db2777", "#ffffff",
-];
+/** Text-color palette — reuses the app's color presets (same as Settings). */
+const TEXT_COLOR_SWATCHES = COLOR_PRESETS.map((p) => p.swatch);
 
 /* ─────────────────────────────────────────
    Main component
 ───────────────────────────────────────── */
 export function DeckTemplateDesigner({
-  deckTitle,
   draft,
   builderState,
   availableFields,
@@ -156,6 +155,7 @@ export function DeckTemplateDesigner({
   removing,
   hasTemplate,
   hasSampleCard,
+  dirty,
   onDraftChange,
   onBuilderChange,
   onPreviewSideChange,
@@ -164,8 +164,19 @@ export function DeckTemplateDesigner({
   onSave,
   onCancel,
   onRemoveTemplate,
+  className,
 }: DeckTemplateDesignerProps) {
   const [activeSide, setActiveSide] = useState<TemplateSide>("FRONT");
+
+  // Expand/collapse-all: remount the sections so each picks up the forced
+  // open state from context, while still allowing individual toggles after.
+  const [expandAll, setExpandAll] = useState<boolean | null>(null);
+  const [sectionsKey, setSectionsKey] = useState(0);
+  const allExpanded = expandAll === true;
+  const toggleAll = () => {
+    setExpandAll(allExpanded ? false : true);
+    setSectionsKey((k) => k + 1);
+  };
 
   const updateSide = (side: TemplateSide, blocks: CardTemplateBlock[]) => {
     onBuilderChange({
@@ -182,94 +193,92 @@ export function DeckTemplateDesigner({
   };
 
   return (
-    <div className="flex h-[92vh] flex-col bg-background text-foreground">
-      {/* ════════ HEADER ════════ */}
-      <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-3 shrink-0">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">Card template</h2>
-            {customCode && (
-              <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                <Code2 className="size-3 mr-1" />
-                Custom code
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {deckTitle ? `Applies to every card in "${deckTitle}".` : "Applies to every card in this deck."}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {hasTemplate && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRemoveTemplate}
-              disabled={saving || removing}
-              className="text-destructive hover:text-destructive"
-            >
-              {removing ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-              Remove
-            </Button>
-          )}
-          <Button variant="ghost" onClick={onCancel} disabled={saving || removing}>
-            <X className="size-4 mr-1" />
-            Cancel
+    <div className={cn("flex flex-col bg-background text-foreground", className ?? "h-[92vh]")}>
+      {/* ════════ HEADER — toggle (left) + actions (right), no card chrome ════════ */}
+      <header className="flex items-center gap-2 border-b border-border/60 py-2.5 shrink-0">
+        <Button
+          variant="outline"
+          onClick={toggleAll}
+          title={allExpanded ? "Thu gọn tất cả các phần" : "Mở rộng tất cả các phần"}
+        >
+          {allExpanded ? <ChevronsDownUp className="size-4 mr-1" /> : <ChevronsUpDown className="size-4 mr-1" />}
+          {allExpanded ? "Thu gọn tất cả" : "Mở rộng tất cả"}
+        </Button>
+        {customCode && (
+          <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <Code2 className="size-3 mr-1" />
+            Custom code
+          </Badge>
+        )}
+        <div className="flex-1" />
+        {hasTemplate && (
+          <Button
+            variant="outline"
+            onClick={onRemoveTemplate}
+            disabled={saving || removing}
+            title="Remove this template and fall back to the default card layout"
+          >
+            {removing ? <Loader2 className="size-4 animate-spin mr-1" /> : <RotateCcw className="size-4 mr-1" />}
+            Back to default
           </Button>
-          <Button onClick={onSave} disabled={saving || removing}>
-            {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
-            Save template
-          </Button>
-        </div>
+        )}
+        <Button variant="ghost" onClick={onCancel} disabled={saving || removing}>
+          <X className="size-4 mr-1" />
+          Cancel
+        </Button>
+        <Button onClick={onSave} disabled={saving || removing || dirty === false}>
+          {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
+          Save template
+        </Button>
       </header>
 
       {/* ════════ BODY ════════ */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* ───── Left: scrollable editor ───── */}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-muted/30">
-          <div className="space-y-4 p-5 max-w-3xl mx-auto">
-            <TemplateBasics draft={draft} onDraftChange={onDraftChange} />
+        {/* ───── Left: scrollable editor (full width, no card background) ───── */}
+        <ScrollHintContainer axis="vertical" className="flex-1 min-w-0" viewportClassName="pr-5 pt-4 pb-6">
+          <SectionOpenContext.Provider value={expandAll}>
+            <div key={sectionsKey} className="space-y-4">
+              <TemplateBasics draft={draft} onDraftChange={onDraftChange} />
 
-            <CardBuilderPanel
-              activeSide={activeSide}
-              state={builderState}
-              availableFields={availableFields}
-              onSideChange={setActiveSide}
-              onSideBlocksChange={(side, blocks) => {
-                updateSide(side, blocks);
-                onCustomCodeChange(false);
-              }}
-            />
+              <CardBuilderPanel
+                activeSide={activeSide}
+                state={builderState}
+                availableFields={availableFields}
+                onSideChange={setActiveSide}
+                onSideBlocksChange={(side, blocks) => {
+                  updateSide(side, blocks);
+                  onCustomCodeChange(false);
+                }}
+              />
 
-            <LayoutPanel settings={builderState.settings} onChange={updateSettings} />
-            <TypographyPanel settings={builderState.settings} onChange={updateSettings} />
-            <JapaneseMediaPanel settings={builderState.settings} onChange={updateSettings} />
-            <ThemePanel settings={builderState.settings} onChange={updateSettings} />
+              <LayoutPanel settings={builderState.settings} onChange={updateSettings} />
+              <TypographyPanel settings={builderState.settings} onChange={updateSettings} />
+              <JapaneseMediaPanel settings={builderState.settings} onChange={updateSettings} />
 
-            <AdvancedPanel
-              advancedMode={advancedMode}
-              onAdvancedModeChange={onAdvancedModeChange}
-              draft={draft}
-              onDraftChange={(next) => {
-                onDraftChange(next);
-                onCustomCodeChange(true);
-              }}
-            />
-          </div>
-        </div>
+              <AdvancedPanel
+                advancedMode={advancedMode}
+                onAdvancedModeChange={onAdvancedModeChange}
+                draft={draft}
+                onDraftChange={(next) => {
+                  onDraftChange(next);
+                  onCustomCodeChange(true);
+                }}
+              />
+            </div>
+          </SectionOpenContext.Provider>
+        </ScrollHintContainer>
 
         {/* ───── Right: fixed preview ───── */}
         <aside className="w-110 xl:w-130 shrink-0 border-l border-border bg-card flex flex-col">
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border shrink-0">
-            <div>
-              <h3 className="text-sm font-semibold">Live preview</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {hasSampleCard
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-2.5 shrink-0">
+            <InfoLabel
+              title={<h3 className="text-sm font-semibold">Live preview</h3>}
+              info={
+                hasSampleCard
                   ? "Showing a real card from this deck."
-                  : "Add a card to this deck to see real content."}
-              </p>
-            </div>
+                  : "Add a card to this deck to see real content."
+              }
+            />
             <Tabs value={previewSide} onValueChange={(value) => onPreviewSideChange(value as TemplateSide)}>
               <TabsList className="h-8">
                 <TabsTrigger value="FRONT" className="h-7 px-3 text-xs">Front</TabsTrigger>
@@ -308,24 +317,38 @@ function Section({
   defaultOpen?: boolean;
   rightSlot?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  // Forced open state from the expand/collapse-all control (null → own default).
+  const forced = useContext(SectionOpenContext);
+  const [open, setOpen] = useState(forced ?? defaultOpen);
   return (
     <section className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="flex flex-1 items-center justify-between gap-3 text-left"
-        >
-          <div>
-            <h3 className="text-sm font-semibold">{title}</h3>
-            {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
-          </div>
-          {open ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
-        </button>
-        {rightSlot}
+        <InfoLabel
+          className="min-w-0"
+          info={description}
+          title={
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              className="min-w-0 text-left"
+            >
+              <h3 className="truncate text-sm font-semibold">{title}</h3>
+            </button>
+          }
+        />
+        <div className="flex shrink-0 items-center gap-2">
+          {rightSlot}
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? "Thu gọn" : "Mở rộng"}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </button>
+        </div>
       </div>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="border-t border-border px-4 pb-4 pt-4">{children}</div>}
     </section>
   );
 }
@@ -699,75 +722,89 @@ function TypographyPanel({
   return (
     <Section title="Typography" description="Fonts, weight and text styling.">
       <div className="space-y-4">
-        {/* Font family */}
-        <div className="space-y-1.5">
-          <Label className="text-sm">Font</Label>
-          <Select value={t.fontFamily} onValueChange={(value) => patch({ fontFamily: value as FontFamilyKey })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FONT_OPTIONS.map((font) => (
-                <SelectItem key={font.value} value={font.value}>
-                  {font.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Font + Style on the same row */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-sm">Font</Label>
+            <Select value={t.fontFamily} onValueChange={(value) => patch({ fontFamily: value as FontFamilyKey })}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FONT_OPTIONS.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    {font.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Style toolbar: B / I / U */}
-        <div className="space-y-1.5">
-          <Label className="text-sm">Style</Label>
-          <div className="flex items-center gap-1.5">
-            <ToggleButton
-              active={t.fontWeight >= 700}
-              onClick={() => patch({ fontWeight: t.fontWeight >= 700 ? 500 : 700 })}
-              title="Bold"
-            >
-              <Bold className="size-4" />
-            </ToggleButton>
-            <ToggleButton active={t.italic} onClick={() => patch({ italic: !t.italic })} title="Italic">
-              <Italic className="size-4" />
-            </ToggleButton>
-            <ToggleButton active={t.underline} onClick={() => patch({ underline: !t.underline })} title="Underline">
-              <Underline className="size-4" />
-            </ToggleButton>
-            <ToggleButton
-              active={t.uppercase}
-              onClick={() => patch({ uppercase: !t.uppercase })}
-              title="Uppercase"
-            >
-              <span className="text-xs font-bold">AA</span>
-            </ToggleButton>
-
-            {/* Text color */}
-            <div className="ml-auto flex items-center gap-2">
-              <ColorPicker
-                value={t.textColor ?? DEFAULT_CUSTOM_COLORS.text}
-                onChange={(color) => patch({ textColor: color })}
-                label="Text color"
-              />
-              {t.textColor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[11px]"
-                  onClick={() => patch({ textColor: null })}
-                  title="Use theme color"
-                >
-                  <RotateCcw className="size-3 mr-1" />
-                  Theme
-                </Button>
-              )}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Style</Label>
+            <div className="flex items-center gap-1.5">
+              <ToggleButton
+                active={t.fontWeight >= 700}
+                onClick={() => patch({ fontWeight: t.fontWeight >= 700 ? 500 : 700 })}
+                title="Bold"
+              >
+                <Bold className="size-4" />
+              </ToggleButton>
+              <ToggleButton active={t.italic} onClick={() => patch({ italic: !t.italic })} title="Italic">
+                <Italic className="size-4" />
+              </ToggleButton>
+              <ToggleButton active={t.underline} onClick={() => patch({ underline: !t.underline })} title="Underline">
+                <Underline className="size-4" />
+              </ToggleButton>
+              <ToggleButton
+                active={t.uppercase}
+                onClick={() => patch({ uppercase: !t.uppercase })}
+                title="Uppercase"
+              >
+                <span className="text-xs font-bold">AA</span>
+              </ToggleButton>
             </div>
           </div>
         </div>
 
-        <RangeRow label="Font size" value={t.fontSize} min={14} max={48} unit="px" onChange={(fontSize) => patch({ fontSize })} />
-        <RangeRow label="Font weight" value={t.fontWeight} min={300} max={900} step={100} onChange={(fontWeight) => patch({ fontWeight })} />
-        <RangeRow label="Line height" value={t.lineHeight} min={1.1} max={2.2} step={0.05} onChange={(lineHeight) => patch({ lineHeight })} />
-        <RangeRow label="Letter spacing" value={t.letterSpacing} min={-1} max={6} step={0.5} unit="px" onChange={(letterSpacing) => patch({ letterSpacing })} />
+        {/* Text color — preset palette only (no custom colour) */}
+        <div className="space-y-1.5">
+          <Label className="text-sm">Text color</Label>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => patch({ textColor: null })}
+              title="Mặc định (theo chủ đề)"
+              className={cn(
+                "flex size-6 items-center justify-center rounded-md border text-[10px] font-semibold text-muted-foreground transition-shadow",
+                !t.textColor ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-foreground/40"
+              )}
+            >
+              A
+            </button>
+            {TEXT_COLOR_SWATCHES.map((color) => {
+              const active = (t.textColor ?? "").toLowerCase() === color.toLowerCase();
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => patch({ textColor: color })}
+                  title={color}
+                  style={{ background: color }}
+                  className={cn(
+                    "size-6 rounded-md border transition-shadow",
+                    active ? "border-primary ring-2 ring-primary/40" : "border-border/40 hover:border-foreground/40"
+                  )}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        <RangeRow label="Font size" value={t.fontSize} min={12} max={120} unit="px" onChange={(fontSize) => patch({ fontSize })} />
+        <RangeRow label="Font weight" value={t.fontWeight} min={100} max={900} step={100} onChange={(fontWeight) => patch({ fontWeight })} />
+        <RangeRow label="Line height" value={t.lineHeight} min={1} max={3} step={0.05} onChange={(lineHeight) => patch({ lineHeight })} />
+        <RangeRow label="Letter spacing" value={t.letterSpacing} min={-3} max={16} step={0.5} unit="px" onChange={(letterSpacing) => patch({ letterSpacing })} />
       </div>
     </Section>
   );
@@ -786,7 +823,7 @@ function JapaneseMediaPanel({
   return (
     <Section title="Japanese & media" defaultOpen={false}>
       <div className="space-y-4">
-        <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
           <Label className="text-sm">Furigana</Label>
           <Select
             value={settings.japanese.furiganaMode}
@@ -794,7 +831,7 @@ function JapaneseMediaPanel({
               onChange({ japanese: { ...settings.japanese, furiganaMode: value as FuriganaMode } })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger size="sm" className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -811,70 +848,6 @@ function JapaneseMediaPanel({
         <ToggleRow label="Show image" checked={settings.media.showImage} onChange={(showImage) => onChange({ media: { ...settings.media, showImage } })} />
         <ToggleRow label="Show video" checked={settings.media.showVideo} onChange={(showVideo) => onChange({ media: { ...settings.media, showVideo } })} />
       </div>
-    </Section>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Theme picker + custom colors
-───────────────────────────────────────── */
-function ThemePanel({
-  settings,
-  onChange,
-}: {
-  settings: CardTemplateSettings;
-  onChange: (next: Partial<CardTemplateSettings>) => void;
-}) {
-  const isCustom = settings.theme === "CUSTOM";
-  const patchColors = (next: Partial<CardTemplateSettings["customColors"]>) =>
-    onChange({ customColors: { ...settings.customColors, ...next } });
-
-  return (
-    <Section title="Theme" description="Color palette for the card.">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {THEME_OPTIONS.map((theme) => {
-          const active = settings.theme === theme.value;
-          return (
-            <button
-              key={theme.value}
-              type="button"
-              onClick={() => onChange({ theme: theme.value })}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition",
-                theme.tone,
-                active && "ring-2 ring-primary ring-offset-1"
-              )}
-            >
-              {theme.label}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => onChange({ theme: "CUSTOM" })}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition border-border bg-background hover:bg-accent",
-            isCustom && "ring-2 ring-primary ring-offset-1 border-primary"
-          )}
-        >
-          <span
-            className="size-3 rounded-full border border-border"
-            style={{
-              background: `conic-gradient(from 0deg, #f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f87171)`,
-            }}
-          />
-          Custom
-        </button>
-      </div>
-
-      {isCustom && (
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/20 p-3">
-          <ColorField label="Background" value={settings.customColors.bg} onChange={(bg) => patchColors({ bg })} />
-          <ColorField label="Text" value={settings.customColors.text} onChange={(text) => patchColors({ text })} />
-          <ColorField label="Accent" value={settings.customColors.accent} onChange={(accent) => patchColors({ accent })} />
-          <ColorField label="Border" value={settings.customColors.border} onChange={(border) => patchColors({ border })} />
-        </div>
-      )}
     </Section>
   );
 }
@@ -1014,7 +987,7 @@ function ToggleButton({
       onClick={onClick}
       title={title}
       className={cn(
-        "flex size-8 items-center justify-center rounded-md border transition-colors",
+        "flex h-8 flex-1 items-center justify-center rounded-md border transition-colors",
         active
           ? "border-primary bg-primary/10 text-primary"
           : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -1022,77 +995,6 @@ function ToggleButton({
     >
       {children}
     </button>
-  );
-}
-
-function ColorPicker({
-  value,
-  onChange,
-  label,
-}: {
-  value: string;
-  onChange: (color: string) => void;
-  label: string;
-}) {
-  return (
-    <label
-      title={label}
-      className="relative flex size-8 cursor-pointer items-center justify-center rounded-md border border-border overflow-hidden"
-      style={{ background: value }}
-    >
-      <input
-        type="color"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
-      />
-    </label>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (color: string) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      <div className="flex items-center gap-2">
-        <label
-          className="relative size-8 shrink-0 cursor-pointer rounded-md border border-border overflow-hidden"
-          style={{ background: value }}
-        >
-          <input
-            type="color"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          />
-        </label>
-        <Input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-8 text-xs font-mono"
-        />
-      </div>
-      <div className="flex flex-wrap gap-1">
-        {COLOR_SWATCHES.map((swatch) => (
-          <button
-            key={swatch}
-            type="button"
-            onClick={() => onChange(swatch)}
-            className="size-4 rounded-sm border border-border"
-            style={{ background: swatch }}
-            title={swatch}
-          />
-        ))}
-      </div>
-    </div>
   );
 }
 

@@ -81,7 +81,9 @@ export function generateCss(state: CardTemplateBuilderState): string {
         : "16px";
   const padding = layout.mode === "COMPACT" ? "22px 18px" : layout.spacing === "roomy" ? "48px 32px" : "36px 24px";
 
-  const textColor = typography.textColor ?? "var(--card-text)";
+  // Default to the system/page text colour so the card stays readable on both
+  // light and dark backgrounds; only override when the user picks a colour.
+  const textColor = typography.textColor ?? "inherit";
   const fontStyle = typography.italic ? "italic" : "normal";
   const textDecoration = typography.underline ? "underline" : "none";
   const textTransform = typography.uppercase ? "uppercase" : "none";
@@ -100,7 +102,8 @@ export function generateCss(state: CardTemplateBuilderState): string {
   align-items: ${align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center"};
   justify-content: center;
   padding: ${padding};
-  background: var(--card-bg);
+  /* Transparent so the card follows the system/page background (light & dark). */
+  background: transparent;
   color: ${textColor};
   font-family: ${fontFamily};
   text-align: ${align};

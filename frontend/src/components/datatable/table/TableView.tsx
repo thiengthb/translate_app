@@ -145,14 +145,17 @@ export function TableView({
         (showActionsColumn ? 1 : 0);
 
     return (
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="relative flex-1 min-h-0 flex flex-col">
             {/* ScrollHintContainer replaces the previous `<div overflow-auto>`
                 — it provides the single y+x scroll surface that the sticky
                 cells need (sticky positions relative to nearest scrolling
                 ancestor, so we keep the structure flat). Hidden scrollbars
                 + floating chevrons replace the native bars without changing
                 sticky behaviour. */}
-            <ScrollHintContainer axis="both" className="flex-1 min-h-0">
+            {/* topOffset clears the sticky header (h-11 = 44px) so the up-arrow
+                floats over the scrollable rows, not the frozen header. 48 =
+                44px header + 4px gap (matches the default top inset). */}
+            <ScrollHintContainer axis="both" className="flex-1 min-h-0" topOffset={48}>
                 <DndContext
                     sensors={dndSensors}
                     collisionDetection={closestCenter}
@@ -328,9 +331,14 @@ export function TableView({
                 </DndContext>
             </ScrollHintContainer>
 
+            {/* Empty / no-result state — overlays the whole table region and
+                centers in its TRUE middle. Absolute (not a flex sibling) so it
+                doesn't split height with the scroll area and get pushed into
+                the lower half. `pointer-events-none` lets header sorting still
+                work; the message itself re-enables clicks for its action. */}
             {!showSkeleton && !hasRows && (
-                <div className="flex-1 flex items-center justify-center">
-                    {renderEmptyState()}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="pointer-events-auto">{renderEmptyState()}</div>
                 </div>
             )}
         </div>

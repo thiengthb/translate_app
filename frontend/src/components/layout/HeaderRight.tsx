@@ -15,12 +15,6 @@ import { useRoleSwitch } from "@/contexts/RoleSwitchContext";
 import { useMyStreak } from "@/hooks/useStreak";
 import type { RootState } from "@/store/store";
 
-interface HeaderRightProps {
-    /** Forwarded into the user dropdown menu so the "Phím tắt" entry
-     *  is wired to the global shortcuts dialog. */
-    onOpenShortcuts?: () => void;
-}
-
 /**
  * Authenticated-user header actions, right-aligned in the top bar.
  *
@@ -45,7 +39,7 @@ interface HeaderRightProps {
  * Unauthenticated state falls through to minimal lang + theme toggles,
  * since the user has no avatar to hide them behind yet.
  */
-export default function HeaderRight({ onOpenShortcuts }: HeaderRightProps = {}) {
+export default function HeaderRight() {
     const { isAuthenticated, role, roles } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -63,7 +57,7 @@ export default function HeaderRight({ onOpenShortcuts }: HeaderRightProps = {}) 
     }
 
     return (
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
             <RoleSwitcher primaryRole={role} roles={roles} />
 
             {isPreviewMode && (
@@ -77,7 +71,7 @@ export default function HeaderRight({ onOpenShortcuts }: HeaderRightProps = {}) 
 
             <Separator
                 orientation="vertical"
-                className="!h-5 mx-1 hidden sm:block"
+                className="!h-6 mx-1 hidden sm:block"
             />
 
             {/* Desktop-only quick stat */}
@@ -94,11 +88,7 @@ export default function HeaderRight({ onOpenShortcuts }: HeaderRightProps = {}) 
             </div>
 
             {/* Settings + identity + logout — one consolidated dropdown */}
-            <UserDropdownMenu
-                variant="compact"
-                side="bottom"
-                onOpenShortcuts={onOpenShortcuts}
-            />
+            <UserDropdownMenu variant="compact" side="bottom" />
         </div>
     );
 }

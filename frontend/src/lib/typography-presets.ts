@@ -28,6 +28,14 @@ export type FontFamilyId =
     | "lexend"
     | "nunito"
     | "space-grotesk"
+    | "poppins"
+    | "montserrat"
+    | "work-sans"
+    | "quicksand"
+    | "rubik"
+    | "mulish"
+    | "figtree"
+    | "source-sans"
     | "jetbrains";
 
 export interface FontFamilyPreset {
@@ -128,6 +136,62 @@ export const FONT_FAMILIES: FontFamilyPreset[] = [
         description: "Techy, đặc trưng",
         family: `"Space Grotesk", ${SYSTEM_FALLBACK}`,
         href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "poppins",
+        name: "Poppins",
+        description: "Tròn trịa, phổ biến",
+        family: `"Poppins", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "montserrat",
+        name: "Montserrat",
+        description: "Mạnh mẽ, tiêu đề",
+        family: `"Montserrat", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "work-sans",
+        name: "Work Sans",
+        description: "Gọn gàng, công sở",
+        family: `"Work Sans", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "quicksand",
+        name: "Quicksand",
+        description: "Bo tròn, vui tươi",
+        family: `"Quicksand", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "rubik",
+        name: "Rubik",
+        description: "Góc bo nhẹ, hiện đại",
+        family: `"Rubik", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "mulish",
+        name: "Mulish",
+        description: "Thanh mảnh, nhẹ nhàng",
+        family: `"Mulish", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "figtree",
+        name: "Figtree",
+        description: "Thân thiện, mới mẻ",
+        family: `"Figtree", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap&subset=vietnamese",
+    },
+    {
+        id: "source-sans",
+        name: "Source Sans 3",
+        description: "Trung tính, dễ đọc",
+        family: `"Source Sans 3", ${SYSTEM_FALLBACK}`,
+        href: "https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap&subset=vietnamese",
     },
     {
         id: "jetbrains",

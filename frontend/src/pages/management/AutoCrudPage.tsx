@@ -26,9 +26,18 @@ export const AutoCrudPage = ({ entity }: any) => {
         </PermissionGate>
     ) : undefined;
 
+    // When `editRoute` is declared, the row "Edit" action navigates to that
+    // page (e.g. a full-screen designer) instead of opening the default modal.
+    const idField = entity.schema?.idField ?? "id";
+    const onEdit = entity.editRoute
+        ? (row: any) => navigate(String(entity.editRoute).replace(":id", String(row?.[idField] ?? row?.id)))
+        : undefined;
+
     return (
         <MainLayout pathName={{ [entity.path]: entity.name }}>
-            <ProTable table={table} headerActions={headerActions} />
+            <div className="w-full flex-1 min-h-0 flex flex-col min-w-0">
+                <ProTable table={table} headerActions={headerActions} onEdit={onEdit} />
+            </div>
         </MainLayout>
     );
 };
