@@ -15,7 +15,7 @@ interface PlayAreaProps {
  */
 export function PlayArea({ played, floats }: PlayAreaProps) {
     return (
-        <div className="flex min-h-[12rem] items-center justify-center gap-3">
+        <div className="flex flex-1 min-h-0 items-center justify-center gap-3">
             <AnimatePresence>
                 {played.map((pc) => {
                     const cardFloats = floats.filter((f) => f.cardId === pc.card.id);

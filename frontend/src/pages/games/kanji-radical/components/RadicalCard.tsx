@@ -31,13 +31,13 @@ export function RadicalCard({
             layout
             disabled={disabled}
             onClick={onClick}
-            whileHover={disabled ? undefined : { y: -10 }}
-            animate={{ y: selected ? -22 : 0 }}
+            whileHover={disabled ? undefined : { y: -8 }}
+            animate={{ y: selected ? -16 : 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 28 }}
             className={cn(
                 "group relative flex shrink-0 select-none flex-col items-center justify-between rounded-xl border text-slate-900 shadow-lg transition-colors",
                 "bg-gradient-to-b from-[#fdf6e3] to-[#f3e7c4]",
-                compact ? "h-28 w-20 p-2" : "h-36 w-24 p-2.5 sm:h-40 sm:w-28",
+                compact ? "h-24 w-16 p-1.5" : "h-28 w-20 p-2 sm:h-32 sm:w-24",
                 disabled && "cursor-default",
                 !disabled && "cursor-pointer hover:shadow-xl",
                 selected
@@ -57,7 +57,7 @@ export function RadicalCard({
             <span
                 className={cn(
                     "flex flex-1 items-center justify-center leading-none",
-                    compact ? "text-4xl" : "text-5xl sm:text-6xl",
+                    compact ? "text-3xl" : "text-4xl sm:text-5xl",
                 )}
                 style={{ fontFamily: JP_SERIF }}
             >

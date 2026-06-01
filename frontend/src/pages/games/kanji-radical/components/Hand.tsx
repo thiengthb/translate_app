@@ -12,7 +12,7 @@ interface HandProps {
 
 export function Hand({ cards, selectedIds, disabled, onToggle }: HandProps) {
     return (
-        <div className="flex flex-wrap items-end justify-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-end justify-center gap-1.5 sm:gap-2">
             <AnimatePresence mode="popLayout">
                 {cards.map((card) => (
                     <motion.div

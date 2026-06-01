@@ -28,7 +28,9 @@ export function GameBoard() {
 
     return (
         <>
-            <div className="relative flex flex-col gap-5 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 p-4 shadow-2xl sm:p-6">
+            {/* flex-1 min-h-0 fills the viewport height slice given by the page
+                wrapper — board never grows taller than the available space. */}
+            <div className="relative flex flex-1 min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 p-3 shadow-2xl">
                 {/* soft ambient glows */}
                 <div className="pointer-events-none absolute -top-24 right-10 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
@@ -45,9 +47,10 @@ export function GameBoard() {
                     onRestart={game.newGame}
                 />
 
-                <div className="relative flex flex-col gap-5 lg:flex-row">
+                {/* middle: prompt (left/top) + score panel (right) — fills remaining height */}
+                <div className="relative flex flex-1 min-h-0 flex-col gap-3 lg:flex-row">
                     {/* centre stage: prompt + thrown cards */}
-                    <div className="flex flex-1 flex-col items-center gap-3 pt-2">
+                    <div className="flex flex-1 min-h-0 flex-col items-center gap-2">
                         <PromptStand prompt={state.prompt} />
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/50 px-3 py-1 text-xs text-slate-400 ring-1 ring-white/10">
                             <Puzzle className="size-3.5 text-amber-400" />
@@ -58,7 +61,7 @@ export function GameBoard() {
                     </div>
 
                     {/* right rail: score + controls */}
-                    <div className="w-full lg:w-80">
+                    <div className="w-full lg:w-76">
                         <ScorePanel
                             readout={state.readout}
                             selectedCount={state.selectedIds.length}
@@ -75,9 +78,9 @@ export function GameBoard() {
                     </div>
                 </div>
 
-                {/* hand across the bottom */}
-                <div className="rounded-2xl bg-slate-950/40 p-3 ring-1 ring-white/5">
-                    <div className="mb-2 flex items-center justify-between px-1">
+                {/* hand across the bottom — shrink-0 keeps height fixed */}
+                <div className="shrink-0 rounded-2xl bg-slate-950/40 p-2 ring-1 ring-white/5">
+                    <div className="mb-1.5 flex items-center justify-between px-1">
                         <span className="text-xs uppercase tracking-wide text-slate-500">
                             Bài trên tay
                         </span>

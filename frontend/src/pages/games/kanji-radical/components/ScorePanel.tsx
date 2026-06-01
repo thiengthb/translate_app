@@ -59,14 +59,14 @@ export function ScorePanel({
     onDiscard,
 }: ScorePanelProps) {
     return (
-        <div className="flex w-full flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-xl backdrop-blur">
+        <div className="flex h-full w-full flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl backdrop-blur">
             {/* point × mult readout */}
             <div className="flex items-stretch gap-2">
                 <motion.div
                     key={`p-${readout.point}`}
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    className="flex flex-1 flex-col items-center justify-center rounded-xl bg-sky-500/15 py-3 ring-1 ring-sky-400/30"
+                    className="flex flex-1 flex-col items-center justify-center rounded-xl bg-sky-500/15 py-2 ring-1 ring-sky-400/30"
                 >
                     <span className="text-[10px] uppercase tracking-wide text-sky-200/80">
                         Điểm
@@ -82,7 +82,7 @@ export function ScorePanel({
                     key={`m-${readout.mult}`}
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
-                    className="flex flex-1 flex-col items-center justify-center rounded-xl bg-rose-500/15 py-3 ring-1 ring-rose-400/30"
+                    className="flex flex-1 flex-col items-center justify-center rounded-xl bg-rose-500/15 py-2 ring-1 ring-rose-400/30"
                 >
                     <span className="text-[10px] uppercase tracking-wide text-rose-200/80">
                         Mult

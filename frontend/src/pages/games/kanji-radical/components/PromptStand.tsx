@@ -16,7 +16,7 @@ const LEVEL_TINT: Record<string, string> = {
 
 export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
     return (
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex flex-col items-center gap-1 text-center">
             <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
                 Tìm bộ thủ của chữ
             </span>
@@ -32,22 +32,22 @@ export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
                 >
                     {/* hiragana furigana */}
                     <span
-                        className="text-lg text-amber-200/90 sm:text-xl"
+                        className="text-base text-amber-200/90 sm:text-lg"
                         style={{ fontFamily: JP_SERIF }}
                     >
                         {prompt.hiragana}
                     </span>
 
-                    {/* the kanji — focal point */}
+                    {/* the kanji — focal point; smaller so it fits without scrolling */}
                     <span
-                        className="my-1 bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[7rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.25)] sm:text-[9rem]"
+                        className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[4.5rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.25)] sm:text-[5.5rem]"
                         style={{ fontFamily: JP_SERIF }}
                     >
                         {prompt.kanji}
                     </span>
 
-                    <div className="mt-1 flex items-center gap-2">
-                        <span className="text-xl font-bold text-amber-300 sm:text-2xl">
+                    <div className="mt-0.5 flex items-center gap-2">
+                        <span className="text-lg font-bold text-amber-300 sm:text-xl">
                             {prompt.hanViet}
                         </span>
                         <span
@@ -59,7 +59,7 @@ export function PromptStand({ prompt }: { prompt: KanjiPrompt }) {
                             {prompt.level}
                         </span>
                     </div>
-                    <span className="mt-0.5 text-sm text-slate-400">
+                    <span className="text-xs text-slate-400">
                         {prompt.meaning}
                     </span>
                 </motion.div>
