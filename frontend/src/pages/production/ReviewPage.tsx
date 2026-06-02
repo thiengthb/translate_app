@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Check, Loader2, RotateCw, Sparkles, Upload, X } from "lucide-react";
+import { Check, Copy, Loader2, RotateCw, Sparkles, Upload, Wand2, X } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,31 @@ const IMPORT_PLACEHOLDER = `[
     "register": "polite"
   }
 ]`;
+
+/** Build the copy-paste prompt for an external chat AI, embedding the valid keys. */
+function buildAiPrompt(grammars: GrammarOption[]): string {
+  const list = grammars
+    .filter((g) => g.detectorKey)
+    .map((g) => `- ${g.detectorKey} — ${g.name}${g.jlptLevel ? ` [${g.jlptLevel}]` : ""}`)
+    .join("\n");
+  return `Bạn là giáo viên tiếng Nhật, soạn câu luyện DỊCH Việt→Nhật cho người Việt học JLPT.
+
+Nhiệm vụ: với mỗi mẫu ngữ pháp tôi chỉ định, tạo 15 câu luyện KHÁC NHAU. Mỗi câu gồm:
+- "situation": MỘT tình huống đời thường bằng TIẾNG VIỆT (1 câu, xưng "Bạn ..."), trả lời được bằng đúng ngữ pháp đó. KHÔNG chào hỏi, xin lỗi, giới thiệu bản thân.
+- "l2Reference": MỘT câu tiếng Nhật ngắn, tự nhiên (1 mệnh đề, tối đa 2), BẮT BUỘC dùng đúng mẫu ngữ pháp. Văn phong lịch sự (です/ます).
+
+Quy tắc:
+- Mọi câu "l2Reference" PHẢI chứa đúng mẫu ngữ pháp tương ứng.
+- Đa dạng chủ đề và từ vựng giữa các câu.
+- "detectorKey" lấy ĐÚNG từ danh sách dưới đây, KHÔNG tự bịa.
+
+Mẫu ngữ pháp hợp lệ (detectorKey — tên [cấp]):
+${list || "(chưa tải được danh sách — hãy mở lại modal sau khi đăng nhập)"}
+
+Hãy nói cho tôi biết bạn muốn tạo cho (các) detectorKey nào, hoặc tôi sẽ tạo cho toàn bộ.
+CHỈ trả về MỘT mảng JSON thuần (không markdown, không giải thích):
+[{"detectorKey":"...","situation":"...","l2Reference":"...","register":"polite"}]`;
+}
 
 /** Parse pasted text into import items. Accepts a raw array or an { items: [...] } wrapper. */
 function parseImportItems(raw: string): ImportPromptItem[] {
@@ -81,6 +106,7 @@ export default function ReviewPage() {
   const [importText, setImportText] = useState("");
   const [importing, setImporting] = useState(false);
   const [grammars, setGrammars] = useState<GrammarOption[]>([]);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -152,6 +178,15 @@ export default function ReviewPage() {
       setImporting(false);
     }
   }, [importText, load]);
+
+  const copyPrompt = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildAiPrompt(grammars));
+      toast.success("Đã copy prompt — dán vào ChatGPT/Claude.");
+    } catch {
+      toast.error("Không copy được prompt.");
+    }
+  }, [grammars]);
 
   return (
     <MainLayout>
@@ -256,6 +291,36 @@ export default function ReviewPage() {
               <code>register</code>, <code>l1PromptTemplate</code>). Câu import vào hàng chờ duyệt.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Get-prompt helper: reveal the copy-paste prompt for an external AI. */}
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => setShowPrompt((v) => !v)}
+            >
+              <Wand2 size={16} />
+              {showPrompt ? "Ẩn prompt" : "Lấy prompt cho AI"}
+            </Button>
+            {showPrompt && (
+              <div className="rounded-md border bg-muted/30 p-2">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    Copy prompt này → dán vào ChatGPT/Claude → dán JSON nó trả về vào ô dưới.
+                  </span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => void copyPrompt()}>
+                    <Copy size={14} />
+                    Copy
+                  </Button>
+                </div>
+                <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs leading-relaxed">
+                  {buildAiPrompt(grammars)}
+                </pre>
+              </div>
+            )}
+          </div>
 
           <Textarea
             value={importText}

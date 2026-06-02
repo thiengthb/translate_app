@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -122,102 +121,6 @@ public class GeminiClient {
                 .build();
     }
 
-    // ── Translate-page analysis: alternative translations ────────────────────
-
-    /** 2–3 alternative translations of {@code sourceText} into the target language. */
-    public List<String> alternatives(String sourceText, String referenceTranslation, String targetLangName) {
-        String prompt = """
-                You are a professional translator. Source text: "%s"
-                A reference translation in %s is: "%s"
-                Provide 2 alternative natural translations in %s that keep the SAME meaning but use different wording.
-                Reply with ONLY a JSON array of strings and nothing else, e.g. ["...", "..."].
-                """.formatted(safe(sourceText), targetLangName, safe(referenceTranslation), targetLangName);
-
-        JsonNode node = parseJsonArray(generate(prompt, 0.7, 200));
-        List<String> out = new ArrayList<>();
-        if (node != null && node.isArray()) {
-            for (JsonNode n : node) {
-                String text = n.isTextual() ? n.asText() : n.path("text").asText("");
-                text = text == null ? "" : text.trim();
-                if (!text.isBlank() && !text.equals(referenceTranslation) && !out.contains(text)) {
-                    out.add(text);
-                }
-                if (out.size() >= 3) {
-                    break;
-                }
-            }
-        }
-        return out;
-    }
-
-    // ── Production drill: compose a prompt + reference from vocab + grammar ───
-
-    /** A generated practice item: a situation in Vietnamese and a Japanese model answer. */
-    public record GeneratedExercise(String situation, String l2Reference) {}
-
-    private record ComposePayload(String situation, String l2Reference) {}
-
-    /**
-     * Compose ONE practice item for a target grammar point, optionally seeded with
-     * the learner's vocabulary. Returns {@code null} when Gemini is unavailable or
-     * the response cannot be parsed (the caller decides the fallback).
-     */
-    public GeneratedExercise compose(String jlptLevel, String nuance, String register,
-                                     List<String> vocab, String mandatoryWord) {
-        String vocabList = (vocab == null || vocab.isEmpty())
-                ? "(any common words)"
-                : String.join(", ", vocab);
-
-        boolean hasMandatory = mandatoryWord != null && !mandatoryWord.isBlank();
-        String wordLine = hasMandatory
-                ? "MANDATORY vocabulary — the sentence MUST naturally include this exact word: " + mandatoryWord
-                : "Suggested vocabulary (use AT LEAST ONE — one is enough; do NOT force the others): " + vocabList;
-        String wordBullet = hasMandatory
-                ? "- It MUST clearly use the grammar point AND include the mandatory word above."
-                : "- It MUST clearly use the grammar point, and use at least one suggested word.";
-
-        String prompt = """
-                You are a Japanese teacher creating ONE short translation practice item for a
-                JLPT %s learner whose native language is Vietnamese.
-
-                MANDATORY grammar point (the Japanese answer MUST use it): %s
-                Register: %s
-                %s
-
-                Keep it SIMPLE and on-point — this is the most important rule:
-                - "l2Reference" must be exactly ONE short, natural sentence (a single clause,
-                  two at most). NEVER multiple sentences.
-                - It must express ONLY what the situation asks — NO greetings, NO apologies,
-                  NO self-introduction, NO "よろしく…" pleasantries, NO flowery or over-humble
-                  keigo. Plain polite (です/ます) is preferred.
-                %s
-
-                Produce:
-                1. "situation": ONE short everyday situation in VIETNAMESE (1 sentence, addressed
-                   to the learner as "Bạn ..."), answerable with the target grammar.
-                2. "l2Reference": the single short Japanese sentence that answers it.
-
-                Reply with ONLY this JSON, no other text:
-                {"situation": "<vietnamese>", "l2Reference": "<japanese>"}
-                """.formatted(safe(jlptLevel), safe(nuance), safe(register), wordLine, wordBullet);
-
-        String raw = generate(prompt, 0.7, 200);
-        if (raw == null) {
-            return null;
-        }
-        try {
-            ComposePayload p = mapper.readValue(extractJson(raw.trim()), ComposePayload.class);
-            if (p == null || p.l2Reference() == null || p.l2Reference().isBlank()) {
-                return null;
-            }
-            String situation = p.situation() == null ? "" : p.situation().trim();
-            return new GeneratedExercise(situation, p.l2Reference().trim());
-        } catch (Exception e) {
-            log.warn("Gemini compose parse failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
     /**
      * POST one user message to the Gemini generateContent REST API and return the
      * first text part of the reply. Returns {@code null} when no API key is configured
@@ -288,22 +191,6 @@ public class GeminiClient {
             return text.isBlank() ? null : text;
         } catch (Exception e) {
             log.warn("Gemini response parse failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private JsonNode parseJsonArray(String raw) {
-        if (raw == null) {
-            return null;
-        }
-        String text = raw.trim();
-        int start = text.indexOf('[');
-        int end = text.lastIndexOf(']');
-        String json = (start != -1 && end > start) ? text.substring(start, end + 1) : text;
-        try {
-            return mapper.readTree(json);
-        } catch (Exception e) {
-            log.warn("Gemini JSON-array parse failed: {}", e.getMessage());
             return null;
         }
     }

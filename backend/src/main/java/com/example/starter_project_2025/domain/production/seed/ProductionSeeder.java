@@ -69,7 +69,11 @@ public class ProductionSeeder implements CommandLineRunner {
                         new CommonMistake("quên đuôi ならない/いけない", "cần đủ なければ + ならない")))
                 .build());
 
-        markerRepository.save(GrammarMarker.builder().subUse(su).markerPattern("～なければなりません").register("polite").frequencyRank(1).build());
+        // detectorSubkey regex lets the Grammar Spotter highlight this pattern (the
+        // former spot_n4_nakerebanaranai entry was merged into this canonical key).
+        markerRepository.save(GrammarMarker.builder().subUse(su).markerPattern("～なければなりません").register("polite")
+                .detectorSubkey("なければ(ならない|なりません|いけない|いけません)|なくては(ならない|いけない|なりません|いけません)|なきゃ|なくちゃ")
+                .frequencyRank(1).build());
         markerRepository.save(GrammarMarker.builder().subUse(su).markerPattern("～なきゃ").register("casual").frequencyRank(2).build());
 
         referenceRepository.save(ReferenceSentence.builder().subUse(su)

@@ -145,8 +145,8 @@ export default function DrillPage() {
       } catch (e: any) {
         const msg =
           e?.response?.status === 503
-            ? "AI đang offline và ngữ pháp này chưa có mẫu sẵn. Hãy thử lại hoặc chọn ngữ pháp khác."
-            : "Không tạo được câu hỏi. Vui lòng thử lại.";
+            ? "Ngữ pháp này chưa có câu nào trong kho. Hãy chọn ngữ pháp khác (hoặc import & duyệt thêm ở trang Duyệt câu)."
+            : "Không tải được câu hỏi. Vui lòng thử lại.";
         toast.error(msg);
       } finally {
         setGenerating(false);
@@ -376,7 +376,7 @@ export default function DrillPage() {
             {generating ? (
               <Card className="p-6 flex items-center justify-center gap-3 h-40">
                 <Loader2 className="animate-spin text-primary" size={24} />
-                <span className="text-sm text-muted-foreground">Đang tạo câu hỏi…</span>
+                <span className="text-sm text-muted-foreground">Đang tải câu hỏi…</span>
               </Card>
             ) : exercise ? (
               <>
@@ -471,7 +471,7 @@ export default function DrillPage() {
             ) : (
               <Card className="p-6 gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Không tạo được câu hỏi cho mẫu này.
+                  Chưa có câu nào trong kho cho mẫu này.
                 </p>
                 <div className="flex gap-3">
                   <Button onClick={() => generateAt(index, queue)}>Thử lại</Button>
