@@ -1,6 +1,6 @@
 package com.example.starter_project_2025.domain.production.detector.impl;
 
-import com.atilika.kuromoji.ipadic.Token;
+import com.example.starter_project_2025.system.analyze.SudachiToken;
 import com.example.starter_project_2025.domain.production.detector.DetectionResult;
 import com.example.starter_project_2025.domain.production.detector.DetectorSupport;
 import com.example.starter_project_2025.domain.production.detector.GrammarDetector;
@@ -17,7 +17,7 @@ public class YouniPurposeDetector implements GrammarDetector {
     }
 
     @Override
-    public DetectionResult detect(List<Token> tokens) {
+    public DetectionResult detect(List<SudachiToken> tokens) {
         String s = DetectorSupport.joinSurfaces(tokens);
         if (DetectorSupport.containsAny(s, "ように", "ような", "ようになり", "ようにし")) {
             return DetectionResult.pass("～ように");

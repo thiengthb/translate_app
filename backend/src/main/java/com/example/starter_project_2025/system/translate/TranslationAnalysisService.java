@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Builds the translate-page analysis: romaji (Kuromoji, deterministic),
+ * Builds the translate-page analysis: romaji (MeCab, deterministic),
  * alternative translations (Ollama), and JLPT Grammar Spotter results
  * (fully deterministic dictionary — no Ollama at grammar-scan runtime).
  *

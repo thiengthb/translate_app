@@ -1,7 +1,7 @@
 package com.example.starter_project_2025.domain.production.detector;
 
-import com.atilika.kuromoji.ipadic.Token;
-import com.atilika.kuromoji.ipadic.Tokenizer;
+import com.example.starter_project_2025.system.analyze.SudachiToken;
+import com.example.starter_project_2025.system.analyze.SudachiTokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 @Component
 public class DetectorRegistry {
 
-    private final Tokenizer tokenizer;
+    private final SudachiTokenizer tokenizer;
     private final Map<String, GrammarDetector> detectors;
 
-    public DetectorRegistry(Tokenizer tokenizer, List<GrammarDetector> detectorBeans) {
+    public DetectorRegistry(SudachiTokenizer tokenizer, List<GrammarDetector> detectorBeans) {
         this.tokenizer = tokenizer;
         this.detectors = detectorBeans.stream()
                 .collect(Collectors.toMap(GrammarDetector::detectorKey, Function.identity()));
@@ -31,7 +31,7 @@ public class DetectorRegistry {
         if (detector == null) {
             return DetectionResult.fail();
         }
-        List<Token> tokens = tokenizer.tokenize(answer == null ? "" : answer);
+        List<SudachiToken> tokens = tokenizer.tokenize(answer == null ? "" : answer);
         return detector.detect(tokens);
     }
 }

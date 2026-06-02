@@ -7,7 +7,7 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
 import com.example.starter_project_2025.domain.production.grammar.ScenarioStubRepository;
-import com.example.starter_project_2025.domain.production.llm.OllamaClient;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptService;
 import com.example.starter_project_2025.domain.production.vocab.VocabSelectionService;
@@ -45,7 +45,7 @@ public class ExerciseGenerationService {
     private final ScenarioStubRepository scenarioRepository;
     private final ReferenceSentenceRepository referenceRepository;
     private final VocabSelectionService vocabService;
-    private final OllamaClient ollamaClient;
+    private final GeminiClient geminiClient;
     private final DetectorRegistry detectorRegistry;
     private final GrammarSpotterService grammarSpotter;
     private final PromptService promptService;
@@ -80,7 +80,11 @@ public class ExerciseGenerationService {
         String mandatory = coverage ? target.forPrompt() : null;
 
         // The slow LLM call runs outside any DB transaction so it never pins a connection.
-        OllamaClient.GeneratedExercise gen = compose(subUse, toPromptList(vocab), mandatory);
+        // lastNonNullGen tracks the best AI output seen so we can serve it even when the
+        // grammar quality gate is too strict (incomplete regex patterns, unexpected conjugation).
+        GeminiClient.GeneratedExercise lastNonNullGen = null;
+        GeminiClient.GeneratedExercise gen = compose(subUse, toPromptList(vocab), mandatory);
+        if (gen != null) lastNonNullGen = gen;
 
         // Quality gate: the reference must use the target grammar (and, in coverage
         // mode, the target word). Retry ONCE, then give up on generation.
@@ -92,6 +96,7 @@ public class ExerciseGenerationService {
                 }
             }
             gen = compose(subUse, toPromptList(vocab), mandatory);
+            if (gen != null) lastNonNullGen = gen;
             // Give up only if the grammar itself is still absent (the word is best-effort).
             if (gen != null && !grammarPresent(subUse, gen.l2Reference())) {
                 log.warn("Generated reference for sub-use {} never matched its grammar; falling back", subUseId);
@@ -99,15 +104,22 @@ public class ExerciseGenerationService {
             }
         }
 
-        // Fallback to a seeded static exercise when generation is unavailable. A
-        // seed can't contain the coverage target word, so coverage mode never falls back.
+        // Fallback priority: seeded exercise → last AI output (gate too strict) → 503.
+        // Coverage mode never falls back because the target word must appear explicitly.
         if (gen == null) {
             if (!coverage && hasSeededExercise(subUseId)) {
                 PromptCache fallback = promptService.buildExercise(userId, subUse);
                 return toResponse(fallback, subUse, List.of(), false, null);
             }
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Không tạo được câu luyện tập (AI offline và chưa có mẫu sẵn cho ngữ pháp này).");
+            if (!coverage && lastNonNullGen != null) {
+                // AI is online but the grammar gate rejected both attempts (regex too strict
+                // or unexpected conjugation form). Serve the last output rather than 503.
+                log.warn("Grammar gate failed for sub-use {} after 2 tries; serving unvalidated AI output", subUseId);
+                gen = lastNonNullGen;
+            } else {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "Không tạo được câu luyện tập (AI offline và chưa có mẫu sẵn cho ngữ pháp này).");
+            }
         }
 
         // Persist the freshly generated prompt (short transaction) and return. The
@@ -163,8 +175,8 @@ public class ExerciseGenerationService {
         return reading != null && !reading.isBlank() && reference.contains(reading);
     }
 
-    private OllamaClient.GeneratedExercise compose(GrammarSubUse subUse, List<String> vocab, String mandatoryWord) {
-        return ollamaClient.compose(
+    private GeminiClient.GeneratedExercise compose(GrammarSubUse subUse, List<String> vocab, String mandatoryWord) {
+        return geminiClient.compose(
                 subUse.getJlptLevel(), subUse.getNuanceDescription(), DEFAULT_REGISTER, vocab, mandatoryWord);
     }
 

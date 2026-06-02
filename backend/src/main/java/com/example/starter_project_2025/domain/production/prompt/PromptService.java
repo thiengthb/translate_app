@@ -1,5 +1,7 @@
 package com.example.starter_project_2025.domain.production.prompt;
 
+import com.example.starter_project_2025.domain.production.api.ImportPromptsRequest;
+import com.example.starter_project_2025.domain.production.api.ImportPromptsResponse;
 import com.example.starter_project_2025.domain.production.api.PendingPromptResponse;
 import com.example.starter_project_2025.domain.production.grading.ScenarioRecency;
 import com.example.starter_project_2025.domain.production.grading.ScenarioRecencyRepository;
@@ -13,8 +15,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,6 +34,7 @@ public class PromptService {
     private final ReferenceSentenceRepository referenceRepository;
     private final PromptCacheRepository promptCacheRepository;
     private final ScenarioRecencyRepository recencyRepository;
+    private final GrammarSubUseRepository subUseRepository;
 
     @Transactional
     public PromptCache buildExercise(Long userId, GrammarSubUse subUse) {
@@ -72,6 +79,82 @@ public class PromptService {
                 .referenceSentence(ref)
                 .l1Prompt(l1Prompt)
                 .build());
+    }
+
+    /**
+     * Bulk-import externally AI-generated prompts into the review queue. Each item
+     * becomes a pending ({@code source = "GENERATED"}) reference + scenario +
+     * prompt-cache triple — exactly like {@link #persistGenerated} — so it surfaces
+     * at {@code /production/review} and only joins the shared pool once approved.
+     *
+     * <p>Idempotent per grammar point: an item is skipped when a reference with the
+     * same {@code l2Reference} already exists for that sub-use, so re-importing the
+     * same batch is safe. Items whose {@code detectorKey} matches no grammar point
+     * are skipped and reported in {@code unknownKeys}.
+     */
+    @Transactional
+    public ImportPromptsResponse importGenerated(List<ImportPromptsRequest.Item> items) {
+        int imported = 0;
+        int skipped = 0;
+        Set<String> unknownKeys = new LinkedHashSet<>();
+        // Cache existing l2 texts per sub-use so dedup is one query per grammar point.
+        Map<Long, Set<String>> existingBySubUse = new HashMap<>();
+
+        for (ImportPromptsRequest.Item item : items) {
+            GrammarSubUse subUse = subUseRepository.findByDetectorKey(item.detectorKey().trim()).orElse(null);
+            if (subUse == null) {
+                unknownKeys.add(item.detectorKey().trim());
+                skipped++;
+                continue;
+            }
+
+            Set<String> existing = existingBySubUse.computeIfAbsent(subUse.getId(), id ->
+                    referenceRepository.findBySubUseId(id).stream()
+                            .map(ReferenceSentence::getL2Text)
+                            .filter(Objects::nonNull)
+                            .map(String::trim)
+                            .collect(Collectors.toCollection(HashSet::new)));
+
+            String l2 = item.l2Reference().trim();
+            if (!existing.add(l2)) {   // already present → duplicate
+                skipped++;
+                continue;
+            }
+
+            String situation = item.situation().trim();
+            String register = isBlank(item.register()) ? "polite" : item.register().trim();
+            String l1Prompt = isBlank(item.l1PromptTemplate()) ? situation : item.l1PromptTemplate().trim();
+
+            ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                    .subUse(subUse)
+                    .l1Text(situation)
+                    .l2Text(l2)
+                    .source("GENERATED")
+                    .build());
+
+            ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                    .subUse(subUse)
+                    .register(register)
+                    .situationContext(situation)
+                    .l1PromptTemplate(l1Prompt)
+                    .source("GENERATED")
+                    .build());
+
+            promptCacheRepository.save(PromptCache.builder()
+                    .subUse(subUse)
+                    .scenario(scenario)
+                    .referenceSentence(ref)
+                    .l1Prompt(l1Prompt)
+                    .build());
+
+            imported++;
+        }
+
+        return new ImportPromptsResponse(imported, skipped, new ArrayList<>(unknownKeys));
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     /**

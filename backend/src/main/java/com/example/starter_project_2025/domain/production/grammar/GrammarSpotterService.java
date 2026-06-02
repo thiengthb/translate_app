@@ -1,6 +1,6 @@
 package com.example.starter_project_2025.domain.production.grammar;
 
-import com.atilika.kuromoji.ipadic.Tokenizer;
+import com.example.starter_project_2025.system.analyze.SudachiTokenizer;
 import com.example.starter_project_2025.domain.production.detector.DetectorSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,16 +40,16 @@ import java.util.regex.PatternSyntaxException;
  * <p>Both tracks are rebuilt only when the index is invalidated (e.g. after the
  * {@link GrammarDictionarySeeder} runs), so routine requests never touch the DB.
  *
- * <h2>No Ollama at runtime</h2>
+ * <h2>No LLM at runtime</h2>
  * Grammar detection is fully deterministic and offline.  The LLM is used only
- * offline/seed-time to author the regex entries in the dictionary.
+ * at seed-time to author the regex entries in the dictionary.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class GrammarSpotterService {
 
-    private final Tokenizer tokenizer;
+    private final SudachiTokenizer tokenizer;
     private final GrammarSubUseRepository subUseRepository;
     private final GrammarMarkerRepository markerRepository;
 
@@ -162,7 +162,7 @@ public class GrammarSpotterService {
             return List.of();
         }
 
-        // Kuromoji surface join (same approach as detectors in the production exercise)
+        // MeCab surface join (same approach as detectors in the production exercise)
         String surface = DetectorSupport.joinSurfaces(tokenizer.tokenize(japaneseText));
 
         GrammarIndex idx = getIndex();

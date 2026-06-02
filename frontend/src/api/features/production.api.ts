@@ -35,6 +35,8 @@ export interface GrammarOption {
   id: number;
   name: string;
   jlptLevel: string | null;
+  /** Stable seed key — the value to put in an import item's `detectorKey`. */
+  detectorKey: string | null;
 }
 
 /** Where the vocabulary for a generated prompt comes from. */
@@ -54,6 +56,22 @@ export interface PendingPrompt {
   referenceAnswer: string;
   register: string | null;
   createdAt: string;
+}
+
+/** One prompt to bulk-import (produced offline by an external chat AI). */
+export interface ImportPromptItem {
+  detectorKey: string;
+  situation: string;
+  l2Reference: string;
+  register?: string;
+  l1PromptTemplate?: string;
+}
+
+/** Outcome of a bulk prompt import. */
+export interface ImportPromptsResult {
+  imported: number;
+  skipped: number;
+  unknownKeys: string[];
 }
 
 export const productionApi = {
@@ -116,5 +134,13 @@ export const productionApi = {
   /** Reject a generated prompt (keeps it out of the shared pool). */
   rejectPrompt: async (promptId: number): Promise<void> => {
     await axiosInstance.post(`/production/prompts/${promptId}/reject`);
+  },
+
+  /** Bulk-import externally AI-generated prompts into the review queue. */
+  importPrompts: async (items: ImportPromptItem[]): Promise<ImportPromptsResult> => {
+    const res = await axiosInstance.post<ImportPromptsResult>("/production/prompts/import", {
+      items,
+    });
+    return res.data;
   },
 };

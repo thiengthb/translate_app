@@ -160,19 +160,16 @@
             <artifactId>caffeine</artifactId>
         </dependency>
         <dependency>
-            <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>dev.samstevens.totp</groupId>
             <artifactId>totp</artifactId>
             <version>1.7.1</version>
         </dependency>
+        <!-- Sudachi — Japanese morphological analyzer (Java native, no Python needed).
+             Dictionary (~70 MB) is downloaded separately during build via Maven plugins below. -->
         <dependency>
-            <groupId>com.atilika.kuromoji</groupId>
-            <artifactId>kuromoji-ipadic</artifactId>
-            <version>0.9.0</version>
+            <groupId>com.worksap.nlp</groupId>
+            <artifactId>sudachi</artifactId>
+            <version>0.7.5</version>
         </dependency>
 
         <!-- Aho-Corasick multi-pattern string search (Grammar Spotter index) -->
@@ -224,6 +221,74 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <!--
+              ┌─────────────────────────────────────────────────────────────────┐
+              │  Sudachi Core Dictionary download + extraction                  │
+              │                                                                 │
+              │  sudachidict-core is NOT on Maven Central — it's distributed   │
+              │  as a zip from GitHub Releases (~70 MB).                        │
+              │                                                                 │
+              │  Step 1 (generate-resources): download zip once to             │
+              │    .sudachi-cache/ (outside target/ → survives mvn clean).     │
+              │  Step 2 (process-resources): extract system_core.dic into      │
+              │    target/classes/sudachi/ (classpath) if not already there.   │
+              └─────────────────────────────────────────────────────────────────┘
+            -->
+            <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.8.1</version>
+                <executions>
+                    <execution>
+                        <id>download-sudachi-core-dict</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/WorksApplications/SudachiDict/releases/download/v20260428/sudachi-dictionary-20260428-core.zip</url>
+                            <!-- Cache outside target/ → persists across mvn clean -->
+                            <outputDirectory>${project.basedir}/.sudachi-cache</outputDirectory>
+                            <outputFileName>sudachi-dictionary-core.zip</outputFileName>
+                            <!-- Skip if already cached (won't re-download on every build) -->
+                            <overwrite>false</overwrite>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>extract-sudachi-dict</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.outputDirectory}/sudachi"/>
+                                <!-- Always extract — unzip is fast and idempotent (~0.2 s).
+                                     Ant <unzip> doesn't support the "unless" attribute; use
+                                     the overwrite="false" flag instead so existing file is kept. -->
+                                <unzip src="${project.basedir}/.sudachi-cache/sudachi-dictionary-core.zip"
+                                       dest="${project.build.outputDirectory}/sudachi"
+                                       overwrite="false">
+                                    <patternset>
+                                        <!-- Pull out only the binary dictionary file -->
+                                        <include name="**/*.dic"/>
+                                    </patternset>
+                                    <!-- Flatten: strips parent folder from zip path -->
+                                    <mapper type="flatten"/>
+                                </unzip>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

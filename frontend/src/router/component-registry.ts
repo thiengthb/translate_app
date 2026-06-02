@@ -39,6 +39,7 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
+import KanjiRadicalGamePage from "@/pages/games/kanji-radical/KanjiRadicalGamePage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -76,6 +77,13 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
+
+  // ── Games ──
+  // Static (always available to any authenticated user). The board is
+  // fully client-side today; radical/prompt data is a placeholder that
+  // can be swapped for a backend feed later without touching the route.
+  { path: "/games/kanji-radical", component: KanjiRadicalGamePage },
+
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

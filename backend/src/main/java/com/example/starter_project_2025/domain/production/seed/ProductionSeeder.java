@@ -20,7 +20,7 @@ import java.util.List;
  *
  * <p>The original four points ({@code n4_obligation}, {@code n4_te_shimau},
  * {@code n4_conditional_ba}, {@code n3_youni}) are graded by hand-written
- * Kuromoji {@code GrammarDetector}s. Every additional point is graded by the
+ * MeCab {@code GrammarDetector}s. Every additional point is graded by the
  * regex-backed grammar bank via {@code GrammarSpotterService.matchesSubUse}, so
  * its markers carry a {@code detectorSubkey} regex and need no Java detector.
  */
@@ -39,7 +39,7 @@ public class ProductionSeeder implements CommandLineRunner {
     public void run(String... args) {
         int before = (int) subUseRepository.count();
 
-        // ── Original four (hand-written Kuromoji detectors) ──────────────────
+        // ── Original four (hand-written MeCab detectors) ──────────────────
         seedObligation();
         seedTeShimau();
         seedConditionalBa();
