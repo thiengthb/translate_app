@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarSpotterBulkSeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarSpotterBulkSeeder.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -90,12 +93,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/thiengthb/translate_app.git",
-    "accountId": "32d5ed62-08dd-467c-a3b4-0dd1bfec836d"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -267,7 +270,7 @@
       <workItem from="1780329573447" duration="4827000" />
       <workItem from="1780388944138" duration="288000" />
       <workItem from="1780389328306" duration="1234000" />
-      <workItem from="1780416906767" duration="9672000" />
+      <workItem from="1780416906767" duration="10624000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -453,7 +456,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780427094305</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns">
+      <option name="closed" value="true" />
+      <created>1780427410701</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1780427410701</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -483,7 +494,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix dictionary" />
     <MESSAGE value="fix frontend" />
     <MESSAGE value="feat(dictionary): fix dictionary UI" />
     <MESSAGE value="feat(dictionary): fix UI and add voice" />
@@ -508,7 +518,8 @@
     <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
     <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
     <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
+    <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

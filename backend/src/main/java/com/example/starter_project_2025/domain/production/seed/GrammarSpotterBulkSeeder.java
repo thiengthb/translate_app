@@ -146,6 +146,14 @@ public class GrammarSpotterBulkSeeder implements CommandLineRunner {
                     "Chưa kịp xong… thì…", "ないかのうちに"),
             new Entry("spot_n2_iyoiyo", "～いよいよ", "N2",
                     "Ngày càng/ Sắp/ Đã sắp đến…", "いよいよ"),
+            new Entry("spot_n2_ikkensuruto", "一見すると／一見～", "N2",
+                    "Thoạt nhìn thì…/ Mới nhìn qua thì…", "一見する|一見した|一見すると|いっけんする"),
+            new Entry("spot_n2_hodo", "～ほど", "N2",
+                    "Đến mức…; càng… càng… (mức độ).", "ほど(の|だ|に|です|である|、|。)"),
+            new Entry("spot_n2_sae", "～さえ", "N2",
+                    "Ngay cả…; chỉ cần… (さえ…ば).", "さえ(も)?(、|。|あれ|すれ|いれ|でき|な|ある|いる|思)"),
+            new Entry("spot_n2_wosayuusuru", "～を左右する", "N2",
+                    "Chi phối/ Quyết định/ Định đoạt…", "を左右する|をさゆうする|を左右し"),
             new Entry("spot_n2_kato iuto", "～かというと", "N2",
                     "Nếu nói là…/ Nói về việc có…", "かというと|かと言うと"),
             new Entry("spot_n2_i) ittai", "～いったい", "N2",
@@ -158,8 +166,7 @@ public class GrammarSpotterBulkSeeder implements CommandLineRunner {
                     "Không đến mức phải…", "には及ばない|にはおよばない"),
             new Entry("spot_n2_naidemonai", "～ないでもない", "N2",
                     "Không phải là không…", "ないでもない|ないものでもない"),
-            new Entry("spot_n2_tesshouganai", "～てしょうがない", "N2",
-                    "Không thể chịu nổi…", "てしょうがない|てしようがない"),
+            // (～てしょうがない already seeded at N3 by GrammarSpotterN3Seeder — not repeated to avoid double hits)
             new Entry("spot_n2_kaneru", "～かねる", "N2",
                     "Không thể/ Khó mà…", "かねる|かねます|かね(?=ない)"),
             new Entry("spot_n2_shidaideha", "～次第では", "N2",
@@ -485,7 +492,10 @@ public class GrammarSpotterBulkSeeder implements CommandLineRunner {
             new Entry("spot_n1_gahayaika", "～が早いか", "N1",
                     "Vừa mới… thì đã…", "が早いか|がはやいか"),
             new Entry("spot_n1_nishite", "～にして", "N1",
-                    "Chỉ trong/ Chỉ mới/ Phải đến…", "にして(はじめて|こそ|なお)")
+                    "Chỉ trong/ Chỉ mới/ Phải đến…", "にして(はじめて|こそ|なお)"),
+            new Entry("spot_n1_toittemokagon", "～と言っても過言ではない", "N1",
+                    "Không ngoa khi nói rằng…/ Có thể nói là…",
+                    "過言ではない|過言じゃない|かごんではない|といっても過言")
     );
 
     @Override
