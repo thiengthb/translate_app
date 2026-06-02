@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(game): add Kanji Radical game components and integrate game logic">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" afterDir="false" />
-    </list>
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -270,7 +267,7 @@
       <workItem from="1780329573447" duration="4827000" />
       <workItem from="1780388944138" duration="288000" />
       <workItem from="1780389328306" duration="1234000" />
-      <workItem from="1780416906767" duration="9309000" />
+      <workItem from="1780416906767" duration="9672000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -448,7 +445,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780385603885</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic">
+      <option name="closed" value="true" />
+      <created>1780427094305</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1780427094305</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -478,7 +483,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="test add" />
     <MESSAGE value="fix dictionary" />
     <MESSAGE value="fix frontend" />
     <MESSAGE value="feat(dictionary): fix dictionary UI" />
@@ -503,7 +507,8 @@
     <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
     <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
     <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(workspace): update workspace configuration and clean up unused paths" />
+    <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
