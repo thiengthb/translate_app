@@ -1,0 +1,37 @@
+# Local dev infrastructure (MySQL + Redis).
+# Values match the team's shared backend/.env: db=translate_app, user=root, pass=root.
+# Additive & non-destructive — start with:  docker compose up -d
+#
+# NOTE: if you previously ran a container named "lonthien-mysql" with `docker run`,
+# remove it first to avoid a name clash:  docker rm -f lonthien-mysql
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lonthien-mysql
+    command:
+      - --character-set-server=utf8mb4      # cần thiết để lưu kanji/kana/tiếng Việt
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: translate_app
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql           # dữ liệu bền, xóa container vẫn còn
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: lonthien-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
