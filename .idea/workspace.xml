@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(game): add Kanji Radical game components and integrate game logic">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/OllamaClient.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,12 +93,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/thiengthb/translate_app.git",
+    "accountId": "32d5ed62-08dd-467c-a3b4-0dd1bfec836d"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -220,7 +221,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
       </set>
     </attachedChunks>
   </component>
@@ -266,6 +268,9 @@
       <workItem from="1780288290905" duration="6445000" />
       <workItem from="1780329301013" duration="164000" />
       <workItem from="1780329573447" duration="4827000" />
+      <workItem from="1780388944138" duration="288000" />
+      <workItem from="1780389328306" duration="1234000" />
+      <workItem from="1780416906767" duration="9309000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -435,7 +440,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780331036949</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="refactor(workspace): update workspace configuration and clean up unused paths">
+      <option name="closed" value="true" />
+      <created>1780385603885</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1780385603885</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -452,7 +465,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/feature/assessment" />
+                        <option value="origin/feature/translator" />
                       </list>
                     </value>
                   </entry>
@@ -489,7 +502,8 @@
     <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
     <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
     <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
+    <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(workspace): update workspace configuration and clean up unused paths" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

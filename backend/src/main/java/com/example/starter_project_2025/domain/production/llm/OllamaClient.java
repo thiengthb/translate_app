@@ -36,7 +36,7 @@ public class OllamaClient {
     public OllamaClient(
             RestClient.Builder builder,
             @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
-            @Value("${ollama.model:qwen:7b}") String model,
+            @Value("${ollama.model:qwen:3b}") String model,
             ObjectMapper mapper) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);    // fail fast if Ollama isn't running
@@ -55,18 +55,21 @@ public class OllamaClient {
 
     // ── Translation-page analysis: alternative translations ────────────────────
 
-    /** 2–3 alternative translations of {@code sourceText} into the target language. */
+    /** 3 alternative translations of {@code sourceText} into the target language. */
     public List<String> alternatives(String sourceText, String referenceTranslation, String targetLangName) {
-        // Deliberately short prompt — qwen:7b follows a simpler instruction more reliably.
-        // num_predict=512: Japanese ≈ 2-3 tokens/char; 2 sentences + JSON ≈ 150-300 tokens.
+        // Each alternative must differ structurally, not just swap synonyms — this mirrors how
+        // DeepL's beam search surfaces candidates that diverged early in decode (different verb
+        // form, particle, formality register, or sentence construction).
+        // num_predict=640: Japanese ≈ 2-3 tokens/char; 3 sentences + JSON brackets ≈ 300-500 tokens.
         String prompt = """
-                Translate the following text into %s. Give exactly 2 alternative translations (different wording, same meaning).
-                Text: "%s"
-                Reference translation: "%s"
-                Reply with ONLY a JSON array of 2 strings, e.g. ["translation 1","translation 2"]. No explanation.
+                You are a professional translator. Translate into %s.
+                Give exactly 3 alternatives. Each must differ in at least one of: vocabulary, grammar structure, formality level, or sentence construction — not just synonym swaps.
+                Source: "%s"
+                Reference: "%s"
+                Reply ONLY with a JSON array of 3 strings: ["alt1","alt2","alt3"]. No explanation.
                 """.formatted(targetLangName, safe(sourceText), safe(referenceTranslation));
 
-        String raw = generate(prompt, 0.7, 512);
+        String raw = generate(prompt, 0.75, 640);
         log.info("[alternatives] Ollama raw ({} chars): {}", raw == null ? 0 : raw.length(),
                 raw == null ? "null" : raw.substring(0, Math.min(raw.length(), 200)));
         JsonNode node = parseJsonArray(raw);
