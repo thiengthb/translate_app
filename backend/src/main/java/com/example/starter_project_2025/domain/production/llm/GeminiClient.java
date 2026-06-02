@@ -236,7 +236,12 @@ public class GeminiClient {
                             "parts", List.of(Map.of("text", prompt)))),
                     "generationConfig", Map.of(
                             "temperature", temperature,
-                            "maxOutputTokens", maxTokens));
+                            "maxOutputTokens", maxTokens,
+                            // gemini-flash-latest is a 2.5 "thinking" model; with our small
+                            // maxOutputTokens the thinking budget would consume the whole
+                            // response and return empty content. Disable thinking for these
+                            // short structured-JSON tasks (compose/judge/alternatives).
+                            "thinkingConfig", Map.of("thinkingBudget", 0)));
 
             return restClient.post()
                     .uri(url)

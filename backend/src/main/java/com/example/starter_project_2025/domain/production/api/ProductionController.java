@@ -66,10 +66,10 @@ public class ProductionController {
     }
 
     @GetMapping("/grammars")
-    @Operation(summary = "List grammar points available to drill (id, name, level)")
+    @Operation(summary = "List grammar points available to drill (id, name, level, detectorKey)")
     public ResponseEntity<List<GrammarOption>> listGrammars() {
         List<GrammarOption> options = subUseRepository.findAll().stream()
-                .map(su -> new GrammarOption(su.getId(), su.getName(), su.getJlptLevel()))
+                .map(su -> new GrammarOption(su.getId(), su.getName(), su.getJlptLevel(), su.getDetectorKey()))
                 .sorted(Comparator
                         .comparing(GrammarOption::jlptLevel, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(GrammarOption::name, Comparator.nullsLast(Comparator.naturalOrder())))
@@ -124,6 +124,13 @@ public class ProductionController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/prompts/import")
+    @PreAuthorize("hasAuthority('SCENARIO_STUB_UPDATE')")
+    @Operation(summary = "Bulk-import externally AI-generated prompts into the review queue")
+    public ResponseEntity<ImportPromptsResponse> importPrompts(@Valid @RequestBody ImportPromptsRequest req) {
+        return ResponseEntity.ok(promptService.importGenerated(req.items()));
+    }
+
     @PostMapping("/attempt")
     @Operation(summary = "Submit and grade a production attempt")
     public ResponseEntity<AttemptResultResponse> submitAttempt(
@@ -155,6 +162,6 @@ public class ProductionController {
         return eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
     }
 
-    /** Lightweight grammar-point option for the drill selector. */
-    public record GrammarOption(Long id, String name, String jlptLevel) {}
+    /** Lightweight grammar-point option for the drill selector + import key reference. */
+    public record GrammarOption(Long id, String name, String jlptLevel, String detectorKey) {}
 }
