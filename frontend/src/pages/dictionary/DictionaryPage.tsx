@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
     Pen, Loader2, Volume2, Bookmark, BookmarkCheck, X, Star, GitBranch,
-    Sparkles, Trash2, AlertCircle, Languages,
+    Sparkles, AlertCircle, Languages,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type {
     WordSearchResult, WordSuggestion, DictionaryKanjiInfo,
@@ -21,6 +23,10 @@ import { HandwritingInput } from "./HandwritingInput";
 import { VoiceInput } from "./VoiceInput";
 import { KanjiStrokeOrder } from "./KanjiStrokeOrder";
 import { KanjiBreakdown } from "./KanjiBreakdown";
+import { JLPT } from "./dictionaryConstants";
+import {
+    loadSavedWords, loadSavedKanjis, toggleSavedWord, toggleSavedKanji,
+} from "./savedStorage";
 
 // ── Constants ─────────────────────────────────────────────────────────
 const WORD_TYPE_LABELS: Record<string, string> = {
@@ -33,19 +39,6 @@ const WORD_TYPE_LABELS: Record<string, string> = {
     suf: "Hậu tố", conj: "Liên từ", int: "Thán từ",
 };
 
-const JLPT: Record<string, { badge: string; bar: string; accent: string; text: string }> = {
-    N1: { badge: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
-          bar: "bg-red-500", accent: "border-l-red-500", text: "text-red-600 dark:text-red-400" },
-    N2: { badge: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
-          bar: "bg-orange-500", accent: "border-l-orange-500", text: "text-orange-600 dark:text-orange-400" },
-    N3: { badge: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
-          bar: "bg-yellow-500", accent: "border-l-yellow-500", text: "text-yellow-700 dark:text-yellow-400" },
-    N4: { badge: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30",
-          bar: "bg-green-500", accent: "border-l-green-500", text: "text-green-600 dark:text-green-400" },
-    N5: { badge: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-          bar: "bg-blue-500", accent: "border-l-blue-500", text: "text-blue-600 dark:text-blue-400" },
-};
-
 const REP_LABELS: Record<string, { label: string; className: string }> = {
     KANJI:    { label: "漢字", className: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
     HIRAGANA: { label: "ひら", className: "bg-pink-500/15 text-pink-600 dark:text-pink-400 border-pink-500/30" },
@@ -55,8 +48,6 @@ const REP_LABELS: Record<string, { label: string; className: string }> = {
 
 const HISTORY_KEY = "dict_search_history";
 const MAX_HISTORY = 10;
-const SAVED_WORDS_KEY  = "dict_saved_words";
-const SAVED_KANJIS_KEY = "dict_saved_kanjis";
 
 // ── Storage helpers ───────────────────────────────────────────────────
 function loadHistory(): string[] {
@@ -69,29 +60,6 @@ function pushHistory(term: string) {
 }
 function dropHistory(term: string) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(loadHistory().filter((x) => x !== term)));
-}
-
-function loadSavedWords(): WordSearchResult[] {
-    try { return JSON.parse(localStorage.getItem(SAVED_WORDS_KEY) ?? "[]"); }
-    catch { return []; }
-}
-function loadSavedKanjis(): DictionaryKanjiDetail[] {
-    try { return JSON.parse(localStorage.getItem(SAVED_KANJIS_KEY) ?? "[]"); }
-    catch { return []; }
-}
-function toggleSavedWord(word: WordSearchResult): WordSearchResult[] {
-    const saved = loadSavedWords();
-    const idx   = saved.findIndex((w) => w.id === word.id);
-    const next  = idx >= 0 ? saved.filter((_, i) => i !== idx) : [word, ...saved];
-    localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(next));
-    return next;
-}
-function toggleSavedKanji(kanji: DictionaryKanjiDetail): DictionaryKanjiDetail[] {
-    const saved = loadSavedKanjis();
-    const idx   = saved.findIndex((k) => k.character === kanji.character);
-    const next  = idx >= 0 ? saved.filter((_, i) => i !== idx) : [kanji, ...saved];
-    localStorage.setItem(SAVED_KANJIS_KEY, JSON.stringify(next));
-    return next;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -127,14 +95,15 @@ export default function DictionaryPage() {
 
     const [savedWords,  setSavedWords]  = useState<WordSearchResult[]>(loadSavedWords);
     const [savedKanjis, setSavedKanjis] = useState<DictionaryKanjiDetail[]>(loadSavedKanjis);
-    const [showSaved,   setShowSaved]   = useState(false);
+
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapRef  = useRef<HTMLDivElement>(null);
     const debouncedQ = useDebounce(query, 250);
 
     useEffect(() => {
-        dictionaryApi.featured().then(setFeatured).catch(() => {});
+        dictionaryApi.featured(9).then(setFeatured).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -158,7 +127,6 @@ export default function DictionaryPage() {
         const effectiveMode = mode ?? searchMode;
         if (!term) return;
         setShowDrop(false);
-        setShowSaved(false);
         setLoading(true);
         setError(null);
         setResults(null);
@@ -191,6 +159,20 @@ export default function DictionaryPage() {
             setError(null);
         }
     }, [searchMode, query, searched, handleSearch]);
+
+    // Khi điều hướng từ trang Sổ tay sang (?q=...&mode=...): tự điền & tra ngay.
+    // Sau khi tra xong xóa param khỏi URL (replace) để không tra lại khi người
+    // dùng tìm từ khác — lần chạy kế tiếp q=null nên thoát sớm, không vòng lặp.
+    useEffect(() => {
+        const q = searchParams.get("q");
+        if (!q) return;
+        const mode: SearchMode = searchParams.get("mode") === "kanji" ? "kanji" : "vocabulary";
+        setSearchMode(mode);
+        setQuery(q);
+        handleSearch(q, mode);
+        setSearchParams({}, { replace: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     const selectSuggestion = (s: WordSuggestion) => { setQuery(s.word); handleSearch(s.word); };
 
@@ -238,66 +220,6 @@ export default function DictionaryPage() {
 
     const handleToggleSaveWord  = (word: WordSearchResult)    => setSavedWords(toggleSavedWord(word));
     const handleToggleSaveKanji = (kanji: DictionaryKanjiDetail) => setSavedKanjis(toggleSavedKanji(kanji));
-    const handleClearAllSaved   = () => {
-        localStorage.removeItem(SAVED_WORDS_KEY);
-        localStorage.removeItem(SAVED_KANJIS_KEY);
-        setSavedWords([]);
-        setSavedKanjis([]);
-    };
-
-    // Đối chiếu mục "đã lưu" với server: bỏ những từ/kanji đã bị xóa (hoặc tắt
-    // hoạt động) khỏi localStorage. Lỗi mạng thì GIỮ NGUYÊN để không xóa nhầm.
-    const reconcileSaved = useCallback(async () => {
-        const words  = loadSavedWords();
-        const kanjis = loadSavedKanjis();
-        if (!words.length && !kanjis.length) return;
-
-        const wordChecks = await Promise.all(words.map(async (w) => {
-            try {
-                const res = await dictionaryApi.search(w.word, 50);
-                return res.find((r) => r.id === w.id) ?? null; // null = đã bị xóa → loại
-            } catch {
-                return w; // lỗi mạng → giữ lại bản cũ
-            }
-        }));
-        const liveWords = wordChecks.filter(Boolean) as WordSearchResult[];
-
-        const kanjiChecks = await Promise.all(kanjis.map(async (k) => {
-            try {
-                const res = await dictionaryApi.kanjiSearch(k.character, 10);
-                return res.find((r) => r.character === k.character) ?? null;
-            } catch {
-                return k;
-            }
-        }));
-        const liveKanjis = kanjiChecks.filter(Boolean) as DictionaryKanjiDetail[];
-
-        if (liveWords.length !== words.length) {
-            localStorage.setItem(SAVED_WORDS_KEY, JSON.stringify(liveWords));
-            setSavedWords(liveWords);
-        }
-        if (liveKanjis.length !== kanjis.length) {
-            localStorage.setItem(SAVED_KANJIS_KEY, JSON.stringify(liveKanjis));
-            setSavedKanjis(liveKanjis);
-        }
-    }, []);
-
-    // Mở/đóng mục "đã lưu". Khi mở: xóa kết quả tìm kiếm đang hiển thị để danh
-    // sách đã lưu hiện ra, đồng thời đối chiếu server loại các từ đã bị xóa.
-    const toggleSavedView = useCallback(() => {
-        setShowSaved((v) => {
-            const next = !v;
-            if (next) {
-                setResults(null);
-                setKanjiResults(null);
-                setSearched("");
-                setError(null);
-                setShowDrop(false);
-                void reconcileSaved();
-            }
-            return next;
-        });
-    }, [reconcileSaved]);
 
     const hasVocabResults = !loading && results !== null;
     const hasKanjiResults = !loading && kanjiResults !== null;
@@ -314,34 +236,29 @@ export default function DictionaryPage() {
                         <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
                         <div className="relative p-4 sm:p-5 space-y-3.5">
 
-                            {/* Title + saved toggle */}
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                                        <Book className="h-[18px] w-[18px]" />
-                                    </span>
-                                    <div className="min-w-0">
-                                        <h1 className="text-base sm:text-lg font-bold leading-tight text-foreground">
-                                            Từ điển Nhật - Việt
-                                        </h1>
-                                        <p className="hidden sm:block text-xs text-muted-foreground">
-                                            Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
-                                        </p>
-                                    </div>
+                            {/* Title */}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                    <Book className="h-[18px] w-[18px]" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <h1 className="text-base sm:text-lg font-bold leading-tight text-foreground">
+                                        Từ điển Nhật - Việt
+                                    </h1>
+                                    <p className="hidden sm:block text-xs text-muted-foreground">
+                                        Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
+                                    </p>
                                 </div>
-                                <Button
-                                    variant={showSaved ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={toggleSavedView}
-                                    className="gap-1.5 shrink-0"
-                                >
-                                    <Bookmark className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Đã lưu</span>
-                                    {totalSaved > 0 && (
-                                        <Badge variant={showSaved ? "secondary" : "default"} className="ml-0.5 px-1.5 h-4 text-[10px]">
-                                            {totalSaved}
-                                        </Badge>
-                                    )}
+                                <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
+                                    <Link to="/notebook">
+                                        <Bookmark className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:inline">Sổ tay</span>
+                                        {totalSaved > 0 && (
+                                            <Badge variant="secondary" className="ml-0.5 px-1.5 h-4 text-[10px]">
+                                                {totalSaved}
+                                            </Badge>
+                                        )}
+                                    </Link>
                                 </Button>
                             </div>
 
@@ -405,12 +322,14 @@ export default function DictionaryPage() {
                                                         className="text-xs text-primary hover:text-primary/80 font-medium"
                                                     >Xóa tất cả</button>
                                                 </div>
-                                                {history.map((term, i) => (
-                                                    <HistoryRow key={term} term={term} active={i === activeIdx}
-                                                        onSelect={() => { setQuery(term); handleSearch(term); }}
-                                                        onRemove={() => removeHistoryItem(term)}
-                                                        onHover={() => setActiveIdx(i)} />
-                                                ))}
+                                                <ScrollHintContainer axis="vertical" scrollStep={120} className="max-h-[200px]">
+                                                    {history.map((term, i) => (
+                                                        <HistoryRow key={term} term={term} active={i === activeIdx}
+                                                            onSelect={() => { setQuery(term); handleSearch(term); }}
+                                                            onRemove={() => removeHistoryItem(term)}
+                                                            onHover={() => setActiveIdx(i)} />
+                                                    ))}
+                                                </ScrollHintContainer>
                                             </>
                                         ) : (
                                             suggestions.map((s, i) => (
@@ -508,21 +427,8 @@ export default function DictionaryPage() {
                     </div>
                 )}
 
-                {/* ── Saved section ── */}
-                {showSaved && !loading && (
-                    <SavedSection
-                        savedWords={savedWords}
-                        savedKanjis={savedKanjis}
-                        onSearchWord={(w) => { setShowSaved(false); quickSearch(w); }}
-                        onSearchKanji={(ch) => { setShowSaved(false); setSearchMode("kanji"); setQuery(ch); handleSearch(ch, "kanji"); }}
-                        onRemoveWord={handleToggleSaveWord}
-                        onRemoveKanji={handleToggleSaveKanji}
-                        onClearAll={handleClearAllSaved}
-                    />
-                )}
-
                 {/* ── Featured ── */}
-                {!loading && featured && !showSaved && (
+                {!loading && featured && (
                     <FeaturedSection
                         featured={featured}
                         onWordClick={quickSearch}
@@ -1150,7 +1056,7 @@ function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
                         </p>
                     </div>
                     <Separator />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 divide-x divide-y">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-x divide-y">
                         {featured.words.map((w) => (
                             <FeaturedWordChip key={w.id} word={w} onClick={onWordClick} />
                         ))}
@@ -1187,7 +1093,7 @@ function FeaturedWordChip({ word, onClick }: { word: WordSearchResult; onClick: 
             className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors text-left group"
         >
             <div className="flex flex-col items-center shrink-0 min-w-[3rem]">
-                <span className={`text-xl font-bold leading-none whitespace-nowrap ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
+                <span className="text-xl font-bold leading-none whitespace-nowrap text-foreground group-hover:text-primary transition-colors">
                     {word.word}
                 </span>
                 {word.reading && word.reading !== word.word && (
@@ -1222,7 +1128,7 @@ function FeaturedKanjiChip({ kanji, onClick }: { kanji: DictionaryKanjiDetail; o
             onClick={() => onClick(kanji.character)}
             className="flex flex-col items-center px-3 py-2 rounded-lg border bg-card hover:border-primary/40 hover:shadow-sm transition-all group"
         >
-            <span className={`text-2xl font-bold leading-none ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
+            <span className="text-2xl font-bold leading-none text-foreground group-hover:text-primary transition-colors">
                 {kanji.character}
             </span>
             {kanji.meaning && (
@@ -1329,143 +1235,5 @@ function BookmarkButton({ saved, onToggle }: { saved: boolean; onToggle: () => v
         >
             {saved ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
         </Button>
-    );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// Saved section
-// ══════════════════════════════════════════════════════════════════════
-function SavedSection({
-    savedWords, savedKanjis, onSearchWord, onSearchKanji, onRemoveWord, onRemoveKanji, onClearAll,
-}: {
-    savedWords: WordSearchResult[];
-    savedKanjis: DictionaryKanjiDetail[];
-    onSearchWord: (w: string) => void;
-    onSearchKanji: (ch: string) => void;
-    onRemoveWord: (w: WordSearchResult) => void;
-    onRemoveKanji: (k: DictionaryKanjiDetail) => void;
-    onClearAll: () => void;
-}) {
-    if (savedWords.length === 0 && savedKanjis.length === 0) {
-        return (
-            <EmptyState
-                className="py-12"
-                icon={<Bookmark className="size-7" />}
-                title="Chưa có từ nào được lưu"
-                description={
-                    <>
-                        Nhấn nút <Bookmark className="inline h-3 w-3 mx-0.5 align-middle" /> trên kết quả tìm kiếm để bookmark từ yêu thích
-                    </>
-                }
-            />
-        );
-    }
-
-    return (
-        <div className="space-y-3">
-            {savedWords.length > 0 && (
-                <Card className="gap-0 py-0 overflow-hidden">
-                    <div className="px-5 py-3 flex items-center gap-2">
-                        <BookmarkCheck className="h-4 w-4 text-yellow-500" />
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Từ vựng đã lưu</p>
-                        <span className="ml-auto text-xs text-muted-foreground">{savedWords.length} từ</span>
-                    </div>
-                    <Separator />
-                    <div className="divide-y">
-                        {savedWords.map((w) => (
-                            <SavedWordRow key={w.id} word={w} onSearch={onSearchWord} onRemove={() => onRemoveWord(w)} />
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            {savedKanjis.length > 0 && (
-                <Card className="gap-0 py-0 overflow-hidden">
-                    <div className="px-5 py-3 flex items-center gap-2">
-                        <BookmarkCheck className="h-4 w-4 text-yellow-500" />
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kanji đã lưu</p>
-                        <span className="ml-auto text-xs text-muted-foreground">{savedKanjis.length} kanji</span>
-                    </div>
-                    <Separator />
-                    <div className="flex flex-wrap gap-2 p-3">
-                        {savedKanjis.map((k) => (
-                            <SavedKanjiChip key={k.character} kanji={k} onSearch={onSearchKanji} onRemove={() => onRemoveKanji(k)} />
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            <div className="flex justify-center">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClearAll}
-                    className="text-muted-foreground hover:text-destructive gap-1.5"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Xóa tất cả đã lưu
-                </Button>
-            </div>
-        </div>
-    );
-}
-
-function SavedWordRow({ word, onSearch, onRemove }: {
-    word: WordSearchResult; onSearch: (w: string) => void; onRemove: () => void;
-}) {
-    const jlpt = JLPT[word.levelCode ?? ""];
-    return (
-        <div className="flex items-center gap-3 px-4 py-2.5 group hover:bg-accent/50 transition-colors">
-            <button onClick={() => onSearch(word.word)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                <div className="flex flex-col shrink-0 min-w-[3rem]">
-                    <span className={`text-lg font-bold leading-tight ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
-                        {word.word}
-                    </span>
-                    {word.reading && word.reading !== word.word && (
-                        <span className="text-[9px] text-muted-foreground leading-tight">{word.reading}</span>
-                    )}
-                </div>
-                <span className="flex-1 text-xs text-muted-foreground leading-tight line-clamp-1">{word.meaningText}</span>
-                {jlpt && (
-                    <Badge variant="outline" className={`text-[9px] font-bold px-1.5 py-0 h-4 shrink-0 ${jlpt.badge}`}>
-                        {word.levelCode}
-                    </Badge>
-                )}
-            </button>
-            <button
-                onClick={onRemove}
-                title="Bỏ lưu"
-                className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all shrink-0"
-            ><X className="h-3 w-3" /></button>
-        </div>
-    );
-}
-
-function SavedKanjiChip({ kanji, onSearch, onRemove }: {
-    kanji: DictionaryKanjiDetail; onSearch: (ch: string) => void; onRemove: () => void;
-}) {
-    const jlpt = kanji.jlptLevel ? JLPT[kanji.jlptLevel] : null;
-    return (
-        <div className="relative group">
-            <button
-                onClick={() => onSearch(kanji.character)}
-                className="flex flex-col items-center px-3 py-2 rounded-lg border bg-card hover:border-primary/40 hover:shadow-sm transition-all"
-            >
-                <span className={`text-2xl font-bold leading-none ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
-                    {kanji.character}
-                </span>
-                {kanji.meaning && (
-                    <span className="text-[9px] text-muted-foreground leading-tight mt-1 max-w-[3.5rem] truncate text-center">
-                        {kanji.meaning}
-                    </span>
-                )}
-                {jlpt && <span className={`text-[8px] font-black mt-0.5 ${jlpt.text}`}>{kanji.jlptLevel}</span>}
-            </button>
-            <button
-                onClick={onRemove}
-                title="Bỏ lưu"
-                className="absolute -top-1.5 -right-1.5 h-4 w-4 flex items-center justify-center rounded-full bg-destructive/15 text-destructive opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-destructive/25"
-            ><X className="h-2.5 w-2.5" /></button>
-        </div>
     );
 }
