@@ -733,7 +733,6 @@ public class AnkiStudyController {
             }
 
             switch (p.getState()) {
-                case "NEW"        -> newC++;
                 case "LEARNING"   -> learning++;
                 case "RELEARNING" -> relearning++;
                 case "REVIEW"     -> review++;
@@ -748,12 +747,16 @@ public class AnkiStudyController {
                 LocalDate due = nextReviewAt.toLocalDate();
                 long diff = ChronoUnit.DAYS.between(today, due);
                 if (!nextReviewAt.isAfter(now)) {
+                    // Overdue (from any past day or already past today) →
+                    // count in dueToday AND show in the T-bar of Future Due chart.
                     dueToday++;
                     dueReviewCards++;
-                } else if (diff == 1) {
-                    dueTomorrow++;
+                    futureDue[0]++;
+                } else {
+                    // Due in the future
+                    if (diff == 1) dueTomorrow++;
+                    if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
                 }
-                if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
             }
 
             sumMemory    += p.getMemoryScore();
