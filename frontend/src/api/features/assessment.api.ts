@@ -6,7 +6,6 @@ import type {
   QuestionTagDTO,
   QuestionTagQueryParams,
   QuizAttemptDTO,
-  QuizCategoryDTO,
   QuizDTO,
   QuizQueryParams,
   QuizQuestionDTO,
@@ -17,35 +16,6 @@ import type {
 
 type Page<T> = { content?: T[]; items?: T[] };
 const list = <T>(data: Page<T>): T[] => data.content ?? data.items ?? [];
-
-/* ─────────────────────────────────────────
-   Quiz categories
-───────────────────────────────────────── */
-const fetchCategories = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<Page<QuizCategoryDTO>>("/quiz-categories", {
-    params: { page: 0, size: 200, sort: "orderIndex,asc" },
-  });
-  return list(res.data);
-};
-
-const fetchCategoryTree = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<QuizCategoryDTO[]>("/quiz-categories/tree");
-  return res.data;
-};
-
-const createCategory = async (data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.post<QuizCategoryDTO>("/quiz-categories", { isActive: true, ...data });
-  return res.data;
-};
-
-const updateCategory = async (id: number, data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.put<QuizCategoryDTO>(`/quiz-categories/${id}`, data);
-  return res.data;
-};
-
-const deleteCategory = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`/quiz-categories/${id}`);
-};
 
 /* ─────────────────────────────────────────
    Quizzes
@@ -254,11 +224,6 @@ const getQuizProgress = async (userId: number, quizId: number): Promise<UserQuiz
 };
 
 export const assessmentApi = {
-  fetchCategories,
-  fetchCategoryTree,
-  createCategory,
-  updateCategory,
-  deleteCategory,
   fetchQuizzes,
   fetchPublicQuizzes,
   fetchQuizById,

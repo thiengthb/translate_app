@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { assessmentApi } from "@/api";
-import type { QuizCategoryDTO, QuizDTO, UserQuizProgressDTO } from "@/types";
+import type { QuizDTO, UserQuizProgressDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Clock, FileQuestion, Loader2, Plus, RotateCcw, Search } from "lucide-react";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { cn } from "@/lib/utils";
@@ -31,25 +32,18 @@ export default function QuizListPage() {
 
   const [tab, setTab] = useState<Tab>("mine");
   const [quizzes, setQuizzes] = useState<QuizDTO[]>([]);
-  const [categories, setCategories] = useState<QuizCategoryDTO[]>([]);
   const [progressMap, setProgressMap] = useState<Record<number, UserQuizProgressDTO>>({});
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState<string>("all");
   const [difficulty, setDifficulty] = useState<string>("all");
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
   useEffect(() => {
-    assessmentApi.fetchCategories().then(setCategories).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setLoading(true);
     const params = {
-      ...(categoryId !== "all" ? { categoryId: Number(categoryId) } : {}),
       ...(difficulty !== "all" ? { difficultyLevel: difficulty as DifficultyLevel } : {}),
       ...(search.trim() ? { search: search.trim() } : {}),
     };
@@ -75,12 +69,12 @@ export default function QuizListPage() {
       })
       .catch(() => toast.error("Failed to load quizzes."))
       .finally(() => setLoading(false));
-  }, [tab, categoryId, difficulty, search, userId]);
+  }, [tab, difficulty, search, userId]);
 
   // Any change to the result set (filters/tab) or page size returns to page 1.
   useEffect(() => {
     setPage(1);
-  }, [tab, categoryId, difficulty, search, pageSize]);
+  }, [tab, difficulty, search, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(quizzes.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -114,25 +108,16 @@ export default function QuizListPage() {
             />
           </div>
 
-          <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={difficulty} onValueChange={setDifficulty}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Difficulty" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All levels</SelectItem>
-              {DIFFICULTIES.map((d) => (
-                <SelectItem key={d} value={d}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            className="w-36"
+            value={difficulty}
+            onValueChange={setDifficulty}
+            placeholder="Difficulty"
+            options={[
+              { value: "all", label: "All levels" },
+              ...DIFFICULTIES.map((d) => ({ value: d, label: d })),
+            ]}
+          />
 
           <Button onClick={() => navigate("/quizzes/create")}>
             <Plus className="size-4 mr-1" />

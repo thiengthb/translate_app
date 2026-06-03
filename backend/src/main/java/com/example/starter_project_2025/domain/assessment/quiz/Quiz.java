@@ -37,12 +37,6 @@ import java.time.LocalDateTime;
 @AuditEnabled
 public class Quiz extends BaseEntity {
 
-    @Column(name = "quiz_type_id")
-    Long quizTypeId;
-
-    @Column(name = "category_id")
-    Long categoryId;
-
     @Column(name = "level_id")
     Long levelId;
 
