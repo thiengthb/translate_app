@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarSpotterBulkSeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/GrammarSpotterBulkSeeder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -271,6 +271,9 @@
       <workItem from="1780388944138" duration="288000" />
       <workItem from="1780389328306" duration="1234000" />
       <workItem from="1780416906767" duration="10624000" />
+      <workItem from="1780445862455" duration="1906000" />
+      <workItem from="1780459191126" duration="890000" />
+      <workItem from="1780466498166" duration="643000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
