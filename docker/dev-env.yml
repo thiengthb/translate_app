@@ -28,6 +28,22 @@ services:
     networks:
       - translate_net
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: translate_app_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8080}:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-root}
+    networks:
+      - translate_net
+    depends_on:
+      mysql:
+        condition: service_healthy
+
 volumes:
   mysql_data:
 
