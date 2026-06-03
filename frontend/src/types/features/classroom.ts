@@ -56,6 +56,24 @@ export interface ClassAssignmentDTO {
   createdAt: string;
 }
 
+export interface AttemptSummary {
+  attemptId: number;
+  attemptNumber: number;
+  /** IN_PROGRESS | SUBMITTED | EXPIRED | CANCELLED */
+  status: string;
+  earnedScore: number | null;
+  totalScore: number | null;
+  percentage: number | null;
+  isPassed: boolean;
+  correctQuestions: number;
+  wrongQuestions: number;
+  skippedQuestions: number;
+  totalQuestions: number;
+  timeSpentSeconds: number;
+  startedAt: string | null;
+  submittedAt: string | null;
+}
+
 export interface StudentResultDTO {
   userId: number;
   displayName: string;
@@ -64,6 +82,7 @@ export interface StudentResultDTO {
   latestScore: number | null;
   isPassed: boolean;
   submittedAt: string | null;
+  attempts: AttemptSummary[];
 }
 
 export interface GradebookDTO {

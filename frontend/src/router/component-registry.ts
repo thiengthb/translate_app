@@ -44,6 +44,7 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
+import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -100,6 +101,7 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
+  { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

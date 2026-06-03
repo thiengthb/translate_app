@@ -20,16 +20,18 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  BookOpen, CalendarClock, Check, ChevronLeft, ClipboardList, Copy,
-  Eye, GraduationCap, Loader2, Play, Plus, RefreshCw, Trash2, Users, UserMinus,
+  BarChart3, BookOpen, CalendarClock, Check, ChevronLeft, ChevronRight, ClipboardList, Copy,
+  Eye, GraduationCap, LayoutGrid, List, Loader2, Play, Plus, RefreshCw, Trash2, Users, UserMinus,
 } from "lucide-react";
 import { COLOR_PRESETS } from "@/lib/color-presets";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { CreateEditAssignmentModal } from "./CreateEditAssignmentModal";
-import { GradebookModal } from "./GradebookModal";
 import { formatDateTime } from "@/pages/assessment/_shared";
+
+type AssignmentView = "list" | "card";
+const ASSIGNMENT_VIEW_KEY = "classroomAssignmentView";
 
 const STATUS_STYLE: Record<string, { badge: string; border: string }> = {
   DRAFT:     { badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300", border: "border-l-slate-400" },
@@ -49,9 +51,18 @@ export default function ClassroomDetailPage() {
 
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<ClassAssignmentDTO | null>(null);
-  const [gradebookId, setGradebookId] = useState<number | null>(null);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
+  const [assignmentView, setAssignmentView] = useState<AssignmentView>(() => {
+    try { return (localStorage.getItem(ASSIGNMENT_VIEW_KEY) as AssignmentView) ?? "list"; }
+    catch { return "list"; }
+  });
+
+  const changeAssignmentView = (v: AssignmentView) => {
+    setAssignmentView(v);
+    try { localStorage.setItem(ASSIGNMENT_VIEW_KEY, v); } catch { /* ignore */ }
+  };
+  const openStats = (a: ClassAssignmentDTO) => navigate(`/classrooms/${cid}/stats/${a.id}`);
 
   if (loading || !classroom) {
     return (
@@ -165,93 +176,55 @@ export default function ClassroomDetailPage() {
 
           {/* ── Assignments ── */}
           <TabsContent value="assignments" className="mt-4 space-y-3">
-            {isOwner && (
-              <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => changeAssignmentView(assignmentView === "list" ? "card" : "list")}
+                title={assignmentView === "list" ? "Switch to card view" : "Switch to list view"}
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                {assignmentView === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+              </button>
+              {isOwner && (
                 <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
                   <Plus className="size-4 mr-1.5" />Create assignment
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
+
             {visibleAssignments.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
                 <ClipboardList className="size-8 opacity-40" />
                 <p className="text-sm">No assignments yet.</p>
               </div>
-            ) : (
+            ) : assignmentView === "list" ? (
               <div className="space-y-2">
-                {visibleAssignments.map((a) => {
-                  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
-                  return (
-                    <div
-                      key={a.id}
-                      className={cn(
-                        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-l-4 bg-card px-4 py-3.5 transition-shadow hover:shadow-sm",
-                        st.border
-                      )}
-                    >
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm leading-tight">{a.title}</p>
-                          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
-                            {a.status}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground/70">{a.quizTitle}</span>
-                          {a.deadline && (
-                            <>
-                              <span>·</span>
-                              <span className="flex items-center gap-1">
-                                <CalendarClock className="size-3" />
-                                Due {formatDateTime(a.deadline)}
-                              </span>
-                            </>
-                          )}
-                          {a.maxAttempts != null && (
-                            <>
-                              <span>·</span>
-                              <span>{a.maxAttempts} attempt{a.maxAttempts !== 1 ? "s" : ""}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isOwner ? (
-                          <>
-                            {a.status === "DRAFT" && (
-                              <Button size="sm" variant="outline" onClick={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}>
-                                Edit
-                              </Button>
-                            )}
-                            {a.status === "DRAFT" && (
-                              <Button
-                                size="sm" variant="outline"
-                                className="text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                onClick={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
-                              >
-                                Publish
-                              </Button>
-                            )}
-                            {a.status === "PUBLISHED" && (
-                              <Button size="sm" variant="outline"
-                                onClick={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
-                              >
-                                Close
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" onClick={() => setGradebookId(a.id)}>
-                              Gradebook
-                            </Button>
-                          </>
-                        ) : (
-                          <Button size="sm" onClick={() => startAssignment(a)}>
-                            <Play className="size-4 mr-1.5" />Start
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {visibleAssignments.map((a) => (
+                  <AssignmentRow
+                    key={a.id}
+                    a={a}
+                    isOwner={isOwner}
+                    onStats={() => openStats(a)}
+                    onEdit={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}
+                    onPublish={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
+                    onClose={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
+                    onStart={() => startAssignment(a)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {visibleAssignments.map((a) => (
+                  <AssignmentCard
+                    key={a.id}
+                    a={a}
+                    isOwner={isOwner}
+                    onStats={() => openStats(a)}
+                    onEdit={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}
+                    onPublish={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
+                    onClose={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
+                    onStart={() => startAssignment(a)}
+                  />
+                ))}
               </div>
             )}
           </TabsContent>
@@ -404,11 +377,6 @@ export default function ClassroomDetailPage() {
         onClose={() => setAssignmentModalOpen(false)}
         onSaved={() => cls.refreshAssignments()}
       />
-      <GradebookModal
-        assignmentId={gradebookId}
-        open={gradebookId != null}
-        onClose={() => setGradebookId(null)}
-      />
       <DeckPickerDialog
         open={deckPickerOpen}
         onClose={() => setDeckPickerOpen(false)}
@@ -416,6 +384,139 @@ export default function ClassroomDetailPage() {
         onAdd={async (deckId) => { await cls.addDeck(deckId); toast.success("Deck added."); }}
       />
     </MainLayout>
+  );
+}
+
+/* ── Assignment item — shared props ── */
+interface AssignmentItemProps {
+  a: ClassAssignmentDTO;
+  isOwner: boolean;
+  onStats: () => void;
+  onEdit: () => void;
+  onPublish: () => void;
+  onClose: () => void;
+  onStart: () => void;
+}
+
+/** Meta line: quiz · due · attempts. */
+function AssignmentMeta({ a }: { a: ClassAssignmentDTO }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <span className="font-medium text-foreground/70">{a.quizTitle}</span>
+      {a.deadline && (
+        <>
+          <span>·</span>
+          <span className="flex items-center gap-1"><CalendarClock className="size-3" />Due {formatDateTime(a.deadline)}</span>
+        </>
+      )}
+      {a.maxAttempts != null && (
+        <><span>·</span><span>{a.maxAttempts} attempt{a.maxAttempts !== 1 ? "s" : ""}</span></>
+      )}
+    </div>
+  );
+}
+
+/** Owner edit/publish/close actions (stop click-through to the card). */
+function OwnerActions({ a, onEdit, onPublish, onClose }: Pick<AssignmentItemProps, "a" | "onEdit" | "onPublish" | "onClose">) {
+  const stop = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); };
+  return (
+    <>
+      {a.status === "DRAFT" && (
+        <Button size="sm" variant="outline" onClick={stop(onEdit)}>Edit</Button>
+      )}
+      {a.status === "DRAFT" && (
+        <Button size="sm" variant="outline"
+          className="text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+          onClick={stop(onPublish)}>Publish</Button>
+      )}
+      {a.status === "PUBLISHED" && (
+        <Button size="sm" variant="outline" onClick={stop(onClose)}>Close</Button>
+      )}
+    </>
+  );
+}
+
+/* ── Assignment — list row ── */
+function AssignmentRow({ a, isOwner, onStats, onEdit, onPublish, onClose, onStart }: AssignmentItemProps) {
+  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
+  return (
+    <div
+      onClick={isOwner ? onStats : undefined}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-l-4 bg-card px-4 py-3.5 transition-shadow hover:shadow-sm",
+        st.border,
+        isOwner && "cursor-pointer"
+      )}
+    >
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-sm leading-tight">{a.title}</p>
+          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
+            {a.status}
+          </span>
+        </div>
+        <AssignmentMeta a={a} />
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {isOwner ? (
+          <>
+            <OwnerActions a={a} onEdit={onEdit} onPublish={onPublish} onClose={onClose} />
+            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onStats(); }}>
+              <BarChart3 className="size-4 mr-1.5" />View stats
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" onClick={onStart}>
+            <Play className="size-4 mr-1.5" />Start
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Assignment — card ── */
+function AssignmentCard({ a, isOwner, onStats, onEdit, onPublish, onClose, onStart }: AssignmentItemProps) {
+  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
+  return (
+    <div
+      onClick={isOwner ? onStats : undefined}
+      className={cn(
+        "group relative flex flex-col rounded-xl border border-l-4 bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/40",
+        st.border,
+        isOwner && "cursor-pointer"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="size-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+          <ClipboardList className="size-5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-sm leading-snug line-clamp-1">{a.title}</p>
+            <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
+              {a.status}
+            </span>
+          </div>
+          <div className="mt-1"><AssignmentMeta a={a} /></div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-3">
+        {isOwner ? (
+          <>
+            <OwnerActions a={a} onEdit={onEdit} onPublish={onPublish} onClose={onClose} />
+            <span className="ml-auto flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
+              View stats <ChevronRight className="size-3.5" />
+            </span>
+          </>
+        ) : (
+          <Button size="sm" className="w-full" onClick={onStart}>
+            <Play className="size-4 mr-1.5" />Start
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
