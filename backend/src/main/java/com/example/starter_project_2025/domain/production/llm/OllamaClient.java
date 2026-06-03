@@ -36,7 +36,7 @@ public class OllamaClient {
     public OllamaClient(
             RestClient.Builder builder,
             @Value("${ollama.api-url:http://localhost:11434/api/generate}") String apiUrl,
-            @Value("${ollama.model:qwen:3b}") String model,
+            @Value("${ollama.model:qwen2.5:3b}") String model,
             ObjectMapper mapper) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(3000);    // fail fast if Ollama isn't running

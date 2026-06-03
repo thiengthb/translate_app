@@ -290,6 +290,56 @@ export default function AnalyzePage() {
                   Dịch
                 </Button>
               </div>
+
+              {/* Grammar Spotter — lấp khoảng trống dưới ô nhập (chỉ khi target là Japanese) */}
+              {isJa && translatedText && (
+                <div className="flex-1 px-4 py-3 border-t">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+                    <GraduationCap size={18} />
+                    Phân tích ngữ pháp (JLPT)
+                    {grammarLoading && (
+                      <Loader2 className="animate-spin text-muted-foreground" size={14} />
+                    )}
+                  </div>
+
+                  {grammar.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {grammarLoading
+                        ? "Đang phân tích…"
+                        : "Không phát hiện cấu trúc ngữ pháp JLPT nổi bật trong câu này."}
+                    </p>
+                  ) : (
+                    <div className="grid gap-2">
+                      {grammar.map((g, i) => (
+                        <div
+                          key={`${g.pattern}-${i}`}
+                          className="flex items-start gap-2 rounded-md border p-3"
+                        >
+                          <span className="text-lg leading-none">📦</span>
+                          <div className="flex min-w-0 flex-col gap-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium break-words">{g.pattern}</span>
+                              {g.level && (
+                                <Badge className={levelBadgeClass(g.level)}>{g.level}</Badge>
+                              )}
+                              {g.source === "ai" && (
+                                <Badge variant="outline" className="text-[10px] uppercase">
+                                  AI
+                                </Badge>
+                              )}
+                            </div>
+                            {g.meaning && (
+                              <p className="text-sm text-muted-foreground break-words">
+                                {g.meaning}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Target */}
@@ -361,56 +411,6 @@ export default function AnalyzePage() {
             </div>
           </div>
         </Card>
-
-        {/* Grammar Spotter — JLPT pattern analysis of the Japanese sentence */}
-        {isJa && translatedText && (
-          <Card className="p-4 gap-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <GraduationCap size={18} />
-              Phân tích ngữ pháp (JLPT)
-              {grammarLoading && (
-                <Loader2 className="animate-spin text-muted-foreground" size={14} />
-              )}
-            </div>
-
-            {grammar.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {grammarLoading
-                  ? "Đang phân tích…"
-                  : "Không phát hiện cấu trúc ngữ pháp JLPT nổi bật trong câu này."}
-              </p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {grammar.map((g, i) => (
-                  <div
-                    key={`${g.pattern}-${i}`}
-                    className="flex items-start gap-2 rounded-md border p-3"
-                  >
-                    <span className="text-lg leading-none">📦</span>
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium break-words">{g.pattern}</span>
-                        {g.level && (
-                          <Badge className={levelBadgeClass(g.level)}>{g.level}</Badge>
-                        )}
-                        {g.source === "ai" && (
-                          <Badge variant="outline" className="text-[10px] uppercase">
-                            AI
-                          </Badge>
-                        )}
-                      </div>
-                      {g.meaning && (
-                        <p className="text-sm text-muted-foreground break-words">
-                          {g.meaning}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        )}
       </div>
     </MainLayout>
   );
