@@ -92,6 +92,15 @@ interface SrsSession {
 
 const EMPTY_SESSION: SrsSession = { main: [], learning: [], current: null, waitingUntil: null };
 
+/**
+ * Anki-style "learn ahead" window. When nothing else is pending and the only
+ * cards left are learning/relearning steps coming due soon, we study the
+ * soonest one NOW (in time order) instead of idling on a countdown — so
+ * finishing the New cards flows straight into the Learning cards. Only when the
+ * next step is further out than this do we actually wait. (Anki default: 20m.)
+ */
+const LEARN_AHEAD_MS = 20 * 60 * 1000;
+
 /** Split a freshly-loaded server queue into the main and learning queues. */
 function splitFromQueue(cards: AnkiStudyCard[]): { main: AnkiStudyCard[]; learning: AnkiStudyCard[] } {
   const main: AnkiStudyCard[] = [];
@@ -136,10 +145,31 @@ function advance(session: SrsSession, now: number): SrsSession {
     return { main: main.slice(1), learning, current: main[0], waitingUntil: null };
   }
 
-  // 3) Nothing due now — wait for the soonest learning card, or finish.
+  // 3) Main is empty. Anki "learn ahead": if the soonest learning card is due
+  //    within the learn-ahead window, study it NOW (chronological order) rather
+  //    than idling — so New → Learning flows continuously.
   if (learning.length > 0) {
-    const soonest = Math.min(...learning.map((c) => cardDueMs(c, now)));
-    return { main, learning, current: null, waitingUntil: Number.isFinite(soonest) ? soonest : now };
+    let soonestIdx = -1;
+    let soonestAt = Infinity;
+    learning.forEach((c, i) => {
+      const t = cardDueMs(c, now);
+      if (t < soonestAt) {
+        soonestAt = t;
+        soonestIdx = i;
+      }
+    });
+    if (soonestIdx >= 0 && soonestAt - now <= LEARN_AHEAD_MS) {
+      return {
+        main,
+        learning: learning.filter((_, i) => i !== soonestIdx),
+        current: learning[soonestIdx],
+        waitingUntil: null,
+      };
+    }
+    // Next step is further out than the learn-ahead window — wait until it
+    // enters the window (then the countdown loop re-picks it via advance()).
+    const eligibleAt = Number.isFinite(soonestAt) ? soonestAt - LEARN_AHEAD_MS : now;
+    return { main, learning, current: null, waitingUntil: eligibleAt };
   }
   return { main, learning, current: null, waitingUntil: null };
 }
