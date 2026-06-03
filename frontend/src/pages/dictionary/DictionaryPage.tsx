@@ -3,10 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
     Pen, Loader2, Volume2, Bookmark, BookmarkCheck, X, Star, GitBranch,
-    Sparkles, AlertCircle, Languages,
+    Sparkles, AlertCircle, Languages, Layers,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmptyState } from "@/components/common/EmptyState";
+import { FuriganaText } from "@/components/common/FuriganaText";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type {
@@ -23,31 +24,16 @@ import { HandwritingInput } from "./HandwritingInput";
 import { VoiceInput } from "./VoiceInput";
 import { KanjiStrokeOrder } from "./KanjiStrokeOrder";
 import { KanjiBreakdown } from "./KanjiBreakdown";
-import { JLPT } from "./dictionaryConstants";
+import { JLPT, JLPT_LEVELS, REP_LABELS, WORD_TYPE_LABELS } from "./dictionaryConstants";
 import {
     loadSavedWords, loadSavedKanjis, toggleSavedWord, toggleSavedKanji,
+    fetchNotebook,
 } from "./savedStorage";
 
 // ── Constants ─────────────────────────────────────────────────────────
-const WORD_TYPE_LABELS: Record<string, string> = {
-    n: "Danh từ", v1: "Động từ nhóm 2",
-    v5: "Động từ nhóm 1", v5k: "Động từ nhóm 1", v5g: "Động từ nhóm 1",
-    v5s: "Động từ nhóm 1", v5t: "Động từ nhóm 1", v5n: "Động từ nhóm 1",
-    v5b: "Động từ nhóm 1", v5m: "Động từ nhóm 1", v5r: "Động từ nhóm 1",
-    "adj-i": "Tính từ -い", "adj-na": "Tính từ -な",
-    adv: "Phó từ", expr: "Thành ngữ", pref: "Tiền tố",
-    suf: "Hậu tố", conj: "Liên từ", int: "Thán từ",
-};
-
-const REP_LABELS: Record<string, { label: string; className: string }> = {
-    KANJI:    { label: "漢字", className: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
-    HIRAGANA: { label: "ひら", className: "bg-pink-500/15 text-pink-600 dark:text-pink-400 border-pink-500/30" },
-    KATAKANA: { label: "カナ", className: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30" },
-    MIXED:    { label: "混合", className: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30" },
-};
-
 const HISTORY_KEY = "dict_search_history";
 const MAX_HISTORY = 10;
+const FURIGANA_KEY = "dict_furigana";
 
 // ── Storage helpers ───────────────────────────────────────────────────
 function loadHistory(): string[] {
@@ -60,6 +46,10 @@ function pushHistory(term: string) {
 }
 function dropHistory(term: string) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(loadHistory().filter((x) => x !== term)));
+}
+function loadFuriganaPref(): boolean {
+    try { return localStorage.getItem(FURIGANA_KEY) !== "0"; } // mặc định bật
+    catch { return true; }
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -92,6 +82,8 @@ export default function DictionaryPage() {
     const [activeIdx, setActiveIdx]     = useState(-1);
 
     const [featured, setFeatured] = useState<FeaturedResult | null>(null);
+    const [furigana, setFurigana] = useState<boolean>(loadFuriganaPref);
+    const [hubStats, setHubStats] = useState<{ words: number; kanjis: number } | null>(null);
 
     const [savedWords,  setSavedWords]  = useState<WordSearchResult[]>(loadSavedWords);
     const [savedKanjis, setSavedKanjis] = useState<DictionaryKanjiDetail[]>(loadSavedKanjis);
@@ -104,6 +96,17 @@ export default function DictionaryPage() {
 
     useEffect(() => {
         dictionaryApi.featured(9).then(setFeatured).catch(() => {});
+        // Tổng số từ/kanji cho card "Kho từ vựng tổng hợp" (size=1 — chỉ cần totalItems).
+        Promise.all([
+            dictionaryApi.browseWords(undefined, 0, 1),
+            dictionaryApi.browseKanjis(undefined, 0, 1),
+        ]).then(([w, k]) => setHubStats({ words: w.totalItems, kanjis: k.totalItems }))
+          .catch(() => {});
+        // Đồng bộ sổ tay từ server để icon bookmark đúng trạng thái đa thiết bị.
+        // Lỗi mạng → giữ cache localStorage (đã là initial state).
+        fetchNotebook()
+            .then(({ words, kanjis }) => { setSavedWords(words); setSavedKanjis(kanjis); })
+            .catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -207,6 +210,11 @@ export default function DictionaryPage() {
         handleSearch(w, "vocabulary");
     };
 
+    const toggleFurigana = () => setFurigana((v) => {
+        try { localStorage.setItem(FURIGANA_KEY, v ? "0" : "1"); } catch { /* ignore */ }
+        return !v;
+    });
+
     const clearAllHistory = () => { localStorage.removeItem(HISTORY_KEY); setHistory([]); setShowDrop(false); };
     const removeHistoryItem = (term: string) => {
         dropHistory(term);
@@ -249,6 +257,13 @@ export default function DictionaryPage() {
                                         Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
                                     </p>
                                 </div>
+                                <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0"
+                                    title="Duyệt toàn bộ từ vựng & kanji theo cấp độ JLPT">
+                                    <Link to="/vocabulary">
+                                        <Layers className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:inline">Kho từ vựng</span>
+                                    </Link>
+                                </Button>
                                 <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
                                     <Link to="/notebook">
                                         <Bookmark className="h-3.5 w-3.5" />
@@ -341,8 +356,23 @@ export default function DictionaryPage() {
                                 )}
                             </div>
 
-                            {/* ── Mode pills + result count ── */}
+                            {/* ── Mode pills + furigana toggle + result count ── */}
                             <div className="relative flex items-center justify-center gap-2 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={toggleFurigana}
+                                    title={furigana ? "Tắt furigana" : "Hiện furigana (cách đọc trên kanji)"}
+                                    className={`sm:absolute sm:left-0 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                                        furigana
+                                            ? "bg-primary/10 border-primary/30 text-primary"
+                                            : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                                    }`}
+                                >
+                                    <ruby className="text-sm font-bold leading-none">
+                                        漢<rt className="text-[7px] font-medium">かん</rt>
+                                    </ruby>
+                                    <span className="hidden sm:inline">Furigana</span>
+                                </button>
                                 <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
                                     <button
                                         type="button"
@@ -411,7 +441,7 @@ export default function DictionaryPage() {
                 {hasVocabResults && results!.length > 0 && (
                     <div className="space-y-3">
                         {results!.map((w) => (
-                            <WordCard key={w.id} word={w} onSearch={quickSearch}
+                            <WordCard key={w.id} word={w} onSearch={quickSearch} furigana={furigana}
                                 savedIds={savedWordIds} onToggleSave={handleToggleSaveWord} />
                         ))}
                     </div>
@@ -422,15 +452,20 @@ export default function DictionaryPage() {
                     <div className="space-y-3">
                         {kanjiResults!.map((k) => (
                             <KanjiDetailCard key={k.character} kanji={k} onVocabSearch={quickVocabSearch}
+                                furigana={furigana}
                                 savedChars={savedKanjiChars} onToggleSave={handleToggleSaveKanji} />
                         ))}
                     </div>
                 )}
 
+                {/* ── Kho từ vựng tổng hợp (entry point sang /vocabulary) ── */}
+                {!loading && <VocabularyHubCard stats={hubStats} />}
+
                 {/* ── Featured ── */}
                 {!loading && featured && (
                     <FeaturedSection
                         featured={featured}
+                        furigana={furigana}
                         onWordClick={quickSearch}
                         onKanjiClick={(ch) => {
                             setSearchMode("kanji");
@@ -546,9 +581,10 @@ function SuggestionItem({ suggestion, active, onSelect, onHover }: {
 // ══════════════════════════════════════════════════════════════════════
 // Word card
 // ══════════════════════════════════════════════════════════════════════
-function WordCard({ word, onSearch, savedIds, onToggleSave }: {
+function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
     word: WordSearchResult;
     onSearch: (w: string) => void;
+    furigana: boolean;
     savedIds: Set<number>;
     onToggleSave: (word: WordSearchResult) => void;
 }) {
@@ -586,13 +622,24 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap mb-2">
-                            <span className="text-3xl font-bold text-foreground leading-none tracking-tight">
-                                {word.word}
-                            </span>
-                            {word.reading && word.reading !== word.word && (
-                                <span className={`text-base font-medium leading-none ${jlpt ? jlpt.text : "text-muted-foreground"}`}>
-                                    【{word.reading}】
-                                </span>
+                            {furigana && word.reading && word.reading !== word.word ? (
+                                <FuriganaText
+                                    word={word.word}
+                                    reading={word.reading}
+                                    className="text-3xl font-bold text-foreground tracking-tight"
+                                    rubyClassName={`text-xs font-medium ${jlpt ? jlpt.text : "text-muted-foreground"}`}
+                                />
+                            ) : (
+                                <>
+                                    <span className="text-3xl font-bold text-foreground leading-none tracking-tight">
+                                        {word.word}
+                                    </span>
+                                    {word.reading && word.reading !== word.word && (
+                                        <span className={`text-base font-medium leading-none ${jlpt ? jlpt.text : "text-muted-foreground"}`}>
+                                            【{word.reading}】
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -736,9 +783,10 @@ function WordCard({ word, onSearch, savedIds, onToggleSave }: {
 // ══════════════════════════════════════════════════════════════════════
 // Kanji detail card
 // ══════════════════════════════════════════════════════════════════════
-function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
+function KanjiDetailCard({ kanji, onVocabSearch, furigana, savedChars, onToggleSave }: {
     kanji: DictionaryKanjiDetail;
     onVocabSearch: (w: string) => void;
+    furigana: boolean;
     savedChars: Set<string>;
     onToggleSave: (kanji: DictionaryKanjiDetail) => void;
 }) {
@@ -856,11 +904,19 @@ function KanjiDetailCard({ kanji, onVocabSearch, savedChars, onToggleSave }: {
                                 onClick={() => onVocabSearch(w.word)}
                                 className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-accent/50 transition-colors text-left group"
                             >
-                                <span className="text-lg font-bold text-foreground w-14 shrink-0 group-hover:text-primary transition-colors">
-                                    {w.word}
-                                </span>
+                                {furigana && w.reading && w.reading !== w.word ? (
+                                    <FuriganaText
+                                        word={w.word}
+                                        reading={w.reading}
+                                        className="text-lg font-bold text-foreground min-w-14 shrink-0 group-hover:text-primary transition-colors"
+                                    />
+                                ) : (
+                                    <span className="text-lg font-bold text-foreground w-14 shrink-0 group-hover:text-primary transition-colors">
+                                        {w.word}
+                                    </span>
+                                )}
                                 <div className="flex-1 min-w-0">
-                                    {w.reading && w.reading !== w.word && (
+                                    {!furigana && w.reading && w.reading !== w.word && (
                                         <span className="text-xs text-muted-foreground block leading-tight">
                                             {w.reading}
                                         </span>
@@ -1038,10 +1094,83 @@ function TatoebaRow({ example }: { example: TatoebaExample }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+// Vocabulary hub card — entry point sang trang "Kho từ vựng tổng hợp"
+// (/vocabulary). Nút nhỏ trên header không đủ để người dùng hiểu trang đó
+// chứa gì, nên card này nói rõ: tổng số từ/kanji thật + duyệt theo cấp độ.
+// ══════════════════════════════════════════════════════════════════════
+function VocabularyHubCard({ stats }: { stats: { words: number; kanjis: number } | null }) {
+    const fmt = (n: number) => n.toLocaleString("vi-VN");
+    return (
+        <Card className="gap-0 py-0 overflow-hidden">
+            <div className="relative p-4 sm:p-5">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent" />
+
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Layers className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                            <Layers className="sm:hidden h-4 w-4 text-primary" />
+                            Kho từ vựng tổng hợp
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                            {stats ? (
+                                <>
+                                    Duyệt toàn bộ{" "}
+                                    <span className="font-semibold text-foreground">{fmt(stats.words)} từ vựng</span> và{" "}
+                                    <span className="font-semibold text-foreground">{fmt(stats.kanjis)} kanji</span>{" "}
+                                    của từ điển — xem nghĩa, cách đọc và lọc theo cấp độ JLPT
+                                </>
+                            ) : (
+                                <>Duyệt toàn bộ từ vựng và kanji của từ điển — xem nghĩa, cách đọc và lọc theo cấp độ JLPT</>
+                            )}
+                        </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                            <Link to="/vocabulary?tab=vocabulary">
+                                <BookOpen className="h-3.5 w-3.5" />
+                                Duyệt từ vựng
+                            </Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                            <Link to="/vocabulary?tab=kanji">
+                                <span className="font-black text-xs leading-none">漢</span>
+                                Duyệt kanji
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Chip cấp độ — đi thẳng tới danh sách đã lọc theo level */}
+                <div className="relative mt-3 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mr-0.5">
+                        Học theo cấp độ
+                    </span>
+                    {JLPT_LEVELS.map((lv) => (
+                        <Link
+                            key={lv}
+                            to={`/vocabulary?level=${lv}`}
+                            title={`Toàn bộ từ vựng cấp độ ${lv}`}
+                            className={`px-2.5 py-1 rounded-md border text-[11px] font-bold transition-all hover:shadow-sm hover:-translate-y-px ${JLPT[lv].badge}`}
+                        >
+                            {lv}
+                        </Link>
+                    ))}
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // Featured section
 // ══════════════════════════════════════════════════════════════════════
-function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
+function FeaturedSection({ featured, furigana, onWordClick, onKanjiClick }: {
     featured: FeaturedResult;
+    furigana: boolean;
     onWordClick: (w: string) => void;
     onKanjiClick: (ch: string) => void;
 }) {
@@ -1058,7 +1187,7 @@ function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
                     <Separator />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-x divide-y">
                         {featured.words.map((w) => (
-                            <FeaturedWordChip key={w.id} word={w} onClick={onWordClick} />
+                            <FeaturedWordChip key={w.id} word={w} furigana={furigana} onClick={onWordClick} />
                         ))}
                     </div>
                 </Card>
@@ -1073,7 +1202,7 @@ function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
                         </p>
                     </div>
                     <Separator />
-                    <div className="flex flex-wrap gap-2 p-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 divide-x divide-y">
                         {featured.kanjis.map((k) => (
                             <FeaturedKanjiChip key={k.character} kanji={k} onClick={onKanjiClick} />
                         ))}
@@ -1084,7 +1213,9 @@ function FeaturedSection({ featured, onWordClick, onKanjiClick }: {
     );
 }
 
-function FeaturedWordChip({ word, onClick }: { word: WordSearchResult; onClick: (w: string) => void }) {
+function FeaturedWordChip({ word, furigana, onClick }: {
+    word: WordSearchResult; furigana: boolean; onClick: (w: string) => void;
+}) {
     const jlpt = JLPT[word.levelCode ?? ""];
     const rep  = REP_LABELS[word.representationCode ?? ""];
     return (
@@ -1093,13 +1224,23 @@ function FeaturedWordChip({ word, onClick }: { word: WordSearchResult; onClick: 
             className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors text-left group"
         >
             <div className="flex flex-col items-center shrink-0 min-w-[3rem]">
-                <span className="text-xl font-bold leading-none whitespace-nowrap text-foreground group-hover:text-primary transition-colors">
-                    {word.word}
-                </span>
-                {word.reading && word.reading !== word.word && (
-                    <span className="text-[9px] text-muted-foreground leading-tight mt-1 whitespace-nowrap">
-                        {word.reading}
-                    </span>
+                {furigana && word.reading && word.reading !== word.word ? (
+                    <FuriganaText
+                        word={word.word}
+                        reading={word.reading}
+                        className="text-xl font-bold whitespace-nowrap text-foreground group-hover:text-primary transition-colors"
+                    />
+                ) : (
+                    <>
+                        <span className="text-xl font-bold leading-none whitespace-nowrap text-foreground group-hover:text-primary transition-colors">
+                            {word.word}
+                        </span>
+                        {word.reading && word.reading !== word.word && (
+                            <span className="text-[9px] text-muted-foreground leading-tight mt-1 whitespace-nowrap">
+                                {word.reading}
+                            </span>
+                        )}
+                    </>
                 )}
             </div>
             <div className="flex-1 min-w-0 space-y-1">
@@ -1123,22 +1264,50 @@ function FeaturedWordChip({ word, onClick }: { word: WordSearchResult; onClick: 
 
 function FeaturedKanjiChip({ kanji, onClick }: { kanji: DictionaryKanjiDetail; onClick: (ch: string) => void }) {
     const jlpt = kanji.jlptLevel ? JLPT[kanji.jlptLevel] : null;
+    // Chỉ lấy cách đọc đầu tiên cho gọn — chi tiết đầy đủ xem ở thẻ kanji khi click.
+    const firstReading = (s?: string) => (s ? s.split(/[・、,,\s]+/)[0]?.trim() : undefined);
+    const on  = firstReading(kanji.onyomi);
+    const kun = firstReading(kanji.kunyomi);
     return (
         <button
             onClick={() => onClick(kanji.character)}
-            className="flex flex-col items-center px-3 py-2 rounded-lg border bg-card hover:border-primary/40 hover:shadow-sm transition-all group"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors text-left group"
         >
-            <span className="text-2xl font-bold leading-none text-foreground group-hover:text-primary transition-colors">
+            <span className="text-4xl font-bold leading-none shrink-0 text-foreground group-hover:text-primary transition-colors">
                 {kanji.character}
             </span>
-            {kanji.meaning && (
-                <span className="text-[9px] text-muted-foreground leading-tight mt-1 max-w-[3.5rem] truncate text-center">
-                    {kanji.meaning}
-                </span>
-            )}
-            {jlpt && (
-                <span className={`text-[8px] font-black mt-0.5 ${jlpt.text}`}>{kanji.jlptLevel}</span>
-            )}
+            <div className="flex-1 min-w-0 space-y-1">
+                {kanji.meaning && (
+                    <p className="text-xs font-semibold text-foreground leading-tight line-clamp-1">
+                        {kanji.meaning}
+                    </p>
+                )}
+                <div className="flex flex-wrap gap-1">
+                    {on && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-600 dark:text-orange-400 font-semibold whitespace-nowrap">
+                            音 {on}
+                        </span>
+                    )}
+                    {kun && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold whitespace-nowrap">
+                            訓 {kun}
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {jlpt && (
+                        <Badge variant="outline" className={`text-[9px] font-bold px-1.5 py-0 h-4 ${jlpt.badge}`}>
+                            {kanji.jlptLevel}
+                        </Badge>
+                    )}
+                    {kanji.stroke != null && (
+                        <span className="text-[9px] text-muted-foreground whitespace-nowrap">{kanji.stroke} nét</span>
+                    )}
+                    {kanji.radical && (
+                        <span className="text-[9px] text-muted-foreground whitespace-nowrap">bộ {kanji.radical}</span>
+                    )}
+                </div>
+            </div>
         </button>
     );
 }

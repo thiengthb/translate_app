@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkCheck, Trash2, X } from "lucide-react";
+import { Bookmark, BookmarkCheck, StickyNote, Trash2, X } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import type { WordSearchResult, DictionaryKanjiDetail } from "@/types";
 import { JLPT } from "./dictionaryConstants";
 
+// Tham chiếu tới một mục trên server — để hiển thị & sửa ghi chú cá nhân.
+export type NoteRef = { entryId: number; note?: string };
+
 // ══════════════════════════════════════════════════════════════════════
 // Saved section — danh sách từ vựng & kanji đã lưu (dùng ở trang Sổ tay).
 // Hiển thị dạng "thẻ bài" (flashcard) chữ to, khác kiểu danh sách của trang
@@ -14,6 +17,7 @@ import { JLPT } from "./dictionaryConstants";
 // ══════════════════════════════════════════════════════════════════════
 export function SavedSection({
     savedWords, savedKanjis, onSearchWord, onSearchKanji, onRemoveWord, onRemoveKanji, onClearAll,
+    wordNotes, kanjiNotes, onEditNote,
 }: {
     savedWords: WordSearchResult[];
     savedKanjis: DictionaryKanjiDetail[];
@@ -22,6 +26,11 @@ export function SavedSection({
     onRemoveWord: (w: WordSearchResult) => void;
     onRemoveKanji: (k: DictionaryKanjiDetail) => void;
     onClearAll: () => void;
+    /** entryId + note theo word.id — chỉ có khi đã load được từ server. */
+    wordNotes?: Record<number, NoteRef>;
+    /** entryId + note theo kanji.character. */
+    kanjiNotes?: Record<string, NoteRef>;
+    onEditNote?: (ref: NoteRef) => void;
 }) {
     if (savedWords.length === 0 && savedKanjis.length === 0) {
         return (
@@ -51,7 +60,8 @@ export function SavedSection({
                     <Separator />
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-3">
                         {savedWords.map((w) => (
-                            <SavedWordCard key={w.id} word={w} onSearch={onSearchWord} onRemove={() => onRemoveWord(w)} />
+                            <SavedWordCard key={w.id} word={w} onSearch={onSearchWord} onRemove={() => onRemoveWord(w)}
+                                noteRef={wordNotes?.[w.id]} onEditNote={onEditNote} />
                         ))}
                     </div>
                 </Card>
@@ -67,7 +77,8 @@ export function SavedSection({
                     <Separator />
                     <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-3 p-3">
                         {savedKanjis.map((k) => (
-                            <SavedKanjiCard key={k.character} kanji={k} onSearch={onSearchKanji} onRemove={() => onRemoveKanji(k)} />
+                            <SavedKanjiCard key={k.character} kanji={k} onSearch={onSearchKanji} onRemove={() => onRemoveKanji(k)}
+                                noteRef={kanjiNotes?.[k.character]} onEditNote={onEditNote} />
                         ))}
                     </div>
                 </Card>
@@ -88,9 +99,27 @@ export function SavedSection({
     );
 }
 
+// ── Nút sửa ghi chú (góc trên trái, hiện khi hover) ───────────────────
+function NoteButton({ noteRef, onEditNote }: { noteRef?: NoteRef; onEditNote?: (ref: NoteRef) => void }) {
+    if (!noteRef || !onEditNote) return null;
+    const hasNote = !!noteRef.note;
+    return (
+        <button
+            onClick={() => onEditNote(noteRef)}
+            title={hasNote ? "Sửa ghi chú" : "Thêm ghi chú"}
+            className={`absolute bottom-1.5 right-1.5 h-5 w-5 flex items-center justify-center rounded-full transition-all shadow-sm ${
+                hasNote
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25"
+                    : "bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/80"
+            }`}
+        ><StickyNote className="h-3 w-3" /></button>
+    );
+}
+
 // ── Thẻ bài từ vựng ───────────────────────────────────────────────────
-function SavedWordCard({ word, onSearch, onRemove }: {
+function SavedWordCard({ word, onSearch, onRemove, noteRef, onEditNote }: {
     word: WordSearchResult; onSearch: (w: string) => void; onRemove: () => void;
+    noteRef?: NoteRef; onEditNote?: (ref: NoteRef) => void;
 }) {
     const jlpt = JLPT[word.levelCode ?? ""];
     return (
@@ -104,7 +133,7 @@ function SavedWordCard({ word, onSearch, onRemove }: {
                         {word.levelCode}
                     </Badge>
                 )}
-                <span className={`text-3xl sm:text-4xl font-bold leading-none tracking-tight ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
+                <span className="text-3xl sm:text-4xl font-bold leading-none tracking-tight text-foreground group-hover:text-primary transition-colors">
                     {word.word}
                 </span>
                 {word.reading && word.reading !== word.word && (
@@ -113,19 +142,26 @@ function SavedWordCard({ word, onSearch, onRemove }: {
                 {word.meaningText && (
                     <span className="text-xs text-muted-foreground leading-snug line-clamp-2 mt-0.5">{word.meaningText}</span>
                 )}
+                {noteRef?.note && (
+                    <span className="text-[11px] italic text-amber-700 dark:text-amber-400 leading-snug line-clamp-2 mt-0.5">
+                        📝 {noteRef.note}
+                    </span>
+                )}
             </button>
             <button
                 onClick={onRemove}
                 title="Bỏ lưu"
                 className="absolute top-1.5 right-1.5 h-5 w-5 flex items-center justify-center rounded-full bg-destructive/15 text-destructive opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-destructive/25"
             ><X className="h-3 w-3" /></button>
+            <NoteButton noteRef={noteRef} onEditNote={onEditNote} />
         </div>
     );
 }
 
 // ── Thẻ bài kanji ─────────────────────────────────────────────────────
-function SavedKanjiCard({ kanji, onSearch, onRemove }: {
+function SavedKanjiCard({ kanji, onSearch, onRemove, noteRef, onEditNote }: {
     kanji: DictionaryKanjiDetail; onSearch: (ch: string) => void; onRemove: () => void;
+    noteRef?: NoteRef; onEditNote?: (ref: NoteRef) => void;
 }) {
     const jlpt = kanji.jlptLevel ? JLPT[kanji.jlptLevel] : null;
     return (
@@ -139,11 +175,16 @@ function SavedKanjiCard({ kanji, onSearch, onRemove }: {
                         {kanji.jlptLevel}
                     </Badge>
                 )}
-                <span className={`text-5xl sm:text-6xl font-bold leading-none ${jlpt ? jlpt.text : "text-foreground"} group-hover:text-primary transition-colors`}>
+                <span className="text-5xl sm:text-6xl font-bold leading-none text-foreground group-hover:text-primary transition-colors">
                     {kanji.character}
                 </span>
                 {kanji.meaning && (
                     <span className="text-xs text-muted-foreground leading-snug line-clamp-2 mt-1.5">{kanji.meaning}</span>
+                )}
+                {noteRef?.note && (
+                    <span className="text-[10px] italic text-amber-700 dark:text-amber-400 leading-snug line-clamp-1 mt-0.5">
+                        📝 {noteRef.note}
+                    </span>
                 )}
             </button>
             <button
@@ -151,6 +192,7 @@ function SavedKanjiCard({ kanji, onSearch, onRemove }: {
                 title="Bỏ lưu"
                 className="absolute top-1.5 right-1.5 h-5 w-5 flex items-center justify-center rounded-full bg-destructive/15 text-destructive opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-destructive/25"
             ><X className="h-3 w-3" /></button>
+            <NoteButton noteRef={noteRef} onEditNote={onEditNote} />
         </div>
     );
 }

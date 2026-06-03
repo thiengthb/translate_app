@@ -22,6 +22,7 @@ import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
+import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
@@ -58,6 +59,7 @@ export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
