@@ -11,7 +11,7 @@ import {
 import { Check, ImageIcon, Loader2, Music, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TagChips, TagCreateInline } from "./QuestionTags";
+import { TagChips } from "./QuestionTags";
 
 /* ── Media URL input with file-picker + inline preview ── */
 function MediaInput({
@@ -490,20 +490,19 @@ export function QuestionForm({
         </div>
       </div>
 
-      {/* Tags */}
+      {/* Tags — selection only; create/manage tags lives in the Question Bank. */}
       <div className="space-y-2">
-        <Label>Tags</Label>
+        <div className="flex items-center justify-between">
+          <Label>Tags</Label>
+          {selectedTagIds.size > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">{selectedTagIds.size} selected</span>
+          )}
+        </div>
         <TagChips
           tags={allTags}
           selectedIds={selectedTagIds}
           onToggle={toggleTag}
-          emptyHint="No tags yet — create one below."
-        />
-        <TagCreateInline
-          onCreated={(tag) => {
-            setAllTags((prev) => [...prev.filter((t) => t.id !== tag.id), tag]);
-            setSelectedTagIds((prev) => new Set(prev).add(tag.id));
-          }}
+          emptyHint="No tags yet — create them from the Question Bank."
         />
       </div>
 
