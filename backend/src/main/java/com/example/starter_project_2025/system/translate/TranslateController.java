@@ -43,10 +43,16 @@ public class TranslateController {
         ));
     }
 
-    @PostMapping("/analyze")
-    @Operation(summary = "Analyze a translation: romaji, alternatives, and JLPT Grammar Spotter")
-    public ResponseEntity<TranslateAnalysisResponse> analyze(@Valid @RequestBody TranslateAnalysisRequest request) {
-        return ResponseEntity.ok(analysisService.analyze(request));
+    @PostMapping("/analyze/grammar")
+    @Operation(summary = "Fast analysis: romaji + JLPT Grammar Spotter (deterministic, no LLM)")
+    public ResponseEntity<GrammarAnalysisResponse> analyzeGrammar(@Valid @RequestBody TranslateAnalysisRequest request) {
+        return ResponseEntity.ok(analysisService.analyzeGrammar(request));
+    }
+
+    @PostMapping("/analyze/alternatives")
+    @Operation(summary = "Slow analysis: alternative translations via Ollama LLM")
+    public ResponseEntity<AlternativesAnalysisResponse> analyzeAlternatives(@Valid @RequestBody TranslateAnalysisRequest request) {
+        return ResponseEntity.ok(analysisService.analyzeAlternatives(request));
     }
 
     @GetMapping("/languages")

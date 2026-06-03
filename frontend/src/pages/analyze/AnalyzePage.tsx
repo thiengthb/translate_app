@@ -160,26 +160,37 @@ export default function AnalyzePage() {
 
   const translatedText = submittedText ? result?.translatedText ?? "" : "";
 
-  // ─── Analysis (romaji + alternatives + Grammar Spotter) ──────────────────
-  // Tự động fire SAU KHI DeepL trả về kết quả (translatedText có giá trị).
-  // Không bao giờ chạy khi user chỉ đang gõ — chỉ chạy sau nhấn nút Dịch.
-  const { data: analysis, isFetching: analyzing } = useQuery({
-    queryKey: ["translate-analyze", translatedText, submittedText, submittedTargetLang],
-    queryFn: () =>
-      translateApi.analyze({
-        text: submittedText,
-        translatedText,
-        sourceLang: submittedSourceLang,
-        targetLang: submittedTargetLang,
-      }),
+  // ─── Analysis — 2 query SONG SONG, fire sau khi DeepL trả về ─────────────
+  // Tách thành 2 endpoint để cái nhanh hiện trước, không phải đợi cái chậm:
+  //   • grammar (romaji + JLPT)  → deterministic, ~vài ms → về TRƯỚC
+  //   • alternatives (Ollama LLM) → chậm vài giây        → về SAU
+  // Cả hai chỉ chạy sau nhấn nút Dịch (translatedText có giá trị).
+  const analyzeParams = {
+    text: submittedText,
+    translatedText,
+    sourceLang: submittedSourceLang,
+    targetLang: submittedTargetLang,
+  };
+
+  const { data: grammarData, isFetching: grammarLoading } = useQuery({
+    queryKey: ["translate-grammar", translatedText, submittedTargetLang],
+    queryFn: () => translateApi.analyzeGrammar(analyzeParams),
     enabled: isJa && translatedText.length > 0,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  const romaji = analysis?.romaji ?? null;
-  const alternatives = analysis?.alternatives ?? [];
-  const grammar = analysis?.grammar ?? [];
+  const { data: altData, isFetching: altLoading } = useQuery({
+    queryKey: ["translate-alternatives", translatedText, submittedText, submittedTargetLang],
+    queryFn: () => translateApi.analyzeAlternatives(analyzeParams),
+    enabled: isJa && translatedText.length > 0,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const romaji = grammarData?.romaji ?? null;
+  const grammar = grammarData?.grammar ?? [];
+  const alternatives = altData?.alternatives ?? [];
 
   const detectedName = useMemo(() => {
     if (!result?.detectedSourceLang) return null;
@@ -321,11 +332,11 @@ export default function AnalyzePage() {
               </div>
 
               {/* Alternatives (hiện sau khi dịch xong, chỉ khi target là Japanese) */}
-              {isJa && translatedText && (alternatives.length > 0 || analyzing) && (
+              {isJa && translatedText && (alternatives.length > 0 || altLoading) && (
                 <div className="px-4 py-3 border-t">
                   <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     Alternatives:
-                    {analyzing && <Loader2 className="animate-spin" size={14} />}
+                    {altLoading && <Loader2 className="animate-spin" size={14} />}
                   </div>
                   <div className="flex flex-col gap-3">
                     {alternatives.map((a, i) => (
@@ -357,14 +368,14 @@ export default function AnalyzePage() {
             <div className="flex items-center gap-2 text-sm font-medium">
               <GraduationCap size={18} />
               Phân tích ngữ pháp (JLPT)
-              {analyzing && (
+              {grammarLoading && (
                 <Loader2 className="animate-spin text-muted-foreground" size={14} />
               )}
             </div>
 
             {grammar.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {analyzing
+                {grammarLoading
                   ? "Đang phân tích…"
                   : "Không phát hiện cấu trúc ngữ pháp JLPT nổi bật trong câu này."}
               </p>

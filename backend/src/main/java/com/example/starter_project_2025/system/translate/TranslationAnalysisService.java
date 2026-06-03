@@ -35,20 +35,37 @@ public class TranslationAnalysisService {
             "JA", "Japanese", "EN", "English", "VI", "Vietnamese",
             "ZH", "Chinese", "KO", "Korean", "FR", "French", "DE", "German");
 
-    public TranslateAnalysisResponse analyze(TranslateAnalysisRequest req) {
+    /**
+     * Fast, fully deterministic analysis: romaji (MeCab) + JLPT grammar
+     * (Aho-Corasick). No LLM call, so this returns in milliseconds and can be
+     * shown to the user well before the slower {@link #analyzeAlternatives} result.
+     */
+    public GrammarAnalysisResponse analyzeGrammar(TranslateAnalysisRequest req) {
+        String target = req.targetLang() == null ? "" : req.targetLang();
+        String translated = req.translatedText() == null ? "" : req.translatedText().trim();
+        boolean japanese = target.toUpperCase(Locale.ROOT).startsWith("JA");
+
+        if (!japanese || translated.isBlank()) {
+            return new GrammarAnalysisResponse(null, List.of());
+        }
+
+        String romaji = romajiService.toRomaji(translated);
+        List<GrammarPointDTO> grammar = buildGrammar(translated);
+        return new GrammarAnalysisResponse(romaji, grammar);
+    }
+
+    /**
+     * Slow analysis: alternative translations via the Ollama LLM. Kept on its
+     * own endpoint so the frontend can request it in parallel and render it
+     * whenever it arrives, without blocking the fast grammar result.
+     */
+    public AlternativesAnalysisResponse analyzeAlternatives(TranslateAnalysisRequest req) {
         String target = req.targetLang() == null ? "" : req.targetLang();
         String translated = req.translatedText() == null ? "" : req.translatedText().trim();
         boolean japanese = target.toUpperCase(Locale.ROOT).startsWith("JA");
 
         List<AlternativeDTO> alternatives = buildAlternatives(req.text(), translated, target, japanese);
-
-        if (!japanese || translated.isBlank()) {
-            return new TranslateAnalysisResponse(null, alternatives, List.of());
-        }
-
-        String romaji = romajiService.toRomaji(translated);
-        List<GrammarPointDTO> grammar = buildGrammar(translated);
-        return new TranslateAnalysisResponse(romaji, alternatives, grammar);
+        return new AlternativesAnalysisResponse(alternatives);
     }
 
     private List<AlternativeDTO> buildAlternatives(String source, String translated, String target, boolean japanese) {

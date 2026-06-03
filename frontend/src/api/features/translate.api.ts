@@ -39,11 +39,16 @@ export interface GrammarPoint {
   source: string;
 }
 
-export interface TranslateAnalysisResult {
+/** Fast analysis: romaji + JLPT grammar (deterministic, no LLM). */
+export interface GrammarAnalysisResult {
   /** Hepburn romaji of the main translation (null for non-Japanese targets). */
   romaji: string | null;
-  alternatives: Alternative[];
   grammar: GrammarPoint[];
+}
+
+/** Slow analysis: alternative translations via the Ollama LLM. */
+export interface AlternativesAnalysisResult {
+  alternatives: Alternative[];
 }
 
 export interface AnalyzeParams {
@@ -68,9 +73,23 @@ export const translateApi = {
     return res.data;
   },
 
-  analyze: async (params: AnalyzeParams): Promise<TranslateAnalysisResult> => {
-    const res = await axiosInstance.post<TranslateAnalysisResult>(
-      "/translate/analyze",
+  /** Fast: romaji + JLPT grammar (deterministic, returns in ms). */
+  analyzeGrammar: async (
+    params: AnalyzeParams,
+  ): Promise<GrammarAnalysisResult> => {
+    const res = await axiosInstance.post<GrammarAnalysisResult>(
+      "/translate/analyze/grammar",
+      params,
+    );
+    return res.data;
+  },
+
+  /** Slow: alternative translations via the Ollama LLM. */
+  analyzeAlternatives: async (
+    params: AnalyzeParams,
+  ): Promise<AlternativesAnalysisResult> => {
+    const res = await axiosInstance.post<AlternativesAnalysisResult>(
+      "/translate/analyze/alternatives",
       params,
     );
     return res.data;
