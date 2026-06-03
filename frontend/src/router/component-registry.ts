@@ -30,6 +30,8 @@ import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
 import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
 import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
 import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
+import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -55,6 +57,8 @@ export const routes: RouteConfig[] = [
   { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
   { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
   { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+  { path: "/kanji-study", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ", isModuleDriven: true },
+  { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

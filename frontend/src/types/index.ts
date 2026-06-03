@@ -10,6 +10,7 @@ export * from "./common/registry";
 export * from "./features/auth";
 export * from "./features/demo/book";
 export * from "./features/words";
+export * from "./features/kanji_study";
 export * from "./features/library/folder";
 export * from "./features/library/deck";
 export * from "./features/library/tag";

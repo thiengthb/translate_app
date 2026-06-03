@@ -8,6 +8,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: lonthien-mysql
+    restart: unless-stopped        # tự bật lại sau khi reboot / khởi động Docker
     command:
       - --character-set-server=utf8mb4      # cần thiết để lưu kanji/kana/tiếng Việt
       - --collation-server=utf8mb4_unicode_ci
@@ -27,6 +28,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: lonthien-redis
+    restart: unless-stopped        # tự bật lại sau khi reboot / khởi động Docker
     ports:
       - "6379:6379"
     volumes:
