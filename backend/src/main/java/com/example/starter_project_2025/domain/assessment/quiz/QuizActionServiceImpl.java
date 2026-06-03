@@ -55,8 +55,6 @@ public class QuizActionServiceImpl implements QuizActionService {
         Quiz source = load(quizId);
 
         Quiz copy = Quiz.builder()
-                .quizTypeId(source.getQuizTypeId())
-                .categoryId(source.getCategoryId())
                 .levelId(source.getLevelId())
                 .creatorId(userId)
                 .deckId(source.getDeckId())
@@ -99,8 +97,6 @@ public class QuizActionServiceImpl implements QuizActionService {
         Quiz source = load(quizId);
 
         Quiz copy = Quiz.builder()
-                .quizTypeId(source.getQuizTypeId())
-                .categoryId(source.getCategoryId())
                 .levelId(source.getLevelId())
                 .creatorId(userId)                       // now owned by the cloner
                 .title(source.getTitle() + " (Copy)")
@@ -152,7 +148,6 @@ public class QuizActionServiceImpl implements QuizActionService {
     /** Copy a question (and its options) into a brand-new row owned by {@code userId}. */
     private QuestionBank deepCopyQuestion(QuestionBank src, Long userId) {
         QuestionBank copy = QuestionBank.builder()
-                .categoryId(src.getCategoryId())
                 .levelId(src.getLevelId())
                 .itemType(src.getItemType())
                 .itemId(src.getItemId())
@@ -222,8 +217,6 @@ public class QuizActionServiceImpl implements QuizActionService {
 
     private QuizDTO toDto(Quiz quiz) {
         QuizDTO dto = QuizDTO.builder()
-                .quizTypeId(quiz.getQuizTypeId())
-                .categoryId(quiz.getCategoryId())
                 .levelId(quiz.getLevelId())
                 .creatorId(quiz.getCreatorId())
                 .deckId(quiz.getDeckId())

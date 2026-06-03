@@ -8,9 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { Check, ChevronLeft, ChevronRight, Loader2, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -73,7 +71,6 @@ export default function QuizCreateEditPage() {
     title: title.trim(),
     description: description.trim() || null,
     creatorId: userId ?? null,
-    categoryId: null,
     difficultyLevel: difficulty !== "none" ? (difficulty as DifficultyLevel) : null,
     passScore: Number(passScore),
     timeLimitMinutes: timeLimit ? Number(timeLimit) : null,
@@ -210,12 +207,12 @@ export default function QuizCreateEditPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger><SelectValue placeholder="Select difficulty" /></SelectTrigger>
-                <SelectContent>
-                  {DIFFICULTIES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={difficulty === "none" ? "" : difficulty}
+                onValueChange={setDifficulty}
+                placeholder="Select difficulty"
+                options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+              />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
@@ -233,14 +230,15 @@ export default function QuizCreateEditPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Visibility</Label>
-              <Select value={visibility} onValueChange={(v) => setVisibility(v as QuizVisibility)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRIVATE">Private</SelectItem>
-                  <SelectItem value="PUBLIC">Public</SelectItem>
-                  <SelectItem value="UNLISTED">Unlisted</SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={visibility}
+                onValueChange={(v) => setVisibility(v as QuizVisibility)}
+                options={[
+                  { value: "PRIVATE", label: "Private" },
+                  { value: "PUBLIC", label: "Public" },
+                  { value: "UNLISTED", label: "Unlisted" },
+                ]}
+              />
             </div>
             <div className="space-y-2 pt-2 border-t border-border">
               <Toggle label="Randomize questions" v={isRandomQuestion} set={setIsRandomQuestion} />

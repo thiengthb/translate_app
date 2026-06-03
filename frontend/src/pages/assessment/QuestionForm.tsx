@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { Check, ImageIcon, Loader2, Music, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -346,22 +344,22 @@ export function QuestionForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Type</Label>
-          <Select value={questionType} onValueChange={(v) => handleTypeChange(v as QuestionType)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ACTIVE_QUESTION_TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABELS[t] ?? t}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={questionType}
+            onValueChange={(v) => handleTypeChange(v as QuestionType)}
+            options={ACTIVE_QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] ?? t }))}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Difficulty</Label>
-          <Select value={difficulty || "none"} onValueChange={(v) => setDifficulty(v === "none" ? "" : v)}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {["EASY","MEDIUM","HARD","N5","N4","N3","N2","N1"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={difficulty || "none"}
+            onValueChange={(v) => setDifficulty(v === "none" ? "" : v)}
+            options={[
+              { value: "none", label: "None" },
+              ...["EASY", "MEDIUM", "HARD", "N5", "N4", "N3", "N2", "N1"].map((d) => ({ value: d, label: d })),
+            ]}
+          />
         </div>
       </div>
 
