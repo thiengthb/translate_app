@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ankiStudyApi, flashcardApi } from "@/api";
 import type { AnkiStudyCard, AnkiRating } from "@/api";
 import { cn } from "@/lib/utils";
-import { BookOpen, Brain, HelpCircle, Maximize2, Minimize2, RotateCcw } from "lucide-react";
+import { BookOpen, Brain, Clock, HelpCircle, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { FlashcardRenderDTO } from "@/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -65,43 +65,118 @@ function returnsNowOrEarlier(nextReviewAt?: string) {
   return nextReview <= new Date();
 }
 
-function shouldTrackAsSessionLearning(card: AnkiStudyCard) {
-  return isLearningState(card);
+/** Absolute due timestamp (ms) of a card; cards without a schedule are due now. */
+function cardDueMs(card: AnkiStudyCard, now: number): number {
+  if (!card.nextReviewAt) return now;
+  const t = new Date(card.nextReviewAt).getTime();
+  return Number.isNaN(t) ? now : t;
 }
 
-function stateBucket(card: AnkiStudyCard): "new" | "learning" | "review" | null {
-  if (card.state === "NEW") return "new";
-  if (shouldTrackAsSessionLearning(card)) return "learning";
-  if (card.state === "REVIEW") return "review";
-  return null;
+/* ─────────────────────────────────────────
+   Anki-style session queue model
+
+   - `main`     : NEW + due REVIEW cards, studied in order.
+   - `learning` : LEARNING / RELEARNING cards waiting for their nextReviewAt.
+                  They re-enter the session exactly when due (not at the end).
+   - `current`  : the card on screen right now.
+   - `waitingUntil`: when nothing is due and `main` is empty, the timestamp of
+                  the soonest learning card — drives the countdown screen so we
+                  never show a learning card before its time.
+───────────────────────────────────────── */
+interface SrsSession {
+  main: AnkiStudyCard[];
+  learning: AnkiStudyCard[];
+  current: AnkiStudyCard | null;
+  waitingUntil: number | null;
 }
 
-function isDueToday(card: AnkiStudyCard) {
-  return card.state === "REVIEW" && returnsNowOrEarlier(card.nextReviewAt);
+const EMPTY_SESSION: SrsSession = { main: [], learning: [], current: null, waitingUntil: null };
+
+/** Split a freshly-loaded server queue into the main and learning queues. */
+function splitFromQueue(cards: AnkiStudyCard[]): { main: AnkiStudyCard[]; learning: AnkiStudyCard[] } {
+  const main: AnkiStudyCard[] = [];
+  const learning: AnkiStudyCard[] = [];
+  for (const c of cards) (isLearningState(c) ? learning : main).push(c);
+  return { main, learning };
 }
 
-function isDueReview(card: AnkiStudyCard) {
-  return isDueToday(card);
+/**
+ * Pick the next card to show. A learning/relearning card whose nextReviewAt has
+ * passed preempts the main queue (soonest-due first). Otherwise the next main
+ * card. If neither is available but learning cards remain, return a wait state
+ * with the soonest due time so the caller can show a countdown.
+ *
+ * `session.current` is assumed already detached (caller decides whether to
+ * re-queue it); this only chooses a new current from `main`/`learning`.
+ */
+function advance(session: SrsSession, now: number): SrsSession {
+  const { main, learning } = session;
+
+  // 1) Due learning/relearning cards cut in line (most overdue first).
+  let dueIdx = -1;
+  let dueAt = Infinity;
+  learning.forEach((c, i) => {
+    const t = cardDueMs(c, now);
+    if (t <= now && t < dueAt) {
+      dueAt = t;
+      dueIdx = i;
+    }
+  });
+  if (dueIdx >= 0) {
+    return {
+      main,
+      learning: learning.filter((_, i) => i !== dueIdx),
+      current: learning[dueIdx],
+      waitingUntil: null,
+    };
+  }
+
+  // 2) Next main-queue card (NEW / due REVIEW).
+  if (main.length > 0) {
+    return { main: main.slice(1), learning, current: main[0], waitingUntil: null };
+  }
+
+  // 3) Nothing due now — wait for the soonest learning card, or finish.
+  if (learning.length > 0) {
+    const soonest = Math.min(...learning.map((c) => cardDueMs(c, now)));
+    return { main, learning, current: null, waitingUntil: Number.isFinite(soonest) ? soonest : now };
+  }
+  return { main, learning, current: null, waitingUntil: null };
 }
 
-function applyReviewDelta(stats: QueueStats, before: AnkiStudyCard, after: AnkiStudyCard): QueueStats {
-  const next = { ...stats };
-  const beforeBucket = stateBucket(before);
-  const afterBucket = stateBucket(after);
-
-  if (beforeBucket) next[beforeBucket] = Math.max(0, next[beforeBucket] - 1);
-  if (isDueToday(before)) next.dueToday = Math.max(0, next.dueToday - 1);
-  if (isDueReview(before)) next.dueReview = Math.max(0, next.dueReview - 1);
-
-  if (afterBucket) next[afterBucket] += 1;
-  if (isDueToday(after)) next.dueToday += 1;
-  if (isDueReview(after)) next.dueReview += 1;
-
-  return next;
+/**
+ * Live counts derived from the session (never drift): everything still in the
+ * session — the two queues plus the on-screen card — bucketed by state.
+ *   New        = state NEW
+ *   Learning   = state LEARNING + RELEARNING
+ *   Review     = state REVIEW
+ *   Due Today  = state REVIEW with nextReviewAt <= now
+ */
+function liveCounts(session: SrsSession): QueueStats {
+  const all = [...session.main, ...session.learning, ...(session.current ? [session.current] : [])];
+  const stats: QueueStats = { new: 0, learning: 0, review: 0, dueToday: 0, dueReview: 0 };
+  for (const c of all) {
+    if (c.state === "NEW") stats.new += 1;
+    else if (isLearningState(c)) stats.learning += 1;
+    else if (c.state === "REVIEW") {
+      stats.review += 1;
+      if (returnsNowOrEarlier(c.nextReviewAt)) {
+        stats.dueToday += 1;
+        stats.dueReview += 1;
+      }
+    }
+  }
+  return stats;
 }
 
-function totalStats(stats: QueueStats) {
-  return stats.new + stats.learning + stats.dueReview;
+/** Cards still pending study now (drives the mode-bar badge). */
+function badgeTotal(session: SrsSession): number {
+  const live = liveCounts(session);
+  return live.new + live.learning + live.dueReview;
+}
+
+function sessionDone(session: SrsSession): boolean {
+  return !session.current && session.main.length === 0 && session.learning.length === 0;
 }
 
 /**
@@ -109,18 +184,17 @@ function totalStats(stats: QueueStats) {
  * to another study mode unmounts SrsMode; without this, remounting would reload
  * the queue from the server and drop session-learning cards (short intervals
  * that aren't "due" yet, so the queue endpoint omits them) — making the live
- * "Learning" count vanish. We resume the cached session if it's recent.
+ * "Learning" count vanish and the badge drop. We resume the cached session if
+ * it's recent.
  */
 interface CachedSrsSession {
   cachedAt: number;
-  queue: AnkiStudyCard[];
-  againQueue: AnkiStudyCard[];
+  session: SrsSession;
   totalStudied: number;
   totalNew: number;
   totalLearning: number;
   totalReview: number;
   totalDue: number;
-  sessionStats: QueueStats;
 }
 const srsSessionCache = new Map<number, CachedSrsSession>();
 const SRS_CACHE_TTL_MS = 10 * 60 * 1000; // resume within 10 min, else reload fresh
@@ -137,44 +211,40 @@ interface SrsModeProps {
 
 /**
  * Spaced-repetition review (Anki SM2). This is the ONLY mode that mutates
- * scheduling — every rating posts to /anki/study/review. Ported verbatim from
- * the former AnkiStudyPage; the unified shell now provides the layout + full
- * view, so this renders just the study surface.
+ * scheduling — every rating posts to /anki/study/review. Learning/relearning
+ * cards re-enter the session at their scheduled time (not at the end), matching
+ * Anki's behaviour.
  */
 export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurrentCard }: SrsModeProps) {
 
-  const [queue, setQueue] = useState<AnkiStudyCard[]>([]);
-  const [againQueue, setAgainQueue] = useState<AnkiStudyCard[]>([]);
+  const [session, setSession] = useState<SrsSession>(EMPTY_SESSION);
   const [flipped, setFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [totalStudied, setTotalStudied] = useState(0);
+  // Deck-level snapshot from the server (for the stats tooltip; not the live
+  // numbers, which are derived from the session).
   const [totalNew, setTotalNew] = useState(0);
   const [totalLearning, setTotalLearning] = useState(0);
   const [totalReview, setTotalReview] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
-  const [sessionStats, setSessionStats] = useState<QueueStats>({ new: 0, learning: 0, review: 0, dueToday: 0, dueReview: 0 });
   const [renderData, setRenderData] = useState<FlashcardRenderDTO | null>(null);
+  // Ticks while the countdown ("waiting for next learning card") screen is up.
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const loadQueue = (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     ankiStudyApi
       .getQueue(deckId)
       .then((data) => {
-        setQueue(data.cards);
-        setAgainQueue([]);
-        setSessionStats({
-          new: data.totalNew,
-          learning: data.totalLearning ?? 0,
-          review: data.totalReview ?? 0,
-          dueToday: data.dueReviewCards ?? 0,
-          dueReview: data.dueReviewCards ?? 0,
-        });
+        const { main, learning } = splitFromQueue(data.cards);
+        const next = advance({ main, learning, current: null, waitingUntil: null }, Date.now());
+        setSession(next);
         setTotalNew(data.totalNew);
         setTotalLearning(data.totalLearning ?? 0);
         setTotalReview(data.totalReview ?? 0);
         setTotalDue(data.dueReviewCards ?? 0);
-        onDueCount?.(data.totalNew + (data.totalLearning ?? 0) + (data.dueReviewCards ?? 0));
+        onDueCount?.(badgeTotal(next));
       })
       .catch(() => toast.error("Failed to load study queue."))
       .finally(() => {
@@ -187,16 +257,17 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
   useEffect(() => {
     const cached = srsSessionCache.get(deckId);
     if (cached && Date.now() - cached.cachedAt < SRS_CACHE_TTL_MS) {
-      setQueue(cached.queue);
-      setAgainQueue(cached.againQueue);
+      // A learning card may have become due while we were away — re-pick if we
+      // were idle/waiting, otherwise keep the card that was on screen.
+      const restored = cached.session.current ? cached.session : advance(cached.session, Date.now());
+      setSession(restored);
       setTotalStudied(cached.totalStudied);
       setTotalNew(cached.totalNew);
       setTotalLearning(cached.totalLearning);
       setTotalReview(cached.totalReview);
       setTotalDue(cached.totalDue);
-      setSessionStats(cached.sessionStats);
       setLoading(false);
-      onDueCount?.(cached.totalDue + cached.totalNew);
+      onDueCount?.(badgeTotal(restored));
     } else {
       loadQueue();
     }
@@ -208,16 +279,31 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
     if (loading) return;
     srsSessionCache.set(deckId, {
       cachedAt: Date.now(),
-      queue,
-      againQueue,
+      session,
       totalStudied,
       totalNew,
       totalLearning,
       totalReview,
       totalDue,
-      sessionStats,
     });
-  }, [deckId, loading, queue, againQueue, totalStudied, totalNew, totalLearning, totalReview, totalDue, sessionStats]);
+  }, [deckId, loading, session, totalStudied, totalNew, totalLearning, totalReview, totalDue]);
+
+  // Countdown loop: only runs while we're waiting (no current card, but learning
+  // cards still pending). Re-picks the moment the soonest one comes due, and
+  // ticks `nowMs` so the countdown text updates each second.
+  useEffect(() => {
+    if (session.current || session.waitingUntil == null) return;
+    setNowMs(Date.now());
+    const id = window.setInterval(() => {
+      setSession((s) => {
+        if (s.current || s.waitingUntil == null) return s;
+        if (Date.now() >= s.waitingUntil) return advance(s, Date.now());
+        return s;
+      });
+      setNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [session.current, session.waitingUntil]);
 
   /* Keyboard: Space flip, 1-4 rate */
   useEffect(() => {
@@ -227,7 +313,7 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
         const tag = target.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
       }
-      if (submitting || queue.length === 0) return;
+      if (submitting || !session.current) return;
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         setFlipped((f) => !f);
@@ -242,9 +328,9 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flipped, submitting, queue]);
+  }, [flipped, submitting, session]);
 
-  const currentFlashcardId = queue[0]?.flashcardId ?? null;
+  const currentFlashcardId = session.current?.flashcardId ?? null;
   useEffect(() => {
     if (currentFlashcardId == null) {
       setRenderData(null);
@@ -267,31 +353,22 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
   useEffect(() => () => onCurrentCard?.(null), [onCurrentCard]);
 
   const handleRate = async (rating: AnkiRating) => {
-    if (submitting || queue.length === 0) return;
-    const card = queue[0];
+    if (submitting || !session.current) return;
+    const card = session.current;
     setSubmitting(true);
     try {
       const updated = await ankiStudyApi.review({ deckId, flashcardId: card.flashcardId, rating });
       setTotalStudied((n) => n + 1);
       setFlipped(false);
 
-      const rest = queue.slice(1);
-      const shouldRequeue = shouldTrackAsSessionLearning(updated);
-      let nextAgainQueue = shouldRequeue ? [...againQueue, updated] : [...againQueue];
-      let nextQueue = rest;
-      if (nextQueue.length === 0 && nextAgainQueue.length > 0) {
-        const [next, ...remainingAgain] = nextAgainQueue;
-        nextQueue = next ? [next] : [];
-        nextAgainQueue = remainingAgain;
-      }
-      setQueue(nextQueue);
-      setAgainQueue(nextAgainQueue);
-      const nextStats = applyReviewDelta(sessionStats, card, updated);
-      setSessionStats(nextStats);
-      setTotalNew(nextStats.new);
-      setTotalLearning(nextStats.learning);
-      setTotalReview(nextStats.review);
-      onDueCount?.(totalStats(nextStats));
+      // Re-queue the just-rated card into the learning queue iff it's still in a
+      // learning/relearning step (it carries the server's nextReviewAt). A card
+      // that graduated to REVIEW is scheduled days out — it leaves the session.
+      // Then pick the next card: a due learning card preempts the main queue.
+      const learning = isLearningState(updated) ? [...session.learning, updated] : session.learning;
+      const next = advance({ ...session, learning, current: null }, Date.now());
+      setSession(next);
+      onDueCount?.(badgeTotal(next));
     } catch {
       toast.error("Failed to submit review.");
     } finally {
@@ -299,8 +376,10 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
     }
   };
 
-  const isDone = !loading && queue.length === 0 && againQueue.length === 0;
-  const current = queue[0] ?? null;
+  const current = session.current;
+  const isDone = !loading && sessionDone(session);
+  const isWaiting = !loading && !current && session.learning.length > 0;
+  const live = liveCounts(session);
 
   if (loading) {
     return (
@@ -317,6 +396,22 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
         title="Session complete!"
         description={`You reviewed ${totalStudied} card${totalStudied !== 1 ? "s" : ""}. Scheduled with SM2 spaced repetition.`}
         action={{ label: "Reload queue", icon: <RotateCcw className="size-4" />, onClick: () => loadQueue() }}
+      />
+    );
+  }
+
+  if (isWaiting) {
+    const remaining = Math.max(0, (session.waitingUntil ?? nowMs) - nowMs);
+    const mm = Math.floor(remaining / 60000);
+    const ss = Math.floor((remaining % 60000) / 1000);
+    const learningLeft = session.learning.length;
+    return (
+      <StudyMessage
+        icon={<Clock size={26} />}
+        title="Chờ thẻ học tiếp theo"
+        description={`Thẻ Learning/Relearning tiếp theo sẽ quay lại sau ${mm}:${ss
+          .toString()
+          .padStart(2, "0")}. Còn ${learningLeft} thẻ đang trong bước học — sẽ tự hiện đúng thời điểm.`}
       />
     );
   }
@@ -455,9 +550,9 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
             ))
           ) : (
             <QueueStatsBar
-              liveNew={sessionStats.new}
-              liveLearning={sessionStats.learning}
-              liveDueToday={sessionStats.dueToday}
+              liveNew={live.new}
+              liveLearning={live.learning}
+              liveDueToday={live.dueToday}
               totalNew={totalNew}
               totalLearning={totalLearning}
               totalReview={totalReview}
