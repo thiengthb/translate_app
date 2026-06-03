@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { assessmentApi } from "@/api";
-import type { QuizAttemptDTO, QuizDTO } from "@/types";
+import { assessmentApi, classroomApi } from "@/api";
+import type { ClassAssignmentDTO, ClassroomDTO, QuizAttemptDTO, QuizDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import {
   acceptedAnswers, formatSeconds, getUserAnswerText,
@@ -21,24 +23,48 @@ export default function QuizResultPage() {
 
   const [attempt, setAttempt] = useState<QuizAttemptDTO | null>(null);
   const [quiz, setQuiz] = useState<QuizDTO | null>(null);
+  // When the attempt belongs to a class assignment, these are loaded so the
+  // page reads as an assignment result (group-context breadcrumb + back) rather
+  // than a free-play quiz attempt.
+  const [assignment, setAssignment] = useState<ClassAssignmentDTO | null>(null);
+  const [group, setGroup] = useState<ClassroomDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [retaking, setRetaking] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([assessmentApi.getAttempt(Number(attemptId)), assessmentApi.fetchQuizById(id)])
-      .then(([a, q]) => { setAttempt(a); setQuiz(q); })
+      .then(async ([a, q]) => {
+        if (cancelled) return;
+        setAttempt(a); setQuiz(q);
+        if (a.assignmentId != null) {
+          try {
+            const asg = await classroomApi.getAssignmentById(a.assignmentId);
+            if (cancelled) return;
+            setAssignment(asg);
+            const grp = await classroomApi.getClassroomById(asg.classroomId);
+            if (!cancelled) setGroup(grp);
+          } catch { /* fall back to plain quiz context */ }
+        }
+      })
       .catch(() => toast.error("Failed to load result."))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [attemptId, id]);
 
   const retake = async () => {
     setRetaking(true);
     try {
-      const a = await assessmentApi.startAttempt({ quizId: id });
+      // Preserve the assignment link on retake so the new attempt still counts
+      // toward the assignment (and respects its attempt limit).
+      const a = await assessmentApi.startAttempt(
+        attempt?.assignmentId != null ? { quizId: id, assignmentId: attempt.assignmentId } : { quizId: id }
+      );
       navigate(`/quizzes/${id}/attempt/${a.id}`);
-    } catch {
-      toast.error("Could not start a new attempt.");
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 409 ? "You've reached the attempt limit." : "Could not start a new attempt.");
       setRetaking(false);
     }
   };
@@ -54,19 +80,49 @@ export default function QuizResultPage() {
 
   const passed = attempt.isPassed;
 
+  /* ── Context: assignment attempt vs free-play quiz attempt ── */
+  const isAssignment = attempt.assignmentId != null && assignment != null;
+  const cid = assignment?.classroomId;
+  const backHref = isAssignment ? `/classrooms/${cid}` : `/quizzes/${id}`;
+
+  // Assignment attempts get a group-context breadcrumb (Home › <group> ›
+  // <assignment>) by hiding the /quizzes URL segments; free-play attempts keep
+  // the regular Quizzes breadcrumb.
+  const layoutProps = isAssignment
+    ? {
+        pathName: { [`/quizzes/${id}/result/${attemptId}`]: assignment!.title },
+        parentCrumb: { href: `/classrooms/${cid}`, title: group?.name ?? "Group" },
+        ignorePaths: ["quizzes", String(id), "result"],
+        breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
+      }
+    : { pathName: { "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz?.title ?? "Quiz" } };
+
   return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz?.title ?? "Quiz" }}>
+    <MainLayout {...layoutProps}>
       <div className="space-y-6 w-full max-w-3xl mx-auto">
         {/* Nav bar (mirrors the quiz session header) */}
         <header className="flex items-center justify-between gap-4 border-b border-border pb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => navigate(`/quizzes/${id}`)}>
-              Back
+            <Button variant="ghost" size="sm" className="shrink-0 gap-1" onClick={() => navigate(backHref)}>
+              <ChevronLeft className="size-4" />{isAssignment ? "Group" : "Back"}
             </Button>
             <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{quiz?.title ?? "Quiz"}</p>
-              <p className={cn("text-xs font-medium", passed ? "text-green-600" : "text-red-600")}>
-                {passed ? "Passed" : "Not passed"} · {attempt.percentage.toFixed(0)}%
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="text-sm font-semibold truncate">{isAssignment ? assignment!.title : (quiz?.title ?? "Quiz")}</p>
+                {isAssignment && (
+                  <Badge variant="outline" className="shrink-0 gap-1 border-primary/30 bg-primary/5 text-primary text-[10px]">
+                    <ClipboardList className="size-3" />Assignment
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                {isAssignment ? (
+                  <>{group?.name ? `${group.name} · ` : ""}{quiz?.title ?? "Quiz"}</>
+                ) : (
+                  <span className={cn("font-medium", passed ? "text-green-600" : "text-red-600")}>
+                    {passed ? "Passed" : "Not passed"} · {attempt.percentage.toFixed(0)}%
+                  </span>
+                )}
               </p>
             </div>
           </div>
