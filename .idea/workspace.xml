@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(translator): update Ollama API configuration and adjust task duration in workspace settings">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -272,6 +274,7 @@
       <workItem from="1780459191126" duration="890000" />
       <workItem from="1780466498166" duration="4109000" />
       <workItem from="1780493427307" duration="1969000" />
+      <workItem from="1780500222342" duration="1245000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -489,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780495400059</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="feat(translator): update Ollama API configuration and adjust task duration in workspace settings">
+      <option name="closed" value="true" />
+      <created>1780500283158</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1780500283158</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -519,7 +530,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(dictionary): fix UI and add voice" />
     <MESSAGE value="feat(dictionary): fix UI add search kanji likes mazii" />
     <MESSAGE value="feat(dictionary): chinh sua UI va them de xuat tu vung" />
     <MESSAGE value="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji" />
@@ -544,7 +554,8 @@
     <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
     <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
     <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
+    <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
