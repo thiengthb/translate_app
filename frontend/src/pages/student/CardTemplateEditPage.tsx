@@ -21,11 +21,9 @@ import type {
 } from "@/features/card-template-designer/types";
 import type { FlashcardContentType, FlashcardTemplateDTO } from "@/types";
 import { getCurrentUserId } from "@/utils/auth.utils";
-import { InfoLabel } from "@/components/common/InfoLabel";
 import {
   defaultFields,
   fieldsFromBuilderConfig,
-  FieldStructureEditor,
   type FieldDef,
 } from "./shared/FieldDeckEditor";
 
@@ -285,22 +283,15 @@ export default function CardTemplateEditPage() {
         </div>
       ) : (
         <div className="flex flex-1 min-h-0 flex-col gap-3">
-          {/* Field structure — a deckless template defines its own fields here. */}
-          <div className="shrink-0 space-y-2 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <InfoLabel
-              title={<p className="text-sm font-semibold text-foreground">Trường của mẫu</p>}
-              info="Các trường mà mẫu này tham chiếu qua {{Tên trường}}. Khi áp dụng cho deck, nội dung thẻ có nhãn trùng tên sẽ được điền vào."
-              side="right"
-            />
-            <FieldStructureEditor fields={fields} onChange={handleFieldsChange} />
-          </div>
-
-          {/* The same designer used for deck templates. */}
+          {/* The same designer used for deck templates — the field structure
+              ("Trường của mẫu") is now edited inside the Card builder itself. */}
           <DeckTemplateDesigner
             className="flex-1 min-h-0 overflow-hidden"
             draft={draft}
             builderState={builderState}
             availableFields={availableFields}
+            fields={fields}
+            onFieldsChange={handleFieldsChange}
             previewSide={previewSide}
             previewSrcDoc={previewSrcDoc}
             advancedMode={advancedMode}

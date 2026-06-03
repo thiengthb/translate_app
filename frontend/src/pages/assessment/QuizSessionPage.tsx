@@ -128,12 +128,12 @@ export default function QuizSessionPage() {
         key={qq.id}
         id={`q-${gi}`}
         className={cn(
-          "scroll-mt-4 space-y-5 rounded-2xl border border-border/60 bg-card p-5 sm:p-6 shadow-sm transition-colors",
+          "scroll-mt-4 space-y-3 rounded-2xl border border-border/60 bg-card p-3.5 sm:p-4 shadow-sm transition-colors",
           marked && "border-amber-400/60",
         )}
       >
         {/* Meta + prompt */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-primary tabular-nums">Question {gi + 1}</span>
@@ -156,7 +156,7 @@ export default function QuizSessionPage() {
               {marked ? "Marked" : "Mark"}
             </button>
           </div>
-          <p className="text-lg font-semibold leading-relaxed">{String(snap.prompt ?? "")}</p>
+          <p className="text-lg font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
           {typeof snap.promptImageUrl === "string" && snap.promptImageUrl && (
             <img src={snap.promptImageUrl} alt="" className="max-h-60 rounded-lg border border-border" />
           )}
@@ -167,7 +167,7 @@ export default function QuizSessionPage() {
 
         {/* Answer area by type */}
         {isSingle ? (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {options.map((o, oi) => (
               <OptionButton
                 key={o.id}
@@ -180,7 +180,7 @@ export default function QuizSessionPage() {
             ))}
           </div>
         ) : isMulti ? (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <p className="text-xs text-muted-foreground">Select all that apply.</p>
             {options.map((o, oi) => {
               const checked = (draft.optionIds ?? []).includes(o.id);
@@ -232,7 +232,7 @@ export default function QuizSessionPage() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       {/* Header */}
-      <header className="flex items-center justify-between gap-4 border-b border-border px-4 sm:px-6 py-3 shrink-0">
+      <header className="flex items-center justify-between gap-4 border-b border-border px-3 sm:px-4 py-2 shrink-0">
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate">{quiz?.title}</p>
           <p className="text-xs text-muted-foreground tabular-nums">
@@ -264,7 +264,7 @@ export default function QuizSessionPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Main: the current page of questions (scrolls, scrollbar hidden) */}
         <ScrollHintContainer className="flex-1">
-          <div className="max-w-2xl mx-auto px-4 sm:px-5 py-6 sm:py-8 space-y-6">
+          <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 space-y-4">
             {pageQuestions.map((qq, li) => renderQuestion(qq, pageStart + li))}
 
             {/* Page navigation */}
@@ -288,7 +288,7 @@ export default function QuizSessionPage() {
 
         {/* Right: question navigator */}
         <aside className="hidden md:flex w-72 shrink-0 flex-col border-l border-border bg-muted/20">
-          <div className="px-4 py-3 border-b border-border space-y-3">
+          <div className="px-3 py-2.5 border-b border-border space-y-2.5">
             <p className="text-sm font-semibold">Question navigator</p>
             {/* Questions per page */}
             <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
@@ -308,7 +308,7 @@ export default function QuizSessionPage() {
             </div>
           </div>
 
-          <ScrollHintContainer className="flex-1" viewportClassName="px-4 py-3">
+          <ScrollHintContainer className="flex-1" viewportClassName="px-3 py-2.5">
             <div className="grid grid-cols-5 gap-1.5">
               {questions.map((qq, i) => {
                 const onPage = i >= pageStart && i < pageEnd;
@@ -335,7 +335,7 @@ export default function QuizSessionPage() {
           </ScrollHintContainer>
 
           {/* Page Prev / Next */}
-          <div className="px-4 py-3 border-t border-border flex items-center gap-2">
+          <div className="px-3 py-2.5 border-t border-border flex items-center gap-2">
             <Button variant="outline" size="sm" className="flex-1" onClick={prevPage} disabled={safePage === 0}>
               <ChevronLeft className="size-4 mr-1" />Prev
             </Button>
@@ -347,7 +347,7 @@ export default function QuizSessionPage() {
       </div>
 
       {/* Mobile page nav (sidebar is hidden on small screens) */}
-      <footer className="md:hidden border-t border-border px-5 py-3 shrink-0 flex items-center justify-between gap-3">
+      <footer className="md:hidden border-t border-border px-3 py-2 shrink-0 flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" onClick={prevPage} disabled={safePage === 0}>
           <ChevronLeft className="size-4 mr-1" />Prev
         </Button>
@@ -396,7 +396,7 @@ function OptionButton({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all",
+        "w-full flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all",
         selected
           ? "border-primary bg-primary/5"
           : "border-border hover:border-primary/40 hover:bg-accent/30",
