@@ -17,6 +17,9 @@ import org.hibernate.annotations.BatchSize;
 
 import java.util.List;
 
+// NOTE: Word KHÔNG dùng DataIO generic (@ImportEntity/@ExportEntity) vì cấu trúc
+// phức tạp (nhiều nghĩa đa ngôn ngữ + nhiều ví dụ). Import/export riêng nằm ở
+// WordDataIoService + DictionaryController (/api/dictionary/words/{export,import,template}).
 @Entity
 @Getter
 @Setter

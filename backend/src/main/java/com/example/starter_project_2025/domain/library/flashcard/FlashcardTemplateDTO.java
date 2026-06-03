@@ -16,6 +16,9 @@ public class FlashcardTemplateDTO extends BaseDTO {
 
     Long userId;
 
+    /** Non-null = deck-local copy (hidden from library); null = shared master. */
+    Long deckId;
+
     String cardType;
 
     @NotBlank(groups = OnCreate.class, message = "Template name is required")
@@ -34,4 +37,7 @@ public class FlashcardTemplateDTO extends BaseDTO {
     Boolean isSystem;
 
     Boolean isDefault;
+
+    /** PUBLIC = shareable to community, PRIVATE = owner-only. */
+    String visibility;
 }

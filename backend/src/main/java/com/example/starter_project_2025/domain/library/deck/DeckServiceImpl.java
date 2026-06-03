@@ -255,7 +255,6 @@ public class DeckServiceImpl
                 .title(candidate)
                 .description(original.getDescription())
                 .visibility("PRIVATE")
-                .studyMode(original.getStudyMode() != null ? original.getStudyMode() : "QUIZLET")
                 .coverImageUrl(original.getCoverImageUrl())
                 .sourceLanguage(original.getSourceLanguage())
                 .targetLanguage(original.getTargetLanguage())
@@ -338,12 +337,13 @@ public class DeckServiceImpl
     public void incrementView(Long deckId) {
         Deck deck = deckRepository.findById(deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found"));
-        // Only increment for public decks or the owner
+        // Count a view only when someone OTHER than the owner opens a public deck.
+        // The owner browsing their own deck must not inflate the counter.
         Long currentUserId = getCurrentUserId();
         boolean isOwner  = deck.getUser() != null && deck.getUser().getId() != null
                         && deck.getUser().getId().equals(currentUserId);
         boolean isPublic = "PUBLIC".equalsIgnoreCase(deck.getVisibility());
-        if (isOwner || isPublic) {
+        if (!isOwner && isPublic) {
             deck.setViewCount(deck.getViewCount() + 1);
             deckRepository.save(deck);
         }

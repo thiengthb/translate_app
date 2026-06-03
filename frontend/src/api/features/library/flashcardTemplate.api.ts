@@ -33,6 +33,17 @@ export const flashcardTemplateApi = {
     return data.content ?? [];
   },
 
+  /** List PUBLIC templates shared by the community (across all users). */
+  listPublic: async (): Promise<FlashcardTemplateDTO[]> => {
+    const res = await axiosInstance.get<{ content?: FlashcardTemplateDTO[] } | FlashcardTemplateDTO[]>(
+      `/flashcard-templates`,
+      { params: { visibility: "PUBLIC", page: 0, size: 200 } }
+    );
+    const data = res.data;
+    if (Array.isArray(data)) return data;
+    return data.content ?? [];
+  },
+
   createTemplate: async (data: CreateUpdateTemplateRequest): Promise<FlashcardTemplateDTO> => {
     const res = await axiosInstance.post<FlashcardTemplateDTO>(`/flashcard-templates`, data);
     return res.data;

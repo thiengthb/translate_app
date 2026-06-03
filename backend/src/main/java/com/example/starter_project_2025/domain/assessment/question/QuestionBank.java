@@ -41,9 +41,6 @@ import java.util.Set;
 @AuditEnabled
 public class QuestionBank extends BaseEntity {
 
-    @Column(name = "category_id")
-    Long categoryId;
-
     @Column(name = "level_id")
     Long levelId;
 

@@ -17,6 +17,13 @@ interface ScrollHintContainerProps {
     scrollStep?: number;
     className?: string;
     viewportClassName?: string;
+    /**
+     * px to push the TOP arrow down from the top edge. Use to clear a
+     * sticky header (e.g. ProTable's frozen header row) so the up-arrow
+     * floats over the scrollable rows instead of covering the header.
+     * Default 4 (matches the original `top-1` inset).
+     */
+    topOffset?: number;
 }
 
 /* ── Scroll constants ── */
@@ -32,12 +39,22 @@ export function ScrollHintContainer({
     scrollStep = 200,
     className,
     viewportClassName,
+    topOffset = 4,
 }: ScrollHintContainerProps) {
     const viewportRef = useRef<HTMLDivElement>(null);
     const [canUp, setCanUp]       = useState(false);
     const [canDown, setCanDown]   = useState(false);
     const [canLeft, setCanLeft]   = useState(false);
     const [canRight, setCanRight] = useState(false);
+
+    // Hints reveal only while the user is engaging with the area — hovering
+    // it (mouse) or actively scrolling (mouse/touch). They fade back out
+    // after a short idle window so static reading isn't cluttered by
+    // always-on arrows.
+    const [hovered, setHovered]     = useState(false);
+    const [scrolling, setScrolling] = useState(false);
+    const scrollIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const active = hovered || scrolling;
 
     const trackV = axis === "vertical"   || axis === "both";
     const trackH = axis === "horizontal" || axis === "both";
@@ -57,21 +74,33 @@ export function ScrollHintContainer({
         }
     }, [trackV, trackH]);
 
+    // Flag the area as "scrolling" on each scroll event, then reset to idle
+    // a beat after scrolling stops. Kept separate from `updateHints` so the
+    // ResizeObserver/MutationObserver passes don't spuriously flash the hints.
+    const markScrolling = useCallback(() => {
+        setScrolling(true);
+        if (scrollIdleRef.current) clearTimeout(scrollIdleRef.current);
+        scrollIdleRef.current = setTimeout(() => setScrolling(false), 1000);
+    }, []);
+
     useEffect(() => {
         const el = viewportRef.current;
         if (!el) return;
         updateHints();
         el.addEventListener("scroll", updateHints, { passive: true });
+        el.addEventListener("scroll", markScrolling, { passive: true });
         const ro = new ResizeObserver(updateHints);
         ro.observe(el);
         const mo = new MutationObserver(updateHints);
         mo.observe(el, { childList: true, subtree: true });
         return () => {
             el.removeEventListener("scroll", updateHints);
+            el.removeEventListener("scroll", markScrolling);
             ro.disconnect();
             mo.disconnect();
+            if (scrollIdleRef.current) clearTimeout(scrollIdleRef.current);
         };
-    }, [updateHints]);
+    }, [updateHints, markScrolling]);
 
     const overflowClass =
         axis === "vertical"
@@ -81,7 +110,11 @@ export function ScrollHintContainer({
               : "overflow-auto";
 
     return (
-        <div className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col", className)}>
+        <div
+            className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col", className)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
             <div
                 ref={viewportRef}
                 className={cn(
@@ -98,13 +131,14 @@ export function ScrollHintContainer({
                 <>
                     <ScrollHintButton
                         edge="top"
-                        visible={canUp}
+                        visible={active && canUp}
                         viewportRef={viewportRef}
                         scrollStep={scrollStep}
+                        offset={topOffset}
                     />
                     <ScrollHintButton
                         edge="bottom"
-                        visible={canDown}
+                        visible={active && canDown}
                         viewportRef={viewportRef}
                         scrollStep={scrollStep}
                     />
@@ -114,13 +148,13 @@ export function ScrollHintContainer({
                 <>
                     <ScrollHintButton
                         edge="left"
-                        visible={canLeft}
+                        visible={active && canLeft}
                         viewportRef={viewportRef}
                         scrollStep={scrollStep}
                     />
                     <ScrollHintButton
                         edge="right"
-                        visible={canRight}
+                        visible={active && canRight}
                         viewportRef={viewportRef}
                         scrollStep={scrollStep}
                     />
@@ -160,9 +194,12 @@ interface ScrollHintButtonProps {
     visible: boolean;
     viewportRef: React.RefObject<HTMLDivElement | null>;
     scrollStep: number;
+    /** px inset from this edge — only honoured for the `top` edge today
+     *  (lets callers clear a sticky header). */
+    offset?: number;
 }
 
-function ScrollHintButton({ edge, visible, viewportRef, scrollStep }: ScrollHintButtonProps) {
+function ScrollHintButton({ edge, visible, viewportRef, scrollStep, offset }: ScrollHintButtonProps) {
     const Icon = EDGE_ICON[edge];
 
     const lastClickRef  = useRef(0);
@@ -257,10 +294,18 @@ function ScrollHintButton({ edge, visible, viewportRef, scrollStep }: ScrollHint
     return (
         <div
             className={cn(
-                "pointer-events-none absolute transition-opacity duration-150",
+                // z-50 keeps the floating arrows above ANY content inside the
+                // viewport — including sticky table headers/columns that climb
+                // to z-40 in ProTable. Without this the left/right arrows sit
+                // exactly over the sticky index/select/action columns and get
+                // painted over, making them un-clickable.
+                "pointer-events-none absolute z-50 transition-opacity duration-150",
                 EDGE_RAIL[edge],
                 visible ? "opacity-100" : "opacity-0",
             )}
+            // Inline `top` overrides the rail's `top-1` so the up-arrow can be
+            // pushed below a sticky header. Only applied to the top edge.
+            style={edge === "top" && offset != null ? { top: offset } : undefined}
         >
             <button
                 type="button"

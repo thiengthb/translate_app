@@ -19,7 +19,4 @@ public class DeckFilter extends BaseFilter {
 
     @FilterField
     String visibility;
-
-    @FilterField
-    String studyMode;
 }

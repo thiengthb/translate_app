@@ -11,22 +11,24 @@ import { iconMap, type IconKey } from "@/components/datatable/iconMap";
 
 const DEFAULT_ICON_KEY: IconKey = "book-open";
 
-const FALLBACK_SWATCHES = COLOR_PRESETS
-  .filter((p) => !["slate", "stone"].includes(p.id))
-  .map((p) => p.swatch);
+/** Sentinel + CSS for the "follow the app's accent color" option (the default). */
+const APP_COLOR = "app";
+const APP_COLOR_CSS = "var(--primary)";
 
 /**
- * Returns the background color (hex/oklch swatch string) for a deck.
- * Uses the user-chosen color preset if set, otherwise falls back to a
- * deterministic color based on the deck id.
+ * Returns the background color (CSS color string) for a deck.
+ *
+ * A deck that picked a named preset renders that preset's swatch. A deck with
+ * no color, or the "app" sentinel, follows the app's themed accent
+ * (`var(--primary)`) so it re-tints automatically when the user changes the
+ * app's color preset.
  */
 export function deckBgColor(deck: { id?: number; deckColor?: string }): string {
-  if (deck.deckColor) {
+  if (deck.deckColor && deck.deckColor !== APP_COLOR) {
     const preset = COLOR_PRESETS.find((p) => p.id === deck.deckColor);
     if (preset) return preset.swatch;
   }
-  const n = FALLBACK_SWATCHES.length;
-  return FALLBACK_SWATCHES[(deck.id ?? 0) % n]!;
+  return APP_COLOR_CSS;
 }
 
 /**

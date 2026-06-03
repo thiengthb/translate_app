@@ -30,6 +30,9 @@ type Props = {
     parentCrumb?: { href: string; title: string };
     /** Override the ⓘ tooltip description for the last (current) segment. */
     pageDescription?: string;
+    /** Custom icon rendered to the left of the last (current) crumb title.
+     *  Takes precedence over the sidebar-module icon. */
+    leadingIcon?: React.ReactNode;
 };
 
 function formatPath(path: string) {
@@ -47,9 +50,7 @@ const PAGE_DESCRIPTIONS: Record<string, string> = {
     "/teacher": "Workspace for teachers.",
     "/library": "Bộ sưu tập deck học tập của bạn.",
     "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
-    "/create-deck": "Pick a study mode and create a new deck.",
-    "/create-deck/quizlet": "Create a fast flip-card (Quizlet) deck.",
-    "/create-deck/anki": "Create a spaced-repetition (Anki) deck.",
+    "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
     "/analyze": "Break down the grammar of a Japanese sentence.",
     "/production": "Practice composing Japanese sentences.",
     "/notifications": "Your notification inbox.",
@@ -63,6 +64,7 @@ export default function DynamicBreadcrumbs({
     ignorePaths = [],
     parentCrumb,
     pageDescription,
+    leadingIcon,
 }: Props) {
     const location = useLocation();
     const { data: moduleGroups } = useActiveModuleGroups();
@@ -113,7 +115,7 @@ export default function DynamicBreadcrumbs({
     if (isEmpty) {
         return (
             <Breadcrumb>
-                <BreadcrumbList className="text-sm gap-1.5">
+                <BreadcrumbList className="text-[15px] gap-2">
                     <BreadcrumbItem>
                         <HomeLink />
                     </BreadcrumbItem>
@@ -124,16 +126,16 @@ export default function DynamicBreadcrumbs({
 
     return (
         <Breadcrumb>
-            <BreadcrumbList className="text-sm gap-1.5 flex-nowrap">
+            <BreadcrumbList className="text-[15px] gap-2 flex-nowrap">
                 <BreadcrumbItem>
                     <HomeLink />
                 </BreadcrumbItem>
 
                 {/* Optional explicit parent (e.g. "My Library" → /library) */}
                 {parentCrumb && (
-                    <BreadcrumbItem className="flex items-center gap-1.5">
+                    <BreadcrumbItem className="flex items-center gap-2">
                         <BreadcrumbSeparator className="text-muted-foreground/50">
-                            <ChevronRight className="size-3.5" />
+                            <ChevronRight className="size-4" />
                         </BreadcrumbSeparator>
                         <BreadcrumbLink asChild>
                             {(() => {
@@ -142,7 +144,7 @@ export default function DynamicBreadcrumbs({
                                     <Link
                                         to={parentCrumb.href}
                                         className={cn(
-                                            "px-1.5 py-0.5 rounded-md text-muted-foreground",
+                                            "px-2 py-1 rounded-md text-muted-foreground",
                                             "hover:text-foreground hover:bg-accent/70 transition-colors",
                                         )}
                                     >
@@ -166,41 +168,62 @@ export default function DynamicBreadcrumbs({
                         formatPath(segment);
                     const { display, full, truncated } = truncateCrumb(title);
 
+                    // Description backs the ⓘ tooltip on the current page
+                    // crumb. Resolve it once; when none exists we skip the
+                    // InfoLabel entirely so no empty ⓘ is shown.
+                    const description = isLast
+                        ? pageDescription ??
+                          activeModule?.description ??
+                          PAGE_DESCRIPTIONS[href]
+                        : undefined;
+                    const hasDescription =
+                        !!description && description.trim().length > 0;
+
                     return (
                         <BreadcrumbItem
                             key={href}
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-2"
                         >
                             <BreadcrumbSeparator className="text-muted-foreground/50">
-                                <ChevronRight className="size-3.5" />
+                                <ChevronRight className="size-4" />
                             </BreadcrumbSeparator>
 
                             {isLast && hasPage ? (
-                                <span className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md">
-                                    {ModuleIcon && (
+                                <span className="flex items-center gap-2 px-2 py-1 rounded-md">
+                                    {leadingIcon ? (
+                                        leadingIcon
+                                    ) : ModuleIcon ? (
                                         <ModuleIcon
-                                            className="size-4 text-primary shrink-0"
+                                            className="size-[18px] text-primary shrink-0"
                                             aria-hidden
                                         />
-                                    )}
-                                    <InfoLabel
-                                        title={
-                                            <TooltipWrapper
-                                                content={truncated ? full : ""}
-                                                side="bottom"
-                                            >
-                                                <BreadcrumbPage className="text-foreground font-medium">
-                                                    {display}
-                                                </BreadcrumbPage>
+                                    ) : null}
+                                    {(() => {
+                                        // Only wrap in a tooltip when the title
+                                        // is actually truncated; only attach the
+                                        // ⓘ InfoLabel when a description exists.
+                                        const page = (
+                                            <BreadcrumbPage className="text-foreground font-medium">
+                                                {display}
+                                            </BreadcrumbPage>
+                                        );
+                                        const titled = truncated ? (
+                                            <TooltipWrapper content={full} side="bottom">
+                                                {page}
                                             </TooltipWrapper>
-                                        }
-                                        info={
-                                            pageDescription ??
-                                            activeModule?.description ??
-                                            PAGE_DESCRIPTIONS[href]
-                                        }
-                                        side="bottom"
-                                    />
+                                        ) : (
+                                            page
+                                        );
+                                        return hasDescription ? (
+                                            <InfoLabel
+                                                title={titled}
+                                                info={description}
+                                                side="bottom"
+                                            />
+                                        ) : (
+                                            titled
+                                        );
+                                    })()}
                                 </span>
                             ) : (
                                 <BreadcrumbLink asChild>
@@ -209,7 +232,7 @@ export default function DynamicBreadcrumbs({
                                             <Link
                                                 to={href}
                                                 className={cn(
-                                                    "px-1.5 py-0.5 rounded-md text-muted-foreground",
+                                                    "px-2 py-1 rounded-md text-muted-foreground",
                                                     "hover:text-foreground hover:bg-accent/70 transition-colors",
                                                 )}
                                             >
@@ -236,9 +259,9 @@ function HomeLink() {
             <Link
                 to="/"
                 aria-label="Trang chủ"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-colors"
             >
-                <Home className="size-4" />
+                <Home className="size-[18px]" />
             </Link>
         </BreadcrumbLink>
     );

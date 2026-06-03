@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { COLOR_PRESETS } from "@/lib/color-presets";
@@ -23,8 +23,18 @@ const COLOR_OPTIONS = COLOR_PRESETS.filter(
   (p) => !["slate", "stone"].includes(p.id)
 );
 
+/**
+ * Sentinel color id meaning "follow the app's accent color". Decks stored with
+ * this value (or no color at all) render with `var(--primary)`, so they re-tint
+ * automatically whenever the user changes the app's color preset.
+ */
+export const APP_COLOR = "app";
+/** CSS value the app-color option resolves to (the live themed accent). */
+export const APP_COLOR_CSS = "var(--primary)";
+
 export const DEFAULT_ICON:  IconKey = "book-open";
-export const DEFAULT_COLOR = "violet";
+/** New decks default to the app color so they match the current theme. */
+export const DEFAULT_COLOR = APP_COLOR;
 
 interface DeckIconColorPickerProps {
   icon: string;
@@ -37,7 +47,11 @@ interface DeckIconColorPickerProps {
 export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIconColorPickerProps) {
   const [open, setOpen] = useState(false);
 
-  const activeColor   = COLOR_OPTIONS.find((c) => c.id === color) ?? COLOR_OPTIONS[0]!;
+  // No explicit color (or the "app" sentinel) → follow the app's themed accent.
+  const isAppColor    = !color || color === APP_COLOR;
+  const activeColor   = COLOR_OPTIONS.find((c) => c.id === color);
+  const activeBg      = isAppColor ? APP_COLOR_CSS : (activeColor?.swatch ?? APP_COLOR_CSS);
+  const activeName    = isAppColor ? "Theo màu app" : (activeColor?.name ?? "Theo màu app");
   const IconComponent = iconMap[icon as IconKey] ?? iconMap[DEFAULT_ICON]!;
 
   return (
@@ -62,7 +76,7 @@ export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIcon
                 "size-6 rounded-md flex items-center justify-center shrink-0 transition-transform",
                 open && "scale-105"
               )}
-              style={{ background: activeColor.swatch }}
+              style={{ background: activeBg }}
             >
               <IconComponent className="size-3.5 text-white" />
             </span>
@@ -83,13 +97,13 @@ export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIcon
         >
           <span
             className="size-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
-            style={{ background: activeColor.swatch }}
+            style={{ background: activeBg }}
           >
             <IconComponent className="size-5 text-white" />
           </span>
           <div className="text-left min-w-0">
             <p className="text-xs font-semibold text-foreground leading-tight">Biểu tượng & màu</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{activeColor.name}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{activeName}</p>
           </div>
           <ChevronDown className={cn(
             "size-3.5 text-muted-foreground ml-auto shrink-0 transition-transform duration-150",
@@ -114,12 +128,12 @@ export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIcon
               <div className="flex items-center gap-3 pb-3 border-b border-border">
                 <span
                   className="size-12 rounded-xl flex items-center justify-center shadow-sm"
-                  style={{ background: activeColor.swatch }}
+                  style={{ background: activeBg }}
                 >
                   <IconComponent className="size-6 text-white" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{activeColor.name}</p>
+                  <p className="text-sm font-semibold text-foreground">{activeName}</p>
                   <p className="text-xs text-muted-foreground">{icon}</p>
                 </div>
               </div>
@@ -159,6 +173,21 @@ export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIcon
                   Màu nền
                 </p>
                 <div className="flex flex-wrap gap-2">
+                  {/* App color — follows the current theme accent; the default. */}
+                  <button
+                    type="button"
+                    title="Theo màu app — đổi theo chủ đề hiện tại"
+                    onClick={() => onChange(icon, APP_COLOR)}
+                    style={{ background: APP_COLOR_CSS }}
+                    className={cn(
+                      "relative flex size-7 items-center justify-center rounded-full transition-all hover:scale-110",
+                      isAppColor
+                        ? "ring-2 ring-offset-2 ring-offset-popover ring-primary scale-110"
+                        : "opacity-75 hover:opacity-100"
+                    )}
+                  >
+                    <Sparkles className="size-3.5 text-primary-foreground" />
+                  </button>
                   {COLOR_OPTIONS.map((c) => (
                     <button
                       key={c.id}
@@ -169,7 +198,7 @@ export function DeckIconColorPicker({ icon, color, onChange, compact }: DeckIcon
                       className={cn(
                         "size-7 rounded-full transition-all hover:scale-110",
                         color === c.id
-                          ? "ring-2 ring-offset-2 ring-foreground/50 scale-110"
+                          ? "ring-2 ring-offset-2 ring-offset-popover ring-primary scale-110"
                           : "opacity-75 hover:opacity-100"
                       )}
                     />

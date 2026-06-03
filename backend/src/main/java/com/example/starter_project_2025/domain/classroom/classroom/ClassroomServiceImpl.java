@@ -118,6 +118,12 @@ public class ClassroomServiceImpl
         if (!"PUBLIC".equalsIgnoreCase(classroom.getVisibility())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This class is private — join with an invite code");
         }
+        // Block re-joining a class the user is already an active member of.
+        memberRepository.findByClassroomIdAndUserId(classroomId, userId).ifPresent(m -> {
+            if (Boolean.TRUE.equals(m.getIsActive())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this group");
+            }
+        });
         return addMember(classroomId, userId);
     }
 
@@ -179,11 +185,15 @@ public class ClassroomServiceImpl
 
         if (memberRepository.existsByClassroomIdAndUserId(classroom.getId(), userId)) {
             ClassMember existing = memberRepository.findByClassroomIdAndUserId(classroom.getId(), userId).orElseThrow();
-            if (!Boolean.TRUE.equals(existing.getIsActive())) {
-                existing.setIsActive(true);
-                memberRepository.save(existing);
+            // Already an active member → reject the re-join instead of silently
+            // succeeding. A membership row that was deactivated (the user left
+            // earlier) is reactivated, which is a legitimate "re-join".
+            if (Boolean.TRUE.equals(existing.getIsActive())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this group");
             }
-            return toMemberDto(existing);
+            existing.setIsActive(true);
+            existing.setJoinedAt(LocalDateTime.now());
+            return toMemberDto(memberRepository.save(existing));
         }
 
         if (classroom.getMaxMembers() != null

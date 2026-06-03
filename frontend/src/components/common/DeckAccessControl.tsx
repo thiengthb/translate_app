@@ -1,13 +1,19 @@
 /**
- * Deck access control: badge showing PUBLIC/PRIVATE + popover to change it
- * + share-link button when public. Only renders for the deck owner.
+ * Deck access control: a dropdown to switch PUBLIC/PRIVATE + a share-link
+ * button when public. Only rendered for the deck owner.
  */
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { Check, Globe, Link, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { deckApi } from "@/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Props {
   deckId: number;
@@ -37,16 +43,14 @@ const OPTIONS: {
 ];
 
 export function DeckAccessControl({ deckId, visibility, onChanged }: Props) {
-  const [open, setSaving] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const current = OPTIONS.find((o) => o.value === visibility) ?? OPTIONS[1]!;
   const CurrentIcon = current.icon;
 
-  /* ── Change visibility ── */
   const handleChange = async (next: "PUBLIC" | "PRIVATE") => {
-    if (next === visibility) { setPopoverOpen(false); return; }
+    if (next === visibility) return;
     setSaving(true);
     try {
       await deckApi.update(String(deckId), { visibility: next } as never);
@@ -56,111 +60,86 @@ export function DeckAccessControl({ deckId, visibility, onChanged }: Props) {
       toast.error("Không thể thay đổi quyền truy cập.");
     } finally {
       setSaving(false);
-      setPopoverOpen(false);
     }
   };
 
-  /* ── Copy share link ── */
   const handleShare = () => {
     const url = `${window.location.origin}/deck/${deckId}/preview`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      toast.success("Đã sao chép liên kết chia sẻ!");
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => toast.error("Không thể sao chép."));
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setCopied(true);
+        toast.success("Đã sao chép liên kết chia sẻ!");
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => toast.error("Không thể sao chép."));
   };
 
   return (
     <div className="flex items-center gap-1.5">
-      {/* ── Access badge + popover ── */}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setPopoverOpen((v) => !v)}
-          className={cn(
-            "flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-all",
-            visibility === "PUBLIC"
-              ? "border-primary/40 bg-primary/8 text-primary hover:bg-primary/15"
-              : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
-            popoverOpen && "ring-1 ring-primary/40"
-          )}
-          disabled={open}
-        >
-          <CurrentIcon className="size-3.5" />
-          {current.label}
-        </button>
-
-        <AnimatePresence>
-          {popoverOpen && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setPopoverOpen(false)} />
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                transition={{ duration: 0.14 }}
-                className="absolute left-0 top-full mt-2 z-40 w-72 rounded-xl border border-border bg-popover shadow-xl overflow-hidden"
+      {/* Access badge + dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={saving}
+            className={cn(
+              "flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors disabled:opacity-60",
+              visibility === "PUBLIC"
+                ? "border-primary/40 bg-primary/8 text-primary hover:bg-primary/15"
+                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            <CurrentIcon className="size-3.5" />
+            {current.label}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-72">
+          <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            Quyền truy cập
+          </DropdownMenuLabel>
+          {OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isActive = opt.value === visibility;
+            return (
+              <DropdownMenuItem
+                key={opt.value}
+                onClick={() => handleChange(opt.value)}
+                className="items-start gap-3 py-2.5"
               >
-                <div className="px-4 pt-3 pb-2 border-b border-border">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Quyền truy cập
-                  </p>
+                <div
+                  className={cn(
+                    "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
+                    isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <Icon className="size-4" />
                 </div>
-                <div className="p-2 space-y-1">
-                  {OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    const isActive = opt.value === visibility;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => handleChange(opt.value)}
-                        className={cn(
-                          "w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
-                          isActive
-                            ? "bg-primary/8 text-foreground"
-                            : "hover:bg-accent text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        <div className={cn(
-                          "size-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5",
-                          isActive ? "bg-primary/15 text-primary" : "bg-muted"
-                        )}>
-                          <Icon className="size-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className={cn("text-sm font-semibold", isActive && "text-primary")}>
-                              {opt.label}
-                            </p>
-                            {isActive && <Check className="size-3.5 text-primary shrink-0" />}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                            {opt.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className={cn("text-sm font-semibold", isActive && "text-primary")}>{opt.label}</p>
+                    {isActive && <Check className="size-3.5 shrink-0 text-primary" />}
+                  </div>
+                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{opt.description}</p>
                 </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </div>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {/* ── Share button (only when PUBLIC) ── */}
+      {/* Share button (only when public) */}
       {visibility === "PUBLIC" && (
         <button
           type="button"
           onClick={handleShare}
+          title="Sao chép liên kết chia sẻ"
           className={cn(
-            "flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-all",
+            "flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors",
             copied
-              ? "border-green-400 bg-green-50 dark:bg-green-950/30 text-green-600"
+              ? "border-green-400 bg-green-50 text-green-600 dark:bg-green-950/30"
               : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
           )}
-          title="Sao chép liên kết chia sẻ"
         >
           {copied ? <Check className="size-3.5" /> : <Link className="size-3.5" />}
           {copied ? "Đã sao chép!" : "Chia sẻ"}

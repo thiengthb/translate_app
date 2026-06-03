@@ -19,14 +19,14 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("CLASSROOM")
 @ResourceMenu(
-        title = "Classrooms",
-        group = "Classroom",
-        icon = "graduation-cap",
+        title = "Groups",
+        group = "Group",
+        icon = "users",
         url = "/classrooms",
         order = 1,
         permission = "CLASSROOM_READ"
 )
-@EntityLabel(name = "Classroom", plural = "Classrooms", description = "Class / group management")
+@EntityLabel(name = "Group", plural = "Groups", description = "Study group management")
 @AutoCrud(path = "classrooms")
 @Searchable(fields = {"name", "description"})
 @Filterable(fields = {"isActive", "visibility"})

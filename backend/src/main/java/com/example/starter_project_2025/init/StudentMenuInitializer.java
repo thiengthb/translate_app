@@ -25,13 +25,14 @@ public class StudentMenuInitializer implements CommandLineRunner {
     public void run(String... args) {
         ModuleGroup learningGroup = getOrCreateGroup("Learning", 10);
 
-        upsertModule(learningGroup, "My Library", "/library",   "layers", 1, "FOLDER_READ");
-        upsertModule(learningGroup, "Shared",     "/community", "users",  2, "DECK_READ");
+        upsertModule(learningGroup, "My Library",  "/library",   "layers",      1, "FOLDER_READ");
+        upsertModule(learningGroup, "Shared",      "/community", "users",       2, "DECK_READ");
+        upsertModule(learningGroup, "Statistics",  "/stats",     "bar-chart-2", 3, "ANKI_SRS_PROGRESS_READ");
 
         // Create Deck is no longer a sidebar entry — it lives as a button inside the Library page.
         moduleRepository.findByUrl("/create-deck").ifPresent(moduleRepository::delete);
 
-        log.info("Student menu entries ensured: /library, /community");
+        log.info("Student menu entries ensured: /library, /community, /stats");
     }
 
     private void upsertModule(ModuleGroup group, String title, String url, String icon, int order, String permission) {

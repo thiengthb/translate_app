@@ -2,7 +2,13 @@ import { downloadBlob, getFilenameFromHeader } from "@/components/datatable/util
 import axiosInstance from "../../axios";
 
 export const downloadTemplate = async (entity: string) => {
-    const res = await axiosInstance.get(`/import/template?entity=${entity}`, {
+    // Từ vựng có template riêng (kèm sheet hướng dẫn + ví dụ mẫu) vì cấu trúc
+    // phức tạp — nghĩa đa ngôn ngữ và ví dụ gộp trong một ô.
+    const url =
+        entity === "word"
+            ? `/dictionary/words/template`
+            : `/import/template?entity=${entity}`;
+    const res = await axiosInstance.get(url, {
         responseType: "blob",
     });
 

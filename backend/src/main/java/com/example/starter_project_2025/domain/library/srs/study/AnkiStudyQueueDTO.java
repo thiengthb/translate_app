@@ -18,5 +18,8 @@ public class AnkiStudyQueueDTO {
     int totalNew;
     int totalLearning;
     int totalReview;
+    /** REVIEW cards whose nextReviewAt is already due; learning/relearning is not included. */
+    int dueReviewCards;
+    /** Backwards-compatible alias for dueReviewCards. */
     int totalDue;
 }

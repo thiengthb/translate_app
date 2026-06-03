@@ -33,8 +33,6 @@ public class DeckDTO extends BaseDTO {
 
     String visibility;
 
-    String studyMode;
-
     String coverImageUrl;
 
     /** Icon key from the FE iconMap (e.g. "book-open", "graduation-cap"). */
@@ -56,4 +54,10 @@ public class DeckDTO extends BaseDTO {
     Integer viewCount;
 
     Long templateId;
+
+    /** Read-only owner display name (firstName + lastName), populated on toResponse. */
+    String ownerName;
+
+    /** Read-only flag: true when the owner holds the ADMIN role. */
+    Boolean ownerIsAdmin;
 }

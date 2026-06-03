@@ -26,6 +26,8 @@ interface MainLayoutProps {
     ignorePaths?: string[];
     /** Override the ⓘ tooltip on the last breadcrumb segment. */
     pageDescription?: string;
+    /** Custom icon shown to the left of the last breadcrumb title. */
+    breadcrumbIcon?: ReactNode;
 }
 
 /**
@@ -53,7 +55,7 @@ interface MainLayoutProps {
  * Layout markup lives in the dedicated sub-components — keep this file
  * easy to skim.
  */
-export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription }: MainLayoutProps) {
+export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon }: MainLayoutProps) {
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -87,6 +89,7 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
                     parentCrumb={parentCrumb}
                     ignorePaths={ignorePaths}
                     pageDescription={pageDescription}
+                    breadcrumbIcon={breadcrumbIcon}
                 >
                     {children}
                 </AppShell>
@@ -117,6 +120,7 @@ interface AppShellProps {
     parentCrumb?: MainLayoutProps["parentCrumb"];
     ignorePaths?: MainLayoutProps["ignorePaths"];
     pageDescription?: MainLayoutProps["pageDescription"];
+    breadcrumbIcon?: MainLayoutProps["breadcrumbIcon"];
 }
 
 /**
@@ -165,6 +169,7 @@ function AppShell({
     parentCrumb,
     ignorePaths,
     pageDescription,
+    breadcrumbIcon,
 }: AppShellProps) {
     return (
         <SidebarProvider defaultOpen={readPersistedSidebarOpen()}>
@@ -176,6 +181,7 @@ function AppShell({
                     parentCrumb={parentCrumb}
                     ignorePaths={ignorePaths}
                     pageDescription={pageDescription}
+                    breadcrumbIcon={breadcrumbIcon}
                 />
                 <ScrollHintContainer
                     axis="vertical"

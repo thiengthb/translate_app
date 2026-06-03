@@ -26,21 +26,8 @@ export type ProgressStatus =
   | "FAILED";
 export type DifficultyLevel = "EASY" | "MEDIUM" | "HARD" | "N5" | "N4" | "N3" | "N2" | "N1";
 
-export interface QuizCategoryDTO {
-  id: number;
-  parentId: number | null;
-  name: string;
-  code: string;
-  description: string | null;
-  orderIndex: number;
-  isActive: boolean;
-  children?: QuizCategoryDTO[];
-}
-
 export interface QuizDTO {
   id: number;
-  quizTypeId: number | null;
-  categoryId: number | null;
   levelId: number | null;
   creatorId: number | null;
   deckId: number | null;
@@ -88,7 +75,6 @@ export interface QuestionTagDTO {
 
 export interface QuestionBankDTO {
   id: number;
-  categoryId: number | null;
   levelId: number | null;
   itemType: string | null;
   questionType: QuestionType;
@@ -173,6 +159,8 @@ export interface QuizAttemptQuestionDTO {
   isCorrect: boolean | null;
   earnedScore: number;
   answeredAt: string | null;
+  /** User's own answer — only populated after submit / reveal. */
+  userAnswerSnapshot?: Record<string, unknown> | null;
 }
 
 export interface QuizAttemptDTO {
@@ -211,7 +199,6 @@ export interface UserQuizProgressDTO {
 
 /* ── Query param helpers ── */
 export interface QuizQueryParams {
-  categoryId?: number;
   levelId?: number;
   creatorId?: number;
   status?: QuizStatus;
@@ -221,7 +208,6 @@ export interface QuizQueryParams {
 }
 
 export interface QuestionQueryParams {
-  categoryId?: number;
   levelId?: number;
   questionType?: QuestionType;
   difficultyLevel?: DifficultyLevel;

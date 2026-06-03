@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFillPageSize } from "@/hooks/useFillPageSize";
+import { DeckTitleRow, DeckStatsInline } from "@/pages/student/shared/deckCardParts";
 import { AnimatePresence, motion } from "motion/react";
 import { deckApi, favoriteDeckApi } from "@/api";
 import type { DeckDTO, FavoriteDeckDTO } from "@/types";
@@ -11,7 +13,6 @@ import { usePagination } from "@/hooks/usePagination";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import {
   BookOpen,
-  Brain,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,7 @@ import {
   Download,
   Eye,
   Heart,
+  Layers,
   LayoutGrid,
   List,
   Loader2,
@@ -32,10 +34,33 @@ import {
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
+import { TemplateLibrary } from "@/pages/student/shared/TemplateLibrary";
+import { EmptyState as SharedEmptyState } from "@/components/common/EmptyState";
+
+/* ── Deck | Template segmented control (top bar) ── */
+function KindTabs({ kind, onChange }: { kind: "deck" | "template"; onChange: (k: "deck" | "template") => void }) {
+  const item = (value: "deck" | "template", label: string, Icon: typeof BookOpen) => (
+    <button
+      onClick={() => onChange(value)}
+      className={cn(
+        "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+        kind === value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+      )}
+    >
+      <Icon className="size-3.5" />
+      {label}
+    </button>
+  );
+  return (
+    <div className="flex items-center gap-0.5">
+      {item("deck", "Deck", BookOpen)}
+      {item("template", "Mẫu thẻ", Layers)}
+    </div>
+  );
+}
 
 type Tab = "discover" | "favorites";
 type ViewMode = "grid" | "list";
-type ModeFilter = "ALL" | "QUIZLET" | "ANKI";
 type SortKey = "newest" | "mostSaved" | "mostFavorited" | "mostViewed";
 
 const DECKS_PER_PAGE = 12;
@@ -194,6 +219,14 @@ function SharedPagination({
 export default function CommunityPage() {
   const navigate = useNavigate();
   const currentUserId = getCurrentUserId();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const kind: "deck" | "template" = searchParams.get("kind") === "template" ? "template" : "deck";
+  const setKind = (next: "deck" | "template") => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "deck") params.delete("kind");
+    else params.set("kind", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const [tab, setTab] = useState<Tab>("discover");
   const [decks, setDecks] = useState<DeckDTO[]>([]);
@@ -203,7 +236,6 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(false);
   const [cloning, setCloning] = useState<number | null>(null);
   const [togglingFav, setTogglingFav] = useState<number | null>(null);
-  const [mode, setMode] = useState<ModeFilter>("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [sortOpen, setSortOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -233,14 +265,13 @@ export default function CommunityPage() {
   useEffect(() => {
     setLoading(true);
     const sortParam = SORT_OPTIONS.find((o) => o.key === sortKey)?.param ?? "createdAt,desc";
-    const filter: { visibility: string; studyMode?: "QUIZLET" | "ANKI" } = { visibility: "PUBLIC" };
-    if (mode !== "ALL") filter.studyMode = mode;
+    const filter = { visibility: "PUBLIC" };
     deckApi
       .getPage({ page: 0, size: 100, sort: sortParam }, debouncedSearch || undefined, filter as never)
       .then((pg) => setDecks(pg.content ?? []))
       .catch(() => toast.error("Không thể tải danh sách deck."))
       .finally(() => setLoading(false));
-  }, [debouncedSearch, currentUserId, mode, sortKey]);
+  }, [debouncedSearch, currentUserId, sortKey]);
 
   const favoriteByDeckId = useMemo(() => {
     const map = new Map<number, FavoriteDeckDTO>();
@@ -254,14 +285,17 @@ export default function CommunityPage() {
     return decks;
   }, [tab, decks, favoriteByDeckId]);
 
-  const totalPages = Math.max(1, Math.ceil(visibleDecks.length / DECKS_PER_PAGE));
+  // Page size fills the viewport (same behaviour as the deck library).
+  const gridRef = useRef<HTMLDivElement>(null);
+  const perPage = useFillPageSize(gridRef, [viewMode, tab, visibleDecks.length > 0], DECKS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(visibleDecks.length / perPage));
   const safePage = Math.min(page, totalPages);
   const pagedDecks = useMemo(
-    () => visibleDecks.slice((safePage - 1) * DECKS_PER_PAGE, safePage * DECKS_PER_PAGE),
-    [visibleDecks, safePage]
+    () => visibleDecks.slice((safePage - 1) * perPage, safePage * perPage),
+    [visibleDecks, safePage, perPage]
   );
 
-  useEffect(() => { setPageDir(-1); setPage(1); }, [tab, mode, sortKey, debouncedSearch]);
+  useEffect(() => { setPageDir(-1); setPage(1); }, [tab, sortKey, debouncedSearch]);
 
   const handlePageChange = (next: number) => {
     setPageDir(next >= safePage ? 1 : -1);
@@ -284,14 +318,26 @@ export default function CommunityPage() {
   const handleToggleFavorite = useCallback(async (deck: DeckDTO) => {
     if (deck.id == null || currentUserId == null) return;
     setTogglingFav(deck.id);
+    const deckId = deck.id;
+    // Keep the visible favourite count in sync with the heart, like a "like":
+    // the backend adjusts deck.favoriteCount, but the card renders the value
+    // from the decks array, so mirror the change here for an instant update.
+    const bumpCount = (delta: number) =>
+      setDecks((prev) =>
+        prev.map((d) =>
+          d.id === deckId ? { ...d, favoriteCount: Math.max(0, (d.favoriteCount ?? 0) + delta) } : d
+        )
+      );
     try {
-      const existing = favoriteByDeckId.get(deck.id);
+      const existing = favoriteByDeckId.get(deckId);
       if (existing && existing.id != null) {
         await favoriteDeckApi.unfavorite(existing.id);
         setFavorites((prev) => prev.filter((f) => f.id !== existing.id));
+        bumpCount(-1);
       } else {
-        const created = await favoriteDeckApi.favorite(currentUserId, deck.id);
+        const created = await favoriteDeckApi.favorite(currentUserId, deckId);
         setFavorites((prev) => [...prev, created]);
+        bumpCount(+1);
       }
     } catch {
       toast.error("Không thể cập nhật yêu thích.");
@@ -301,22 +347,15 @@ export default function CommunityPage() {
   }, [currentUserId, favoriteByDeckId]);
 
   return (
-    <MainLayout
-      headerExtra={
-        <HeaderTabs tab={tab} favCount={favorites.length} onChange={(t) => setTab(t)} />
-      }
-    >
+    <MainLayout headerExtra={<KindTabs kind={kind} onChange={setKind} />}>
+      {kind === "template" ? (
+        <TemplateLibrary mode="shared" />
+      ) : (
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
-        {/* ════════ TOOLBAR ════════ */}
+        {/* ════════ TOOLBAR — Discover/Favourites tabs · sort · search · view ════════ */}
         <div className="flex flex-wrap items-center gap-2 px-1 pt-2 pb-3 shrink-0">
-          {/* Mode pills */}
-          <div className="flex items-center gap-1">
-            <ModePill label="Tất cả"  icon={<Sparkles className="size-3.5" />} active={mode === "ALL"}     onClick={() => setMode("ALL")} />
-            <ModePill label="Quizlet" icon={<BookOpen className="size-3.5" />} active={mode === "QUIZLET"} onClick={() => setMode("QUIZLET")} />
-            <ModePill label="Anki"    icon={<Brain className="size-3.5" />}    active={mode === "ANKI"}    onClick={() => setMode("ANKI")} />
-          </div>
-
+          <HeaderTabs tab={tab} favCount={favorites.length} onChange={(t) => setTab(t)} />
           <div className="flex-1" />
 
           {/* Sort + search + view toggle */}
@@ -371,7 +410,7 @@ export default function CommunityPage() {
               <p className="text-sm text-muted-foreground">Đang tải deck…</p>
             </div>
           ) : visibleDecks.length === 0 ? (
-            <EmptyState tab={tab} hasSearch={!!debouncedSearch} />
+            <EmptyState tab={tab} hasSearch={!!debouncedSearch} onClearSearch={() => setSearchQuery("")} />
           ) : (
             <AnimatePresence mode="wait" custom={pageDir} initial={false}>
               <motion.div
@@ -384,9 +423,9 @@ export default function CommunityPage() {
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {viewMode === "list" ? (
-                  <ul className="space-y-1 pb-2">
+                  <div ref={gridRef} className="space-y-1 pb-2">
                     {pagedDecks.map((deck) => (
-                      <li key={deck.id}>
+                      <div key={deck.id}>
                         <CommunityDeckRow
                           deck={deck}
                           isOwn={deck.userId != null && deck.userId === currentUserId}
@@ -397,21 +436,19 @@ export default function CommunityPage() {
                           onClone={() => handleClone(deck)}
                           onToggleFavorite={() => handleToggleFavorite(deck)}
                         />
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-2">
+                  <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-2">
                     {pagedDecks.map((deck) => (
                       <CommunityDeckCard
                         key={deck.id}
                         deck={deck}
                         isOwn={deck.userId != null && deck.userId === currentUserId}
                         favorited={deck.id != null && favoriteByDeckId.has(deck.id)}
-                        cloning={cloning === deck.id}
                         togglingFav={togglingFav === deck.id}
                         onPreview={() => navigate(`/deck/${deck.id}/preview`)}
-                        onClone={() => handleClone(deck)}
                         onToggleFavorite={() => handleToggleFavorite(deck)}
                       />
                     ))}
@@ -435,36 +472,11 @@ export default function CommunityPage() {
           />
         </div>
       </div>
+      )}
     </MainLayout>
   );
 }
 
-/* ─────────────────────────────────────────
-   Mode pill — uses system primary only
-───────────────────────────────────────── */
-function ModePill({
-  icon, label, active, onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
-        active
-          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent"
-      )}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 /* ─────────────────────────────────────────
    Sort dropdown
@@ -533,35 +545,32 @@ function SortDropdown({
 }
 
 /* ─────────────────────────────────────────
-   Empty state
+   Empty state — uses the shared EmptyState
 ───────────────────────────────────────── */
-function EmptyState({ tab, hasSearch }: { tab: Tab; hasSearch: boolean }) {
+function EmptyState({ tab, hasSearch, onClearSearch }: { tab: Tab; hasSearch: boolean; onClearSearch: () => void }) {
+  if (hasSearch) {
+    return (
+      <SharedEmptyState
+        className="h-64"
+        icon={<Search className="size-7" />}
+        title="Không tìm thấy kết quả"
+        description="Không có deck nào khớp với từ khóa. Thử từ khóa khác."
+        action={{ label: "Xóa tìm kiếm", icon: <X className="size-4" />, onClick: onClearSearch }}
+      />
+    );
+  }
+  const isFav = tab === "favorites";
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center h-64 gap-4 text-center py-12"
-    >
-      <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
-        {tab === "favorites"
-          ? <Heart className="size-7 text-muted-foreground/50" />
-          : <Users className="size-7 text-muted-foreground/50" />}
-      </div>
-      <div className="space-y-1 max-w-xs">
-        <p className="text-sm font-medium text-foreground">
-          {tab === "favorites"
-            ? "Chưa có deck yêu thích"
-            : hasSearch ? "Không tìm thấy kết quả" : "Chưa có deck công khai"}
-        </p>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {tab === "favorites"
-            ? "Duyệt tab Discover và nhấn ♥ để lưu deck bạn thích."
-            : hasSearch
-              ? "Thử từ khóa khác hoặc xóa bộ lọc."
-              : "Công khai một deck từ thư viện của bạn để chia sẻ với mọi người."}
-        </p>
-      </div>
-    </motion.div>
+    <SharedEmptyState
+      className="h-64"
+      icon={isFav ? <Heart className="size-7" /> : <Users className="size-7" />}
+      title={isFav ? "Chưa có deck yêu thích" : "Chưa có deck công khai"}
+      description={
+        isFav
+          ? "Duyệt tab Discover và nhấn ♥ để lưu deck bạn thích."
+          : "Công khai một deck từ thư viện của bạn để chia sẻ với mọi người."
+      }
+    />
   );
 }
 
@@ -583,42 +592,28 @@ function CommunityDeckRow({
 }) {
   const gradStyle = deckBgStyle(deck);
   const DeckIcon  = deckIconComponent(deck);
-  const isAnki = deck.studyMode === "ANKI";
 
   return (
-    <motion.div
-      whileHover={{ x: 3, transition: { duration: 0.1 } }}
-      className="flex items-center gap-4 px-4 py-3.5 rounded-lg hover:bg-accent border border-transparent hover:border-border/40 transition-colors cursor-pointer group"
+    <div
       onClick={onPreview}
+      className="group relative flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-card px-3.5 py-2.5 shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md"
     >
       {/* Icon */}
-      <div className="shrink-0 size-11 rounded-lg flex items-center justify-center shadow-sm" style={gradStyle}>
-        <DeckIcon className="size-4 text-white" />
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg shadow-sm" style={gradStyle}>
+        <DeckIcon className="size-5 text-white" />
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
-          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-            {isAnki ? "ANKI" : "QUIZLET"}
-          </span>
-          {isOwn && (
-            <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-              <Check className="size-3" /> Của bạn
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-          <span>{deck.totalCards ?? 0} thẻ</span>
+      {/* Info — title + visibility, then card count + New/Learning/Review (like My Library) */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <DeckTitleRow deck={deck} />
+        <div className="flex min-w-0 items-center gap-2.5 text-xs text-muted-foreground">
+          <span className="shrink-0">{deck.totalCards ?? 0} thẻ</span>
+          <DeckStatsInline deck={deck} />
           {(deck.favoriteCount ?? 0) > 0 && (
-            <span className="flex items-center gap-1"><Heart className="size-3 text-rose-400" />{deck.favoriteCount}</span>
+            <span className="flex shrink-0 items-center gap-1"><Heart className="size-3 text-rose-400" />{deck.favoriteCount}</span>
           )}
           {(deck.cloneCount ?? 0) > 0 && (
-            <span className="flex items-center gap-1"><Download className="size-3 text-blue-400" />{deck.cloneCount}</span>
-          )}
-          {deck.sourceLanguage && deck.targetLanguage && (
-            <span className="font-mono uppercase text-[10px] tracking-wide">{deck.sourceLanguage}→{deck.targetLanguage}</span>
+            <span className="flex shrink-0 items-center gap-1"><Download className="size-3 text-blue-400" />{deck.cloneCount}</span>
           )}
         </div>
       </div>
@@ -659,7 +654,7 @@ function CommunityDeckRow({
           </button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -667,50 +662,41 @@ function CommunityDeckRow({
    Deck card — grid view
 ───────────────────────────────────────── */
 function CommunityDeckCard({
-  deck, isOwn, favorited, cloning, togglingFav,
-  onPreview, onClone, onToggleFavorite,
+  deck, isOwn, favorited, togglingFav, onPreview, onToggleFavorite,
 }: {
   deck: DeckDTO;
   isOwn: boolean;
   favorited: boolean;
-  cloning: boolean;
   togglingFav: boolean;
   onPreview: () => void;
-  onClone: () => void;
   onToggleFavorite: () => void;
 }) {
   const gradStyle = deckBgStyle(deck);
   const DeckIcon  = deckIconComponent(deck);
-  const isAnki    = deck.studyMode === "ANKI";
 
   return (
     <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.16, ease: "easeOut" } }}
-      className="group relative rounded-xl overflow-hidden border border-border/60 shadow-sm hover:shadow-lg hover:border-border transition-all bg-card cursor-pointer flex flex-col"
       onClick={onPreview}
+      className="group relative flex cursor-pointer flex-col rounded-xl border border-border/60 bg-card shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-lg"
     >
       {/* Gradient banner */}
-      <div className="relative h-24 overflow-hidden shrink-0" style={gradStyle}>
+      <div className="relative h-24 shrink-0 overflow-hidden rounded-t-xl" style={gradStyle}>
         <div className="absolute -top-5 -right-5 size-20 rounded-full bg-white/10" />
         <div className="absolute top-6 -right-2 size-10 rounded-full bg-white/10" />
         <div className="absolute -bottom-3 left-4 size-14 rounded-full bg-black/10" />
+
+        {/* Owner — red ribbon across the top-left corner, "Của bạn" on hover */}
+        {isOwn && (
+          <TooltipWrapper content="Của bạn">
+            <span className="absolute -left-8 top-3 z-20 h-5 w-28 -rotate-45 cursor-default bg-red-600 shadow-md" />
+          </TooltipWrapper>
+        )}
 
         <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
           <DeckIcon className="size-5 text-white" />
         </div>
 
-        <div className="absolute top-2.5 left-4">
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm tracking-wide">
-            {isAnki ? "ANKI" : "QUIZLET"}
-          </span>
-        </div>
-
-        {isOwn ? (
-          <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-            <Check className="size-3" />
-            Của bạn
-          </span>
-        ) : (
+        {!isOwn && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
             disabled={togglingFav}
@@ -728,61 +714,21 @@ function CommunityDeckCard({
         )}
       </div>
 
-      {/* Body */}
-      <div className="p-3.5 space-y-3 flex-1 flex flex-col">
-        <div className="flex-1 space-y-1">
-          <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">
-            {deck.title ?? "Untitled"}
-          </p>
-          {deck.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {deck.description}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+      {/* Body — title + visibility, then card count + views / favorites / downloads */}
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
+        <DeckTitleRow deck={deck} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="font-medium">{deck.totalCards ?? 0} thẻ</span>
-          <div className="flex items-center gap-2.5">
-            {(deck.favoriteCount ?? 0) > 0 && (
-              <span className="flex items-center gap-1">
-                <Heart className="size-3 text-rose-400" />
-                {deck.favoriteCount}
-              </span>
-            )}
-            {(deck.cloneCount ?? 0) > 0 && (
-              <span className="flex items-center gap-1">
-                <Download className="size-3 text-blue-400" />
-                {deck.cloneCount}
-              </span>
-            )}
-            {deck.sourceLanguage && deck.targetLanguage && (
-              <span className="font-mono uppercase text-[10px] tracking-wide">
-                {deck.sourceLanguage}→{deck.targetLanguage}
-              </span>
-            )}
+          <div className="ml-auto flex items-center gap-2.5">
+            <span className="flex items-center gap-1" title="Lượt xem"><Eye className="size-3" />{deck.viewCount ?? 0}</span>
+            <span className="flex items-center gap-1" title="Yêu thích"><Heart className="size-3 text-rose-400" />{deck.favoriteCount ?? 0}</span>
+            <span className="flex items-center gap-1" title="Lượt tải"><Download className="size-3 text-blue-400" />{deck.cloneCount ?? 0}</span>
           </div>
         </div>
-
-        {isOwn ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPreview(); }}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <Eye className="size-3.5" />
-            Xem deck của bạn
-          </button>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); onClone(); }}
-            disabled={cloning}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {cloning ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-            {cloning ? "Đang lưu…" : "Lưu vào thư viện"}
-          </button>
-        )}
       </div>
+
+      {/* Brighten ring on hover */}
+      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 ring-2 ring-inset ring-primary/10 transition-opacity duration-300 group-hover:opacity-100" />
     </motion.div>
   );
 }

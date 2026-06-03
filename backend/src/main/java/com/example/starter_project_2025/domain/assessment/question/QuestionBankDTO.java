@@ -21,7 +21,6 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuestionBankDTO extends BaseDTO {
 
-    Long categoryId;
     Long levelId;
     String itemType;
 
