@@ -1,7 +1,22 @@
-// src/components/ui/ConfirmDialog.tsx
+// src/components/ui/confirmdialog.tsx
 import React from "react";
-import { Modal } from "./modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trash2 } from "lucide-react";
 
+/**
+ * Destructive confirmation dialog — mirrors the ProTable delete modal
+ * (`datatable/modal/ConfirmDeleteModal`): red Trash icon chip in the title,
+ * a description, and an outline Cancel / red Delete button pair. Labels stay
+ * configurable so callers can localize them.
+ */
 export const ConfirmDialog: React.FC<{
   open: boolean;
   title?: string;
@@ -13,38 +28,65 @@ export const ConfirmDialog: React.FC<{
   loading?: boolean;
 }> = ({
   open,
-  title = "Are you sure?",
+  title = "Xác nhận xóa",
   description,
-  confirmLabel = "Yes, delete",
-  cancelLabel = "Cancel",
+  confirmLabel = "Xóa",
+  cancelLabel = "Hủy",
   onConfirm,
   onCancel,
   loading = false,
 }) => {
+  const displayDescription =
+    description ||
+    "Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn tác.";
+
   return (
-    <Modal open={open} onClose={onCancel} title={title} size="sm">
-      <div className="space-y-4">
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border border-border rounded hover:bg-muted transition"
-            disabled={loading}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            disabled={loading}
-          >
-            {loading ? "Deleting..." : confirmLabel}
-          </button>
-        </div>
-      </div>
-    </Modal>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Esc / overlay click / close button → cancel (unless an action is in flight).
+        if (!next && !loading) onCancel();
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+              <Trash2 className="h-5 w-5 text-red-600" />
+            </div>
+            {title}
+          </DialogTitle>
+          <DialogDescription className="pt-2">
+            {displayDescription}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <div className="flex w-full justify-between">
+            <Button variant="outline" onClick={onCancel} disabled={loading}>
+              {cancelLabel}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onConfirm}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {confirmLabel}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {confirmLabel}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

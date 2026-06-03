@@ -16,13 +16,7 @@ import {
   type ThemePreference,
 } from "@/hooks/useThemePreference";
 import { Check, Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 type Animation = "ripple" | "fade" | "none";
 
@@ -84,36 +78,17 @@ const ToggleTheme: React.FC<ToggleThemeProps> = ({
 
   // ─── Visual ripple/fade transition on switch (cosmetic only) ────────────
   const [animKey, setAnimKey] = useState(0);
-  const transitionTimeoutRef = useRef<number | null>(null);
-
-  const triggerThemeTransition = useCallback(() => {
-    const root = document.documentElement;
-    root.classList.add("theme-transition");
-    if (transitionTimeoutRef.current) {
-      window.clearTimeout(transitionTimeoutRef.current);
-    }
-    transitionTimeoutRef.current = window.setTimeout(() => {
-      root.classList.remove("theme-transition");
-      transitionTimeoutRef.current = null;
-    }, 120);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (transitionTimeoutRef.current) {
-        window.clearTimeout(transitionTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const onSelectTheme = useCallback(
     (nextTheme: ThemePreference) => {
       if (nextTheme === themePreference) return;
-      triggerThemeTransition();
+      // The smooth color cross-fade is owned by `setThemePreference`
+      // (shared `playThemeTransition`); here we only fire the button's
+      // cosmetic ripple.
       setAnimKey((k) => k + 1);
       setThemePreference(nextTheme);
     },
-    [themePreference, triggerThemeTransition, setThemePreference],
+    [themePreference, setThemePreference],
   );
 
   return (

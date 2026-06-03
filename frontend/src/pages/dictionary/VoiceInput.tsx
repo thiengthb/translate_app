@@ -2,15 +2,43 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 type RecognitionState = "idle" | "listening" | "error";
 
-const SpeechRecognitionCtor: typeof SpeechRecognition | undefined =
+type SpeechRecognitionErrorEventLike = { error: string };
+type SpeechRecognitionResultEventLike = {
+    results: ArrayLike<ArrayLike<{ transcript: string }>>;
+};
+
+interface SpeechRecognitionLike {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    continuous: boolean;
+    onstart: (() => void) | null;
+    onend: (() => void) | null;
+    onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+    onresult: ((event: SpeechRecognitionResultEventLike) => void) | null;
+    abort: () => void;
+    stop: () => void;
+    start: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+declare global {
+    interface Window {
+        SpeechRecognition?: SpeechRecognitionConstructor;
+        webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    }
+}
+
+const SpeechRecognitionCtor: SpeechRecognitionConstructor | undefined =
     typeof window !== "undefined"
-        ? (window.SpeechRecognition ?? (window as any).webkitSpeechRecognition)
+        ? (window.SpeechRecognition ?? window.webkitSpeechRecognition)
         : undefined;
 
 export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
     const [state, setState]     = useState<RecognitionState>("idle");
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const recRef = useRef<SpeechRecognition | null>(null);
+    const recRef = useRef<SpeechRecognitionLike | null>(null);
 
     useEffect(() => () => { recRef.current?.abort(); }, []);
 

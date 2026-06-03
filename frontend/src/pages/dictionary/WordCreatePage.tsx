@@ -4,20 +4,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-    ArrowLeft, Plus, Trash2, Save, Loader2, BookPlus, Languages, MessageSquareText,
+    Plus, Trash2, Save, Loader2, Languages, MessageSquareText, BookText,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { languageApi, levelApi, representationApi, wordApi } from "@/api";
+import { languageApi, levelApi, representationApi, wordApi, wordTypeApi } from "@/api";
 import type {
-    LanguageDTO, LevelDTO, RepresentationDTO, WordCreateRequest,
+    LanguageDTO, LevelDTO, RepresentationDTO, WordCreateRequest, WordTypeDTO,
 } from "@/types";
 import type { ValidationErrorResponse } from "@/types/common/error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { InfoCard } from "@/components/common/InfoCard";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -50,6 +49,11 @@ export default function WordCreatePage() {
     const { data: representations = [] } = useQuery({
         queryKey: ["word-create-options", "representations"],
         queryFn: async () => (await representationApi.getPage({ page: 0, size: 9999 })).content as RepresentationDTO[],
+        staleTime: 5 * 60 * 1000,
+    });
+    const { data: wordTypes = [] } = useQuery({
+        queryKey: ["word-create-options", "word-types"],
+        queryFn: async () => (await wordTypeApi.getPage({ page: 0, size: 9999 })).content as WordTypeDTO[],
         staleTime: 5 * 60 * 1000,
     });
 
@@ -151,86 +155,118 @@ export default function WordCreatePage() {
 
     return (
         <MainLayout pathName={{ "/words": "Từ vựng", "/words/create": "Tạo từ vựng" }}>
-            <div className="w-full max-w-3xl mx-auto space-y-4 pb-8">
+            <div className="w-full space-y-3 pb-8">
 
-                {/* Header */}
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" onClick={() => navigate("/words")}>
-                        <ArrowLeft className="h-4 w-4" />
+                {/* ── Actions (top) ── */}
+                <div className="flex items-center justify-end gap-2">
+                    <Button variant="outline" onClick={() => navigate("/words")} disabled={submitting}>
+                        Huỷ
                     </Button>
-                    <div>
-                        <h1 className="text-xl font-semibold flex items-center gap-2">
-                            <BookPlus className="h-5 w-5 text-primary" />
-                            Tạo từ vựng mới
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Thêm từ, nhiều nghĩa theo ngôn ngữ và ví dụ — tất cả trong một lần.
-                        </p>
-                    </div>
+                    <Button onClick={handleSubmit} disabled={submitting} className="gap-1.5">
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Lưu từ vựng
+                    </Button>
                 </div>
 
                 {/* ── Word info ── */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Thông tin từ</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <Field label="Từ vựng" required error={err("word")}>
-                                <Input value={word} onChange={(e) => setWord(e.target.value)}
-                                    placeholder="食べる" autoFocus />
-                            </Field>
-                            <Field label="Cách đọc">
-                                <Input value={reading} onChange={(e) => setReading(e.target.value)}
-                                    placeholder="たべる" />
-                            </Field>
-                        </div>
+                <InfoCard
+                    icon={<BookText className="h-4 w-4 text-primary" />}
+                    title="Thông tin từ"
+                    info="Thông tin cốt lõi của từ: cách viết, cách đọc, dạng chữ và cấp độ JLPT."
+                    className="h-auto py-4 gap-3"
+                    headerClassName="px-5"
+                    contentClassName="px-5 space-y-4"
+                >
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <Field
+                            label="Từ vựng"
+                            required
+                            error={err("word")}
+                            info="Từ tiếng Nhật cần thêm — có thể là kanji, hiragana hoặc katakana (vd: 食べる)."
+                        >
+                            <Input value={word} onChange={(e) => setWord(e.target.value)}
+                                placeholder="食べる" autoFocus />
+                        </Field>
+                        <Field
+                            label="Cách đọc"
+                            info="Cách đọc bằng kana (furigana) của từ (vd: たべる). Để trống nếu từ đã là kana."
+                        >
+                            <Input value={reading} onChange={(e) => setReading(e.target.value)}
+                                placeholder="たべる" />
+                        </Field>
+                    </div>
 
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <Field label="Loại biểu diễn" required error={err("representationId")}>
-                                <RelationSelect
-                                    value={representationId}
-                                    onChange={setRepresentationId}
-                                    options={representations.map((r) => ({ value: r.id!, label: r.name ?? r.code ?? String(r.id) }))}
-                                    placeholder="Chọn loại..."
-                                />
-                            </Field>
-                            <Field label="Cấp độ (JLPT)" required error={err("levelId")}>
-                                <RelationSelect
-                                    value={levelId}
-                                    onChange={setLevelId}
-                                    options={levels.map((l) => ({ value: l.id!, label: l.name ?? l.code ?? String(l.id) }))}
-                                    placeholder="Chọn cấp độ..."
-                                />
-                            </Field>
-                        </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <Field
+                            label="Loại biểu diễn"
+                            required
+                            error={err("representationId")}
+                            info="Dạng chữ viết chính của từ: Kanji, Hiragana hay Katakana."
+                        >
+                            <RelationSelect
+                                value={representationId}
+                                onChange={setRepresentationId}
+                                options={representations.map((r) => ({ value: r.id!, label: r.name ?? r.code ?? String(r.id) }))}
+                                placeholder="Chọn loại..."
+                            />
+                        </Field>
+                        <Field
+                            label="Cấp độ (JLPT)"
+                            required
+                            error={err("levelId")}
+                            info="Trình độ JLPT của từ, từ N5 (dễ nhất) đến N1 (khó nhất)."
+                        >
+                            <RelationSelect
+                                value={levelId}
+                                onChange={setLevelId}
+                                options={levels.map((l) => ({ value: l.id!, label: l.name ?? l.code ?? String(l.id) }))}
+                                placeholder="Chọn cấp độ..."
+                            />
+                        </Field>
+                    </div>
 
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <Field label="Loại từ">
-                                <Input value={wordType} onChange={(e) => setWordType(e.target.value)}
-                                    placeholder="v1, n, adj-i..." />
-                            </Field>
-                            <Field label="Tần suất (frequency)">
-                                <Input type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)}
-                                    placeholder="vd 1200" />
-                            </Field>
-                        </div>
-                    </CardContent>
-                </Card>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <Field
+                            label="Loại từ"
+                            info="Từ loại của từ vựng (danh từ, động từ, tính từ…). Chọn từ danh sách Word Type."
+                        >
+                            <Select value={wordType || undefined} onValueChange={setWordType}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Chọn loại từ..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {wordTypes.map((t) => (
+                                        <SelectItem key={t.id} value={t.code ?? String(t.id)}>
+                                            {t.name}{t.code ? ` (${t.code})` : ""}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                        <Field
+                            label="Tần suất (frequency)"
+                            info="Mức độ phổ biến của từ — số càng nhỏ càng hay dùng. Dùng để ưu tiên xếp hạng khi tìm kiếm."
+                        >
+                            <Input type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)}
+                                placeholder="vd 1200" />
+                        </Field>
+                    </div>
+                </InfoCard>
 
                 {/* ── Meanings ── */}
-                <Card>
-                    <CardHeader className="flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Languages className="h-4 w-4 text-primary" />
-                            Nghĩa
-                            <span className="text-xs font-normal text-muted-foreground">(đa ngôn ngữ)</span>
-                        </CardTitle>
+                <InfoCard
+                    icon={<Languages className="h-4 w-4 text-primary" />}
+                    title="Nghĩa"
+                    info="Một hoặc nhiều nghĩa của từ theo từng ngôn ngữ (vd: tiếng Việt, tiếng Anh). Cần ít nhất một nghĩa."
+                    actions={
                         <Button variant="outline" size="sm" onClick={addMeaning} className="gap-1.5">
                             <Plus className="h-3.5 w-3.5" /> Thêm nghĩa
                         </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
+                    }
+                    className="h-auto py-4 gap-3"
+                    headerClassName="px-5"
+                    contentClassName="px-5 space-y-4"
+                >
                         {err("meanings") && <p className="text-xs text-destructive">{err("meanings")}</p>}
                         {meanings.map((m, i) => (
                             <div key={i} className="flex gap-2 items-start">
@@ -262,22 +298,22 @@ export default function WordCreatePage() {
                                 </Button>
                             </div>
                         ))}
-                    </CardContent>
-                </Card>
+                </InfoCard>
 
                 {/* ── Examples ── */}
-                <Card>
-                    <CardHeader className="flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <MessageSquareText className="h-4 w-4 text-primary" />
-                            Ví dụ
-                            <span className="text-xs font-normal text-muted-foreground">(tùy chọn)</span>
-                        </CardTitle>
+                <InfoCard
+                    icon={<MessageSquareText className="h-4 w-4 text-primary" />}
+                    title="Ví dụ"
+                    info="Câu ví dụ minh hoạ cách dùng từ, kèm bản dịch. Không bắt buộc — có thể thêm nhiều câu."
+                    actions={
                         <Button variant="outline" size="sm" onClick={addExample} className="gap-1.5">
                             <Plus className="h-3.5 w-3.5" /> Thêm ví dụ
                         </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                    }
+                    className="h-auto py-4 gap-3"
+                    headerClassName="px-5"
+                    contentClassName="px-5 space-y-4"
+                >
                         {examples.length === 0 && (
                             <p className="text-xs text-muted-foreground">Chưa có ví dụ nào. Bấm “Thêm ví dụ” để thêm.</p>
                         )}
@@ -294,9 +330,14 @@ export default function WordCreatePage() {
                                         <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
-                                <div className="grid sm:grid-cols-2 gap-3">
+                                <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs">Ngôn ngữ câu gốc</Label>
+                                        <InfoLabel
+                                            className="text-xs font-medium"
+                                            title="Ngôn ngữ câu gốc"
+                                            info="Ngôn ngữ của câu ví dụ gốc — thường là tiếng Nhật."
+                                            iconSize={12}
+                                        />
                                         <RelationSelect
                                             value={ex.rootLanguageId}
                                             onChange={(v) => updateExample(i, { rootLanguageId: v })}
@@ -311,7 +352,12 @@ export default function WordCreatePage() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs">Ngôn ngữ bản dịch</Label>
+                                        <InfoLabel
+                                            className="text-xs font-medium"
+                                            title="Ngôn ngữ bản dịch"
+                                            info="Ngôn ngữ của câu dịch — thường là tiếng Việt."
+                                            iconSize={12}
+                                        />
                                         <RelationSelect
                                             value={ex.toLanguageId}
                                             onChange={(v) => updateExample(i, { toLanguageId: v })}
@@ -328,34 +374,28 @@ export default function WordCreatePage() {
                                 </div>
                             </div>
                         ))}
-                    </CardContent>
-                </Card>
-
-                {/* ── Actions ── */}
-                <Separator />
-                <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => navigate("/words")} disabled={submitting}>
-                        Huỷ
-                    </Button>
-                    <Button onClick={handleSubmit} disabled={submitting} className="gap-1.5">
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Lưu từ vựng
-                    </Button>
-                </div>
+                </InfoCard>
             </div>
         </MainLayout>
     );
 }
 
 // ── Small field wrapper ───────────────────────────────────────────────
-function Field({ label, required, error, children }: {
-    label: string; required?: boolean; error?: string; children: React.ReactNode;
+function Field({ label, info, required, error, children }: {
+    label: string; info?: string; required?: boolean; error?: string; children: React.ReactNode;
 }) {
     return (
         <div className="space-y-1.5">
-            <Label className="text-sm">
-                {label} {required && <span className="text-destructive">*</span>}
-            </Label>
+            <InfoLabel
+                className="text-sm font-medium"
+                iconSize={12}
+                title={
+                    <>
+                        {label} {required && <span className="text-destructive">*</span>}
+                    </>
+                }
+                info={info}
+            />
             {children}
             {error && <p className="text-xs text-destructive">{error}</p>}
         </div>

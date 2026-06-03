@@ -4,7 +4,6 @@ import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.domain.library.deck.Deck;
 import com.example.starter_project_2025.domain.library.flashcard.Flashcard;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,14 +19,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "deck_items", uniqueConstraints = @UniqueConstraint(columnNames = {"deck_id", "flashcard_id"}))
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("DECK_ITEM")
-@ResourceMenu(
-        title = "Deck Items",
-        group = "Library",
-        icon = "list",
-        url = "/deck-items",
-        order = 5,
-        permission = "DECK_ITEM_READ"
-)
 @EntityLabel(name = "Deck Item", plural = "Deck Items", description = "Flashcard to deck mapping")
 @AutoCrud(path = "deck-items")
 @Filterable(fields = {"isActive"})

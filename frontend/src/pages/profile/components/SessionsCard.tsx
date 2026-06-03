@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Laptop, Loader2, LogOut, Monitor } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -71,15 +72,14 @@ export function SessionsCard() {
     };
 
     return (
-        <Card>
-            <CardHeader className="pb-4">
+        <Card className="gap-3 py-4">
+            <CardHeader className="px-4 pb-0">
                 <CardTitle className="text-base flex items-center gap-2">
                     <Monitor size={16} className="text-primary" />
-                    {t("profile.sessions.title")}
+                    <InfoLabel title={t("profile.sessions.title")} info={t("profile.sessions.description")} />
                 </CardTitle>
-                <CardDescription>{t("profile.sessions.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-1">
+            <CardContent className="px-4 space-y-1">
                 {loading ? (
                     <div className="flex justify-center py-6">
                         <Loader2 size={20} className="animate-spin text-primary" />

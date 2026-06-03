@@ -63,6 +63,44 @@ public class DeckServiceImpl
         return new String[]{"title", "description"};
     }
 
+    /**
+     * Override getById to enforce visibility rules:
+     *   - Owner can always access their own deck (PUBLIC or PRIVATE)
+     *   - Other users can only access PUBLIC decks
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public DeckDTO getById(Long id) {
+        Deck deck = deckRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Deck not found"));
+
+        Long currentUserId = getCurrentUserId();
+        boolean isOwner = deck.getUser() != null
+                && deck.getUser().getId() != null
+                && deck.getUser().getId().equals(currentUserId);
+        boolean isPublic = "PUBLIC".equalsIgnoreCase(deck.getVisibility());
+
+        if (!isOwner && !isPublic) {
+            throw new AccessDeniedException("This deck is private");
+        }
+
+        return afterRead(deckMapper.toResponse(deck), deck);
+    }
+
+    /**
+     * Ownership check helper — throws AccessDeniedException if the current
+     * user is not the deck owner.
+     */
+    private void requireOwner(Deck deck) {
+        Long currentUserId = getCurrentUserId();
+        boolean isOwner = deck.getUser() != null
+                && deck.getUser().getId() != null
+                && deck.getUser().getId().equals(currentUserId);
+        if (!isOwner) {
+            throw new AccessDeniedException("You do not own this deck");
+        }
+    }
+
     @Override
     protected void beforeCreate(Deck deck, DeckDTO request, ValidationContext ctx) {
 
@@ -108,6 +146,7 @@ public class DeckServiceImpl
 
     @Override
     protected void beforeUpdate(Deck deck, DeckDTO request, ValidationContext ctx) {
+        requireOwner(deck);
 
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId()).orElse(null);
@@ -216,7 +255,6 @@ public class DeckServiceImpl
                 .title(candidate)
                 .description(original.getDescription())
                 .visibility("PRIVATE")
-                .studyMode(original.getStudyMode() != null ? original.getStudyMode() : "QUIZLET")
                 .coverImageUrl(original.getCoverImageUrl())
                 .sourceLanguage(original.getSourceLanguage())
                 .targetLanguage(original.getTargetLanguage())
@@ -299,7 +337,14 @@ public class DeckServiceImpl
     public void incrementView(Long deckId) {
         Deck deck = deckRepository.findById(deckId)
                 .orElseThrow(() -> new ResourceNotFoundException("Deck not found"));
-        deck.setViewCount(deck.getViewCount() + 1);
-        deckRepository.save(deck);
+        // Only increment for public decks or the owner
+        Long currentUserId = getCurrentUserId();
+        boolean isOwner  = deck.getUser() != null && deck.getUser().getId() != null
+                        && deck.getUser().getId().equals(currentUserId);
+        boolean isPublic = "PUBLIC".equalsIgnoreCase(deck.getVisibility());
+        if (isOwner || isPublic) {
+            deck.setViewCount(deck.getViewCount() + 1);
+            deckRepository.save(deck);
+        }
     }
 }

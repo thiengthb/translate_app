@@ -24,6 +24,15 @@ export interface RepresentationDTO extends BaseDTO {
 
 export interface RepresentationFilter extends BaseFilter {}
 
+// ── Word type (part of speech) ─────────────────────────────────────────
+export interface WordTypeDTO extends BaseDTO {
+  name?: string;
+  code?: string;
+  description?: string;
+}
+
+export interface WordTypeFilter extends BaseFilter {}
+
 // ── Meaning ────────────────────────────────────────────────────────────
 export interface MeaningDTO extends BaseDTO {
   languageId?: number;

@@ -1,6 +1,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoLabel } from "@/components/common/InfoLabel";
 import { formatRoleLabel } from "@/utils/rbac.utils";
 import type { RoleDistribution } from "@/types/features/dashboard";
 
@@ -30,8 +31,12 @@ export function RoleDistributionChart({ data }: Props) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-base">Phân bố theo vai trò</CardTitle>
-                <CardDescription>{total.toLocaleString()} người dùng phân theo {data.length} nhóm</CardDescription>
+                <CardTitle className="text-base">
+                    <InfoLabel
+                        title="Phân bố theo vai trò"
+                        info={`${total.toLocaleString()} người dùng phân theo ${data.length} nhóm`}
+                    />
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 {data.length === 0 ? (

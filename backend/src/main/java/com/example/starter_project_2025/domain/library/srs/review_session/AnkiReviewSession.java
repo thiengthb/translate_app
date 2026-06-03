@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
         group = "Anki SRS",
         icon = "play",
         url = "/anki/review-sessions",
+        description = "Anki review sessions per user.",
         order = 2,
         permission = "ANKI_REVIEW_SESSION_READ"
 )

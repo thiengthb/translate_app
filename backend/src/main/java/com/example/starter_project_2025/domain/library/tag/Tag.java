@@ -2,7 +2,6 @@ package com.example.starter_project_2025.domain.library.tag;
 
 import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.persistence.*;
@@ -19,14 +18,6 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "tags")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("TAG")
-@ResourceMenu(
-        title = "Tags",
-        group = "Library",
-        icon = "tag",
-        url = "/tags",
-        order = 2,
-        permission = "TAG_READ"
-)
 @EntityLabel(name = "Tag", plural = "Tags", description = "User tag management")
 @AutoCrud(path = "tags")
 @Searchable(fields = {"name", "description"})

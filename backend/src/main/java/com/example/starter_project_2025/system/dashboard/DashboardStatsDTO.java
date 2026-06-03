@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
         group = "Dashboard",
         icon = "dashboard",
         url = "/dashboard",
+        description = "Overview of key system metrics at a glance.",
     order = 1,
     permission = "USER_READ"
 )

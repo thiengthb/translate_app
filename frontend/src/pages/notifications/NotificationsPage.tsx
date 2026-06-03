@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { EmptyState } from "@/components/common/EmptyState";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 
@@ -138,7 +139,7 @@ export default function NotificationsPage() {
 
     return (
         <MainLayout pathName={{ "/notifications": "Thông báo" }}>
-            <div className="max-w-3xl mx-auto w-full space-y-4">
+            <div className="w-full space-y-4">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <header className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -198,14 +199,11 @@ export default function NotificationsPage() {
                 )}
 
                 {!loading && items.length === 0 && !error && (
-                    <Card className="flex flex-col items-center py-16 gap-3 text-muted-foreground">
-                        <Inbox size={32} className="opacity-40" />
-                        <p className="text-sm">
-                            {filter === "unread"
-                                ? "Không có thông báo chưa đọc"
-                                : "Chưa có thông báo nào"}
-                        </p>
-                    </Card>
+                    <EmptyState
+                        className="py-16"
+                        icon={<Inbox className="size-7" />}
+                        title={filter === "unread" ? "Không có thông báo chưa đọc" : "Chưa có thông báo nào"}
+                    />
                 )}
 
                 {items.length > 0 && (

@@ -116,7 +116,15 @@ public class AutoMenuInitializer implements CommandLineRunner {
         module.setIcon(menu.icon());
         module.setDisplayOrder(menu.order());
         module.setRequiredPermission(normalizePermission(menu.permission()));
-        module.setDescription("Auto generated menu for " + clazz.getSimpleName());
+        // Prefer the annotation's human description (surfaced as the breadcrumb
+        // / card ⓘ tooltip). Fall back to the auto-gen marker only when absent
+        // so legacy stale-detection (deactivateStaleModules) still recognises
+        // annotation-less rows.
+        String description = menu.description();
+        module.setDescription(
+                (description == null || description.isBlank())
+                        ? "Auto generated menu for " + clazz.getSimpleName()
+                        : description);
         module.setIsActive(true);
 
         moduleRepository.save(module);

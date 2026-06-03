@@ -5,7 +5,6 @@ import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.domain.library.flashcard.FlashcardTemplate;
 import com.example.starter_project_2025.domain.library.folder.Folder;
 import com.example.starter_project_2025.domain.library.tag.Tag;
-import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.persistence.*;
@@ -25,18 +24,10 @@ import java.util.Set;
 @Table(name = "decks")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("DECK")
-@ResourceMenu(
-        title = "Decks",
-        group = "Library",
-        icon = "layer-group",
-        url = "/decks",
-        order = 3,
-        permission = "DECK_READ"
-)
 @EntityLabel(name = "Deck", plural = "Decks", description = "Study deck management")
 @AutoCrud(path = "decks")
 @Searchable(fields = {"title", "description"})
-@Filterable(fields = {"title", "visibility", "studyMode", "isActive"})
+@Filterable(fields = {"title", "visibility", "isActive"})
 @Sortable(fields = {"title", "createdAt", "updatedAt", "cloneCount", "favoriteCount", "viewCount", "totalCards"})
 @SoftDelete
 @AuditEnabled
@@ -73,13 +64,16 @@ public class Deck extends BaseEntity {
     @Column(length = 20)
     String visibility = "PRIVATE";
 
-    @Builder.Default
-    @Column(name = "study_mode", nullable = false, length = 20)
-    @FieldMeta(label = "Study Mode", type = "select", order = 3, group = "Study", placeholder = "QUIZLET or ANKI")
-    String studyMode = "QUIZLET";
-
     @Column
     String coverImageUrl;
+
+    /** Icon key from the FE iconMap (e.g. "book-open", "graduation-cap"). */
+    @Column(length = 50)
+    String deckIcon;
+
+    /** Color preset ID from the FE color system (e.g. "violet", "amber"). */
+    @Column(length = 30)
+    String deckColor;
 
     @Column(length = 10)
     String sourceLanguage;

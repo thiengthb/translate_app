@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Flame, Loader2, Trophy } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
+import { EmptyState } from "@/components/common/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
@@ -19,7 +20,7 @@ export default function LeaderboardPage() {
 
     return (
         <MainLayout>
-            <div className="w-full max-w-5xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 {/* ─── Header ─────────────────────────────────────────────── */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                     <div>
@@ -51,11 +52,12 @@ export default function LeaderboardPage() {
                         <Loader2 className="animate-spin text-primary" size={32} />
                     </div>
                 ) : entries.length === 0 ? (
-                    <Card>
-                        <CardContent className="py-16 text-center text-muted-foreground">
-                            Chưa có người dùng nào có streak. Hãy là người đầu tiên!
-                        </CardContent>
-                    </Card>
+                    <EmptyState
+                        className="py-16"
+                        icon={<Flame className="size-7" />}
+                        title="Chưa có ai có streak"
+                        description="Hãy là người đầu tiên — học mỗi ngày để lên bảng xếp hạng!"
+                    />
                 ) : (
                     <>
                         {/* ─── Podium (top 3) ─────────────────────────────── */}
