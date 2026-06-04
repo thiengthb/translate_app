@@ -25,8 +25,11 @@ export interface AttemptResult {
   attemptId: number;
   finalVerdict: "PASS" | "PARTIAL" | "FAIL";
   detectorPassed: boolean;
+  /** Holistic score, normalized 0.0-1.0 (display as judgeScore*10 → x/10). */
   judgeScore: number | null;
   feedback: string;
+  /** AI rewrite of the learner's own sentence into correct, natural Japanese. */
+  correction?: string | null;
   referenceAnswer: string;
 }
 
@@ -94,16 +97,17 @@ export const productionApi = {
   },
 
   /**
-   * Generate one vocab-driven practice prompt for a selected grammar point.
+   * Generate one practice prompt. Pass a {@code subUseId} to drill that grammar point,
+   * or omit it for a random AI-composed exercise (the server picks the grammar point).
    * Pass {@code target} (coverage drill) to force the answer to use that exact word.
    */
   generateExercise: async (
-    subUseId: number,
+    subUseId: number | undefined,
     source: VocabSource,
     target?: VocabWordItem,
   ): Promise<ExerciseResponse> => {
     const res = await axiosInstance.post<ExerciseResponse>("/production/generate", {
-      subUseId,
+      subUseId: subUseId ?? null,
       source,
       target,
     });

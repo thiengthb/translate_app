@@ -82,6 +82,43 @@ public class PromptService {
     }
 
     /**
+     * Persist a live AI-composed exercise (reference + scenario + prompt cache) that is
+     * served immediately to the requesting learner and then discarded from the pools.
+     *
+     * <p>Unlike {@link #persistGenerated}, the rows are tagged {@code source = "AUTO"}.
+     * That value matches neither the shared-pool filter ({@code null}/{@code APPROVED} in
+     * {@code findApprovedBySubUseId}) nor the review-queue filter ({@code GENERATED} in
+     * {@code findPendingReview}), so a freshly composed prompt is invisible to other
+     * learners and to the teacher review page — it exists only so grading can resolve it
+     * by {@code promptId}. The slow LLM call happens before this in the caller.
+     */
+    @Transactional
+    public PromptCache persistComposed(GrammarSubUse subUse, String situation, String l1Prompt,
+                                       String l2Reference, String register) {
+        ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                .subUse(subUse)
+                .l1Text(situation)
+                .l2Text(l2Reference)
+                .source("AUTO")
+                .build());
+
+        ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                .subUse(subUse)
+                .register(register)
+                .situationContext(situation)
+                .l1PromptTemplate(l1Prompt)
+                .source("AUTO")
+                .build());
+
+        return promptCacheRepository.save(PromptCache.builder()
+                .subUse(subUse)
+                .scenario(scenario)
+                .referenceSentence(ref)
+                .l1Prompt(l1Prompt)
+                .build());
+    }
+
+    /**
      * Bulk-import externally AI-generated prompts into the review queue. Each item
      * becomes a pending ({@code source = "GENERATED"}) reference + scenario +
      * prompt-cache triple — exactly like {@link #persistGenerated} — so it surfaces

@@ -4,14 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(workspace): update git widget placeholder and external directory path">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(production): implement AI-generated exercise composition and enhance production page functionality">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/GameBoard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/GameBoard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/FloatingText.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/FloatingText.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/Overlays.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/Overlays.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/engine.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/engine.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/useKanjiGame.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/useKanjiGame.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/GenerateExerciseRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/GenerateExerciseRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/menu/ProductionDrillMenu.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/DrillPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,7 +110,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -226,8 +235,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
       </set>
     </attachedChunks>
   </component>
@@ -281,6 +289,9 @@
       <workItem from="1780466498166" duration="4109000" />
       <workItem from="1780493427307" duration="1969000" />
       <workItem from="1780500222342" duration="1245000" />
+      <workItem from="1780556472172" duration="3120000" />
+      <workItem from="1780582286513" duration="4671000" />
+      <workItem from="1780595446343" duration="2356000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -536,7 +547,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(dictionary): fix UI add search kanji likes mazii" />
     <MESSAGE value="feat(dictionary): chinh sua UI va them de xuat tu vung" />
     <MESSAGE value="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji" />
     <MESSAGE value="feat(dictionary): chinh them phan vi du tu vung" />
@@ -561,7 +571,8 @@
     <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
     <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
     <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
+    <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

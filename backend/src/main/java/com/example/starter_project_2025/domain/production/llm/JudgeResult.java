@@ -17,5 +17,8 @@ public class JudgeResult {
 
     private final String verdict;
 
+    /** The learner's own sentence rewritten correctly & naturally (Japanese). */
+    private final String correction;
+
     private final String feedback;
 }

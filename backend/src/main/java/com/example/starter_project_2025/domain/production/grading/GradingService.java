@@ -25,9 +25,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GradingService {
 
-    /** Minimum meaning score to count as "meaning roughly OK" (→ at least PARTIAL). */
-    private static final double MEANING_THRESHOLD = 0.7;
-    /** Minimum meaning score required for a full PASS (in addition to correct grammar). */
+    /** Score (0-1, i.e. 6.5/10) at/above which the answer is "Gần đúng" (PARTIAL). */
+    private static final double MEANING_THRESHOLD = 0.65;
+    /** Score (0-1, i.e. 8.5/10) at/above which the answer is a full PASS ("Đúng"). */
     private static final double PASS_THRESHOLD = 0.85;
 
     private final PromptCacheRepository promptCacheRepository;
@@ -56,23 +56,28 @@ public class GradingService {
         }
         GrammarMarker markerUsed = resolveMarker(subUse.getId(), detection.getMarkerPattern());
 
-        // Signal 2: LLM judge (Gemini), may be null on network/parse error or no API key
+        // Signal 2: LLM judge (Gemini) — the PRIMARY grader. Its 0-10 score already
+        // factors in meaning + correct use of the target grammar + naturalness. May be
+        // null on network/parse error or no API key. The detector above is now only a
+        // supplementary badge, it no longer gates the score.
         JudgeResult judge = geminiClient.judge(
-                reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
+                subUse.getName(), reference.getL2Text(), answer,
+                subUse.getNuanceDescription(), subUse.getCommonMistakes());
 
         String finalVerdict;
         Double judgeScore = judge == null ? null : judge.getMeaningScore();
         String judgeVerdict = judge == null ? null : judge.getVerdict();
         String feedback;
+        String correction = judge == null ? null : judge.getCorrection();
 
         if (judge == null) {
-            // Meaning can't be verified offline → never award a full PASS.
+            // AI offline → fall back to the deterministic detector only.
             finalVerdict = detectorPassed ? "PARTIAL" : "FAIL";
             feedback = detectorPassed
                     ? "Đã dùng đúng cấu trúc ngữ pháp mục tiêu, nhưng chưa kiểm tra được nghĩa (AI tạm offline)."
                     : "Chưa thấy cấu trúc ngữ pháp mục tiêu trong câu của bạn.";
         } else {
-            finalVerdict = decide(detectorPassed, judge.getMeaningScore());
+            finalVerdict = decide(judge.getMeaningScore());
             feedback = judge.getFeedback();
         }
 
@@ -85,6 +90,7 @@ public class GradingService {
                 .llmJudgeScore(judgeScore)
                 .llmJudgeVerdict(judgeVerdict)
                 .llmJudgeFeedback(feedback)
+                .llmCorrection(correction)
                 .finalVerdict(finalVerdict)
                 .build();
 
@@ -92,15 +98,13 @@ public class GradingService {
     }
 
     /**
-     * Strict verdict: a full PASS requires BOTH the target grammar pattern AND a
-     * high meaning score ({@link #PASS_THRESHOLD}). Correct grammar with weaker
-     * meaning, or good meaning without the target grammar, is only PARTIAL.
+     * Verdict is driven purely by the AI judge's holistic 0-10 score (normalized to 0-1):
+     * {@link #PASS_THRESHOLD}+ = PASS ("Đúng"), {@link #MEANING_THRESHOLD}+ = PARTIAL
+     * ("Gần đúng"), otherwise FAIL ("Chưa đạt"). The grammar detector is informational only.
      */
-    private String decide(boolean detectorPassed, double meaningScore) {
-        if (detectorPassed && meaningScore >= PASS_THRESHOLD) return "PASS";
-        if (detectorPassed && meaningScore >= MEANING_THRESHOLD) return "PARTIAL";
-        if (detectorPassed) return "PARTIAL";                 // right grammar, weak meaning
-        if (meaningScore >= MEANING_THRESHOLD) return "PARTIAL"; // right meaning, missing grammar
+    private String decide(double score) {
+        if (score >= PASS_THRESHOLD) return "PASS";
+        if (score >= MEANING_THRESHOLD) return "PARTIAL";
         return "FAIL";
     }
 
