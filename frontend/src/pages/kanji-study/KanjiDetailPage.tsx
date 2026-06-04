@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { kanjiDetailApi, kanjiReadingApi, kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiReadingDTO, KanjiRadicalDTO } from "@/types";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiLayout } from "./components/KanjiLayout";
 
 /**
  * Detail view of a single kanji (the Kanji-Study master record): character, readings,
@@ -63,8 +63,8 @@ export default function KanjiDetailPage() {
     );
 
   return (
-    <MainLayout>
-      <div className="max-w-3xl mx-auto px-4 py-6">
+    <KanjiLayout>
+      <div className="max-w-3xl mx-auto pb-8">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 mb-4"
@@ -104,6 +104,6 @@ export default function KanjiDetailPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </KanjiLayout>
   );
 }

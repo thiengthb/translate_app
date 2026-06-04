@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { kanjiDeckApi, kanjiDeckItemApi, kanjiDetailApi } from "@/api/features/kanji_study";
 import type { KanjiDeckDTO, KanjiDeckItemDTO, KanjiDetailDTO } from "@/types";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiLayout } from "./components/KanjiLayout";
 
 /**
  * Browse the kanji inside a single kanji deck. Each card links to the kanji detail view.
@@ -57,10 +57,10 @@ export default function KanjiDeckBrowsePage() {
   }, [deckId]);
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <KanjiLayout>
+      <div className="pb-8">
         <button
-          onClick={() => navigate("/kanji-study")}
+          onClick={() => navigate("/kanji-study/decks")}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 mb-4"
         >
           <ArrowLeft size={16} /> Tất cả deck
@@ -102,6 +102,6 @@ export default function KanjiDeckBrowsePage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </KanjiLayout>
   );
 }

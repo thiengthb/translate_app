@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BookOpen, Layers, Search, Sparkles } from "lucide-react";
 import { kanjiDeckApi } from "@/api/features/kanji_study";
 import type { KanjiDeckDTO } from "@/types";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiLayout } from "./components/KanjiLayout";
 import { cn } from "@/lib/utils";
 
 const GRADIENTS = [
@@ -76,13 +76,13 @@ export default function KanjiDeckListPage() {
   );
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <KanjiLayout>
+      <div className="pb-8">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="text-violet-500" size={22} />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Kanji Study</h1>
+          <Sparkles className="text-rose-500" size={22} />
+          <h1 className="text-2xl font-bold text-foreground">Decks</h1>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Chọn một bộ Hán tự để bắt đầu học.</p>
+        <p className="text-muted-foreground mb-6">Chọn một bộ Hán tự để bắt đầu học.</p>
 
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -119,6 +119,6 @@ export default function KanjiDeckListPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </KanjiLayout>
   );
 }

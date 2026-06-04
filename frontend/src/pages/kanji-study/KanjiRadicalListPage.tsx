@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Grid, Search } from "lucide-react";
 import { kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiRadicalDTO } from "@/types";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiLayout } from "./components/KanjiLayout";
 
 /**
  * The 214 Kangxi radicals (bộ thủ) — the classifying components of kanji.
@@ -27,13 +27,13 @@ export default function KanjiRadicalListPage() {
   );
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <KanjiLayout>
+      <div className="pb-8">
         <div className="flex items-center gap-2 mb-1">
-          <Grid className="text-violet-500" size={22} />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bộ thủ</h1>
+          <Grid className="text-rose-500" size={22} />
+          <h1 className="text-2xl font-bold text-foreground">Bộ thủ</h1>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">214 bộ thủ Khang Hy — thành phần phân loại Hán tự.</p>
+        <p className="text-muted-foreground mb-6">214 bộ thủ Khang Hy — thành phần phân loại Hán tự.</p>
 
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -73,6 +73,6 @@ export default function KanjiRadicalListPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </KanjiLayout>
   );
 }
