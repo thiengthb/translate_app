@@ -4,8 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(translator): update Ollama API configuration and adjust task duration in workspace settings">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(workspace): update git widget placeholder and external directory path">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/GameBoard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/GameBoard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/FloatingText.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/FloatingText.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/Overlays.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/components/Overlays.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/engine.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/engine.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/useKanjiGame.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/useKanjiGame.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,7 +160,7 @@
     &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/translator&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Test-by-ân&quot;,
     &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
@@ -517,7 +523,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/feature/translator" />
+                        <option value="origin/Test-by-ân" />
                       </list>
                     </value>
                   </entry>

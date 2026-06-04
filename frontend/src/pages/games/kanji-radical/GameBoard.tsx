@@ -9,7 +9,9 @@ import { PromptStand } from "./components/PromptStand";
 import { PlayArea } from "./components/PlayArea";
 import { Hand } from "./components/Hand";
 import { ScorePanel } from "./components/ScorePanel";
+import { BuffTray } from "./components/BuffTray";
 import { HowToPlayDialog, ResultOverlay } from "./components/Overlays";
+import { RewardOverlay } from "./components/RewardOverlay";
 
 export function GameBoard() {
     const game = useKanjiGame();
@@ -46,6 +48,14 @@ export function GameBoard() {
                     onHelp={() => setHelpOpen(true)}
                     onRestart={game.newGame}
                 />
+
+                {/* charm shelf — the run's collected buffs */}
+                <div className="flex shrink-0 items-center justify-between gap-2 rounded-xl bg-slate-950/40 px-3 py-1.5 ring-1 ring-white/5">
+                    <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                        Lá bùa
+                    </span>
+                    <BuffTray buffs={state.buffs} />
+                </div>
 
                 {/* middle: prompt (left/top) + score panel (right) — fills remaining height */}
                 <div className="relative flex flex-1 min-h-0 flex-col gap-3 lg:flex-row">
@@ -118,14 +128,24 @@ export function GameBoard() {
                     />
                 </div>
 
+                {state.phase === "roundClear" && (
+                    <RewardOverlay
+                        round={state.round}
+                        score={state.score}
+                        targetScore={state.targetScore}
+                        buffs={state.buffs}
+                        rewardOptions={state.rewardOptions}
+                        rerollsLeft={state.rerollsLeft}
+                        onChoose={game.chooseBuff}
+                        onReroll={game.rerollReward}
+                        onSkip={game.skipReward}
+                    />
+                )}
+
                 <ResultOverlay
                     phase={state.phase}
-                    round={state.round}
-                    score={state.score}
-                    targetScore={state.targetScore}
                     runTotal={state.runTotal}
                     highScore={game.highScore}
-                    onNextRound={game.nextRound}
                     onNewGame={game.newGame}
                 />
             </div>

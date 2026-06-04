@@ -7,6 +7,7 @@
  * React hook (`useKanjiGame`); everything here is deterministic given inputs.
  */
 import { PROMPTS, RADICALS } from "./data";
+import { REROLLS_PER_RUN } from "./buffs";
 import type {
     GameState,
     JlptLevel,
@@ -21,9 +22,21 @@ export const GAME_CONFIG = {
     discardsPerRound: 3,
     /** Clearing this round ends the run as a victory. */
     winRound: 8,
-    /** Round-1 target; subsequent rounds scale by `targetGrowth`. */
-    baseTarget: 300,
-    targetGrowth: 1.4,
+    /**
+     * Round-1 target; subsequent rounds scale by `targetGrowth`.
+     *
+     * Balance note: round 1 must be clearable with ZERO buffs (the first
+     * charm is only granted AFTER clearing it). A weak run of single-radical
+     * N5 prompts earns ~60/turn → ~300 over 5 turns, so `baseTarget` sits a
+     * touch below that to leave margin for bad RNG. From round 2 on, each
+     * cleared round hands the player a charm whose power budget (~+35% to a
+     * turn) is tuned to offset one step of `targetGrowth` — so staying on the
+     * curve means picking one charm per clear. See buffs.ts BALANCE MODEL.
+     *
+     * Resulting targets: 280, 390, 530, 740, 1020, 1400, 1930, 2670.
+     */
+    baseTarget: 280,
+    targetGrowth: 1.38,
     basePoint: 50,
     baseMult: 1,
     /** From the 2nd consecutive correct card, mult ×= this each time. */
@@ -34,6 +47,17 @@ export const GAME_CONFIG = {
      */
     hintPenalty: 0.5,
 } as const;
+
+/** Initial run state for snowball buffs (see buffs.ts). */
+export function createBuffRunState(): import("./types").BuffRunState {
+    return {
+        goldenBonus: 0,
+        // Over Heaven's base multiplier (only read once the charm is owned).
+        overHeavenMult: 2,
+        chainCount: 0,
+        chainMult: 1,
+    };
+}
 
 const LEVEL_BONUS: Record<JlptLevel, { point?: number; mult?: number }> = {
     N5: { point: 10 },
@@ -159,6 +183,10 @@ export function createInitialState(): GameState {
         floats: [],
         readout: { point: 0, mult: 0, turnScore: 0 },
         runTotal: 0,
+        buffs: [],
+        buffRunState: createBuffRunState(),
+        rewardOptions: [],
+        rerollsLeft: REROLLS_PER_RUN,
     };
 }
 

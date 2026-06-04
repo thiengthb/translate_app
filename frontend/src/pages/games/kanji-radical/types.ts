@@ -60,7 +60,42 @@ export interface FloatingText {
     id: string;
     cardId: string;
     text: string;
-    kind: "base" | "point" | "mult" | "chain" | "fail" | "level" | "penalty";
+    kind: "base" | "point" | "mult" | "chain" | "fail" | "level" | "penalty" | "buff";
+}
+
+/** Rarity tiers for buffs — drives reward odds + sell/UI colour. */
+export type BuffRarity = "common" | "uncommon" | "rare" | "legendary";
+
+/**
+ * A "lá bùa" (charm) the player collects on clearing a round. Buffs modify
+ * scoring permanently for the rest of the run — they are the power-growth
+ * engine that lets the player keep pace with the escalating round targets
+ * (mirrors the reference game's Item/relic system).
+ */
+export interface BuffDef {
+    id: string;
+    /** Single kanji/symbol shown on the charm face. */
+    glyph: string;
+    /** Display name (Vietnamese). */
+    name: string;
+    rarity: BuffRarity;
+    /** One-line effect description (Vietnamese). */
+    desc: string;
+}
+
+/**
+ * Run-level mutable state that some buffs accumulate across turns/rounds
+ * (e.g. Golden Ratio's snowballing point bonus, Over Heaven's growing mult,
+ * and the chain carried between turns when Vô Cực is held).
+ */
+export interface BuffRunState {
+    /** Golden Ratio: permanent +Point bonus, grows per valid card. */
+    goldenBonus: number;
+    /** Over Heaven: final-mult multiplier, grows per N1 kanji cleared. */
+    overHeavenMult: number;
+    /** Chain carried between turns (only used while "infinite" is held). */
+    chainCount: number;
+    chainMult: number;
 }
 
 /** A card that has been thrown to the centre play area this turn. */
@@ -108,4 +143,13 @@ export interface GameState {
 
     /** Cumulative points scored across the whole run (for the end screens). */
     runTotal: number;
+
+    /** Owned buff ids, in pick order (capped at GAME_CONFIG.maxBuffs). */
+    buffs: string[];
+    /** Accumulating per-run state for snowball buffs. */
+    buffRunState: BuffRunState;
+    /** The 3 buff ids offered on the current round-clear screen. */
+    rewardOptions: string[];
+    /** Remaining reroll uses for the reward screen this run. */
+    rerollsLeft: number;
 }

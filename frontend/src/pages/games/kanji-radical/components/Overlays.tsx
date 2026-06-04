@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ArrowRight, PartyPopper, RotateCcw, Skull, Trophy } from "lucide-react";
+import { PartyPopper, RotateCcw, Skull } from "lucide-react";
 
 import {
     Dialog,
@@ -13,38 +13,29 @@ import type { GamePhase } from "../types";
 
 interface ResultOverlayProps {
     phase: GamePhase;
-    round: number;
-    score: number;
-    targetScore: number;
     runTotal: number;
     highScore: number;
-    onNextRound: () => void;
     onNewGame: () => void;
 }
 
 const PRIMARY_BTN =
     "flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-400 to-orange-500 px-6 py-3 text-base font-bold text-slate-900 shadow-lg shadow-orange-500/30 transition-all hover:from-amber-300 hover:to-orange-400 active:scale-[0.98]";
 
+/**
+ * End-of-run overlay for victory / game-over. The round-clear case is handled
+ * separately by {@link RewardOverlay} (the buff picker).
+ */
 export function ResultOverlay({
     phase,
-    round,
-    score,
-    targetScore,
     runTotal,
     highScore,
-    onNextRound,
     onNewGame,
 }: ResultOverlayProps) {
-    if (phase !== "roundClear" && phase !== "gameOver" && phase !== "victory") {
+    if (phase !== "gameOver" && phase !== "victory") {
         return null;
     }
 
     const config = {
-        roundClear: {
-            icon: <Trophy className="size-12 text-amber-300" />,
-            title: `Qua vòng ${round}! 🎉`,
-            tint: "from-amber-500/20",
-        },
         victory: {
             icon: <PartyPopper className="size-12 text-emerald-300" />,
             title: "Xuất sắc! Hoàn thành tất cả các vòng!",
@@ -83,34 +74,18 @@ export function ResultOverlay({
                     </div>
                     <div className="rounded-xl bg-slate-950/40 px-3 py-3">
                         <div className="text-[11px] uppercase tracking-wide text-slate-400">
-                            {phase === "roundClear" ? "Mục tiêu" : "Kỷ lục"}
+                            Kỷ lục
                         </div>
                         <div className="text-2xl font-black tabular-nums text-slate-100">
-                            {formatNumber(
-                                phase === "roundClear" ? targetScore : highScore,
-                            )}
+                            {formatNumber(highScore)}
                         </div>
                     </div>
                 </div>
 
-                {phase === "roundClear" ? (
-                    <button type="button" onClick={onNextRound} className={PRIMARY_BTN}>
-                        Vòng tiếp theo
-                        <ArrowRight className="size-5" />
-                    </button>
-                ) : (
-                    <button type="button" onClick={onNewGame} className={PRIMARY_BTN}>
-                        <RotateCcw className="size-5" />
-                        Chơi lại
-                    </button>
-                )}
-
-                {phase === "roundClear" && (
-                    <p className="text-xs text-slate-400">
-                        Còn dư {formatNumber(Math.max(0, score - targetScore))} điểm
-                        sẽ được cộng dồn sang vòng sau.
-                    </p>
-                )}
+                <button type="button" onClick={onNewGame} className={PRIMARY_BTN}>
+                    <RotateCcw className="size-5" />
+                    Chơi lại
+                </button>
             </motion.div>
         </motion.div>
     );
@@ -153,6 +128,11 @@ export function HowToPlayDialog({
                     <li>
                         Đạt <b>mục tiêu điểm</b> trong số lượt cho phép để qua vòng. Hết
                         lượt mà chưa đủ điểm là thua.
+                    </li>
+                    <li>
+                        Qua mỗi vòng, bạn nhận một <b>lá bùa (お守り)</b> — chọn 1 trong 3
+                        để tăng sức mạnh ghi điểm. Bùa càng nhiều, càng dễ theo kịp mục
+                        tiêu tăng dần. Giữ tối đa 5 lá.
                     </li>
                     <li>
                         Bí quá? Dùng <b>Bỏ &amp; rút lại</b> để đổi các lá không cần (có

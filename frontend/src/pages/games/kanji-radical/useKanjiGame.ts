@@ -18,9 +18,18 @@ import {
     pickPrompt,
     targetForRound,
 } from "./engine";
+import {
+    MAX_BUFFS,
+    applyCardBuffs,
+    applyFinalBuffs,
+    rollRewards,
+    roundTurnBonus,
+    trimMult,
+} from "./buffs";
 import { RADICALS } from "./data";
 import { playSfx } from "./sound";
 import type {
+    BuffRunState,
     FloatingText,
     GameState,
     PlayedCard,
@@ -41,9 +50,11 @@ type Action =
     | { type: "SET_PLAYED_STATE"; cardId: string; state: PlayedCard["state"] }
     | { type: "ADD_FLOAT"; float: FloatingText }
     | { type: "REMOVE_FLOAT"; id: string }
-    | { type: "COMMIT_TURN"; turnScore: number }
+    | { type: "COMMIT_TURN"; turnScore: number; buffRunState: BuffRunState }
     | { type: "DISCARD"; ids: string[] }
-    | { type: "NEXT_ROUND" }
+    | { type: "CHOOSE_BUFF"; id: string }
+    | { type: "SKIP_REWARD" }
+    | { type: "REROLL_REWARD" }
     | { type: "NEW_GAME" };
 
 function refillHand(
@@ -70,6 +81,38 @@ function refillHand(
         restored.push(distractors.shift()!);
     }
     return restored.sort(() => Math.random() - 0.5);
+}
+
+/**
+ * Build the next-round state after the reward screen: carry over surplus
+ * score, scale the target, refresh prompt/hand, and grant any Túi Thần Kỳ
+ * bonus turns. Assumes `state.buffs` is already up to date (the picked charm
+ * has been added by the caller). Victory on the final round is resolved at
+ * clear-time in COMMIT_TURN, so this only ever advances within the run.
+ */
+function advanceRound(state: GameState): GameState {
+    const carry = Math.max(0, state.score - state.targetScore);
+    const nextRound = state.round + 1;
+    if (nextRound > GAME_CONFIG.winRound) {
+        return { ...state, phase: "victory", round: nextRound, rewardOptions: [] };
+    }
+    const prompt = pickPrompt(state.prompt.id);
+    return {
+        ...state,
+        phase: "playing",
+        round: nextRound,
+        targetScore: targetForRound(nextRound),
+        score: carry,
+        turnsLeft: state.maxTurns + roundTurnBonus(state.buffs),
+        discardsLeft: state.maxDiscards,
+        prompt,
+        hand: generateHand(prompt),
+        hintUsed: false,
+        played: [],
+        floats: [],
+        readout: { point: 0, mult: 0, turnScore: 0 },
+        rewardOptions: [],
+    };
 }
 
 function reducer(state: GameState, action: Action): GameState {
@@ -126,17 +169,34 @@ function reducer(state: GameState, action: Action): GameState {
             const score = state.score + action.turnScore;
             const runTotal = state.runTotal + action.turnScore;
             const turnsLeft = Math.max(0, state.turnsLeft - 1);
+            const buffRunState = action.buffRunState;
 
             if (score >= state.targetScore) {
+                // Clearing the final round wins the run outright — no reward.
+                if (state.round >= GAME_CONFIG.winRound) {
+                    return {
+                        ...state,
+                        phase: "victory",
+                        score,
+                        runTotal,
+                        turnsLeft,
+                        buffRunState,
+                        played: [],
+                        floats: [],
+                    };
+                }
+                // Otherwise open the charm reward screen.
                 return {
                     ...state,
                     phase: "roundClear",
                     score,
                     runTotal,
                     turnsLeft,
+                    buffRunState,
                     played: [],
                     floats: [],
                     readout: { point: 0, mult: 0, turnScore: action.turnScore },
+                    rewardOptions: rollRewards(3, state.buffs),
                 };
             }
             if (turnsLeft <= 0) {
@@ -146,6 +206,7 @@ function reducer(state: GameState, action: Action): GameState {
                     score,
                     runTotal,
                     turnsLeft,
+                    buffRunState,
                     played: [],
                     floats: [],
                 };
@@ -157,6 +218,7 @@ function reducer(state: GameState, action: Action): GameState {
                 score,
                 runTotal,
                 turnsLeft,
+                buffRunState,
                 prompt,
                 hand: generateHand(prompt),
                 hintUsed: false,
@@ -178,27 +240,27 @@ function reducer(state: GameState, action: Action): GameState {
             };
         }
 
-        case "NEXT_ROUND": {
-            const carry = Math.max(0, state.score - state.targetScore);
-            const nextRound = state.round + 1;
-            if (nextRound > GAME_CONFIG.winRound) {
-                return { ...state, phase: "victory", round: nextRound };
-            }
-            const prompt = pickPrompt(state.prompt.id);
+        case "CHOOSE_BUFF": {
+            if (state.phase !== "roundClear") return state;
+            const canTake =
+                !state.buffs.includes(action.id) &&
+                state.buffs.length < MAX_BUFFS;
+            const buffs = canTake ? [...state.buffs, action.id] : state.buffs;
+            return advanceRound({ ...state, buffs });
+        }
+
+        case "SKIP_REWARD": {
+            if (state.phase !== "roundClear") return state;
+            return advanceRound(state);
+        }
+
+        case "REROLL_REWARD": {
+            if (state.phase !== "roundClear" || state.rerollsLeft <= 0)
+                return state;
             return {
                 ...state,
-                phase: "playing",
-                round: nextRound,
-                targetScore: targetForRound(nextRound),
-                score: carry,
-                turnsLeft: state.maxTurns,
-                discardsLeft: state.maxDiscards,
-                prompt,
-                hand: generateHand(prompt),
-                hintUsed: false,
-                played: [],
-                floats: [],
-                readout: { point: 0, mult: 0, turnScore: 0 },
+                rewardOptions: rollRewards(3, state.buffs),
+                rerollsLeft: state.rerollsLeft - 1,
             };
         }
 
@@ -222,7 +284,9 @@ export interface KanjiGameApi {
     play: () => void;
     discard: () => void;
     useHint: () => void;
-    nextRound: () => void;
+    chooseBuff: (id: string) => void;
+    skipReward: () => void;
+    rerollReward: () => void;
     newGame: () => void;
 }
 
@@ -306,9 +370,25 @@ export function useKanjiGame(): KanjiGameApi {
         playSfx("play");
         await wait(STEP);
 
+        // ── Buff context for this turn ──────────────────────────────────
+        const buffs = cur.buffs;
+        const hasInfinite = buffs.includes("infinite");
+        const hasPhantom = buffs.includes("phantom");
+        const hasFullCombo = buffs.includes("full_combo");
+        const discardsUsed = cur.maxDiscards - cur.discardsLeft;
+        // Mutable copy of run-level snowball state; committed at turn end.
+        const run: BuffRunState = { ...cur.buffRunState };
+        // Vô Cực carries the chain between turns; everyone else starts fresh.
+        let chainCount = hasInfinite ? run.chainCount : 0;
+        let chainMult = hasInfinite ? run.chainMult : 1;
+        let phantomUsed = false;
+        let validIndex = 0;
+        // Last correct card's figures — Liên Hoàn replays them as bonus chains.
+        let lastPoint = 0;
+        let lastBaseMult = 0;
+        let lastAnchorId = "";
+
         let turnScore = 0;
-        let chainCount = 0;
-        let chainMult = 1;
 
         for (const pc of played) {
             if (!mountedRef.current) {
@@ -322,8 +402,14 @@ export function useKanjiGame(): KanjiGameApi {
                 dispatch({ type: "SET_PLAYED_STATE", cardId: card.id, state: "fail" });
                 emitFloat(card.id, "Trật!", "fail");
                 playSfx("fail");
-                chainCount = 0;
-                chainMult = 1;
+                // 幻 Ảo Ảnh: the first miss each turn spares the chain.
+                if (hasPhantom && !phantomUsed && chainCount > 0) {
+                    phantomUsed = true;
+                    emitFloat(card.id, "Ảo Ảnh: giữ chuỗi", "buff");
+                } else {
+                    chainCount = 0;
+                    chainMult = 1;
+                }
                 await wait(STEP);
                 continue;
             }
@@ -351,12 +437,35 @@ export function useKanjiGame(): KanjiGameApi {
                 await wait(STEP);
             }
 
+            // ── Buff adds (flat Point / Mult), before the chain ──────────
+            const cardBuffs = applyCardBuffs(
+                buffs,
+                {
+                    card,
+                    level: cur.prompt.level,
+                    validIndex,
+                    chainCount,
+                    discardsUsed,
+                },
+                run,
+            );
+            if (cardBuffs.floats.length > 0) {
+                point += cardBuffs.addPoint;
+                mult += cardBuffs.addMult;
+                for (const f of cardBuffs.floats) {
+                    emitFloat(card.id, `${f.label}: ${f.text}`, "buff");
+                }
+                playSfx("correct");
+                dispatch({ type: "SET_READOUT", readout: { point, mult, turnScore } });
+                await wait(STEP);
+            }
+
             // Chain: from the 2nd consecutive correct card the mult compounds.
             if (chainCount >= 1) {
                 chainMult *= GAME_CONFIG.chainDelta;
                 emitFloat(
                     card.id,
-                    `Chuỗi ${chainCount} (× ${chainMult.toFixed(2).replace(/\.?0+$/, "")})`,
+                    `Chuỗi ${chainCount} (× ${trimMult(chainMult)})`,
                     "chain",
                 );
                 playSfx("chain");
@@ -368,15 +477,71 @@ export function useKanjiGame(): KanjiGameApi {
             }
             chainCount += 1;
 
-            const finalMult = Math.round(mult * chainMult);
+            let finalMult = Math.round(mult * chainMult);
+
+            // ── Multiplicative final-mult buffs (天 Thiên Ngoại) ──────────
+            const finalBuffs = applyFinalBuffs(buffs, cur.prompt.level, run);
+            if (finalBuffs.mulFinal !== 1) {
+                finalMult = Math.round(finalMult * finalBuffs.mulFinal);
+                for (const f of finalBuffs.floats) {
+                    emitFloat(card.id, `${f.label}: ${f.text}`, "buff");
+                }
+                playSfx("chain");
+                dispatch({
+                    type: "SET_READOUT",
+                    readout: { point, mult: finalMult, turnScore },
+                });
+                await wait(STEP);
+            }
+
             const cardScore = point * finalMult;
             turnScore += cardScore;
+            lastPoint = point;
+            lastBaseMult = mult;
+            lastAnchorId = card.id;
+            validIndex += 1;
 
             dispatch({
                 type: "SET_READOUT",
                 readout: { point, mult: finalMult, turnScore },
             });
             await wait(STEP);
+        }
+
+        // ── 連 Liên Hoàn: a flawless multi-card turn replays the last card
+        // as two extra chain hits. ───────────────────────────────────────
+        if (
+            hasFullCombo &&
+            played.length >= 2 &&
+            played.every((p) => p.correct) &&
+            lastAnchorId
+        ) {
+            for (let i = 0; i < 2 && mountedRef.current; i++) {
+                chainMult *= GAME_CONFIG.chainDelta;
+                chainCount += 1;
+                const extraMult = Math.round(lastBaseMult * chainMult);
+                turnScore += lastPoint * extraMult;
+                emitFloat(
+                    lastAnchorId,
+                    `Liên Hoàn: Chuỗi ${chainCount - 1} (× ${trimMult(chainMult)})`,
+                    "buff",
+                );
+                playSfx("chain");
+                dispatch({
+                    type: "SET_READOUT",
+                    readout: { point: lastPoint, mult: extraMult, turnScore },
+                });
+                await wait(STEP);
+            }
+        }
+
+        // Persist the chain for Vô Cực; otherwise it dies with the turn.
+        if (hasInfinite) {
+            run.chainCount = chainCount;
+            run.chainMult = chainMult;
+        } else {
+            run.chainCount = 0;
+            run.chainMult = 1;
         }
 
         // Hint penalty: if the player revealed the kanji this prompt, they keep
@@ -406,7 +571,7 @@ export function useKanjiGame(): KanjiGameApi {
         }
 
         const before = stateRef.current.score;
-        dispatch({ type: "COMMIT_TURN", turnScore });
+        dispatch({ type: "COMMIT_TURN", turnScore, buffRunState: run });
 
         // Resolve end-of-turn sounds from the *resulting* phase.
         if (before + turnScore >= stateRef.current.targetScore) {
@@ -426,11 +591,26 @@ export function useKanjiGame(): KanjiGameApi {
         playSfx("play");
     }, []);
 
-    const nextRound = useCallback(() => {
+    const chooseBuff = useCallback((id: string) => {
         const cur = stateRef.current;
+        if (cur.phase !== "roundClear") return;
         const willWin = cur.round + 1 > GAME_CONFIG.winRound;
-        dispatch({ type: "NEXT_ROUND" });
+        dispatch({ type: "CHOOSE_BUFF", id });
+        playSfx(willWin ? "win" : "chain");
+    }, []);
+
+    const skipReward = useCallback(() => {
+        const cur = stateRef.current;
+        if (cur.phase !== "roundClear") return;
+        const willWin = cur.round + 1 > GAME_CONFIG.winRound;
+        dispatch({ type: "SKIP_REWARD" });
         playSfx(willWin ? "win" : "correct");
+    }, []);
+
+    const rerollReward = useCallback(() => {
+        if (stateRef.current.rerollsLeft <= 0) return;
+        dispatch({ type: "REROLL_REWARD" });
+        playSfx("select");
     }, []);
 
     const useHint = useCallback(() => {
@@ -472,7 +652,9 @@ export function useKanjiGame(): KanjiGameApi {
         play,
         discard,
         useHint,
-        nextRound,
+        chooseBuff,
+        skipReward,
+        rerollReward,
         newGame,
     };
 }
