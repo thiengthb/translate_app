@@ -1,14 +1,25 @@
 import type { BaseDTO, BaseFilter } from "@/types/common/base";
 
-// ── Kanji Detail (1:1 kanji) ─────────────────────────────────────────────
+// ── Kanji Detail (the self-contained kanji master record) ────────────────
 export interface KanjiDetailDTO extends BaseDTO {
-  kanjiId?: number;
+  character?: string;
+  onyomi?: string;
+  kunyomi?: string;
+  meaning?: string;
+  jlptLevel?: string;
+  radicalId?: number;
+  strokeCount?: number;
+  strokeData?: string;
+  svgViewbox?: string;
+  strokeSource?: string;
   formExplanation?: string;
   etymology?: string;
 }
 
 export interface KanjiDetailFilter extends BaseFilter {
-  kanjiId?: number;
+  character?: string;
+  jlptLevel?: string;
+  radicalId?: number;
 }
 
 // ── Kanji Reading (Hán-Việt / nanori) ────────────────────────────────────
@@ -26,18 +37,18 @@ export interface KanjiReadingFilter extends BaseFilter {
   readingType?: string;
 }
 
-// ── Kanji Stroke Order (animation data) ──────────────────────────────────
-export interface KanjiStrokeOrderDTO extends BaseDTO {
-  kanjiId?: number;
+// ── Kanji Radical (bộ thủ) ───────────────────────────────────────────────
+export interface KanjiRadicalDTO extends BaseDTO {
+  number?: number;
+  character?: string;
+  hanViet?: string;
+  meaning?: string;
   strokeCount?: number;
-  strokeData?: string;
-  svgViewbox?: string;
-  source?: string;
 }
 
-export interface KanjiStrokeOrderFilter extends BaseFilter {
-  kanjiId?: number;
-  source?: string;
+export interface KanjiRadicalFilter extends BaseFilter {
+  number?: number;
+  strokeCount?: number;
 }
 
 // ── Kanji Deck ───────────────────────────────────────────────────────────

@@ -1,0 +1,2459 @@
+{
+  "radicals": [
+    {
+      "number": 1,
+      "character": "一",
+      "hanViet": "nhất",
+      "meaning": "one",
+      "strokeCount": 1
+    },
+    {
+      "number": 2,
+      "character": "丨",
+      "hanViet": "cổn",
+      "meaning": "line",
+      "strokeCount": 1
+    },
+    {
+      "number": 3,
+      "character": "丶",
+      "hanViet": "chủ",
+      "meaning": "dot",
+      "strokeCount": 1
+    },
+    {
+      "number": 4,
+      "character": "丿",
+      "hanViet": "phiệt",
+      "meaning": "slash",
+      "strokeCount": 1
+    },
+    {
+      "number": 5,
+      "character": "乙",
+      "hanViet": "ất",
+      "meaning": "second",
+      "strokeCount": 1
+    },
+    {
+      "number": 6,
+      "character": "亅",
+      "hanViet": "quyết",
+      "meaning": "hook",
+      "strokeCount": 1
+    },
+    {
+      "number": 7,
+      "character": "二",
+      "hanViet": "nhị",
+      "meaning": "two",
+      "strokeCount": 2
+    },
+    {
+      "number": 8,
+      "character": "亠",
+      "hanViet": "đầu",
+      "meaning": "lid",
+      "strokeCount": 2
+    },
+    {
+      "number": 9,
+      "character": "人",
+      "hanViet": "nhân",
+      "meaning": "man",
+      "strokeCount": 2
+    },
+    {
+      "number": 10,
+      "character": "儿",
+      "hanViet": "nhân",
+      "meaning": "legs",
+      "strokeCount": 2
+    },
+    {
+      "number": 11,
+      "character": "入",
+      "hanViet": "nhập",
+      "meaning": "enter",
+      "strokeCount": 2
+    },
+    {
+      "number": 12,
+      "character": "八",
+      "hanViet": "bát",
+      "meaning": "eight",
+      "strokeCount": 2
+    },
+    {
+      "number": 13,
+      "character": "冂",
+      "hanViet": "quynh",
+      "meaning": "down box",
+      "strokeCount": 2
+    },
+    {
+      "number": 14,
+      "character": "冖",
+      "hanViet": "mịch",
+      "meaning": "cover",
+      "strokeCount": 2
+    },
+    {
+      "number": 15,
+      "character": "冫",
+      "hanViet": "băng",
+      "meaning": "ice",
+      "strokeCount": 2
+    },
+    {
+      "number": 16,
+      "character": "几",
+      "hanViet": "kỷ",
+      "meaning": "table",
+      "strokeCount": 2
+    },
+    {
+      "number": 17,
+      "character": "凵",
+      "hanViet": "khảm",
+      "meaning": "open box",
+      "strokeCount": 2
+    },
+    {
+      "number": 18,
+      "character": "刀",
+      "hanViet": "đao",
+      "meaning": "knife",
+      "strokeCount": 2
+    },
+    {
+      "number": 19,
+      "character": "力",
+      "hanViet": "lực",
+      "meaning": "power",
+      "strokeCount": 2
+    },
+    {
+      "number": 20,
+      "character": "勹",
+      "hanViet": "bao",
+      "meaning": "wrap",
+      "strokeCount": 2
+    },
+    {
+      "number": 21,
+      "character": "匕",
+      "hanViet": "chủy",
+      "meaning": "spoon",
+      "strokeCount": 2
+    },
+    {
+      "number": 22,
+      "character": "匚",
+      "hanViet": "phương",
+      "meaning": "box",
+      "strokeCount": 2
+    },
+    {
+      "number": 23,
+      "character": "匸",
+      "hanViet": "hệ",
+      "meaning": "hiding enclosure",
+      "strokeCount": 2
+    },
+    {
+      "number": 24,
+      "character": "十",
+      "hanViet": "thập",
+      "meaning": "ten",
+      "strokeCount": 2
+    },
+    {
+      "number": 25,
+      "character": "卜",
+      "hanViet": "bốc",
+      "meaning": "divination",
+      "strokeCount": 2
+    },
+    {
+      "number": 26,
+      "character": "卩",
+      "hanViet": "tiết",
+      "meaning": "seal",
+      "strokeCount": 2
+    },
+    {
+      "number": 27,
+      "character": "厂",
+      "hanViet": "hán",
+      "meaning": "cliff",
+      "strokeCount": 2
+    },
+    {
+      "number": 28,
+      "character": "厶",
+      "hanViet": "khư",
+      "meaning": "private",
+      "strokeCount": 2
+    },
+    {
+      "number": 29,
+      "character": "又",
+      "hanViet": "hựu",
+      "meaning": "again",
+      "strokeCount": 2
+    },
+    {
+      "number": 30,
+      "character": "口",
+      "hanViet": "khẩu",
+      "meaning": "mouth",
+      "strokeCount": 3
+    },
+    {
+      "number": 31,
+      "character": "囗",
+      "hanViet": "vi",
+      "meaning": "enclosure",
+      "strokeCount": 3
+    },
+    {
+      "number": 32,
+      "character": "土",
+      "hanViet": "thổ",
+      "meaning": "earth",
+      "strokeCount": 3
+    },
+    {
+      "number": 33,
+      "character": "士",
+      "hanViet": "sĩ",
+      "meaning": "scholar",
+      "strokeCount": 3
+    },
+    {
+      "number": 34,
+      "character": "夂",
+      "hanViet": "truy",
+      "meaning": "go",
+      "strokeCount": 3
+    },
+    {
+      "number": 35,
+      "character": "夊",
+      "hanViet": "tuy",
+      "meaning": "go slowly",
+      "strokeCount": 3
+    },
+    {
+      "number": 36,
+      "character": "夕",
+      "hanViet": "tịch",
+      "meaning": "evening",
+      "strokeCount": 3
+    },
+    {
+      "number": 37,
+      "character": "大",
+      "hanViet": "đại",
+      "meaning": "big",
+      "strokeCount": 3
+    },
+    {
+      "number": 38,
+      "character": "女",
+      "hanViet": "nữ",
+      "meaning": "woman",
+      "strokeCount": 3
+    },
+    {
+      "number": 39,
+      "character": "子",
+      "hanViet": "tử",
+      "meaning": "child",
+      "strokeCount": 3
+    },
+    {
+      "number": 40,
+      "character": "宀",
+      "hanViet": "miên",
+      "meaning": "roof",
+      "strokeCount": 3
+    },
+    {
+      "number": 41,
+      "character": "寸",
+      "hanViet": "thốn",
+      "meaning": "inch",
+      "strokeCount": 3
+    },
+    {
+      "number": 42,
+      "character": "小",
+      "hanViet": "tiểu",
+      "meaning": "small",
+      "strokeCount": 3
+    },
+    {
+      "number": 43,
+      "character": "尢",
+      "hanViet": "uông",
+      "meaning": "lame",
+      "strokeCount": 3
+    },
+    {
+      "number": 44,
+      "character": "尸",
+      "hanViet": "thi",
+      "meaning": "corpse",
+      "strokeCount": 3
+    },
+    {
+      "number": 45,
+      "character": "屮",
+      "hanViet": "triệt",
+      "meaning": "sprout",
+      "strokeCount": 3
+    },
+    {
+      "number": 46,
+      "character": "山",
+      "hanViet": "sơn",
+      "meaning": "mountain",
+      "strokeCount": 3
+    },
+    {
+      "number": 47,
+      "character": "巛",
+      "hanViet": "xuyên",
+      "meaning": "river",
+      "strokeCount": 3
+    },
+    {
+      "number": 48,
+      "character": "工",
+      "hanViet": "công",
+      "meaning": "work",
+      "strokeCount": 3
+    },
+    {
+      "number": 49,
+      "character": "己",
+      "hanViet": "kỷ",
+      "meaning": "oneself",
+      "strokeCount": 3
+    },
+    {
+      "number": 50,
+      "character": "巾",
+      "hanViet": "cân",
+      "meaning": "turban",
+      "strokeCount": 3
+    },
+    {
+      "number": 51,
+      "character": "干",
+      "hanViet": "can",
+      "meaning": "dry",
+      "strokeCount": 3
+    },
+    {
+      "number": 52,
+      "character": "幺",
+      "hanViet": "yêu",
+      "meaning": "short thread",
+      "strokeCount": 3
+    },
+    {
+      "number": 53,
+      "character": "广",
+      "hanViet": "nghiễm",
+      "meaning": "dotted cliff",
+      "strokeCount": 3
+    },
+    {
+      "number": 54,
+      "character": "廴",
+      "hanViet": "dẫn",
+      "meaning": "long stride",
+      "strokeCount": 3
+    },
+    {
+      "number": 55,
+      "character": "廾",
+      "hanViet": "củng",
+      "meaning": "two hands",
+      "strokeCount": 3
+    },
+    {
+      "number": 56,
+      "character": "弋",
+      "hanViet": "dặc",
+      "meaning": "shoot",
+      "strokeCount": 3
+    },
+    {
+      "number": 57,
+      "character": "弓",
+      "hanViet": "cung",
+      "meaning": "bow",
+      "strokeCount": 3
+    },
+    {
+      "number": 58,
+      "character": "彐",
+      "hanViet": "kệ",
+      "meaning": "snout",
+      "strokeCount": 3
+    },
+    {
+      "number": 59,
+      "character": "彡",
+      "hanViet": "sam",
+      "meaning": "bristle",
+      "strokeCount": 3
+    },
+    {
+      "number": 60,
+      "character": "彳",
+      "hanViet": "xích",
+      "meaning": "step",
+      "strokeCount": 3
+    },
+    {
+      "number": 61,
+      "character": "心",
+      "hanViet": "tâm",
+      "meaning": "heart",
+      "strokeCount": 3
+    },
+    {
+      "number": 62,
+      "character": "戈",
+      "hanViet": "qua",
+      "meaning": "halberd",
+      "strokeCount": 4
+    },
+    {
+      "number": 63,
+      "character": "戶",
+      "hanViet": "hộ",
+      "meaning": "door",
+      "strokeCount": 4
+    },
+    {
+      "number": 64,
+      "character": "手",
+      "hanViet": "thủ",
+      "meaning": "hand",
+      "strokeCount": 4
+    },
+    {
+      "number": 65,
+      "character": "支",
+      "hanViet": "chi",
+      "meaning": "branch",
+      "strokeCount": 4
+    },
+    {
+      "number": 66,
+      "character": "攴",
+      "hanViet": "phộc",
+      "meaning": "rap",
+      "strokeCount": 4
+    },
+    {
+      "number": 67,
+      "character": "文",
+      "hanViet": "văn",
+      "meaning": "script",
+      "strokeCount": 4
+    },
+    {
+      "number": 68,
+      "character": "斗",
+      "hanViet": "đẩu",
+      "meaning": "dipper",
+      "strokeCount": 4
+    },
+    {
+      "number": 69,
+      "character": "斤",
+      "hanViet": "cân",
+      "meaning": "axe",
+      "strokeCount": 4
+    },
+    {
+      "number": 70,
+      "character": "方",
+      "hanViet": "phương",
+      "meaning": "square",
+      "strokeCount": 4
+    },
+    {
+      "number": 71,
+      "character": "无",
+      "hanViet": "vô",
+      "meaning": "not",
+      "strokeCount": 4
+    },
+    {
+      "number": 72,
+      "character": "日",
+      "hanViet": "nhật",
+      "meaning": "sun",
+      "strokeCount": 4
+    },
+    {
+      "number": 73,
+      "character": "曰",
+      "hanViet": "viết",
+      "meaning": "say",
+      "strokeCount": 4
+    },
+    {
+      "number": 74,
+      "character": "月",
+      "hanViet": "nguyệt",
+      "meaning": "moon",
+      "strokeCount": 4
+    },
+    {
+      "number": 75,
+      "character": "木",
+      "hanViet": "mộc",
+      "meaning": "tree",
+      "strokeCount": 4
+    },
+    {
+      "number": 76,
+      "character": "欠",
+      "hanViet": "khiếm",
+      "meaning": "lack",
+      "strokeCount": 4
+    },
+    {
+      "number": 77,
+      "character": "止",
+      "hanViet": "chỉ",
+      "meaning": "stop",
+      "strokeCount": 4
+    },
+    {
+      "number": 78,
+      "character": "歹",
+      "hanViet": "đãi",
+      "meaning": "death",
+      "strokeCount": 4
+    },
+    {
+      "number": 79,
+      "character": "殳",
+      "hanViet": "thù",
+      "meaning": "weapon",
+      "strokeCount": 4
+    },
+    {
+      "number": 80,
+      "character": "毋",
+      "hanViet": "vô",
+      "meaning": "do not",
+      "strokeCount": 4
+    },
+    {
+      "number": 81,
+      "character": "比",
+      "hanViet": "tỉ",
+      "meaning": "compare",
+      "strokeCount": 4
+    },
+    {
+      "number": 82,
+      "character": "毛",
+      "hanViet": "mao",
+      "meaning": "fur",
+      "strokeCount": 4
+    },
+    {
+      "number": 83,
+      "character": "氏",
+      "hanViet": "thị",
+      "meaning": "clan",
+      "strokeCount": 4
+    },
+    {
+      "number": 84,
+      "character": "气",
+      "hanViet": "khí",
+      "meaning": "steam",
+      "strokeCount": 4
+    },
+    {
+      "number": 85,
+      "character": "水",
+      "hanViet": "thủy",
+      "meaning": "water",
+      "strokeCount": 4
+    },
+    {
+      "number": 86,
+      "character": "火",
+      "hanViet": "hỏa",
+      "meaning": "fire",
+      "strokeCount": 4
+    },
+    {
+      "number": 87,
+      "character": "爪",
+      "hanViet": "trảo",
+      "meaning": "claw",
+      "strokeCount": 4
+    },
+    {
+      "number": 88,
+      "character": "父",
+      "hanViet": "phụ",
+      "meaning": "father",
+      "strokeCount": 4
+    },
+    {
+      "number": 89,
+      "character": "爻",
+      "hanViet": "hào",
+      "meaning": "lines",
+      "strokeCount": 4
+    },
+    {
+      "number": 90,
+      "character": "爿",
+      "hanViet": "tường",
+      "meaning": "half tree trunk",
+      "strokeCount": 4
+    },
+    {
+      "number": 91,
+      "character": "片",
+      "hanViet": "phiến",
+      "meaning": "slice",
+      "strokeCount": 4
+    },
+    {
+      "number": 92,
+      "character": "牙",
+      "hanViet": "nha",
+      "meaning": "fang",
+      "strokeCount": 4
+    },
+    {
+      "number": 93,
+      "character": "牛",
+      "hanViet": "ngưu",
+      "meaning": "cow",
+      "strokeCount": 4
+    },
+    {
+      "number": 94,
+      "character": "犬",
+      "hanViet": "khuyển",
+      "meaning": "dog",
+      "strokeCount": 4
+    },
+    {
+      "number": 95,
+      "character": "玄",
+      "hanViet": "huyền",
+      "meaning": "profound",
+      "strokeCount": 5
+    },
+    {
+      "number": 96,
+      "character": "玉",
+      "hanViet": "ngọc",
+      "meaning": "jade",
+      "strokeCount": 5
+    },
+    {
+      "number": 97,
+      "character": "瓜",
+      "hanViet": "qua",
+      "meaning": "melon",
+      "strokeCount": 5
+    },
+    {
+      "number": 98,
+      "character": "瓦",
+      "hanViet": "ngõa",
+      "meaning": "tile",
+      "strokeCount": 5
+    },
+    {
+      "number": 99,
+      "character": "甘",
+      "hanViet": "cam",
+      "meaning": "sweet",
+      "strokeCount": 5
+    },
+    {
+      "number": 100,
+      "character": "生",
+      "hanViet": "sinh",
+      "meaning": "life",
+      "strokeCount": 5
+    },
+    {
+      "number": 101,
+      "character": "用",
+      "hanViet": "dụng",
+      "meaning": "use",
+      "strokeCount": 5
+    },
+    {
+      "number": 102,
+      "character": "田",
+      "hanViet": "điền",
+      "meaning": "field",
+      "strokeCount": 5
+    },
+    {
+      "number": 103,
+      "character": "疋",
+      "hanViet": "thất",
+      "meaning": "bolt of cloth",
+      "strokeCount": 5
+    },
+    {
+      "number": 104,
+      "character": "疒",
+      "hanViet": "nạch",
+      "meaning": "sickness",
+      "strokeCount": 5
+    },
+    {
+      "number": 105,
+      "character": "癶",
+      "hanViet": "bát",
+      "meaning": "footsteps",
+      "strokeCount": 5
+    },
+    {
+      "number": 106,
+      "character": "白",
+      "hanViet": "bạch",
+      "meaning": "white",
+      "strokeCount": 5
+    },
+    {
+      "number": 107,
+      "character": "皮",
+      "hanViet": "bì",
+      "meaning": "skin",
+      "strokeCount": 5
+    },
+    {
+      "number": 108,
+      "character": "皿",
+      "hanViet": "mãnh",
+      "meaning": "dish",
+      "strokeCount": 5
+    },
+    {
+      "number": 109,
+      "character": "目",
+      "hanViet": "mục",
+      "meaning": "eye",
+      "strokeCount": 5
+    },
+    {
+      "number": 110,
+      "character": "矛",
+      "hanViet": "mâu",
+      "meaning": "spear",
+      "strokeCount": 5
+    },
+    {
+      "number": 111,
+      "character": "矢",
+      "hanViet": "thỉ",
+      "meaning": "arrow",
+      "strokeCount": 5
+    },
+    {
+      "number": 112,
+      "character": "石",
+      "hanViet": "thạch",
+      "meaning": "stone",
+      "strokeCount": 5
+    },
+    {
+      "number": 113,
+      "character": "示",
+      "hanViet": "thị",
+      "meaning": "spirit",
+      "strokeCount": 5
+    },
+    {
+      "number": 114,
+      "character": "禸",
+      "hanViet": "nhựu",
+      "meaning": "track",
+      "strokeCount": 5
+    },
+    {
+      "number": 115,
+      "character": "禾",
+      "hanViet": "hòa",
+      "meaning": "grain",
+      "strokeCount": 5
+    },
+    {
+      "number": 116,
+      "character": "穴",
+      "hanViet": "huyệt",
+      "meaning": "cave",
+      "strokeCount": 5
+    },
+    {
+      "number": 117,
+      "character": "立",
+      "hanViet": "lập",
+      "meaning": "stand",
+      "strokeCount": 5
+    },
+    {
+      "number": 118,
+      "character": "竹",
+      "hanViet": "trúc",
+      "meaning": "bamboo",
+      "strokeCount": 6
+    },
+    {
+      "number": 119,
+      "character": "米",
+      "hanViet": "mễ",
+      "meaning": "rice",
+      "strokeCount": 6
+    },
+    {
+      "number": 120,
+      "character": "糸",
+      "hanViet": "mịch",
+      "meaning": "silk",
+      "strokeCount": 6
+    },
+    {
+      "number": 121,
+      "character": "缶",
+      "hanViet": "phũ",
+      "meaning": "jar",
+      "strokeCount": 6
+    },
+    {
+      "number": 122,
+      "character": "网",
+      "hanViet": "võng",
+      "meaning": "net",
+      "strokeCount": 6
+    },
+    {
+      "number": 123,
+      "character": "羊",
+      "hanViet": "dương",
+      "meaning": "sheep",
+      "strokeCount": 6
+    },
+    {
+      "number": 124,
+      "character": "羽",
+      "hanViet": "vũ",
+      "meaning": "feather",
+      "strokeCount": 6
+    },
+    {
+      "number": 125,
+      "character": "老",
+      "hanViet": "lão",
+      "meaning": "old",
+      "strokeCount": 6
+    },
+    {
+      "number": 126,
+      "character": "而",
+      "hanViet": "nhi",
+      "meaning": "and",
+      "strokeCount": 6
+    },
+    {
+      "number": 127,
+      "character": "耒",
+      "hanViet": "lỗi",
+      "meaning": "plow",
+      "strokeCount": 6
+    },
+    {
+      "number": 128,
+      "character": "耳",
+      "hanViet": "nhĩ",
+      "meaning": "ear",
+      "strokeCount": 6
+    },
+    {
+      "number": 129,
+      "character": "聿",
+      "hanViet": "duật",
+      "meaning": "brush",
+      "strokeCount": 6
+    },
+    {
+      "number": 130,
+      "character": "肉",
+      "hanViet": "nhục",
+      "meaning": "meat",
+      "strokeCount": 6
+    },
+    {
+      "number": 131,
+      "character": "臣",
+      "hanViet": "thần",
+      "meaning": "minister",
+      "strokeCount": 6
+    },
+    {
+      "number": 132,
+      "character": "自",
+      "hanViet": "tự",
+      "meaning": "self",
+      "strokeCount": 6
+    },
+    {
+      "number": 133,
+      "character": "至",
+      "hanViet": "chí",
+      "meaning": "arrive",
+      "strokeCount": 6
+    },
+    {
+      "number": 134,
+      "character": "臼",
+      "hanViet": "cữu",
+      "meaning": "mortar",
+      "strokeCount": 6
+    },
+    {
+      "number": 135,
+      "character": "舌",
+      "hanViet": "thiệt",
+      "meaning": "tongue",
+      "strokeCount": 6
+    },
+    {
+      "number": 136,
+      "character": "舛",
+      "hanViet": "suyễn",
+      "meaning": "oppose",
+      "strokeCount": 6
+    },
+    {
+      "number": 137,
+      "character": "舟",
+      "hanViet": "chu",
+      "meaning": "boat",
+      "strokeCount": 6
+    },
+    {
+      "number": 138,
+      "character": "艮",
+      "hanViet": "cấn",
+      "meaning": "stopping",
+      "strokeCount": 6
+    },
+    {
+      "number": 139,
+      "character": "色",
+      "hanViet": "sắc",
+      "meaning": "color",
+      "strokeCount": 6
+    },
+    {
+      "number": 140,
+      "character": "艸",
+      "hanViet": "thảo",
+      "meaning": "grass",
+      "strokeCount": 6
+    },
+    {
+      "number": 141,
+      "character": "虍",
+      "hanViet": "hô",
+      "meaning": "tiger",
+      "strokeCount": 6
+    },
+    {
+      "number": 142,
+      "character": "虫",
+      "hanViet": "trùng",
+      "meaning": "insect",
+      "strokeCount": 6
+    },
+    {
+      "number": 143,
+      "character": "血",
+      "hanViet": "huyết",
+      "meaning": "blood",
+      "strokeCount": 6
+    },
+    {
+      "number": 144,
+      "character": "行",
+      "hanViet": "hành",
+      "meaning": "walk enclosure",
+      "strokeCount": 6
+    },
+    {
+      "number": 145,
+      "character": "衣",
+      "hanViet": "y",
+      "meaning": "clothes",
+      "strokeCount": 6
+    },
+    {
+      "number": 146,
+      "character": "襾",
+      "hanViet": "á",
+      "meaning": "cover",
+      "strokeCount": 6
+    },
+    {
+      "number": 147,
+      "character": "見",
+      "hanViet": "kiến",
+      "meaning": "see",
+      "strokeCount": 7
+    },
+    {
+      "number": 148,
+      "character": "角",
+      "hanViet": "giác",
+      "meaning": "horn",
+      "strokeCount": 7
+    },
+    {
+      "number": 149,
+      "character": "言",
+      "hanViet": "ngôn",
+      "meaning": "speech",
+      "strokeCount": 7
+    },
+    {
+      "number": 150,
+      "character": "谷",
+      "hanViet": "cốc",
+      "meaning": "valley",
+      "strokeCount": 7
+    },
+    {
+      "number": 151,
+      "character": "豆",
+      "hanViet": "đậu",
+      "meaning": "bean",
+      "strokeCount": 7
+    },
+    {
+      "number": 152,
+      "character": "豕",
+      "hanViet": "thỉ",
+      "meaning": "pig",
+      "strokeCount": 7
+    },
+    {
+      "number": 153,
+      "character": "豸",
+      "hanViet": "trĩ",
+      "meaning": "badger",
+      "strokeCount": 7
+    },
+    {
+      "number": 154,
+      "character": "貝",
+      "hanViet": "bối",
+      "meaning": "shell",
+      "strokeCount": 7
+    },
+    {
+      "number": 155,
+      "character": "赤",
+      "hanViet": "xích",
+      "meaning": "red",
+      "strokeCount": 7
+    },
+    {
+      "number": 156,
+      "character": "走",
+      "hanViet": "tẩu",
+      "meaning": "run",
+      "strokeCount": 7
+    },
+    {
+      "number": 157,
+      "character": "足",
+      "hanViet": "túc",
+      "meaning": "foot",
+      "strokeCount": 7
+    },
+    {
+      "number": 158,
+      "character": "身",
+      "hanViet": "thân",
+      "meaning": "body",
+      "strokeCount": 7
+    },
+    {
+      "number": 159,
+      "character": "車",
+      "hanViet": "xa",
+      "meaning": "cart",
+      "strokeCount": 7
+    },
+    {
+      "number": 160,
+      "character": "辛",
+      "hanViet": "tân",
+      "meaning": "bitter",
+      "strokeCount": 7
+    },
+    {
+      "number": 161,
+      "character": "辰",
+      "hanViet": "thần",
+      "meaning": "morning",
+      "strokeCount": 7
+    },
+    {
+      "number": 162,
+      "character": "辵",
+      "hanViet": "sước",
+      "meaning": "walk",
+      "strokeCount": 7
+    },
+    {
+      "number": 163,
+      "character": "邑",
+      "hanViet": "ấp",
+      "meaning": "city",
+      "strokeCount": 7
+    },
+    {
+      "number": 164,
+      "character": "酉",
+      "hanViet": "dậu",
+      "meaning": "wine",
+      "strokeCount": 7
+    },
+    {
+      "number": 165,
+      "character": "釆",
+      "hanViet": "biện",
+      "meaning": "distinguish",
+      "strokeCount": 7
+    },
+    {
+      "number": 166,
+      "character": "里",
+      "hanViet": "lý",
+      "meaning": "village",
+      "strokeCount": 7
+    },
+    {
+      "number": 167,
+      "character": "金",
+      "hanViet": "kim",
+      "meaning": "gold",
+      "strokeCount": 7
+    },
+    {
+      "number": 168,
+      "character": "長",
+      "hanViet": "trường",
+      "meaning": "long",
+      "strokeCount": 7
+    },
+    {
+      "number": 169,
+      "character": "門",
+      "hanViet": "môn",
+      "meaning": "gate",
+      "strokeCount": 7
+    },
+    {
+      "number": 170,
+      "character": "阜",
+      "hanViet": "phụ",
+      "meaning": "mound",
+      "strokeCount": 7
+    },
+    {
+      "number": 171,
+      "character": "隶",
+      "hanViet": "đãi",
+      "meaning": "slave",
+      "strokeCount": 8
+    },
+    {
+      "number": 172,
+      "character": "隹",
+      "hanViet": "chuy",
+      "meaning": "short-tailed bird",
+      "strokeCount": 8
+    },
+    {
+      "number": 173,
+      "character": "雨",
+      "hanViet": "vũ",
+      "meaning": "rain",
+      "strokeCount": 8
+    },
+    {
+      "number": 174,
+      "character": "青",
+      "hanViet": "thanh",
+      "meaning": "blue/green",
+      "strokeCount": 8
+    },
+    {
+      "number": 175,
+      "character": "非",
+      "hanViet": "phi",
+      "meaning": "wrong",
+      "strokeCount": 8
+    },
+    {
+      "number": 176,
+      "character": "面",
+      "hanViet": "diện",
+      "meaning": "face",
+      "strokeCount": 8
+    },
+    {
+      "number": 177,
+      "character": "革",
+      "hanViet": "cách",
+      "meaning": "leather",
+      "strokeCount": 8
+    },
+    {
+      "number": 178,
+      "character": "韋",
+      "hanViet": "vi",
+      "meaning": "tanned leather",
+      "strokeCount": 8
+    },
+    {
+      "number": 179,
+      "character": "韭",
+      "hanViet": "cửu",
+      "meaning": "leek",
+      "strokeCount": 8
+    },
+    {
+      "number": 180,
+      "character": "音",
+      "hanViet": "âm",
+      "meaning": "sound",
+      "strokeCount": 8
+    },
+    {
+      "number": 181,
+      "character": "頁",
+      "hanViet": "hiệt",
+      "meaning": "leaf",
+      "strokeCount": 8
+    },
+    {
+      "number": 182,
+      "character": "風",
+      "hanViet": "phong",
+      "meaning": "wind",
+      "strokeCount": 8
+    },
+    {
+      "number": 183,
+      "character": "飛",
+      "hanViet": "phi",
+      "meaning": "fly",
+      "strokeCount": 9
+    },
+    {
+      "number": 184,
+      "character": "食",
+      "hanViet": "thực",
+      "meaning": "eat",
+      "strokeCount": 9
+    },
+    {
+      "number": 185,
+      "character": "首",
+      "hanViet": "thủ",
+      "meaning": "head",
+      "strokeCount": 9
+    },
+    {
+      "number": 186,
+      "character": "香",
+      "hanViet": "hương",
+      "meaning": "fragrant",
+      "strokeCount": 9
+    },
+    {
+      "number": 187,
+      "character": "馬",
+      "hanViet": "mã",
+      "meaning": "horse",
+      "strokeCount": 9
+    },
+    {
+      "number": 188,
+      "character": "骨",
+      "hanViet": "cốt",
+      "meaning": "bone",
+      "strokeCount": 9
+    },
+    {
+      "number": 189,
+      "character": "高",
+      "hanViet": "cao",
+      "meaning": "tall",
+      "strokeCount": 9
+    },
+    {
+      "number": 190,
+      "character": "髟",
+      "hanViet": "tiêu",
+      "meaning": "long hair",
+      "strokeCount": 9
+    },
+    {
+      "number": 191,
+      "character": "鬥",
+      "hanViet": "đấu",
+      "meaning": "fight",
+      "strokeCount": 9
+    },
+    {
+      "number": 192,
+      "character": "鬯",
+      "hanViet": "sưởng",
+      "meaning": "sacrificial wine",
+      "strokeCount": 9
+    },
+    {
+      "number": 193,
+      "character": "鬲",
+      "hanViet": "cách",
+      "meaning": "cauldron",
+      "strokeCount": 9
+    },
+    {
+      "number": 194,
+      "character": "鬼",
+      "hanViet": "quỷ",
+      "meaning": "ghost",
+      "strokeCount": 9
+    },
+    {
+      "number": 195,
+      "character": "魚",
+      "hanViet": "ngư",
+      "meaning": "fish",
+      "strokeCount": 10
+    },
+    {
+      "number": 196,
+      "character": "鳥",
+      "hanViet": "điểu",
+      "meaning": "bird",
+      "strokeCount": 10
+    },
+    {
+      "number": 197,
+      "character": "鹵",
+      "hanViet": "lỗ",
+      "meaning": "salt",
+      "strokeCount": 10
+    },
+    {
+      "number": 198,
+      "character": "鹿",
+      "hanViet": "lộc",
+      "meaning": "deer",
+      "strokeCount": 10
+    },
+    {
+      "number": 199,
+      "character": "麥",
+      "hanViet": "mạch",
+      "meaning": "wheat",
+      "strokeCount": 10
+    },
+    {
+      "number": 200,
+      "character": "麻",
+      "hanViet": "ma",
+      "meaning": "hemp",
+      "strokeCount": 10
+    },
+    {
+      "number": 201,
+      "character": "黃",
+      "hanViet": "hoàng",
+      "meaning": "yellow",
+      "strokeCount": 11
+    },
+    {
+      "number": 202,
+      "character": "黍",
+      "hanViet": "thử",
+      "meaning": "millet",
+      "strokeCount": 11
+    },
+    {
+      "number": 203,
+      "character": "黑",
+      "hanViet": "hắc",
+      "meaning": "black",
+      "strokeCount": 11
+    },
+    {
+      "number": 204,
+      "character": "黹",
+      "hanViet": "chỉ",
+      "meaning": "embroidery",
+      "strokeCount": 11
+    },
+    {
+      "number": 205,
+      "character": "黽",
+      "hanViet": "mãnh",
+      "meaning": "frog",
+      "strokeCount": 12
+    },
+    {
+      "number": 206,
+      "character": "鼎",
+      "hanViet": "đỉnh",
+      "meaning": "tripod",
+      "strokeCount": 12
+    },
+    {
+      "number": 207,
+      "character": "鼓",
+      "hanViet": "cổ",
+      "meaning": "drum",
+      "strokeCount": 12
+    },
+    {
+      "number": 208,
+      "character": "鼠",
+      "hanViet": "thử",
+      "meaning": "rat",
+      "strokeCount": 13
+    },
+    {
+      "number": 209,
+      "character": "鼻",
+      "hanViet": "tị",
+      "meaning": "nose",
+      "strokeCount": 13
+    },
+    {
+      "number": 210,
+      "character": "齊",
+      "hanViet": "tề",
+      "meaning": "even",
+      "strokeCount": 13
+    },
+    {
+      "number": 211,
+      "character": "齒",
+      "hanViet": "xỉ",
+      "meaning": "tooth",
+      "strokeCount": 14
+    },
+    {
+      "number": 212,
+      "character": "龍",
+      "hanViet": "long",
+      "meaning": "dragon",
+      "strokeCount": 14
+    },
+    {
+      "number": 213,
+      "character": "龜",
+      "hanViet": "quy",
+      "meaning": "turtle",
+      "strokeCount": 15
+    },
+    {
+      "number": 214,
+      "character": "龠",
+      "hanViet": "dược",
+      "meaning": "flute",
+      "strokeCount": 16
+    }
+  ],
+  "kanji": [
+    {
+      "character": "日",
+      "onyomi": "ニチ、ジツ",
+      "kunyomi": "ひ、-び、-か",
+      "meaning": "day; sun; Japan; counter for days",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 72,
+      "hanViet": [
+        "nhật"
+      ]
+    },
+    {
+      "character": "一",
+      "onyomi": "イチ、イツ",
+      "kunyomi": "ひと-、ひと.つ",
+      "meaning": "one; one radical (no.1)",
+      "jlptLevel": "N5",
+      "strokeCount": 1,
+      "radicalNumber": 1,
+      "hanViet": [
+        "nhất"
+      ]
+    },
+    {
+      "character": "国",
+      "onyomi": "コク",
+      "kunyomi": "くに",
+      "meaning": "country",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 31,
+      "hanViet": [
+        "quốc"
+      ]
+    },
+    {
+      "character": "人",
+      "onyomi": "ジン、ニン",
+      "kunyomi": "ひと、-り、-と",
+      "meaning": "person",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 9,
+      "hanViet": [
+        "nhân"
+      ]
+    },
+    {
+      "character": "年",
+      "onyomi": "ネン",
+      "kunyomi": "とし",
+      "meaning": "year; counter for years",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 51,
+      "hanViet": [
+        "nên"
+      ]
+    },
+    {
+      "character": "大",
+      "onyomi": "ダイ、タイ",
+      "kunyomi": "おお-、おお.きい、-おお.いに",
+      "meaning": "large; big",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 37,
+      "hanViet": [
+        "đại"
+      ]
+    },
+    {
+      "character": "十",
+      "onyomi": "ジュウ、ジッ、ジュッ",
+      "kunyomi": "とお、と、そ",
+      "meaning": "ten",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 24,
+      "hanViet": [
+        "thập"
+      ]
+    },
+    {
+      "character": "二",
+      "onyomi": "ニ、ジ",
+      "kunyomi": "ふた、ふた.つ、ふたたび",
+      "meaning": "two; two radical (no. 7)",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 7,
+      "hanViet": [
+        "nhì"
+      ]
+    },
+    {
+      "character": "本",
+      "onyomi": "ホン",
+      "kunyomi": "もと",
+      "meaning": "book; present; main; origin; true; real; counter for long cylindrical things",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 75,
+      "hanViet": [
+        "bản"
+      ]
+    },
+    {
+      "character": "中",
+      "onyomi": "チュウ",
+      "kunyomi": "なか、うち、あた.る",
+      "meaning": "in; inside; middle; mean; center",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 2,
+      "hanViet": [
+        "trung"
+      ]
+    },
+    {
+      "character": "長",
+      "onyomi": "チョウ",
+      "kunyomi": "なが.い、おさ",
+      "meaning": "long; leader; superior; senior",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 168,
+      "hanViet": [
+        "trường"
+      ]
+    },
+    {
+      "character": "出",
+      "onyomi": "シュツ、スイ",
+      "kunyomi": "で.る、-で、だ.す、-だ.す、い.でる、い.だす",
+      "meaning": "exit; leave; go out; come out; put out; protrude",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 17,
+      "hanViet": [
+        "xuất"
+      ]
+    },
+    {
+      "character": "三",
+      "onyomi": "サン、ゾウ",
+      "kunyomi": "み、み.つ、みっ.つ",
+      "meaning": "three",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 1,
+      "hanViet": [
+        "tam"
+      ]
+    },
+    {
+      "character": "時",
+      "onyomi": "ジ",
+      "kunyomi": "とき、-どき",
+      "meaning": "time; hour",
+      "jlptLevel": "N5",
+      "strokeCount": 10,
+      "radicalNumber": 72,
+      "hanViet": [
+        "thì"
+      ]
+    },
+    {
+      "character": "行",
+      "onyomi": "コウ、ギョウ、アン",
+      "kunyomi": "い.く、ゆ.く、-ゆ.き、-ゆき、-い.き、-いき、おこな.う、おこ.なう",
+      "meaning": "going; journey; carry out; conduct; act; line; row; bank",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 144,
+      "hanViet": [
+        "hàng"
+      ]
+    },
+    {
+      "character": "見",
+      "onyomi": "ケン",
+      "kunyomi": "み.る、み.える、み.せる",
+      "meaning": "see; hopes; chances; idea; opinion; look at; visible",
+      "jlptLevel": "N5",
+      "strokeCount": 7,
+      "radicalNumber": 147,
+      "hanViet": [
+        "kiến"
+      ]
+    },
+    {
+      "character": "月",
+      "onyomi": "ゲツ、ガツ",
+      "kunyomi": "つき",
+      "meaning": "month; moon",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 74,
+      "hanViet": [
+        "nguyệt"
+      ]
+    },
+    {
+      "character": "後",
+      "onyomi": "ゴ、コウ",
+      "kunyomi": "のち、うし.ろ、うしろ、あと、おく.れる",
+      "meaning": "behind; back; later",
+      "jlptLevel": "N5",
+      "strokeCount": 9,
+      "radicalNumber": 60,
+      "hanViet": [
+        "hậu"
+      ]
+    },
+    {
+      "character": "前",
+      "onyomi": "ゼン",
+      "kunyomi": "まえ、-まえ",
+      "meaning": "in front; before",
+      "jlptLevel": "N5",
+      "strokeCount": 9,
+      "radicalNumber": 18,
+      "hanViet": [
+        "tiền"
+      ]
+    },
+    {
+      "character": "生",
+      "onyomi": "セイ、ショウ",
+      "kunyomi": "い.きる、い.かす、い.ける、う.まれる、うま.れる、う.まれ、うまれ、う.む、お.う、は.える、は.やす、き、なま、なま-、な.る、な.す、む.す、-う",
+      "meaning": "life; genuine; birth",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 100,
+      "hanViet": [
+        "sinh"
+      ]
+    },
+    {
+      "character": "五",
+      "onyomi": "ゴ",
+      "kunyomi": "いつ、いつ.つ",
+      "meaning": "five",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 7,
+      "hanViet": [
+        "ngũ"
+      ]
+    },
+    {
+      "character": "間",
+      "onyomi": "カン、ケン",
+      "kunyomi": "あいだ、ま、あい",
+      "meaning": "interval; space",
+      "jlptLevel": "N5",
+      "strokeCount": 12,
+      "radicalNumber": 169,
+      "hanViet": [
+        "gian"
+      ]
+    },
+    {
+      "character": "上",
+      "onyomi": "ジョウ、ショウ、シャン",
+      "kunyomi": "うえ、-うえ、うわ-、かみ、あ.げる、-あ.げる、あ.がる、-あ.がる、あ.がり、-あ.がり、のぼ.る、のぼ.り、のぼ.せる、のぼ.す、たてまつ.る",
+      "meaning": "above; up",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 1,
+      "hanViet": [
+        "thượng"
+      ]
+    },
+    {
+      "character": "東",
+      "onyomi": "トウ",
+      "kunyomi": "ひがし",
+      "meaning": "east",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 75,
+      "hanViet": [
+        "đang",
+        "đông"
+      ]
+    },
+    {
+      "character": "四",
+      "onyomi": "シ",
+      "kunyomi": "よ、よ.つ、よっ.つ、よん",
+      "meaning": "four",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 31,
+      "hanViet": [
+        "tứ"
+      ]
+    },
+    {
+      "character": "今",
+      "onyomi": "コン、キン",
+      "kunyomi": "いま",
+      "meaning": "now",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 9,
+      "hanViet": [
+        "kim"
+      ]
+    },
+    {
+      "character": "金",
+      "onyomi": "キン、コン、ゴン",
+      "kunyomi": "かね、かな-、-がね",
+      "meaning": "gold",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 167,
+      "hanViet": [
+        "kim"
+      ]
+    },
+    {
+      "character": "九",
+      "onyomi": "キュウ、ク",
+      "kunyomi": "ここの、ここの.つ",
+      "meaning": "nine",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 5,
+      "hanViet": [
+        "cửu"
+      ]
+    },
+    {
+      "character": "入",
+      "onyomi": "ニュウ、ジュ",
+      "kunyomi": "い.る、-い.る、-い.り、い.れる、-い.れ、はい.る",
+      "meaning": "enter; insert",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 11,
+      "hanViet": [
+        "nhập"
+      ]
+    },
+    {
+      "character": "学",
+      "onyomi": "ガク",
+      "kunyomi": "まな.ぶ",
+      "meaning": "study; learning; science",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 39,
+      "hanViet": [
+        "học"
+      ]
+    },
+    {
+      "character": "高",
+      "onyomi": "コウ",
+      "kunyomi": "たか.い、たか、-だか、たか.まる、たか.める",
+      "meaning": "tall; high; expensive",
+      "jlptLevel": "N5",
+      "strokeCount": 10,
+      "radicalNumber": 189,
+      "hanViet": [
+        "cao"
+      ]
+    },
+    {
+      "character": "円",
+      "onyomi": "エン",
+      "kunyomi": "まる.い、まる、まど、まど.か、まろ.やか",
+      "meaning": "circle; yen; round",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 13,
+      "hanViet": [
+        "viên"
+      ]
+    },
+    {
+      "character": "子",
+      "onyomi": "シ、ス、ツ",
+      "kunyomi": "こ、-こ、ね",
+      "meaning": "child; sign of the rat; 11PM-1AM; first sign of Chinese zodiac",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 39,
+      "hanViet": [
+        "tí"
+      ]
+    },
+    {
+      "character": "外",
+      "onyomi": "ガイ、ゲ",
+      "kunyomi": "そと、ほか、はず.す、はず.れる、と-",
+      "meaning": "outside",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 36,
+      "hanViet": [
+        "ngoại"
+      ]
+    },
+    {
+      "character": "八",
+      "onyomi": "ハチ、ハツ",
+      "kunyomi": "や、や.つ、やっ.つ、よう",
+      "meaning": "eight; eight radical (no. 12)",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 12,
+      "hanViet": [
+        "bát"
+      ]
+    },
+    {
+      "character": "六",
+      "onyomi": "ロク、リク",
+      "kunyomi": "む、む.つ、むっ.つ、むい",
+      "meaning": "six",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 12,
+      "hanViet": [
+        "lục"
+      ]
+    },
+    {
+      "character": "下",
+      "onyomi": "カ、ゲ",
+      "kunyomi": "した、しも、もと、さ.げる、さ.がる、くだ.る、くだ.り、くだ.す、-くだ.す、くだ.さる、お.ろす、お.りる",
+      "meaning": "below; down; descend; give; low; inferior",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 1,
+      "hanViet": [
+        "hạ"
+      ]
+    },
+    {
+      "character": "来",
+      "onyomi": "ライ、タイ",
+      "kunyomi": "く.る、きた.る、きた.す、き.たす、き.たる、き、こ",
+      "meaning": "come; due; next; cause; become",
+      "jlptLevel": "N5",
+      "strokeCount": 7,
+      "radicalNumber": 75,
+      "hanViet": [
+        "lai"
+      ]
+    },
+    {
+      "character": "気",
+      "onyomi": "キ、ケ",
+      "kunyomi": "いき、き",
+      "meaning": "spirit; mind; air; atmosphere; mood",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 84,
+      "hanViet": [
+        "khí"
+      ]
+    },
+    {
+      "character": "小",
+      "onyomi": "ショウ",
+      "kunyomi": "ちい.さい、こ-、お-、さ-",
+      "meaning": "little; small",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 42,
+      "hanViet": [
+        "tiểu"
+      ]
+    },
+    {
+      "character": "七",
+      "onyomi": "シチ",
+      "kunyomi": "なな、なな.つ、なの",
+      "meaning": "seven",
+      "jlptLevel": "N5",
+      "strokeCount": 2,
+      "radicalNumber": 1,
+      "hanViet": [
+        "thất"
+      ]
+    },
+    {
+      "character": "山",
+      "onyomi": "サン、セン",
+      "kunyomi": "やま",
+      "meaning": "mountain",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 46,
+      "hanViet": [
+        "sơn"
+      ]
+    },
+    {
+      "character": "話",
+      "onyomi": "ワ",
+      "kunyomi": "はな.す、はなし",
+      "meaning": "tale; talk",
+      "jlptLevel": "N5",
+      "strokeCount": 13,
+      "radicalNumber": 149,
+      "hanViet": [
+        "thoại"
+      ]
+    },
+    {
+      "character": "女",
+      "onyomi": "ジョ、ニョ、ニョウ",
+      "kunyomi": "おんな、め",
+      "meaning": "woman; female",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 38,
+      "hanViet": [
+        "nữa"
+      ]
+    },
+    {
+      "character": "北",
+      "onyomi": "ホク",
+      "kunyomi": "きた",
+      "meaning": "north",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 21,
+      "hanViet": [
+        "bắc"
+      ]
+    },
+    {
+      "character": "午",
+      "onyomi": "ゴ",
+      "kunyomi": "うま",
+      "meaning": "noon; sign of the horse; 11AM-1PM; seventh sign of Chinese zodiac",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 24,
+      "hanViet": [
+        "ngọ"
+      ]
+    },
+    {
+      "character": "百",
+      "onyomi": "ヒャク、ビャク",
+      "kunyomi": "もも",
+      "meaning": "hundred",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 106,
+      "hanViet": [
+        "bá",
+        "bách",
+        "trăm"
+      ]
+    },
+    {
+      "character": "書",
+      "onyomi": "ショ",
+      "kunyomi": "か.く、-が.き、-がき",
+      "meaning": "write",
+      "jlptLevel": "N5",
+      "strokeCount": 10,
+      "radicalNumber": 73,
+      "hanViet": [
+        "thư"
+      ]
+    },
+    {
+      "character": "先",
+      "onyomi": "セン",
+      "kunyomi": "さき、ま.ず",
+      "meaning": "before; ahead; previous; future; precedence",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 10,
+      "hanViet": [
+        "tiên"
+      ]
+    },
+    {
+      "character": "名",
+      "onyomi": "メイ、ミョウ",
+      "kunyomi": "な、-な",
+      "meaning": "name; noted; distinguished; reputation",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 30,
+      "hanViet": [
+        "danh"
+      ]
+    },
+    {
+      "character": "川",
+      "onyomi": "セン",
+      "kunyomi": "かわ",
+      "meaning": "stream; river; river or three-stroke river radical (no. 47)",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 47,
+      "hanViet": [
+        "xuyên"
+      ]
+    },
+    {
+      "character": "千",
+      "onyomi": "セン",
+      "kunyomi": "ち",
+      "meaning": "thousand",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 24,
+      "hanViet": [
+        "thiên"
+      ]
+    },
+    {
+      "character": "水",
+      "onyomi": "スイ",
+      "kunyomi": "みず、みず-",
+      "meaning": "water",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 85,
+      "hanViet": [
+        "thuỷ"
+      ]
+    },
+    {
+      "character": "半",
+      "onyomi": "ハン",
+      "kunyomi": "なか.ば",
+      "meaning": "half; middle; odd number; semi-; part-",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 24,
+      "hanViet": [
+        "bán"
+      ]
+    },
+    {
+      "character": "男",
+      "onyomi": "ダン、ナン",
+      "kunyomi": "おとこ、お",
+      "meaning": "male",
+      "jlptLevel": "N5",
+      "strokeCount": 7,
+      "radicalNumber": 102,
+      "hanViet": [
+        "nam"
+      ]
+    },
+    {
+      "character": "西",
+      "onyomi": "セイ、サイ、ス",
+      "kunyomi": "にし",
+      "meaning": "west; Spain",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 146,
+      "hanViet": [
+        "tây"
+      ]
+    },
+    {
+      "character": "電",
+      "onyomi": "デン",
+      "kunyomi": null,
+      "meaning": "electricity",
+      "jlptLevel": "N5",
+      "strokeCount": 13,
+      "radicalNumber": 173,
+      "hanViet": [
+        "điện"
+      ]
+    },
+    {
+      "character": "校",
+      "onyomi": "コウ、キョウ",
+      "kunyomi": null,
+      "meaning": "exam; school; printing; proof; correction",
+      "jlptLevel": "N5",
+      "strokeCount": 10,
+      "radicalNumber": 75,
+      "hanViet": [
+        "chò",
+        "giâu",
+        "hiệu"
+      ]
+    },
+    {
+      "character": "語",
+      "onyomi": "ゴ",
+      "kunyomi": "かた.る、かた.らう",
+      "meaning": "word; speech; language",
+      "jlptLevel": "N5",
+      "strokeCount": 14,
+      "radicalNumber": 149,
+      "hanViet": [
+        "ngữ"
+      ]
+    },
+    {
+      "character": "土",
+      "onyomi": "ド、ト",
+      "kunyomi": "つち",
+      "meaning": "soil; earth; ground; Turkey",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 32,
+      "hanViet": [
+        "thổ"
+      ]
+    },
+    {
+      "character": "木",
+      "onyomi": "ボク、モク",
+      "kunyomi": "き、こ-",
+      "meaning": "tree; wood",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 75,
+      "hanViet": [
+        "mộc"
+      ]
+    },
+    {
+      "character": "聞",
+      "onyomi": "ブン、モン",
+      "kunyomi": "き.く、き.こえる",
+      "meaning": "hear; ask; listen",
+      "jlptLevel": "N5",
+      "strokeCount": 14,
+      "radicalNumber": 128,
+      "hanViet": [
+        "văn"
+      ]
+    },
+    {
+      "character": "食",
+      "onyomi": "ショク、ジキ",
+      "kunyomi": "く.う、く.らう、た.べる、は.む",
+      "meaning": "eat; food",
+      "jlptLevel": "N5",
+      "strokeCount": 9,
+      "radicalNumber": 184,
+      "hanViet": [
+        "thực",
+        "tự"
+      ]
+    },
+    {
+      "character": "車",
+      "onyomi": "シャ",
+      "kunyomi": "くるま",
+      "meaning": "car",
+      "jlptLevel": "N5",
+      "strokeCount": 7,
+      "radicalNumber": 159,
+      "hanViet": [
+        "xa"
+      ]
+    },
+    {
+      "character": "何",
+      "onyomi": "カ",
+      "kunyomi": "なに、なん、なに-、なん-",
+      "meaning": "what",
+      "jlptLevel": "N5",
+      "strokeCount": 7,
+      "radicalNumber": 9,
+      "hanViet": [
+        "hà"
+      ]
+    },
+    {
+      "character": "南",
+      "onyomi": "ナン、ナ",
+      "kunyomi": "みなみ",
+      "meaning": "south",
+      "jlptLevel": "N5",
+      "strokeCount": 9,
+      "radicalNumber": 24,
+      "hanViet": [
+        "nam"
+      ]
+    },
+    {
+      "character": "万",
+      "onyomi": "マン、バン",
+      "kunyomi": "よろず",
+      "meaning": "ten thousand; 10,000",
+      "jlptLevel": "N5",
+      "strokeCount": 3,
+      "radicalNumber": 1,
+      "hanViet": [
+        "vạn"
+      ]
+    },
+    {
+      "character": "毎",
+      "onyomi": "マイ",
+      "kunyomi": "ごと、-ごと.に",
+      "meaning": "every",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 80,
+      "hanViet": [
+        "mỗi"
+      ]
+    },
+    {
+      "character": "白",
+      "onyomi": "ハク、ビャク",
+      "kunyomi": "しろ、しら-、しろ.い",
+      "meaning": "white",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 106,
+      "hanViet": [
+        "bạch"
+      ]
+    },
+    {
+      "character": "天",
+      "onyomi": "テン",
+      "kunyomi": "あまつ、あめ、あま-",
+      "meaning": "heavens; sky; imperial",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 37,
+      "hanViet": [
+        "thiên"
+      ]
+    },
+    {
+      "character": "母",
+      "onyomi": "ボ",
+      "kunyomi": "はは、も",
+      "meaning": "mother",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 80,
+      "hanViet": [
+        "mẫu"
+      ]
+    },
+    {
+      "character": "火",
+      "onyomi": "カ",
+      "kunyomi": "ひ、-び、ほ-",
+      "meaning": "fire",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 86,
+      "hanViet": [
+        "hoả"
+      ]
+    },
+    {
+      "character": "右",
+      "onyomi": "ウ、ユウ",
+      "kunyomi": "みぎ",
+      "meaning": "right",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 30,
+      "hanViet": [
+        "hữu"
+      ]
+    },
+    {
+      "character": "読",
+      "onyomi": "ドク、トク、トウ",
+      "kunyomi": "よ.む、-よ.み",
+      "meaning": "read",
+      "jlptLevel": "N5",
+      "strokeCount": 14,
+      "radicalNumber": 149,
+      "hanViet": [
+        "độc",
+        "đậu"
+      ]
+    },
+    {
+      "character": "友",
+      "onyomi": "ユウ",
+      "kunyomi": "とも",
+      "meaning": "friend",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 29,
+      "hanViet": [
+        "hữu"
+      ]
+    },
+    {
+      "character": "左",
+      "onyomi": "サ、シャ",
+      "kunyomi": "ひだり",
+      "meaning": "left",
+      "jlptLevel": "N5",
+      "strokeCount": 5,
+      "radicalNumber": 48,
+      "hanViet": [
+        "tả"
+      ]
+    },
+    {
+      "character": "休",
+      "onyomi": "キュウ",
+      "kunyomi": "やす.む、やす.まる、やす.める",
+      "meaning": "rest; day off; retire; sleep",
+      "jlptLevel": "N5",
+      "strokeCount": 6,
+      "radicalNumber": 9,
+      "hanViet": [
+        "hưu"
+      ]
+    },
+    {
+      "character": "父",
+      "onyomi": "フ",
+      "kunyomi": "ちち",
+      "meaning": "father",
+      "jlptLevel": "N5",
+      "strokeCount": 4,
+      "radicalNumber": 88,
+      "hanViet": [
+        "phụ"
+      ]
+    },
+    {
+      "character": "雨",
+      "onyomi": "ウ",
+      "kunyomi": "あめ、あま-、-さめ",
+      "meaning": "rain",
+      "jlptLevel": "N5",
+      "strokeCount": 8,
+      "radicalNumber": 173,
+      "hanViet": [
+        "vũ"
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import com.example.starter_project_2025.base.annotation.*;
 import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
-import com.example.starter_project_2025.system.words.kanji.Kanji;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetail;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +42,7 @@ public class KanjiReading extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kanji_id", nullable = false)
-    Kanji kanji;
+    KanjiDetail kanji;
 
     @Column(name = "reading_type", nullable = false, length = 16)
     @FieldMeta(label = "Reading Type", type = "select", required = true, order = 1,

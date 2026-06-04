@@ -42,12 +42,10 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
-import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
-import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
-import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
-import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
+import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -102,12 +100,10 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
-  { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
-  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
   { path: "/kanji-study", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ", isModuleDriven: true },
   { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

@@ -8,14 +8,14 @@ import org.mapstruct.*;
 public interface KanjiDetailMapper {
 
     @IgnoreAuditFields
-    @Mapping(target = "kanji", ignore = true)
+    @Mapping(target = "radical", ignore = true)
     KanjiDetail toEntity(KanjiDetailDTO dto);
 
-    @Mapping(target = "kanjiId", source = "kanji.id")
+    @Mapping(target = "radicalId", source = "radical.id")
     KanjiDetailDTO toResponse(KanjiDetail entity);
 
     @IgnoreAuditFields
-    @Mapping(target = "kanji", ignore = true)
+    @Mapping(target = "radical", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void update(@MappingTarget KanjiDetail entity, KanjiDetailDTO dto);
 }

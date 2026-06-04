@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { kanjiDeckApi, kanjiDeckItemApi } from "@/api/features/kanji_study";
-import { kanjiApi } from "@/api/features/words/kanji.api";
-import type { KanjiDeckDTO, KanjiDeckItemDTO } from "@/types";
-import type { KanjiDTO } from "@/types";
+import { kanjiDeckApi, kanjiDeckItemApi, kanjiDetailApi } from "@/api/features/kanji_study";
+import type { KanjiDeckDTO, KanjiDeckItemDTO, KanjiDetailDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 /**
@@ -16,7 +14,7 @@ export default function KanjiDeckBrowsePage() {
 
   const [deck, setDeck] = useState<KanjiDeckDTO | null>(null);
   const [items, setItems] = useState<KanjiDeckItemDTO[]>([]);
-  const [kanjiMap, setKanjiMap] = useState<Record<number, KanjiDTO>>({});
+  const [kanjiMap, setKanjiMap] = useState<Record<number, KanjiDetailDTO>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,9 +37,9 @@ export default function KanjiDeckBrowsePage() {
         if (!cancelled) setItems(list);
 
         const ids = Array.from(new Set(list.map((i) => i.kanjiId).filter((x): x is number => x != null)));
-        const kanjis = await Promise.all(ids.map((id) => kanjiApi.getById(String(id)).catch(() => null)));
+        const kanjis = await Promise.all(ids.map((id) => kanjiDetailApi.getById(String(id)).catch(() => null)));
         if (!cancelled) {
-          const map: Record<number, KanjiDTO> = {};
+          const map: Record<number, KanjiDetailDTO> = {};
           ids.forEach((id, idx) => {
             const k = kanjis[idx];
             if (k) map[id] = k;

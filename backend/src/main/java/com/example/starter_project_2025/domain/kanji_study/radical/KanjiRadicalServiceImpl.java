@@ -1,12 +1,10 @@
-package com.example.starter_project_2025.domain.kanji_study.reading;
+package com.example.starter_project_2025.domain.kanji_study.radical;
 
 import com.example.starter_project_2025.base.audit.AuditLogService;
 import com.example.starter_project_2025.base.crud.spec.AutoSpecBuilder;
 import com.example.starter_project_2025.base.event.EntityEvent;
 import com.example.starter_project_2025.exception.BusinessValidationException;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
-import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetail;
-import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetailRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -17,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,108 +25,96 @@ import java.util.Map;
 @Transactional
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class KanjiReadingServiceImpl implements KanjiReadingService {
+public class KanjiRadicalServiceImpl implements KanjiRadicalService {
 
-    KanjiReadingRepository kanjiReadingRepository;
-    KanjiReadingMapper kanjiReadingMapper;
-    KanjiDetailRepository kanjiDetailRepository;
+    KanjiRadicalRepository kanjiRadicalRepository;
+    KanjiRadicalMapper kanjiRadicalMapper;
     AuditLogService auditLogService;
     ApplicationEventPublisher eventPublisher;
     AutoSpecBuilder autoSpecBuilder;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<KanjiReadingDTO> getAll(Pageable pageable, String search, KanjiReadingFilter filter) {
+    public Page<KanjiRadicalDTO> getAll(Pageable pageable, String search, KanjiRadicalFilter filter) {
 
-        Specification<KanjiReading> spec = Specification.where(notDeleted());
+        Specification<KanjiRadical> spec = Specification.where(notDeleted());
 
-        Specification<KanjiReading> filterSpec = autoSpecBuilder.build(filter);
+        Specification<KanjiRadical> filterSpec = autoSpecBuilder.build(filter);
         if (filterSpec != null) spec = spec.and(filterSpec);
 
-        Specification<KanjiReading> searchSpec = searchSpec(search);
+        Specification<KanjiRadical> searchSpec = searchSpec(search);
         if (searchSpec != null) spec = spec.and(searchSpec);
 
-        return kanjiReadingRepository.findAll(spec, pageable).map(kanjiReadingMapper::toResponse);
+        return kanjiRadicalRepository.findAll(spec, pageable).map(kanjiRadicalMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public KanjiReadingDTO getById(Long id) {
-        return kanjiReadingRepository.findById(id)
+    public KanjiRadicalDTO getById(Long id) {
+        return kanjiRadicalRepository.findById(id)
                 .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
-                .map(kanjiReadingMapper::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji reading not found"));
+                .map(kanjiRadicalMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji radical not found"));
     }
 
     @Override
-    public KanjiReadingDTO create(KanjiReadingDTO request) {
+    public KanjiRadicalDTO create(KanjiRadicalDTO request) {
 
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
-        if (kanji == null) {
-            addError(errors, "kanjiId", "Kanji not found");
+        if (request.getNumber() != null && kanjiRadicalRepository.existsByNumber(request.getNumber())) {
+            addError(errors, "number", "Radical number already exists");
             throw new BusinessValidationException(errors);
         }
 
-        if (kanjiReadingRepository.existsByKanjiIdAndReadingTypeAndValue(
-                request.getKanjiId(), request.getReadingType(), request.getValue())) {
-            addError(errors, "value", "This reading already exists for the kanji");
-            throw new BusinessValidationException(errors);
-        }
-
-        KanjiReading entity = kanjiReadingMapper.toEntity(request);
-        entity.setKanji(kanji);
+        KanjiRadical entity = kanjiRadicalMapper.toEntity(request);
         if (entity.getIsActive() == null) entity.setIsActive(true);
         if (entity.getIsDeleted() == null) entity.setIsDeleted(false);
 
-        KanjiReading saved = kanjiReadingRepository.save(entity);
+        KanjiRadical saved = kanjiRadicalRepository.save(entity);
 
         auditLogService.logCreate(saved);
         eventPublisher.publishEvent(new EntityEvent<>(saved, EntityEvent.EventType.CREATED));
 
-        return kanjiReadingMapper.toResponse(saved);
+        return kanjiRadicalMapper.toResponse(saved);
     }
 
     @Override
-    public KanjiReadingDTO update(Long id, KanjiReadingDTO request) {
+    public KanjiRadicalDTO update(Long id, KanjiRadicalDTO request) {
 
-        KanjiReading entity = kanjiReadingRepository.findById(id)
+        KanjiRadical entity = kanjiRadicalRepository.findById(id)
                 .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji reading not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji radical not found"));
 
-        KanjiReading beforeSnapshot = cloneForAudit(entity);
+        KanjiRadical beforeSnapshot = cloneForAudit(entity);
 
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        if (request.getKanjiId() != null && !request.getKanjiId().equals(entity.getKanji().getId())) {
-            KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
-            if (kanji == null) {
-                addError(errors, "kanjiId", "Kanji not found");
-                throw new BusinessValidationException(errors);
-            }
-            entity.setKanji(kanji);
+        if (request.getNumber() != null && !request.getNumber().equals(entity.getNumber())
+                && kanjiRadicalRepository.existsByNumberAndIdNot(request.getNumber(), entity.getId())) {
+            addError(errors, "number", "Radical number already exists");
+            throw new BusinessValidationException(errors);
         }
 
-        kanjiReadingMapper.update(entity, request);
+        kanjiRadicalMapper.update(entity, request);
 
-        KanjiReading saved = kanjiReadingRepository.save(entity);
+        KanjiRadical saved = kanjiRadicalRepository.save(entity);
 
         auditLogService.logUpdate(beforeSnapshot, saved);
         eventPublisher.publishEvent(new EntityEvent<>(saved, EntityEvent.EventType.UPDATED));
 
-        return kanjiReadingMapper.toResponse(saved);
+        return kanjiRadicalMapper.toResponse(saved);
     }
 
     @Override
     public void delete(Long id) {
 
-        KanjiReading entity = kanjiReadingRepository.findById(id)
+        KanjiRadical entity = kanjiRadicalRepository.findById(id)
                 .filter(r -> !Boolean.TRUE.equals(r.getIsDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji reading not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji radical not found"));
 
         entity.setIsDeleted(true);
-        KanjiReading saved = kanjiReadingRepository.save(entity);
+        KanjiRadical saved = kanjiRadicalRepository.save(entity);
 
         auditLogService.logDelete(saved);
         eventPublisher.publishEvent(new EntityEvent<>(saved, EntityEvent.EventType.DELETED));
@@ -135,27 +122,33 @@ public class KanjiReadingServiceImpl implements KanjiReadingService {
 
     /* ── helpers ─────────────────────────────────────────────────── */
 
-    private Specification<KanjiReading> notDeleted() {
+    private Specification<KanjiRadical> notDeleted() {
         return (root, query, cb) -> cb.equal(root.get("isDeleted"), false);
     }
 
-    private Specification<KanjiReading> searchSpec(String keyword) {
+    private Specification<KanjiRadical> searchSpec(String keyword) {
         if (keyword == null || keyword.isBlank()) return null;
         String like = "%" + keyword.toLowerCase() + "%";
-        return (root, query, cb) -> cb.like(cb.lower(root.get("value")), like);
+        return (root, query, cb) -> {
+            Predicate ch = cb.like(cb.lower(root.get("character")), like);
+            Predicate hv = cb.like(cb.lower(root.get("hanViet").as(String.class)), like);
+            Predicate mn = cb.like(cb.lower(root.get("meaning").as(String.class)), like);
+            return cb.or(ch, hv, mn);
+        };
     }
 
     private static void addError(Map<String, List<String>> errors, String field, String msg) {
         errors.computeIfAbsent(field, k -> new ArrayList<>()).add(msg);
     }
 
-    private KanjiReading cloneForAudit(KanjiReading src) {
-        KanjiReading copy = new KanjiReading();
+    private KanjiRadical cloneForAudit(KanjiRadical src) {
+        KanjiRadical copy = new KanjiRadical();
         copy.setId(src.getId());
-        copy.setKanji(src.getKanji());
-        copy.setReadingType(src.getReadingType());
-        copy.setValue(src.getValue());
-        copy.setPriority(src.getPriority());
+        copy.setNumber(src.getNumber());
+        copy.setCharacter(src.getCharacter());
+        copy.setHanViet(src.getHanViet());
+        copy.setMeaning(src.getMeaning());
+        copy.setStrokeCount(src.getStrokeCount());
         copy.setIsActive(src.getIsActive());
         copy.setIsDeleted(src.getIsDeleted());
         copy.setVersion(src.getVersion());
