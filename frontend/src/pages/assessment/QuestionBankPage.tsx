@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { QuestionTagManagerModal } from "./QuestionTagManagerModal";
 import { TagBadges } from "./QuestionTags";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
@@ -32,6 +33,7 @@ export default function QuestionBankPage() {
 
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDel, setConfirmDel] = useState<QuestionBankDTO | null>(null);
 
   /* ── Pagination (client-side) ── */
   const [page, setPage] = useState(1);
@@ -75,12 +77,13 @@ export default function QuestionBankPage() {
       return next;
     });
 
-  const handleDelete = async (q: QuestionBankDTO) => {
-    if (!window.confirm("Delete this question? This cannot be undone.")) return;
-    setDeletingId(q.id);
+  const performDelete = async () => {
+    if (!confirmDel) return;
+    setDeletingId(confirmDel.id);
     try {
-      await assessmentApi.deleteQuestion(q.id);
-      setQuestions((prev) => prev.filter((x) => x.id !== q.id));
+      await assessmentApi.deleteQuestion(confirmDel.id);
+      setQuestions((prev) => prev.filter((x) => x.id !== confirmDel.id));
+      setConfirmDel(null);
     } catch {
       toast.error("Failed to delete question.");
     } finally {
@@ -178,7 +181,7 @@ export default function QuestionBankPage() {
                   order={pageStart + i + 1}
                   deleting={deletingId === q.id}
                   onEdit={() => openEdit(q)}
-                  onDelete={() => handleDelete(q)}
+                  onDelete={() => setConfirmDel(q)}
                 />
               ))}
             </div>
@@ -215,6 +218,21 @@ export default function QuestionBankPage() {
         open={tagManagerOpen}
         onClose={() => setTagManagerOpen(false)}
         onChanged={() => { loadTags(); loadQuestions(); }}
+      />
+
+      <ConfirmDialog
+        open={confirmDel != null}
+        loading={deletingId != null}
+        title="Delete question?"
+        description={
+          confirmDel
+            ? `This permanently deletes “${confirmDel.prompt.slice(0, 60)}${confirmDel.prompt.length > 60 ? "…" : ""}”. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={performDelete}
+        onCancel={() => { if (deletingId == null) setConfirmDel(null); }}
       />
     </MainLayout>
   );

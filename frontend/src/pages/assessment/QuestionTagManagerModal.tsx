@@ -6,6 +6,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { Check, Loader2, Pencil, Plus, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ export function QuestionTagManagerModal({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [confirmDel, setConfirmDel] = useState<QuestionTagDTO | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -76,11 +78,12 @@ export function QuestionTagManagerModal({
     }
   };
 
-  const remove = async (tag: QuestionTagDTO) => {
-    if (!window.confirm(`Delete tag "${tag.name}"? Questions keep their other tags.`)) return;
-    setBusyId(tag.id);
+  const performRemove = async () => {
+    if (!confirmDel) return;
+    setBusyId(confirmDel.id);
     try {
-      await assessmentApi.deleteQuestionTag(tag.id);
+      await assessmentApi.deleteQuestionTag(confirmDel.id);
+      setConfirmDel(null);
       load();
       notify();
     } catch {
@@ -153,7 +156,7 @@ export function QuestionTagManagerModal({
                       <Pencil className="size-3.5" />
                     </Button>
                     <Button size="sm" variant="ghost" className="text-destructive"
-                      disabled={busyId === tag.id} onClick={() => remove(tag)}>
+                      disabled={busyId === tag.id} onClick={() => setConfirmDel(tag)}>
                       {busyId === tag.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                     </Button>
                   </>
@@ -163,6 +166,17 @@ export function QuestionTagManagerModal({
           )}
         </div>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmDel != null}
+        loading={busyId != null}
+        title="Delete tag?"
+        description={confirmDel ? `Delete tag "${confirmDel.name}"? Questions keep their other tags.` : undefined}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={performRemove}
+        onCancel={() => { if (busyId == null) setConfirmDel(null); }}
+      />
     </Dialog>
   );
 }
