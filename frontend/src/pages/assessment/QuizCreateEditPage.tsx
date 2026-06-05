@@ -185,11 +185,6 @@ export default function QuizCreateEditPage() {
   return (
     <MainLayout pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "New quiz" }}>
       <div className={cn("w-full mx-auto space-y-6 transition-[max-width]", step === 1 ? "max-w-3xl" : "max-w-full")}>
-        {/* Back */}
-        <button onClick={() => navigate("/quizzes")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> Back to quizzes
-        </button>
-
         {/* Stepper */}
         <StepBar step={step} onStepClick={goToStep} />
 

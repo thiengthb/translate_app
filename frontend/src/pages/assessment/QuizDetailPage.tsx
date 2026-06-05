@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
-  Archive, ChevronLeft, Clock, Copy, FileQuestion, Loader2, Pencil, Play, RotateCcw, Send, Trophy,
+  Archive, Clock, Copy, FileQuestion, Loader2, Pencil, Play, RotateCcw, Send, Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -86,10 +86,6 @@ export default function QuizDetailPage() {
   return (
     <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz.title }}>
       <div className="space-y-5 max-w-5xl">
-        <button onClick={() => navigate("/quizzes")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> Back to quizzes
-        </button>
-
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">

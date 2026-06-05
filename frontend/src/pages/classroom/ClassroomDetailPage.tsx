@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { assessmentApi, classroomApi, deckApi } from "@/api";
+import { fileApi } from "@/api/features/file.api";
 import type { ClassAssignmentDTO, DeckDTO } from "@/types";
 import { useClassroom } from "@/hooks/useClassroom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -20,8 +21,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  BarChart3, BookOpen, CalendarClock, Check, ChevronLeft, ChevronRight, ClipboardList, Copy,
-  Eye, GraduationCap, LayoutGrid, List, Loader2, Play, Plus, RefreshCw, Trash2, Users, UserMinus,
+  BarChart3, BookOpen, CalendarClock, Check, ChevronRight, ClipboardList, Copy,
+  Eye, GraduationCap, Image as ImageIcon, LayoutGrid, List, Loader2, Play, Plus, RefreshCw,
+  Trash2, Users, UserMinus, X,
 } from "lucide-react";
 import { COLOR_PRESETS } from "@/lib/color-presets";
 import { toast } from "sonner";
@@ -104,13 +106,6 @@ export default function ClassroomDetailPage() {
   return (
     <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
-        <button
-          onClick={() => navigate("/classrooms")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="size-4" /> Back to groups
-        </button>
-
         {/* ── Hero Header ── */}
         <Card className="overflow-hidden p-0 border-0 shadow-md">
           {/* Cover banner */}
@@ -614,6 +609,28 @@ function SettingsForm({
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const coverFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Cover image can be a pasted link OR a locally-picked file (uploaded to the
+  // file store, which returns a URL we save just like a pasted one).
+  const handleCoverFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (coverFileRef.current) coverFileRef.current.value = ""; // allow re-picking same file
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5 MB)."); return; }
+    setUploadingCover(true);
+    try {
+      const uploaded = await fileApi.upload(file, "classroom", classroomId, "coverImageUrl");
+      setCoverImageUrl(uploaded.url);
+      toast.success("Cover image uploaded.");
+    } catch {
+      toast.error("Upload failed.");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -652,15 +669,50 @@ function SettingsForm({
         <Label>Description</Label>
         <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
       </div>
-      <div className="grid grid-cols-2 gap-5">
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
-          <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} className="h-11" />
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
+        <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} className="h-11" />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Cover image</Label>
+        <div className="flex gap-2">
+          <Input
+            value={coverImageUrl}
+            onChange={(e) => setCoverImageUrl(e.target.value)}
+            placeholder="Paste an image link (https://…)"
+            className="h-11 flex-1"
+          />
+          <input ref={coverFileRef} type="file" accept="image/*" className="hidden" onChange={handleCoverFile} />
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 shrink-0"
+            onClick={() => coverFileRef.current?.click()}
+            disabled={uploadingCover}
+          >
+            {uploadingCover ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <ImageIcon className="size-4 mr-1.5" />}
+            Upload
+          </Button>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Cover image URL</Label>
-          <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://…" className="h-11" />
-        </div>
+        <p className="text-[11px] text-muted-foreground">Paste a link or upload an image from your device (max 5 MB).</p>
+        {coverImageUrl && (
+          <div className="relative mt-1.5 w-fit">
+            <img
+              src={coverImageUrl}
+              alt="Cover preview"
+              className="h-24 rounded-md border border-border object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => setCoverImageUrl("")}
+              aria-label="Remove cover image"
+              className="absolute -right-2 -top-2 rounded-full border border-border bg-background p-0.5 text-muted-foreground shadow-sm transition-colors hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
       </div>
       <Separator />
       <div className="flex justify-between pt-1">

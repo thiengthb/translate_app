@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { classroomApi } from "@/api";
 import type { AttemptSummary, ClassAssignmentDTO, ClassroomDTO, GradebookDTO, StudentResultDTO } from "@/types";
 import type { AttemptStatus } from "@/types";
@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3, CalendarClock, CheckCircle2, ChevronDown, ChevronLeft,
+  BarChart3, CalendarClock, CheckCircle2, ChevronDown,
   Clock, Loader2, Repeat, Target, TrendingUp, Trophy, Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +24,6 @@ export default function AssignmentStatsPage() {
   const { classroomId, assignmentId } = useParams<{ classroomId: string; assignmentId: string }>();
   const cid = Number(classroomId);
   const aid = Number(assignmentId);
-  const navigate = useNavigate();
 
   const [classroom, setClassroom]   = useState<ClassroomDTO | null>(null);
   const [assignment, setAssignment] = useState<ClassAssignmentDTO | null>(null);
@@ -99,14 +98,6 @@ export default function AssignmentStatsPage() {
   return (
     <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />}>
       <div className="space-y-5">
-        {/* Back */}
-        <button
-          onClick={() => navigate(`/classrooms/${cid}`)}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="size-4" /> Back to group
-        </button>
-
         {/* ── Assignment header ── */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
