@@ -17,13 +17,17 @@ import type { RootState } from "@/store/store";
 
 interface MainLayoutProps {
     children: ReactNode;
-    /** Path → display-title map forwarded to the breadcrumb component. */
     pathName?: Record<string, string>;
-    /** Optional content rendered next to the breadcrumbs in the top bar.
-     *  Pages with sub-views (e.g. `/users` Manage / Analytic tabs) inject
-     *  their tab control here so it sits at chrome level instead of
-     *  taking page space. */
     headerExtra?: ReactNode;
+    /** Explicit parent crumb shown between Home and URL segments.
+     *  Use on sub-pages (e.g. deck study/preview) whose URL doesn't
+     *  contain the parent route (/library, /community). */
+    parentCrumb?: { href: string; title: string };
+    ignorePaths?: string[];
+    /** Override the ⓘ tooltip on the last breadcrumb segment. */
+    pageDescription?: string;
+    /** Custom icon shown to the left of the last breadcrumb title. */
+    breadcrumbIcon?: ReactNode;
 }
 
 /**
@@ -51,7 +55,7 @@ interface MainLayoutProps {
  * Layout markup lives in the dedicated sub-components — keep this file
  * easy to skim.
  */
-export function MainLayout({ children, pathName, headerExtra }: MainLayoutProps) {
+export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon }: MainLayoutProps) {
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -82,6 +86,10 @@ export function MainLayout({ children, pathName, headerExtra }: MainLayoutProps)
                 <AppShell
                     pathName={pathName}
                     headerExtra={headerExtra}
+                    parentCrumb={parentCrumb}
+                    ignorePaths={ignorePaths}
+                    pageDescription={pageDescription}
+                    breadcrumbIcon={breadcrumbIcon}
                 >
                     {children}
                 </AppShell>
@@ -109,6 +117,10 @@ interface AppShellProps {
     children: ReactNode;
     pathName?: MainLayoutProps["pathName"];
     headerExtra?: MainLayoutProps["headerExtra"];
+    parentCrumb?: MainLayoutProps["parentCrumb"];
+    ignorePaths?: MainLayoutProps["ignorePaths"];
+    pageDescription?: MainLayoutProps["pageDescription"];
+    breadcrumbIcon?: MainLayoutProps["breadcrumbIcon"];
 }
 
 /**
@@ -154,6 +166,10 @@ function AppShell({
     children,
     pathName,
     headerExtra,
+    parentCrumb,
+    ignorePaths,
+    pageDescription,
+    breadcrumbIcon,
 }: AppShellProps) {
     return (
         <SidebarProvider defaultOpen={readPersistedSidebarOpen()}>
@@ -162,6 +178,10 @@ function AppShell({
                 <MainLayoutTopBar
                     pathName={pathName}
                     headerExtra={headerExtra}
+                    parentCrumb={parentCrumb}
+                    ignorePaths={ignorePaths}
+                    pageDescription={pageDescription}
+                    breadcrumbIcon={breadcrumbIcon}
                 />
                 <ScrollHintContainer
                     axis="vertical"

@@ -38,6 +38,11 @@ public class QuizAttemptQuestion extends BaseEntity {
     @Column(name = "question_type", nullable = false, length = 50)
     String questionType;
 
+    /** Content version of the source question at the moment this attempt was
+     *  started. Lets us tell whether the live question has since been edited. */
+    @Column(name = "original_question_version")
+    Integer originalQuestionVersion;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "question_snapshot")
     Map<String, Object> questionSnapshot;

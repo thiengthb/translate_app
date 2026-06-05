@@ -1,6 +1,7 @@
 package com.example.starter_project_2025.system.dictionary;
 
 import com.example.starter_project_2025.system.words.word.Word;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -54,4 +55,23 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
             ORDER BY w.frequency ASC
             """)
     List<Word> findFeaturedWords(Pageable pageable);
+
+    /**
+     * Duyệt toàn bộ từ vựng (màn "Từ vựng tổng hợp"), lọc tùy chọn theo
+     * level code (N5…N1). {@code level = null} → tất cả level.
+     */
+    @Query(value = """
+            SELECT w FROM Word w
+            JOIN w.level l
+            WHERE w.isDeleted = false AND w.isActive = true
+            AND (:level IS NULL OR l.code = :level)
+            ORDER BY w.frequency ASC NULLS LAST, w.word ASC
+            """,
+            countQuery = """
+            SELECT COUNT(w) FROM Word w
+            JOIN w.level l
+            WHERE w.isDeleted = false AND w.isActive = true
+            AND (:level IS NULL OR l.code = :level)
+            """)
+    Page<Word> browse(@Param("level") String level, Pageable pageable);
 }

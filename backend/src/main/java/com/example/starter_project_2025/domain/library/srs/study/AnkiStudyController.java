@@ -46,6 +46,11 @@ import java.util.stream.Collectors;
 @Tag(name = "AnkiStudy", description = "Anki SM2 study session APIs")
 public class AnkiStudyController {
 
+    /** Anki-style learn-ahead window (minutes): learning/relearning cards whose
+     *  next step is due within this window are queued so the client can keep
+     *  studying them in time order rather than idling on a countdown. */
+    private static final int LEARN_AHEAD_MINUTES = 20;
+
     DeckRepository deckRepository;
     DeckItemRepository deckItemRepository;
     FlashcardRepository flashcardRepository;
@@ -78,6 +83,7 @@ public class AnkiStudyController {
                     .totalNew(0)
                     .totalLearning(0)
                     .totalReview(0)
+                    .dueReviewCards(0)
                     .totalDue(0)
                     .build());
         }
@@ -114,6 +120,7 @@ public class AnkiStudyController {
         int totalNew = 0;
         int totalLearning = 0;
         int totalReview = 0;
+        int dueReviewCards = 0;
         int totalDue = 0;
 
         for (DeckItem item : items) {
@@ -122,23 +129,31 @@ public class AnkiStudyController {
 
             AnkiSrsProgress progress = progressMap.get(fc.getId());
 
-            boolean isNew = (progress == null);
+            boolean isNew = progress == null || "NEW".equals(progress.getState());
             boolean isDue = !isNew && isDue(progress, now);
-
-            if (!isNew && !isDue) continue;
 
             if (isNew) {
                 totalNew++;
                 if (queuedNew >= newLimit) continue;
                 queuedNew++;
             } else {
-                totalDue++;
                 if ("LEARNING".equals(progress.getState()) || "RELEARNING".equals(progress.getState())) {
                     totalLearning++;
+                    // Learn-ahead: include learning/relearning cards due now OR
+                    // coming up within the window, so the client can keep
+                    // studying them in time order without idling (matches Anki).
+                    boolean dueSoon = progress.getNextReviewAt() == null
+                            || !progress.getNextReviewAt().isAfter(now.plusMinutes(LEARN_AHEAD_MINUTES));
+                    if (!dueSoon) continue;
                 } else if ("REVIEW".equals(progress.getState())) {
                     totalReview++;
+                    if (!isDue) continue;
+                    totalDue++;
+                    dueReviewCards++;
                     if (queuedDue >= dueLimit) continue;
                     queuedDue++;
+                } else {
+                    if (!isDue) continue;
                 }
             }
 
@@ -151,6 +166,7 @@ public class AnkiStudyController {
                 .totalNew(totalNew)
                 .totalLearning(totalLearning)
                 .totalReview(totalReview)
+                .dueReviewCards(dueReviewCards)
                 .totalDue(totalDue)
                 .build());
     }
@@ -676,6 +692,145 @@ public class AnkiStudyController {
             double value = node.asDouble(fallback);
             return Math.max(min, Math.min(max, value));
         }
+    }   // end SchedulingConfig
+
+    /* ──────────────────────────────────────────
+       GET /api/anki/study/{deckId}/stats
+       Anki-style statistics aggregated from SRS progress rows.
+    ────────────────────────────────────────── */
+    @GetMapping("/{deckId}/stats")
+    @PreAuthorize("hasAuthority('ANKI_SRS_PROGRESS_READ')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AnkiStatsDTO> stats(
+            @PathVariable Long deckId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal.getId();
+        Deck deck = deckRepository.findById(deckId).orElseThrow();
+
+        List<DeckItem> items = deckItemRepository.findByDeckIdOrderByOrderIndexAsc(deckId);
+        List<AnkiSrsProgress> rows = progressRepository.findByUserIdAndDeckId(userId, deckId);
+        Map<Long, AnkiSrsProgress> progressMap = rows.stream()
+                .collect(Collectors.toMap(p -> p.getFlashcard().getId(), p -> p));
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+
+        int newC = 0, learning = 0, relearning = 0, review = 0;
+        int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
+        double sumMemory = 0, sumEase = 0, sumInterval = 0;
+        int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
+
+        int[] futureDue = new int[31];
+        List<Integer> intervals = new ArrayList<>();
+        List<Double> easeFactors = new ArrayList<>();
+
+        for (DeckItem item : items) {
+            AnkiSrsProgress p = progressMap.get(item.getFlashcard().getId());
+            if (p == null || "NEW".equals(p.getState())) {
+                newC++;
+                continue;
+            }
+
+            switch (p.getState()) {
+                case "LEARNING"   -> learning++;
+                case "RELEARNING" -> relearning++;
+                case "REVIEW"     -> review++;
+            }
+
+            if (p.getLastReviewedAt() != null && today.equals(p.getLastReviewedAt().toLocalDate())) {
+                studiedToday++;
+            }
+
+            if ("REVIEW".equals(p.getState()) && p.getNextReviewAt() != null) {
+                LocalDateTime nextReviewAt = p.getNextReviewAt();
+                LocalDate due = nextReviewAt.toLocalDate();
+                long diff = ChronoUnit.DAYS.between(today, due);
+                if (!nextReviewAt.isAfter(now)) {
+                    // Overdue (from any past day or already past today) →
+                    // count in dueToday AND show in the T-bar of Future Due chart.
+                    dueToday++;
+                    dueReviewCards++;
+                    futureDue[0]++;
+                } else {
+                    // Due in the future
+                    if (diff == 1) dueTomorrow++;
+                    if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
+                }
+            }
+
+            sumMemory    += p.getMemoryScore();
+            totalReviews += p.getReviewCount();
+            totalLapses  += p.getLapses();
+
+            if (!"NEW".equals(p.getState())) {
+                sumEase += p.getEaseFactor();
+                sumInterval += p.getIntervalDays();
+                intervals.add(p.getIntervalDays());
+                easeFactors.add(p.getEaseFactor());
+                hasEaseCount++;
+            }
+        }
+
+        int    total       = items.size();
+        double avgMem      = rows.size() > 0 ? Math.round(sumMemory   / rows.size() * 10.0) / 10.0 : 0;
+        double avgEase     = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
+        double avgInterval = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
+
+        List<AnkiStatsDTO.DayCount> futureDueList = new ArrayList<>();
+        for (int d = 0; d <= 30; d++) {
+            futureDueList.add(new AnkiStatsDTO.DayCount(d, futureDue[d]));
+        }
+
+        return ResponseEntity.ok(AnkiStatsDTO.builder()
+                .deckId(deck.getId())
+                .deckTitle(deck.getTitle())
+                .totalCards(total)
+                .newCards(newC)
+                .learningCards(learning)
+                .relearningCards(relearning)
+                .reviewCards(review)
+                .studiedToday(studiedToday)
+                .dueToday(dueToday)
+                .dueTomorrow(dueTomorrow)
+                .dueReviewCards(dueReviewCards)
+                .avgMemoryScore(avgMem)
+                .avgEaseFactor(avgEase)
+                .avgIntervalDays(avgInterval)
+                .totalReviews(totalReviews)
+                .totalLapses(totalLapses)
+                .futureReviews(futureDueList)
+                .intervalBuckets(buildIntervalBuckets(intervals))
+                .easeBuckets(buildEaseBuckets(easeFactors))
+                .build());
+    }
+
+    private List<AnkiStatsDTO.BucketCount> buildIntervalBuckets(List<Integer> intervals) {
+        int[][] ranges = {{1,1},{2,3},{4,7},{8,14},{15,30},{31,90},{91,180},{181,365},{366,Integer.MAX_VALUE}};
+        String[] labels = {"1d","2-3d","4-7d","8-14d","15-30d","1-3mo","3-6mo","6-12mo","1yr+"};
+        int[] counts = new int[labels.length];
+        for (int v : intervals) {
+            for (int i = 0; i < ranges.length; i++) {
+                if (v >= ranges[i][0] && v <= ranges[i][1]) { counts[i]++; break; }
+            }
+        }
+        List<AnkiStatsDTO.BucketCount> r = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) r.add(new AnkiStatsDTO.BucketCount(labels[i], counts[i]));
+        return r;
+    }
+
+    private List<AnkiStatsDTO.BucketCount> buildEaseBuckets(List<Double> eases) {
+        double[] upper = {1.60, 1.90, 2.20, 2.50, 2.80, 3.10, Double.MAX_VALUE};
+        String[] labels = {"130-160%","161-190%","191-220%","221-250%","251-280%","281-310%","310%+"};
+        int[] counts = new int[labels.length];
+        for (double v : eases) {
+            for (int i = 0; i < upper.length; i++) {
+                if (v <= upper[i]) { counts[i]++; break; }
+            }
+        }
+        List<AnkiStatsDTO.BucketCount> r = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) r.add(new AnkiStatsDTO.BucketCount(labels[i], counts[i]));
+        return r;
     }
 
 }

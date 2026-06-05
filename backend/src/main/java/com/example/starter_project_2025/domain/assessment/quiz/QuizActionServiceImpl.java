@@ -3,6 +3,7 @@ package com.example.starter_project_2025.domain.assessment.quiz;
 import com.example.starter_project_2025.domain.assessment.question.QuestionBank;
 import com.example.starter_project_2025.domain.assessment.question.QuestionBankMapper;
 import com.example.starter_project_2025.domain.assessment.question.QuestionBankRepository;
+import com.example.starter_project_2025.domain.assessment.question.QuestionOption;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestion;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionDTO;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
@@ -54,8 +55,6 @@ public class QuizActionServiceImpl implements QuizActionService {
         Quiz source = load(quizId);
 
         Quiz copy = Quiz.builder()
-                .quizTypeId(source.getQuizTypeId())
-                .categoryId(source.getCategoryId())
                 .levelId(source.getLevelId())
                 .creatorId(userId)
                 .deckId(source.getDeckId())
@@ -94,6 +93,98 @@ public class QuizActionServiceImpl implements QuizActionService {
     }
 
     @Override
+    public QuizDTO cloneForUser(Long quizId, Long userId) {
+        Quiz source = load(quizId);
+
+        Quiz copy = Quiz.builder()
+                .levelId(source.getLevelId())
+                .creatorId(userId)                       // now owned by the cloner
+                .title(source.getTitle() + " (Copy)")
+                .description(source.getDescription())
+                .totalQuestions(0)
+                .totalScore(0)
+                .passScore(source.getPassScore())
+                .timeLimitMinutes(source.getTimeLimitMinutes())
+                .difficultyLevel(source.getDifficultyLevel())
+                .isRandomQuestion(source.isRandomQuestion())
+                .isRandomOption(source.isRandomOption())
+                .allowRetake(source.isAllowRetake())
+                .maxAttempts(source.getMaxAttempts())
+                .showAnswerAfterSubmit(source.isShowAnswerAfterSubmit())
+                .showExplanationAfterSubmit(source.isShowExplanationAfterSubmit())
+                .visibility("PRIVATE")
+                .status("DRAFT")
+                .build();
+        Quiz savedQuiz = quizRepository.save(copy);
+
+        // Deep-copy every referenced question into the cloner's own bank, then
+        // point the new placements at those fresh questions (like cloning a deck).
+        List<QuizQuestion> placements =
+                quizQuestionRepository.findByQuizIdAndIsDeletedFalseOrderByOrderIndexAsc(quizId);
+        double totalScore = 0;
+        for (QuizQuestion qq : placements) {
+            QuestionBank src = questionBankRepository.findById(qq.getQuestionId()).orElse(null);
+            if (src == null || Boolean.TRUE.equals(src.getIsDeleted())) continue;
+
+            QuestionBank cloned = deepCopyQuestion(src, userId);
+            QuestionBank savedQuestion = questionBankRepository.save(cloned);
+
+            quizQuestionRepository.save(QuizQuestion.builder()
+                    .quizId(savedQuiz.getId())
+                    .sectionId(qq.getSectionId())
+                    .questionId(savedQuestion.getId())
+                    .orderIndex(qq.getOrderIndex())
+                    .score(qq.getScore())
+                    .isRequired(qq.isRequired())
+                    .build());
+            totalScore += qq.getScore();
+        }
+
+        savedQuiz.setTotalQuestions(placements.size());
+        savedQuiz.setTotalScore(totalScore);
+        return toDto(quizRepository.save(savedQuiz));
+    }
+
+    /** Copy a question (and its options) into a brand-new row owned by {@code userId}. */
+    private QuestionBank deepCopyQuestion(QuestionBank src, Long userId) {
+        QuestionBank copy = QuestionBank.builder()
+                .levelId(src.getLevelId())
+                .itemType(src.getItemType())
+                .itemId(src.getItemId())
+                .wordId(src.getWordId())
+                .kanjiId(src.getKanjiId())
+                .grammarSubUseId(src.getGrammarSubUseId())
+                .questionType(src.getQuestionType())
+                .prompt(src.getPrompt())
+                .promptAudioUrl(src.getPromptAudioUrl())
+                .promptImageUrl(src.getPromptImageUrl())
+                .explanation(src.getExplanation())
+                .hint(src.getHint())
+                .difficultyLevel(src.getDifficultyLevel())
+                .defaultScore(src.getDefaultScore())
+                .createdByUser(userId)        // owned by the cloner
+                .isSystemGenerated(false)
+                .contentVersion(1)
+                .options(new ArrayList<>())
+                .build();
+
+        if (src.getOptions() != null) {
+            src.getOptions().stream()
+                    .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
+                    .forEach(o -> copy.getOptions().add(QuestionOption.builder()
+                            .question(copy)
+                            .content(o.getContent())
+                            .contentAudioUrl(o.getContentAudioUrl())
+                            .contentImageUrl(o.getContentImageUrl())
+                            .isCorrect(o.isCorrect())
+                            .explanation(o.getExplanation())
+                            .orderIndex(o.getOrderIndex())
+                            .build()));
+        }
+        return copy;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<QuizQuestionDTO> getQuestions(Long quizId) {
         List<QuizQuestion> questions =
@@ -126,8 +217,6 @@ public class QuizActionServiceImpl implements QuizActionService {
 
     private QuizDTO toDto(Quiz quiz) {
         QuizDTO dto = QuizDTO.builder()
-                .quizTypeId(quiz.getQuizTypeId())
-                .categoryId(quiz.getCategoryId())
                 .levelId(quiz.getLevelId())
                 .creatorId(quiz.getCreatorId())
                 .deckId(quiz.getDeckId())

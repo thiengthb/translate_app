@@ -11,4 +11,6 @@ public interface QuizRepository extends BaseCrudRepository<Quiz, Long> {
     List<Quiz> findByCreatorIdAndIsDeletedFalse(Long creatorId);
 
     List<Quiz> findByVisibilityAndStatusAndIsDeletedFalse(String visibility, String status);
+
+    boolean existsByCode(String code);
 }

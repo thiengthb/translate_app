@@ -1,8 +1,8 @@
 import {
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronUp,
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    ArrowUp,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -12,56 +12,51 @@ type Axis = "vertical" | "horizontal" | "both";
 
 interface ScrollHintContainerProps {
     children: React.ReactNode;
-    /** Which axes to track / hint. Default "vertical". */
     axis?: Axis;
-    /** Smooth-scroll delta (px) per chevron click. Default 200. */
+    /** px scrolled on a single click. Default 200. */
     scrollStep?: number;
-    /** Extra classes applied to the outer relative wrapper. */
     className?: string;
-    /** Extra classes applied to the inner scrolling viewport. Use this to
-     *  layer padding, gap, grid layout, etc. instead of fighting our defaults. */
     viewportClassName?: string;
+    /**
+     * px to push the TOP arrow down from the top edge. Use to clear a
+     * sticky header (e.g. ProTable's frozen header row) so the up-arrow
+     * floats over the scrollable rows instead of covering the header.
+     * Default 4 (matches the original `top-1` inset).
+     */
+    topOffset?: number;
 }
 
-/**
- * A scrolling viewport with **hidden scrollbars** + **floating chevron
- * indicators** that appear only when there's more content in that
- * direction — same affordance as Messenger's "↓ new messages" pill.
- *
- *   ┌─────────────────┐       ┌─────────────────┐
- *   │      ▲          │       │ ◀  content   ▶  │   axis="horizontal"
- *   │  visible item   │       │                 │
- *   │  visible item   │       │                 │
- *   │      ▼          │       └─────────────────┘
- *   └─────────────────┘
- *      axis="vertical"
- *
- * Axes can be combined (`axis="both"`) — used by the data-table viewport
- * where rows overflow vertically and columns overflow horizontally.
- *
- * Implementation notes:
- *   - Watches scroll + ResizeObserver (viewport size) + MutationObserver
- *     (children added/removed) so chevrons appear/disappear without lag.
- *   - 4px epsilon on the scroll math avoids flicker from sub-pixel
- *     scrollbar positions (Safari rounds differently than Chrome).
- *   - `pointer-events-none` on the button wrapper + `pointer-events-auto`
- *     on the button itself so the chevron rail never blocks clicks on
- *     content underneath when it's invisible (opacity-0).
- */
+/* ── Scroll constants ── */
+const HOLD_DELAY_MS   = 180;   // ms after mousedown before hold scroll starts
+const DOUBLE_CLICK_MS = 320;   // ms window to detect double-click
+const HOLD_INITIAL    = 3;     // px/frame on hold start
+const HOLD_MAX        = 22;    // px/frame maximum (≈ 1320 px/s @ 60 fps)
+const HOLD_ACCEL      = 1.055; // multiplier per frame (exponential ramp)
+
 export function ScrollHintContainer({
     children,
     axis = "vertical",
     scrollStep = 200,
     className,
     viewportClassName,
+    topOffset = 4,
 }: ScrollHintContainerProps) {
     const viewportRef = useRef<HTMLDivElement>(null);
-    const [canUp, setCanUp] = useState(false);
-    const [canDown, setCanDown] = useState(false);
-    const [canLeft, setCanLeft] = useState(false);
+    const [canUp, setCanUp]       = useState(false);
+    const [canDown, setCanDown]   = useState(false);
+    const [canLeft, setCanLeft]   = useState(false);
     const [canRight, setCanRight] = useState(false);
 
-    const trackV = axis === "vertical" || axis === "both";
+    // Hints reveal only while the user is engaging with the area — hovering
+    // it (mouse) or actively scrolling (mouse/touch). They fade back out
+    // after a short idle window so static reading isn't cluttered by
+    // always-on arrows.
+    const [hovered, setHovered]     = useState(false);
+    const [scrolling, setScrolling] = useState(false);
+    const scrollIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const active = hovered || scrolling;
+
+    const trackV = axis === "vertical"   || axis === "both";
     const trackH = axis === "horizontal" || axis === "both";
 
     const updateHints = useCallback(() => {
@@ -79,37 +74,34 @@ export function ScrollHintContainer({
         }
     }, [trackV, trackH]);
 
+    // Flag the area as "scrolling" on each scroll event, then reset to idle
+    // a beat after scrolling stops. Kept separate from `updateHints` so the
+    // ResizeObserver/MutationObserver passes don't spuriously flash the hints.
+    const markScrolling = useCallback(() => {
+        setScrolling(true);
+        if (scrollIdleRef.current) clearTimeout(scrollIdleRef.current);
+        scrollIdleRef.current = setTimeout(() => setScrolling(false), 1000);
+    }, []);
+
     useEffect(() => {
         const el = viewportRef.current;
         if (!el) return;
-
         updateHints();
-
         el.addEventListener("scroll", updateHints, { passive: true });
+        el.addEventListener("scroll", markScrolling, { passive: true });
         const ro = new ResizeObserver(updateHints);
         ro.observe(el);
         const mo = new MutationObserver(updateHints);
         mo.observe(el, { childList: true, subtree: true });
-
         return () => {
             el.removeEventListener("scroll", updateHints);
+            el.removeEventListener("scroll", markScrolling);
             ro.disconnect();
             mo.disconnect();
+            if (scrollIdleRef.current) clearTimeout(scrollIdleRef.current);
         };
-    }, [updateHints]);
+    }, [updateHints, markScrolling]);
 
-    const scrollByDelta = (deltaX: number, deltaY: number) => {
-        viewportRef.current?.scrollBy({
-            top: deltaY,
-            left: deltaX,
-            behavior: "smooth",
-        });
-    };
-
-    // Compose overflow classes per axis so the viewport only scrolls where
-    // the caller asked. The triple `[&::-webkit-scrollbar]:hidden` /
-    // `scrollbar-width:none` / `-ms-overflow-style:none` together hide
-    // the scrollbar across every engine we care about.
     const overflowClass =
         axis === "vertical"
             ? "overflow-y-auto overflow-x-hidden"
@@ -118,7 +110,11 @@ export function ScrollHintContainer({
               : "overflow-auto";
 
     return (
-        <div className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col", className)}>
+        <div
+            className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col", className)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
             <div
                 ref={viewportRef}
                 className={cn(
@@ -135,13 +131,16 @@ export function ScrollHintContainer({
                 <>
                     <ScrollHintButton
                         edge="top"
-                        visible={canUp}
-                        onClick={() => scrollByDelta(0, -scrollStep)}
+                        visible={active && canUp}
+                        viewportRef={viewportRef}
+                        scrollStep={scrollStep}
+                        offset={topOffset}
                     />
                     <ScrollHintButton
                         edge="bottom"
-                        visible={canDown}
-                        onClick={() => scrollByDelta(0, scrollStep)}
+                        visible={active && canDown}
+                        viewportRef={viewportRef}
+                        scrollStep={scrollStep}
                     />
                 </>
             )}
@@ -149,13 +148,15 @@ export function ScrollHintContainer({
                 <>
                     <ScrollHintButton
                         edge="left"
-                        visible={canLeft}
-                        onClick={() => scrollByDelta(-scrollStep, 0)}
+                        visible={active && canLeft}
+                        viewportRef={viewportRef}
+                        scrollStep={scrollStep}
                     />
                     <ScrollHintButton
                         edge="right"
-                        visible={canRight}
-                        onClick={() => scrollByDelta(scrollStep, 0)}
+                        visible={active && canRight}
+                        viewportRef={viewportRef}
+                        scrollStep={scrollStep}
                     />
                 </>
             )}
@@ -163,62 +164,164 @@ export function ScrollHintContainer({
     );
 }
 
-// ─── Floating chevron button ───────────────────────────────────────────────
+// ─── Scroll hint button ────────────────────────────────────────────────────
+
 type Edge = "top" | "bottom" | "left" | "right";
 
 const EDGE_RAIL: Record<Edge, string> = {
-    top: "top-1 left-0 right-0 flex justify-center",
+    top:    "top-1 left-0 right-0 flex justify-center",
     bottom: "bottom-1 left-0 right-0 flex justify-center",
-    left: "left-1 top-0 bottom-0 flex items-center",
-    right: "right-1 top-0 bottom-0 flex items-center",
+    left:   "left-1 top-0 bottom-0 flex items-center",
+    right:  "right-1 top-0 bottom-0 flex items-center",
 };
 
-const EDGE_ICON: Record<Edge, React.ComponentType<{ size?: number }>> = {
-    top: ChevronUp,
-    bottom: ChevronDown,
-    left: ChevronLeft,
-    right: ChevronRight,
+const EDGE_ICON: Record<Edge, React.ComponentType<{ size?: number; className?: string }>> = {
+    top:    ArrowUp,
+    bottom: ArrowDown,
+    left:   ArrowLeft,
+    right:  ArrowRight,
 };
 
 const EDGE_LABEL: Record<Edge, string> = {
-    top: "Scroll up",
-    bottom: "Scroll down",
-    left: "Scroll left",
-    right: "Scroll right",
+    top:    "Scroll lên đầu",
+    bottom: "Scroll xuống cuối",
+    left:   "Scroll sang trái",
+    right:  "Scroll sang phải",
 };
 
 interface ScrollHintButtonProps {
     edge: Edge;
     visible: boolean;
-    onClick: () => void;
+    viewportRef: React.RefObject<HTMLDivElement | null>;
+    scrollStep: number;
+    /** px inset from this edge — only honoured for the `top` edge today
+     *  (lets callers clear a sticky header). */
+    offset?: number;
 }
 
-function ScrollHintButton({ edge, visible, onClick }: ScrollHintButtonProps) {
+function ScrollHintButton({ edge, visible, viewportRef, scrollStep, offset }: ScrollHintButtonProps) {
     const Icon = EDGE_ICON[edge];
+
+    const lastClickRef  = useRef(0);
+    const holdTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const holdRafRef    = useRef<number | null>(null);
+    const holdSpeedRef  = useRef(HOLD_INITIAL);
+    const isHoldingRef  = useRef(false);
+
+    const applyDelta = useCallback((speed: number) => {
+        const el = viewportRef.current;
+        if (!el) return;
+        if (edge === "top")    el.scrollTop  -= speed;
+        if (edge === "bottom") el.scrollTop  += speed;
+        if (edge === "left")   el.scrollLeft -= speed;
+        if (edge === "right")  el.scrollLeft += speed;
+    }, [edge, viewportRef]);
+
+    const stopHold = useCallback(() => {
+        if (holdTimerRef.current !== null) {
+            clearTimeout(holdTimerRef.current);
+            holdTimerRef.current = null;
+        }
+        if (holdRafRef.current !== null) {
+            cancelAnimationFrame(holdRafRef.current);
+            holdRafRef.current = null;
+        }
+        isHoldingRef.current = false;
+    }, []);
+
+    const startHoldScroll = useCallback(() => {
+        isHoldingRef.current = true;
+        holdSpeedRef.current = HOLD_INITIAL;
+
+        const tick = () => {
+            if (!isHoldingRef.current) return;
+            applyDelta(holdSpeedRef.current);
+            holdSpeedRef.current = Math.min(holdSpeedRef.current * HOLD_ACCEL, HOLD_MAX);
+            holdRafRef.current = requestAnimationFrame(tick);
+        };
+        holdRafRef.current = requestAnimationFrame(tick);
+    }, [applyDelta]);
+
+    const scrollToEdge = useCallback(() => {
+        const el = viewportRef.current;
+        if (!el) return;
+        if (edge === "top")    el.scrollTo({ top: 0,                    behavior: "smooth" });
+        if (edge === "bottom") el.scrollTo({ top: el.scrollHeight,      behavior: "smooth" });
+        if (edge === "left")   el.scrollTo({ left: 0,                   behavior: "smooth" });
+        if (edge === "right")  el.scrollTo({ left: el.scrollWidth,      behavior: "smooth" });
+    }, [edge, viewportRef]);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        holdTimerRef.current = setTimeout(startHoldScroll, HOLD_DELAY_MS);
+    }, [startHoldScroll]);
+
+    const handleMouseUp = useCallback(() => {
+        const wasHolding = isHoldingRef.current;
+        stopHold();
+
+        if (!wasHolding) {
+            // Short press → single or double click
+            const now = Date.now();
+            const since = now - lastClickRef.current;
+            lastClickRef.current = now;
+
+            if (since < DOUBLE_CLICK_MS) {
+                // Double click → jump to edge
+                scrollToEdge();
+            } else {
+                // Single click → step scroll (smooth)
+                const el = viewportRef.current;
+                if (!el) return;
+                el.scrollBy({
+                    top:  (edge === "bottom" ? scrollStep : edge === "top" ? -scrollStep : 0),
+                    left: (edge === "right"  ? scrollStep : edge === "left" ? -scrollStep : 0),
+                    behavior: "smooth",
+                });
+            }
+        }
+    }, [stopHold, scrollToEdge, edge, scrollStep, viewportRef]);
+
+    // Stop hold when pointer leaves the button
+    const handleMouseLeave = useCallback(() => {
+        stopHold();
+    }, [stopHold]);
+
+    // Cleanup on unmount
+    useEffect(() => () => stopHold(), [stopHold]);
+
     return (
         <div
             className={cn(
-                "pointer-events-none absolute transition-opacity duration-150",
+                // z-50 keeps the floating arrows above ANY content inside the
+                // viewport — including sticky table headers/columns that climb
+                // to z-40 in ProTable. Without this the left/right arrows sit
+                // exactly over the sticky index/select/action columns and get
+                // painted over, making them un-clickable.
+                "pointer-events-none absolute z-50 transition-opacity duration-150",
                 EDGE_RAIL[edge],
                 visible ? "opacity-100" : "opacity-0",
             )}
+            // Inline `top` overrides the rail's `top-1` so the up-arrow can be
+            // pushed below a sticky header. Only applied to the top edge.
+            style={edge === "top" && offset != null ? { top: offset } : undefined}
         >
             <button
                 type="button"
-                onClick={onClick}
                 aria-label={EDGE_LABEL[edge]}
                 tabIndex={visible ? 0 : -1}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
                 className={cn(
                     "inline-flex h-6 w-6 items-center justify-center rounded-full",
-                    "bg-background/90 text-foreground shadow-md ring-1 ring-border/60 backdrop-blur",
-                    "hover:bg-background hover:scale-105 active:scale-95 transition-all cursor-pointer",
-                    // Only intercept clicks while visible — an invisible chevron
-                    // must not block the element underneath (e.g. the first
-                    // sidebar item when the rail sits at the top edge).
+                    "bg-background/80 text-muted-foreground shadow-sm ring-1 ring-border/50 backdrop-blur-sm",
+                    "hover:bg-accent hover:text-foreground hover:scale-105 active:scale-95 transition-all cursor-pointer select-none",
                     visible ? "pointer-events-auto" : "pointer-events-none",
                 )}
             >
-                <Icon size={13} />
+                <Icon size={12} />
             </button>
         </div>
     );

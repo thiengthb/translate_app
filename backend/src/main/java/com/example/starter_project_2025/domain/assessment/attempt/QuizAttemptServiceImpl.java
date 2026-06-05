@@ -9,7 +9,10 @@ import com.example.starter_project_2025.domain.assessment.quiz.Quiz;
 import com.example.starter_project_2025.domain.assessment.quiz.QuizRepository;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestion;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
+import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignment;
+import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignmentRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
+import com.example.starter_project_2025.system.reward.RewardService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,6 +44,8 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     QuizAttemptRepository attemptRepository;
     QuizAttemptQuestionRepository attemptQuestionRepository;
     UserQuizProgressRepository progressRepository;
+    ClassAssignmentRepository classAssignmentRepository;
+    RewardService rewardService;
 
     /* ──────────────────────────────────────────
        Start a new attempt — snapshots every question
@@ -57,6 +62,22 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         }
         if (!quiz.isAllowRetake() && existing >= 1) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Retake is not allowed for this quiz");
+        }
+
+        // Assignment-scoped limit: when this attempt is started for a class
+        // assignment, the assignment's own maxAttempts caps how many times the
+        // student may attempt it (counted only against this assignment, not
+        // free-play attempts on the same quiz).
+        Long assignmentId = request.getAssignmentId();
+        if (assignmentId != null) {
+            ClassAssignment assignment = classAssignmentRepository.findById(assignmentId).orElse(null);
+            if (assignment != null && assignment.getMaxAttempts() != null) {
+                long usedForAssignment =
+                        attemptRepository.countByUserIdAndAssignmentIdAndIsDeletedFalse(userId, assignmentId);
+                if (usedForAssignment >= assignment.getMaxAttempts()) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Maximum attempts reached for this assignment");
+                }
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -90,6 +111,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                     .originalQuestionId(question.getId())
                     .sectionId(qq.getSectionId())
                     .questionType(question.getQuestionType())
+                    .originalQuestionVersion(question.getContentVersion())
                     .questionSnapshot(buildQuestionSnapshot(question))
                     .optionsSnapshot(buildOptionsSnapshot(question))
                     .correctAnswerSnapshot(buildCorrectAnswer(question))
@@ -212,7 +234,13 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     /* ──────────────────────────────────────────
        Grading engine
     ────────────────────────────────────────── */
-    @SuppressWarnings("unchecked")
+    /**
+     * Auto-grade a single answer using ONLY the frozen
+     * {@code correct_answer_snapshot} on the attempt question. The live
+     * {@code question_bank} / {@code question_options} are never queried here,
+     * so editing a question after an attempt started can never change how that
+     * attempt is graded.
+     */
     private void grade(QuizAttemptQuestion aq) {
         String type = aq.getQuestionType();
         Map<String, Object> correct = aq.getCorrectAnswerSnapshot();
@@ -226,33 +254,66 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             return;
         }
 
-        List<Long> correctIds = toLongList(correct != null ? correct.get("optionIds") : null);
-        String correctText = correct != null && correct.get("text") != null
-                ? normalize(String.valueOf(correct.get("text"))) : null;
-
         boolean isCorrect;
-        switch (type) {
+        switch (type == null ? "" : type) {
             case "MULTIPLE_CHOICE" -> {
                 Set<Long> chosen = new HashSet<>(toLongList(answer != null ? answer.get("selectedOptionIds") : null));
-                isCorrect = !correctIds.isEmpty() && chosen.equals(new HashSet<>(correctIds));
+                Set<Long> key = new HashSet<>(correctOptionIds(correct));
+                isCorrect = !key.isEmpty() && chosen.equals(key);
             }
             case "ORDERING", "MATCHING" -> {
                 List<Long> chosen = toLongList(answer != null ? answer.get("selectedOptionIds") : null);
-                isCorrect = !correctIds.isEmpty() && chosen.equals(correctIds);
+                List<Long> key = correctOptionIds(correct);
+                isCorrect = !key.isEmpty() && chosen.equals(key);
             }
             case "FILL_BLANK" -> {
                 String text = answer != null && answer.get("answerText") != null
                         ? normalize(String.valueOf(answer.get("answerText"))) : "";
-                isCorrect = correctText != null && !correctText.isEmpty() && correctText.equals(text);
+                isCorrect = !text.isEmpty() && acceptedAnswers(correct).stream()
+                        .map(QuizAttemptServiceImpl::normalize)
+                        .anyMatch(a -> !a.isEmpty() && a.equals(text));
             }
             default -> { // SINGLE_CHOICE, TRUE_FALSE, LISTENING
                 Long chosen = toLong(answer != null ? answer.get("selectedOptionId") : null);
-                isCorrect = chosen != null && correctIds.contains(chosen);
+                Long key = correctOptionId(correct);
+                isCorrect = chosen != null && chosen.equals(key);
             }
         }
 
         aq.setIsCorrect(isCorrect);
         aq.setEarnedScore(isCorrect ? full : 0);
+    }
+
+    /* ── Snapshot answer-key readers (new shape, with legacy fallback) ── */
+
+    private static List<Long> correctOptionIds(Map<String, Object> correct) {
+        if (correct == null) return List.of();
+        Object v = correct.get("correctOptionIds");
+        if (v == null) v = correct.get("optionIds"); // legacy snapshots
+        return toLongList(v);
+    }
+
+    private static Long correctOptionId(Map<String, Object> correct) {
+        if (correct == null) return null;
+        Long single = toLong(correct.get("correctOptionId"));
+        if (single != null) return single;
+        // legacy snapshots stored a list under "optionIds"
+        List<Long> legacy = toLongList(correct.get("optionIds"));
+        return legacy.isEmpty() ? null : legacy.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> acceptedAnswers(Map<String, Object> correct) {
+        if (correct == null) return List.of();
+        Object v = correct.get("acceptedAnswers");
+        if (v instanceof List<?> list) {
+            List<String> result = new ArrayList<>();
+            for (Object o : list) if (o != null) result.add(String.valueOf(o));
+            return result;
+        }
+        // legacy snapshots stored a single accepted answer under "text"
+        Object text = correct.get("text");
+        return text != null ? List.of(String.valueOf(text)) : List.of();
     }
 
     /* ──────────────────────────────────────────
@@ -270,6 +331,12 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         return map;
     }
 
+    /**
+     * Snapshot of the options as shown to the student — deliberately WITHOUT
+     * {@code isCorrect}. The correct answer lives only in
+     * {@link #buildCorrectAnswer(QuestionBank)} so it can never leak through the
+     * options payload, even if a client inspects the raw response.
+     */
     private List<Map<String, Object>> buildOptionsSnapshot(QuestionBank q) {
         List<Map<String, Object>> list = new ArrayList<>();
         List<QuestionOption> options = q.getOptions() == null ? List.of() : q.getOptions();
@@ -284,40 +351,51 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                     m.put("contentAudioUrl", o.getContentAudioUrl());
                     m.put("contentImageUrl", o.getContentImageUrl());
                     m.put("orderIndex", o.getOrderIndex());
-                    m.put("isCorrect", o.isCorrect()); // stripped during active serialization
                     list.add(m);
                 });
         return list;
     }
 
+    /**
+     * The graded answer key, shaped per question type:
+     * <ul>
+     *   <li>SINGLE_CHOICE / TRUE_FALSE / LISTENING → {@code {correctOptionId}}</li>
+     *   <li>MULTIPLE_CHOICE → {@code {correctOptionIds: [...]}}</li>
+     *   <li>ORDERING / MATCHING → {@code {correctOptionIds: [ordered ids]}}</li>
+     *   <li>FILL_BLANK → {@code {acceptedAnswers: [...]}}</li>
+     * </ul>
+     * Stored in the {@code correct_answer_snapshot} jsonb column and read back
+     * verbatim at grading time — never re-derived from the live question.
+     */
     private Map<String, Object> buildCorrectAnswer(QuestionBank q) {
         Map<String, Object> map = new LinkedHashMap<>();
-        List<QuestionOption> options = q.getOptions() == null ? List.of() : q.getOptions();
-        List<Long> correctIds = options.stream()
+        List<QuestionOption> active = (q.getOptions() == null ? List.<QuestionOption>of() : q.getOptions())
+                .stream()
                 .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
-                .filter(QuestionOption::isCorrect)
                 .sorted(java.util.Comparator.comparingInt(QuestionOption::getOrderIndex))
+                .collect(Collectors.toList());
+
+        List<Long> correctIds = active.stream()
+                .filter(QuestionOption::isCorrect)
                 .map(QuestionOption::getId)
                 .collect(Collectors.toList());
-        map.put("optionIds", correctIds);
 
-        // For ORDERING, correct order = options by orderIndex
-        if ("ORDERING".equals(q.getQuestionType())) {
-            List<Long> ordered = options.stream()
-                    .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
-                    .sorted(java.util.Comparator.comparingInt(QuestionOption::getOrderIndex))
-                    .map(QuestionOption::getId)
-                    .collect(Collectors.toList());
-            map.put("optionIds", ordered);
+        switch (q.getQuestionType() == null ? "" : q.getQuestionType()) {
+            case "MULTIPLE_CHOICE" -> map.put("correctOptionIds", correctIds);
+            case "ORDERING", "MATCHING" ->
+                    // Correct sequence = every option in its authored order.
+                    map.put("correctOptionIds", active.stream()
+                            .map(QuestionOption::getId)
+                            .collect(Collectors.toList()));
+            case "FILL_BLANK" ->
+                    // Every correct option's content is an accepted answer.
+                    map.put("acceptedAnswers", active.stream()
+                            .filter(QuestionOption::isCorrect)
+                            .map(QuestionOption::getContent)
+                            .collect(Collectors.toList()));
+            default -> // SINGLE_CHOICE, TRUE_FALSE, LISTENING
+                    map.put("correctOptionId", correctIds.isEmpty() ? null : correctIds.get(0));
         }
-
-        // For FILL_BLANK, the answer text = first correct option's content
-        String text = options.stream()
-                .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
-                .filter(QuestionOption::isCorrect)
-                .map(QuestionOption::getContent)
-                .findFirst().orElse(null);
-        map.put("text", text);
         return map;
     }
 
@@ -326,7 +404,6 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     ────────────────────────────────────────── */
     private QuizAttemptDTO assembleDto(QuizAttempt attempt, Quiz quiz) {
         boolean submitted = "SUBMITTED".equals(attempt.getStatus());
-        boolean showAfterAnswer = quiz != null && quiz.isShowAnswerAfterSubmit();
 
         QuizAttemptDTO dto = QuizAttemptDTO.builder()
                 .userId(attempt.getUserId())
@@ -353,32 +430,39 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         attempt.getAttemptQuestions().stream()
                 .sorted(java.util.Comparator.comparingInt(QuizAttemptQuestion::getOrderIndex))
                 .forEach(aq -> {
-                    boolean reveal = submitted || (showAfterAnswer && aq.isAnswered());
-                    dto.getAttemptQuestions().add(toQuestionDto(aq, reveal));
+                    // Never reveal correctness mid-attempt — only after the whole quiz is submitted.
+                    dto.getAttemptQuestions().add(toQuestionDto(aq, submitted));
                 });
         return dto;
     }
 
     private QuizAttemptQuestionDTO toQuestionDto(QuizAttemptQuestion aq, boolean reveal) {
+        // Defensive: new snapshots no longer store isCorrect inside options, but
+        // strip it from any legacy snapshot anyway so the key never leaks through
+        // the options payload. The answer key is exposed solely via
+        // correctAnswerSnapshot, and only once reveal is allowed.
         List<Map<String, Object>> options = aq.getOptionsSnapshot() == null
                 ? new ArrayList<>() : aq.getOptionsSnapshot();
         List<Map<String, Object>> safeOptions = new ArrayList<>();
         for (Map<String, Object> o : options) {
             Map<String, Object> copy = new LinkedHashMap<>(o);
-            if (!reveal) copy.remove("isCorrect");
+            copy.remove("isCorrect");
             safeOptions.add(copy);
         }
 
         QuizAttemptQuestionDTO dto = QuizAttemptQuestionDTO.builder()
                 .questionType(aq.getQuestionType())
+                .originalQuestionVersion(aq.getOriginalQuestionVersion())
                 .questionSnapshot(aq.getQuestionSnapshot())
                 .optionsSnapshot(safeOptions)
+                .correctAnswerSnapshot(reveal ? aq.getCorrectAnswerSnapshot() : null)
                 .orderIndex(aq.getOrderIndex())
                 .score(aq.getScore())
                 .isAnswered(aq.isAnswered())
                 .isCorrect(reveal ? aq.getIsCorrect() : null)
                 .earnedScore(reveal ? aq.getEarnedScore() : 0)
                 .answeredAt(aq.getAnsweredAt())
+                .userAnswerSnapshot(reveal ? aq.getUserAnswerSnapshot() : null)
                 .build();
         dto.setId(aq.getId());
         return dto;
@@ -422,6 +506,10 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             progress.setStatus("FAILED");
         }
         progressRepository.save(progress);
+
+        // Grant exp + coins for classroom quiz completion (no-op for free-play
+        // quizzes and idempotent for repeated calls on the same attempt).
+        rewardService.grantForAttempt(attempt);
     }
 
     /* ──────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { AttemptStatus, DifficultyLevel, QuizStatus } from "@/types";
+import type { AttemptStatus, CorrectAnswerSnapshot, DifficultyLevel, QuizStatus } from "@/types";
 
 export function DifficultyBadge({ level }: { level: DifficultyLevel | null | undefined }) {
   if (!level) return null;
@@ -47,4 +47,47 @@ export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleString();
+}
+
+/* ─────────────────────────────────────────
+   Answer-key helpers — the attempt's options no longer carry `isCorrect`.
+   The correct answer lives in `correctAnswerSnapshot`, revealed only after
+   submit. These read it back regardless of question type.
+───────────────────────────────────────── */
+
+/** Whether a given option id is part of the correct answer key. */
+export function isCorrectOption(
+  correct: CorrectAnswerSnapshot | null | undefined,
+  optionId: number
+): boolean {
+  if (!correct) return false;
+  if (correct.correctOptionId != null && correct.correctOptionId === optionId) return true;
+  if (Array.isArray(correct.correctOptionIds) && correct.correctOptionIds.includes(optionId)) return true;
+  return false;
+}
+
+/** Accepted free-text answers (FILL_BLANK), if any. */
+export function acceptedAnswers(correct: CorrectAnswerSnapshot | null | undefined): string[] {
+  return correct?.acceptedAnswers ?? [];
+}
+
+/** The single option id the user picked (SINGLE_CHOICE / TRUE_FALSE). */
+export function getUserSelectedOptionId(snap: Record<string, unknown> | null | undefined): number | null {
+  if (!snap) return null;
+  const v = snap.selectedOptionId;
+  return typeof v === "number" ? v : null;
+}
+
+/** The option ids the user picked (MULTIPLE_CHOICE). */
+export function getUserSelectedOptionIds(snap: Record<string, unknown> | null | undefined): number[] {
+  if (!snap) return [];
+  const v = snap.selectedOptionIds;
+  return Array.isArray(v) ? (v as unknown[]).map(Number) : [];
+}
+
+/** Free-text answer the user typed (FILL_BLANK). */
+export function getUserAnswerText(snap: Record<string, unknown> | null | undefined): string | null {
+  if (!snap) return null;
+  const v = snap.answerText;
+  return typeof v === "string" ? v : null;
 }

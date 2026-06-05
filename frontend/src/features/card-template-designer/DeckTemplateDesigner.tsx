@@ -22,6 +22,8 @@ import {
   AlignRight,
   Bold,
   ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
   ChevronUp,
   Code2,
   Columns2,
@@ -43,7 +45,13 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { useMemo, useState, type PointerEvent } from "react";
+import { createContext, useContext, useMemo, useState, type PointerEvent } from "react";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { InfoLabel } from "@/components/common/InfoLabel";
+
+/** Drives every Section's initial open state for the "expand/collapse all"
+ *  control. `null` = each Section keeps its own default. */
+const SectionOpenContext = createContext<boolean | null>(null);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +67,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { DEFAULT_CUSTOM_COLORS } from "./presets";
+import { COLOR_PRESETS } from "@/lib/color-presets";
+import { FieldStructureEditor, type FieldDef } from "@/pages/student/shared/FieldDeckEditor";
 import type {
   AvailableTemplateField,
   CardTemplateBlock,
@@ -92,6 +101,13 @@ interface DeckTemplateDesignerProps {
   removing: boolean;
   hasTemplate: boolean;
   hasSampleCard: boolean;
+  /** When explicitly `false`, the Save button is disabled (nothing changed). */
+  dirty?: boolean;
+  /** Editable field structure. When both are provided the field editor is shown
+   *  inside the Card builder so new fields can be created here (standalone
+   *  templates). Omit for deck-tied templates whose fields come from the deck. */
+  fields?: FieldDef[];
+  onFieldsChange?: (fields: FieldDef[]) => void;
   onDraftChange: (draft: TemplateDraftFields) => void;
   onBuilderChange: (state: CardTemplateBuilderState) => void;
   onPreviewSideChange: (side: TemplateSide) => void;
@@ -100,6 +116,9 @@ interface DeckTemplateDesignerProps {
   onSave: () => void;
   onCancel: () => void;
   onRemoveTemplate: () => void;
+  /** Root height/container override. Defaults to `h-[92vh]` (modal use);
+   *  pass e.g. `h-svh` to fill a full-screen editor page. */
+  className?: string;
 }
 
 const LAYOUT_OPTIONS: Array<{ value: TemplateLayoutMode; label: string; icon: typeof AlignCenter }> = [
@@ -124,16 +143,13 @@ const FONT_OPTIONS: Array<{ value: FontFamilyKey; label: string }> = [
   { value: "JP_MINCHO", label: "Japanese Mincho (明朝)" },
 ];
 
-const COLOR_SWATCHES = [
-  "#1f2937", "#dc2626", "#ea580c", "#d97706", "#16a34a",
-  "#0891b2", "#2563eb", "#7c3aed", "#db2777", "#ffffff",
-];
+/** Text-color palette — reuses the app's color presets (same as Settings). */
+const TEXT_COLOR_SWATCHES = COLOR_PRESETS.map((p) => p.swatch);
 
 /* ─────────────────────────────────────────
    Main component
 ───────────────────────────────────────── */
 export function DeckTemplateDesigner({
-  deckTitle,
   draft,
   builderState,
   availableFields,
@@ -145,6 +161,9 @@ export function DeckTemplateDesigner({
   removing,
   hasTemplate,
   hasSampleCard,
+  dirty,
+  fields,
+  onFieldsChange,
   onDraftChange,
   onBuilderChange,
   onPreviewSideChange,
@@ -153,8 +172,19 @@ export function DeckTemplateDesigner({
   onSave,
   onCancel,
   onRemoveTemplate,
+  className,
 }: DeckTemplateDesignerProps) {
   const [activeSide, setActiveSide] = useState<TemplateSide>("FRONT");
+
+  // Expand/collapse-all: remount the sections so each picks up the forced
+  // open state from context, while still allowing individual toggles after.
+  const [expandAll, setExpandAll] = useState<boolean | null>(null);
+  const [sectionsKey, setSectionsKey] = useState(0);
+  const allExpanded = expandAll === true;
+  const toggleAll = () => {
+    setExpandAll(allExpanded ? false : true);
+    setSectionsKey((k) => k + 1);
+  };
 
   const updateSide = (side: TemplateSide, blocks: CardTemplateBlock[]) => {
     onBuilderChange({
@@ -171,93 +201,94 @@ export function DeckTemplateDesigner({
   };
 
   return (
-    <div className="flex h-[92vh] flex-col bg-background text-foreground">
-      {/* ════════ HEADER ════════ */}
-      <header className="flex items-center justify-between gap-3 border-b border-border bg-card px-5 py-3 shrink-0">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">Card template</h2>
-            {customCode && (
-              <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                <Code2 className="size-3 mr-1" />
-                Custom code
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {deckTitle ? `Applies to every card in "${deckTitle}".` : "Applies to every card in this deck."}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {hasTemplate && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRemoveTemplate}
-              disabled={saving || removing}
-              title="Remove this template and fall back to the default card layout"
-            >
-              {removing ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
-              Back to default
-            </Button>
-          )}
-          <Button variant="ghost" onClick={onCancel} disabled={saving || removing}>
-            <X className="size-4 mr-1" />
-            Cancel
+    <div className={cn("flex flex-col bg-background text-foreground", className ?? "h-[92vh]")}>
+      {/* ════════ HEADER — toggle (left) + actions (right), no card chrome ════════ */}
+      <header className="flex items-center gap-2 border-b border-border/60 py-2.5 shrink-0">
+        <Button
+          variant="outline"
+          onClick={toggleAll}
+          title={allExpanded ? "Thu gọn tất cả các phần" : "Mở rộng tất cả các phần"}
+        >
+          {allExpanded ? <ChevronsDownUp className="size-4 mr-1" /> : <ChevronsUpDown className="size-4 mr-1" />}
+          {allExpanded ? "Thu gọn tất cả" : "Mở rộng tất cả"}
+        </Button>
+        {customCode && (
+          <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <Code2 className="size-3 mr-1" />
+            Custom code
+          </Badge>
+        )}
+        <div className="flex-1" />
+        {hasTemplate && (
+          <Button
+            variant="outline"
+            onClick={onRemoveTemplate}
+            disabled={saving || removing}
+            title="Remove this template and fall back to the default card layout"
+          >
+            {removing ? <Loader2 className="size-4 animate-spin mr-1" /> : <RotateCcw className="size-4 mr-1" />}
+            Back to default
           </Button>
-          <Button onClick={onSave} disabled={saving || removing}>
-            {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
-            Save template
-          </Button>
-        </div>
+        )}
+        <Button variant="ghost" onClick={onCancel} disabled={saving || removing}>
+          <X className="size-4 mr-1" />
+          Cancel
+        </Button>
+        <Button onClick={onSave} disabled={saving || removing || dirty === false}>
+          {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
+          Save template
+        </Button>
       </header>
 
       {/* ════════ BODY ════════ */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* ───── Left: scrollable editor ───── */}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-muted/30">
-          <div className="space-y-4 p-5 max-w-3xl mx-auto">
-            <TemplateBasics draft={draft} onDraftChange={onDraftChange} />
+        {/* ───── Left: scrollable editor (full width, no card background) ───── */}
+        <ScrollHintContainer axis="vertical" className="flex-1 min-w-0" viewportClassName="pr-5 pt-4 pb-6">
+          <SectionOpenContext.Provider value={expandAll}>
+            <div key={sectionsKey} className="space-y-4">
+              <TemplateBasics draft={draft} onDraftChange={onDraftChange} />
 
-            <CardBuilderPanel
-              activeSide={activeSide}
-              state={builderState}
-              availableFields={availableFields}
-              onSideChange={setActiveSide}
-              onSideBlocksChange={(side, blocks) => {
-                updateSide(side, blocks);
-                onCustomCodeChange(false);
-              }}
-            />
+              <CardBuilderPanel
+                activeSide={activeSide}
+                state={builderState}
+                availableFields={availableFields}
+                fields={fields}
+                onFieldsChange={onFieldsChange}
+                onSideChange={setActiveSide}
+                onSideBlocksChange={(side, blocks) => {
+                  updateSide(side, blocks);
+                  onCustomCodeChange(false);
+                }}
+              />
 
-            <LayoutPanel settings={builderState.settings} onChange={updateSettings} />
-            <TypographyPanel settings={builderState.settings} onChange={updateSettings} />
-            <JapaneseMediaPanel settings={builderState.settings} onChange={updateSettings} />
+              <LayoutPanel settings={builderState.settings} onChange={updateSettings} />
+              <TypographyPanel settings={builderState.settings} onChange={updateSettings} />
+              <JapaneseMediaPanel settings={builderState.settings} onChange={updateSettings} />
 
-            <AdvancedPanel
-              advancedMode={advancedMode}
-              onAdvancedModeChange={onAdvancedModeChange}
-              draft={draft}
-              onDraftChange={(next) => {
-                onDraftChange(next);
-                onCustomCodeChange(true);
-              }}
-            />
-          </div>
-        </div>
+              <AdvancedPanel
+                advancedMode={advancedMode}
+                onAdvancedModeChange={onAdvancedModeChange}
+                draft={draft}
+                onDraftChange={(next) => {
+                  onDraftChange(next);
+                  onCustomCodeChange(true);
+                }}
+              />
+            </div>
+          </SectionOpenContext.Provider>
+        </ScrollHintContainer>
 
         {/* ───── Right: fixed preview ───── */}
         <aside className="w-110 xl:w-130 shrink-0 border-l border-border bg-card flex flex-col">
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border shrink-0">
-            <div>
-              <h3 className="text-sm font-semibold">Live preview</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {hasSampleCard
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-2.5 shrink-0">
+            <InfoLabel
+              title={<h3 className="text-sm font-semibold">Live preview</h3>}
+              info={
+                hasSampleCard
                   ? "Showing a real card from this deck."
-                  : "Add a card to this deck to see real content."}
-              </p>
-            </div>
+                  : "Add a card to this deck to see real content."
+              }
+            />
             <Tabs value={previewSide} onValueChange={(value) => onPreviewSideChange(value as TemplateSide)}>
               <TabsList className="h-8">
                 <TabsTrigger value="FRONT" className="h-7 px-3 text-xs">Front</TabsTrigger>
@@ -296,24 +327,38 @@ function Section({
   defaultOpen?: boolean;
   rightSlot?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  // Forced open state from the expand/collapse-all control (null → own default).
+  const forced = useContext(SectionOpenContext);
+  const [open, setOpen] = useState(forced ?? defaultOpen);
   return (
     <section className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="flex flex-1 items-center justify-between gap-3 text-left"
-        >
-          <div>
-            <h3 className="text-sm font-semibold">{title}</h3>
-            {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
-          </div>
-          {open ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
-        </button>
-        {rightSlot}
+        <InfoLabel
+          className="min-w-0"
+          info={description}
+          title={
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              className="min-w-0 text-left"
+            >
+              <h3 className="truncate text-sm font-semibold">{title}</h3>
+            </button>
+          }
+        />
+        <div className="flex shrink-0 items-center gap-2">
+          {rightSlot}
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? "Thu gọn" : "Mở rộng"}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </button>
+        </div>
       </div>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="border-t border-border px-4 pb-4 pt-4">{children}</div>}
     </section>
   );
 }
@@ -358,15 +403,22 @@ function CardBuilderPanel({
   activeSide,
   state,
   availableFields,
+  fields,
+  onFieldsChange,
   onSideChange,
   onSideBlocksChange,
 }: {
   activeSide: TemplateSide;
   state: CardTemplateBuilderState;
   availableFields: AvailableTemplateField[];
+  fields?: FieldDef[];
+  onFieldsChange?: (fields: FieldDef[]) => void;
   onSideChange: (side: TemplateSide) => void;
   onSideBlocksChange: (side: TemplateSide, blocks: CardTemplateBlock[]) => void;
 }) {
+  // When the field structure is editable, the builder owns field creation too
+  // (the old separate "Mẫu thẻ" panel is merged in here).
+  const canEditFields = !!fields && !!onFieldsChange;
   const blocks = state.sides[activeSide];
   const enabledCount = blocks.filter((block) => block.enabled).length;
 
@@ -419,8 +471,26 @@ function CardBuilderPanel({
   return (
     <Section
       title="Card builder"
-      description="Toggle, reorder and resize the fields shown on this side."
+      description={
+        canEditFields
+          ? "Tạo trường cho mẫu, rồi bật/sắp xếp/đổi cỡ các trường trên từng mặt."
+          : "Toggle, reorder and resize the fields shown on this side."
+      }
     >
+      {/* Field structure — merged in from the old "Mẫu thẻ" panel so new fields
+          can be created right here. Hidden for deck-tied templates. */}
+      {canEditFields && (
+        <div className="mb-4 space-y-2">
+          <InfoLabel
+            title={<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trường của mẫu</p>}
+            info="Các trường mà mẫu này tham chiếu qua {{Tên trường}}. Thêm/sửa/xóa trường tại đây, rồi bấm chip bên dưới để đưa trường vào một mặt thẻ."
+            side="right"
+          />
+          <FieldStructureEditor fields={fields!} onChange={onFieldsChange!} />
+          <div className="!mt-4 border-t border-border/60" />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <Tabs value={activeSide} onValueChange={(value) => onSideChange(value as TemplateSide)}>
           <TabsList className="h-8">
@@ -468,11 +538,13 @@ function CardBuilderPanel({
       {/* Available deck fields → click to add */}
       <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          Deck fields · click to add
+          {canEditFields ? "Trường · bấm để thêm vào mặt này" : "Deck fields · click to add"}
         </p>
         {sideFields.length === 0 ? (
           <p className="text-[11px] text-muted-foreground">
-            No {activeSide.toLowerCase()} fields found in the sample card.
+            {canEditFields
+              ? `Chưa có trường ${activeSide === "FRONT" ? "mặt trước" : "mặt sau"}. Thêm ở phần "Trường của mẫu" bên trên.`
+              : `No ${activeSide.toLowerCase()} fields found in the sample card.`}
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
@@ -687,75 +759,89 @@ function TypographyPanel({
   return (
     <Section title="Typography" description="Fonts, weight and text styling.">
       <div className="space-y-4">
-        {/* Font family */}
-        <div className="space-y-1.5">
-          <Label className="text-sm">Font</Label>
-          <Select value={t.fontFamily} onValueChange={(value) => patch({ fontFamily: value as FontFamilyKey })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FONT_OPTIONS.map((font) => (
-                <SelectItem key={font.value} value={font.value}>
-                  {font.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Font + Style on the same row */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-sm">Font</Label>
+            <Select value={t.fontFamily} onValueChange={(value) => patch({ fontFamily: value as FontFamilyKey })}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FONT_OPTIONS.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    {font.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Style toolbar: B / I / U */}
-        <div className="space-y-1.5">
-          <Label className="text-sm">Style</Label>
-          <div className="flex items-center gap-1.5">
-            <ToggleButton
-              active={t.fontWeight >= 700}
-              onClick={() => patch({ fontWeight: t.fontWeight >= 700 ? 500 : 700 })}
-              title="Bold"
-            >
-              <Bold className="size-4" />
-            </ToggleButton>
-            <ToggleButton active={t.italic} onClick={() => patch({ italic: !t.italic })} title="Italic">
-              <Italic className="size-4" />
-            </ToggleButton>
-            <ToggleButton active={t.underline} onClick={() => patch({ underline: !t.underline })} title="Underline">
-              <Underline className="size-4" />
-            </ToggleButton>
-            <ToggleButton
-              active={t.uppercase}
-              onClick={() => patch({ uppercase: !t.uppercase })}
-              title="Uppercase"
-            >
-              <span className="text-xs font-bold">AA</span>
-            </ToggleButton>
+          <div className="space-y-1.5">
+            <Label className="text-sm">Style</Label>
+            <div className="flex items-center gap-1.5">
+              <ToggleButton
+                active={t.fontWeight >= 700}
+                onClick={() => patch({ fontWeight: t.fontWeight >= 700 ? 500 : 700 })}
+                title="Bold"
+              >
+                <Bold className="size-4" />
+              </ToggleButton>
+              <ToggleButton active={t.italic} onClick={() => patch({ italic: !t.italic })} title="Italic">
+                <Italic className="size-4" />
+              </ToggleButton>
+              <ToggleButton active={t.underline} onClick={() => patch({ underline: !t.underline })} title="Underline">
+                <Underline className="size-4" />
+              </ToggleButton>
+              <ToggleButton
+                active={t.uppercase}
+                onClick={() => patch({ uppercase: !t.uppercase })}
+                title="Uppercase"
+              >
+                <span className="text-xs font-bold">AA</span>
+              </ToggleButton>
+            </div>
           </div>
         </div>
 
-        {/* Text color */}
+        {/* Text color — preset palette only (no custom colour) */}
         <div className="space-y-1.5">
-          <ColorField
-            label="Text color"
-            value={t.textColor ?? DEFAULT_CUSTOM_COLORS.text}
-            onChange={(color) => patch({ textColor: color })}
-          />
-          {t.textColor && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-[11px]"
+          <Label className="text-sm">Text color</Label>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
               onClick={() => patch({ textColor: null })}
-              title="Use default color"
+              title="Mặc định (theo chủ đề)"
+              className={cn(
+                "flex size-6 items-center justify-center rounded-md border text-[10px] font-semibold text-muted-foreground transition-shadow",
+                !t.textColor ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-foreground/40"
+              )}
             >
-              <RotateCcw className="size-3 mr-1" />
-              Reset to default
-            </Button>
-          )}
+              A
+            </button>
+            {TEXT_COLOR_SWATCHES.map((color) => {
+              const active = (t.textColor ?? "").toLowerCase() === color.toLowerCase();
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => patch({ textColor: color })}
+                  title={color}
+                  style={{ background: color }}
+                  className={cn(
+                    "size-6 rounded-md border transition-shadow",
+                    active ? "border-primary ring-2 ring-primary/40" : "border-border/40 hover:border-foreground/40"
+                  )}
+                />
+              );
+            })}
+          </div>
         </div>
 
-        <RangeRow label="Font size" value={t.fontSize} min={14} max={48} unit="px" onChange={(fontSize) => patch({ fontSize })} />
-        <RangeRow label="Font weight" value={t.fontWeight} min={300} max={900} step={100} onChange={(fontWeight) => patch({ fontWeight })} />
-        <RangeRow label="Line height" value={t.lineHeight} min={1.1} max={2.2} step={0.05} onChange={(lineHeight) => patch({ lineHeight })} />
-        <RangeRow label="Letter spacing" value={t.letterSpacing} min={-1} max={6} step={0.5} unit="px" onChange={(letterSpacing) => patch({ letterSpacing })} />
+        <RangeRow label="Font size" value={t.fontSize} min={12} max={120} unit="px" onChange={(fontSize) => patch({ fontSize })} />
+        <RangeRow label="Font weight" value={t.fontWeight} min={100} max={900} step={100} onChange={(fontWeight) => patch({ fontWeight })} />
+        <RangeRow label="Line height" value={t.lineHeight} min={1} max={3} step={0.05} onChange={(lineHeight) => patch({ lineHeight })} />
+        <RangeRow label="Letter spacing" value={t.letterSpacing} min={-3} max={16} step={0.5} unit="px" onChange={(letterSpacing) => patch({ letterSpacing })} />
       </div>
     </Section>
   );
@@ -774,7 +860,7 @@ function JapaneseMediaPanel({
   return (
     <Section title="Japanese & media" defaultOpen={false}>
       <div className="space-y-4">
-        <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
           <Label className="text-sm">Furigana</Label>
           <Select
             value={settings.japanese.furiganaMode}
@@ -782,7 +868,7 @@ function JapaneseMediaPanel({
               onChange({ japanese: { ...settings.japanese, furiganaMode: value as FuriganaMode } })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger size="sm" className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -938,7 +1024,7 @@ function ToggleButton({
       onClick={onClick}
       title={title}
       className={cn(
-        "flex size-8 items-center justify-center rounded-md border transition-colors",
+        "flex h-8 flex-1 items-center justify-center rounded-md border transition-colors",
         active
           ? "border-primary bg-primary/10 text-primary"
           : "border-border bg-background text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -946,52 +1032,6 @@ function ToggleButton({
     >
       {children}
     </button>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (color: string) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      <div className="flex items-center gap-2">
-        <label
-          className="relative size-8 shrink-0 cursor-pointer rounded-md border border-border overflow-hidden"
-          style={{ background: value }}
-        >
-          <input
-            type="color"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          />
-        </label>
-        <Input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-8 text-xs font-mono"
-        />
-      </div>
-      <div className="flex flex-wrap gap-1">
-        {COLOR_SWATCHES.map((swatch) => (
-          <button
-            key={swatch}
-            type="button"
-            onClick={() => onChange(swatch)}
-            className="size-4 rounded-sm border border-border"
-            style={{ background: swatch }}
-            title={swatch}
-          />
-        ))}
-      </div>
-    </div>
   );
 }
 

@@ -7,7 +7,7 @@ import {
 } from "@/types";
 
 const wordTypeSchema: EntitySchema = {
-  entityName: "wordType",
+  entityName: "word_type",
   idField: "id",
   fields: [
     {

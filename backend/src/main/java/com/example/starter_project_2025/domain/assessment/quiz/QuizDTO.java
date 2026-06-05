@@ -16,8 +16,6 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuizDTO extends BaseDTO {
 
-    Long quizTypeId;
-    Long categoryId;
     Long levelId;
     Long creatorId;
     Long deckId;

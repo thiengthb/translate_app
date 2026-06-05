@@ -8,9 +8,6 @@ import lombok.Builder;
 public class QuestionBankFilter extends BaseFilter {
 
     @FilterField
-    Long categoryId;
-
-    @FilterField
     Long levelId;
 
     @FilterField
@@ -18,4 +15,12 @@ public class QuestionBankFilter extends BaseFilter {
 
     @FilterField
     String difficultyLevel;
+
+    /** Filter the list endpoint to questions carrying this tag. */
+    @FilterField(entityField = "tags.id")
+    Long tagId;
+
+    /** Owner scope — forced to the current user by the service (per-user bank). */
+    @FilterField(entityField = "createdByUser")
+    Long createdByUser;
 }

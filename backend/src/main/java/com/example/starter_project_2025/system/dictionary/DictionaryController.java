@@ -1,8 +1,11 @@
 package com.example.starter_project_2025.system.dictionary;
 
+import com.example.starter_project_2025.base.dataio.importer.result.ImportResult;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
+import com.example.starter_project_2025.security.PermissionChecker;
 import com.example.starter_project_2025.system.words.word.WordCreateRequest;
 import com.example.starter_project_2025.system.words.word.WordDTO;
+import com.example.starter_project_2025.system.words.word.WordDataIoService;
 import com.example.starter_project_2025.system.words.word.WordService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,13 +15,17 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -47,6 +54,7 @@ public class DictionaryController {
     TatoebaClient     tatoebaClient;
     ForvoClient       forvoClient;
     WordService       wordService;
+    WordDataIoService wordDataIoService;
 
     private static final String GOOGLE_HWR_URL =
             "https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8";
@@ -55,6 +63,43 @@ public class DictionaryController {
     @Operation(summary = "Tạo từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ trong một lần")
     public ResponseEntity<WordDTO> createWord(@Valid @RequestBody WordCreateRequest request) {
         return ResponseEntity.ok(wordService.createFull(request));
+    }
+
+    // ── Import / Export RIÊNG cho từ vựng (cấu trúc phức tạp: nghĩa + ví dụ) ──
+
+    @GetMapping("/words/export")
+    @Operation(summary = "Xuất toàn bộ từ vựng (kèm nghĩa & ví dụ) ra Excel/CSV")
+    public ResponseEntity<byte[]> exportWords(@RequestParam(defaultValue = "EXCEL") String format) {
+        PermissionChecker.require("WORD_READ");
+        boolean csv = "CSV".equalsIgnoreCase(format);
+        byte[] file = wordDataIoService.export(csv);
+        return fileResponse(file, csv ? "words.csv" : "words.xlsx", csv);
+    }
+
+    @PostMapping("/words/import")
+    @Operation(summary = "Nhập từ vựng (kèm nghĩa & ví dụ) từ file Excel/CSV theo template")
+    public ResponseEntity<ImportResult> importWords(@RequestParam("file") MultipartFile file) {
+        PermissionChecker.require("WORD_CREATE");
+        return ResponseEntity.ok(wordDataIoService.importFile(file));
+    }
+
+    @GetMapping("/words/template")
+    @Operation(summary = "Tải file Excel mẫu (kèm sheet hướng dẫn) để nhập từ vựng")
+    public ResponseEntity<byte[]> wordTemplate() {
+        PermissionChecker.require("WORD_CREATE");
+        byte[] file = wordDataIoService.buildTemplate();
+        return fileResponse(file, "word-import-template.xlsx", false);
+    }
+
+    private ResponseEntity<byte[]> fileResponse(byte[] body, String filename, boolean csv) {
+        MediaType type = csv
+                ? new MediaType("text", "csv", StandardCharsets.UTF_8)
+                : MediaType.APPLICATION_OCTET_STREAM;
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header("Access-Control-Expose-Headers", "Content-Disposition")
+                .contentType(type)
+                .body(body);
     }
 
     @GetMapping("/search")
@@ -88,6 +133,28 @@ public class DictionaryController {
             return ResponseEntity.ok(List.of());
         }
         return ResponseEntity.ok(dictionaryService.searchKanji(q, Math.min(limit, 20)));
+    }
+
+    // ── Từ vựng tổng hợp — duyệt toàn bộ từ vựng / kanji có lọc level ──
+
+    @GetMapping("/browse/words")
+    @Operation(summary = "Duyệt toàn bộ từ vựng (phân trang, lọc tùy chọn theo level N5…N1)")
+    public ResponseEntity<BrowseResult<WordSearchResult>> browseWords(
+            @RequestParam(required = false) String level,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(dictionaryService.browseWords(
+                level, Math.max(page, 0), Math.min(Math.max(size, 1), 50)));
+    }
+
+    @GetMapping("/browse/kanjis")
+    @Operation(summary = "Duyệt toàn bộ kanji (phân trang, lọc tùy chọn theo JLPT level N5…N1)")
+    public ResponseEntity<BrowseResult<KanjiSearchResult>> browseKanjis(
+            @RequestParam(required = false) String level,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size) {
+        return ResponseEntity.ok(dictionaryService.browseKanjis(
+                level, Math.max(page, 0), Math.min(Math.max(size, 1), 60)));
     }
 
     @GetMapping("/featured")
