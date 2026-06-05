@@ -109,6 +109,52 @@ const charLevel = new Map();
 for (const lv of LEVELS) {
   for (const ch of lv.chars) if (!charLevel.has(ch)) charLevel.set(ch, lv.level);
 }
+
+// ── "Khác" pool (level KHAC) ────────────────────────────────────────────────
+// A hidden reference pool of rare / variant / pre-Meiji-reform (旧字体) forms.
+// These get NO deck and the sentinel level "KHAC", so they never appear in the
+// deck list ("học theo deck") or the per-level progress (which sums decks only).
+// They exist only as detail pages so a kanji can link to its alternate writing.
+const KHAC_RAW =
+  "驕驍驛驗驟驢驥驤驩驫驪骭骰骼髀髏髑髓體髞髟髢髣髦髯髫髮髴髱髷髻鬆鬘鬚鬟鬢鬣鬥鬧鬨鬩鬪鬮鬯鬲魄魃魏魍魎魑魘魴鮓鮃鮑鮖鮗鮟鮠鮨鮴鯀鯊鮹鯆鯏鯑鯒鯣鯢鯤鯔鯡鯲鯱鯰鰕鰔鰉鰓鰌鰆鰈鰒鰊鰄鰮鰛鰥鰤鰡鰰鱇鰲鱆鰾鱚鱠鱧鱶鱸鳧鳬鳰鴉鳫鴃鴆鴪鴣鴟鵄鴕鴒鵁鴿鴾鵆鵈鵝鵞鵤鵑鵐鵙鵲鶉鶇鶫鵯鵺鶚鶤鶩鶲鷄鷁鶻鶸鶺鷆鷏鷂鷙鷓鷸鷦鷭鷯鷽鸛鸞鹵鹹鹽麁麈麋麌麕麑麝麥麩麸麭靡黌黏黐黔黜點黝黠黥黨黯黴黶黷黹黻黼黽鼇鼈皷鼕鼡鼬鼾齊齒齔齣齟齠齡齦齧齬齪齷齲齶龕龜龠堯槇遙瑤耦逬炷愒焠慠牖挘厲鎺萁瑇薏噁噦癭噯晳皁嚬曬蜓蝘蝲螈蟎蠆蠊桛顬梲梻壎榀姸﨟驎櫱竽鬭孒魞魬魳孽鮸鯎鰙鰧鱏鱓籙屛鱛鱟籡鱲粏沪糝鵇鶍跎縕麇麤鼯鼴鼹彽儚脩熙憫燎凜燿勁茉莉菫瑶昴晏晟晨暉皓眸頌栞颯褌椰奎詢諄笙毬崚洵洸赳綸綺滉黎漱彗侑澪翔迪㐬㓁㝵丂丨丰丵乀乄么乑乚亍亻亼你佣佷佾俏倂倘倜倻儛儞关冎刂划刖剕剗劓匀匜卌卽厃厴叀吧呍呦咅咖咜唎唵啚啤喂嗉嗩嘈嘻囉囟囧圣圳坅坷垜埤埦埵埶塌塡塤塼墝增墩壒壔壴复夔奶她妳姧媧媳嬥嬭孁寬尃尌巋巠巢弈弎弽彀彇彐彔徉徜徧徵德忄忉惔惸慼憍憗戠戾扌拼挍挵捄捥揭搢搩摹撿擊擤攙攩攲斦斿晚曆杮枘枻柃柒柰柲柹桒桕桫桼梂梘梣棈楂楉楣楤楲榨槪槵樏樝橅橉橛橫檉檝檞檫櫧欏欛步歷殭殸毌每毮氐氳氵氺泫洄洱洹涉涔涮淚渴湑溫漳瀨灬炻烘焮煆煞煠熅熇熒熳爫牕牜牸犎犭犮狀狳猨獐獦獬獱玢玦璆璫瓤瓫甁畐疒痀痎痟痤痧瘙瘦瘭癋癤皶眴眶睘睺瞟矠砑砭砰硏硨确碰磈磠磤磲礻祆禸离秈秭稃稭窠窻笟笧笯筯箶篊篗簎簏簳簶籰籹粔糕糗糫糵紇絁綠緖緣縑纁纍罒罣羗翮耂耑胭胳腅腭膻臱舢艹芇芎芷苾茛荽莧莩菀菇菝葈葜葼蒁蒅蒦蒴蒾蔞蔤蔲蕓蕙蕤蕺薰藋藦藿蘘蘞蘩虛虬虯蚉蚜蛁蛑蛺蜱蜺蜾蝀蝃蝤蝥螠螭蟖蟟蠁蠃蠔蠰衤袘裑褱襀襅誷譃豇豉貒貛賴贛趯跆跑踠蹋躻辦辵辶迤迱邈邌郞鄕酛醞醨醶釃釬鈹鉏鉸鋙錄鍊鍰鍳鏁鏢鏽鑣閦閩闋阝阼隄雒雞雩靛鞺韘韛顇顖顦颺飠飡飥飳餛餢餺餻駃騠騮騸驊骶髐髤魛魣魨魹鮄鮐鮞鮧鮬鯁鯝鯥鯧鯯鯷鯸鯺鯽鰖鰞鰣鰩鰱鰶鰷鱁鱖鱘鱜鱝鱨鱩鱪鱫鱮鱰鱵鱷鳲鴴鵂鵟鵷鵼鶵鷉鷚鷴鸊麞麨麬麵麽黃黑黿鼉鼺龗欄廊朗虜殺類隆塚﨑神祥福諸都侮僧免勉勤卑喝嘆器塀墨層悔慨憎懲敏既暑梅海漢煮碑社祉祈祖祝禍穀突節練繁署者臭著褐視謁謹賓贈逸難響頻𠂢𠂤𠏹𡱖𣠽𨫤𩻛𪃹々〆〇囍潚喿矞";
+const KHAC = [...new Set([...KHAC_RAW])];
+for (const ch of KHAC) if (!charLevel.has(ch)) charLevel.set(ch, "KHAC");
+
+// ── Curated alternate-writing (cách viết khác) pairs ────────────────────────
+// modern (jōyō shinjitai) ↔ old (kyūjitai). Hand-verified, high-confidence only
+// — derived auto-mapping (Unihan) is too noisy/incomplete to trust. The "old"
+// targets are seeded into the KHAC pool so the link always resolves. Easy to
+// extend: just add a "modern老" pair.
+const VARIANT_PAIRS = [
+  ["国","國"],["学","學"],["体","體"],["数","數"],["医","醫"],["万","萬"],["売","賣"],
+  ["読","讀"],["広","廣"],["沢","澤"],["駅","驛"],["変","變"],["鉄","鐵"],["仏","佛"],
+  ["県","縣"],["団","團"],["円","圓"],["当","當"],["対","對"],["発","發"],["寿","壽"],
+  ["戦","戰"],["戸","戶"],["気","氣"],["来","來"],["桜","櫻"],["様","樣"],["権","權"],
+  ["横","橫"],["楽","樂"],["帰","歸"],["観","觀"],["覚","覺"],["児","兒"],["写","寫"],
+  ["処","處"],["区","區"],["号","號"],["営","營"],["圧","壓"],["声","聲"],["実","實"],
+  ["専","專"],["拝","拜"],["挙","擧"],["断","斷"],["昼","晝"],["検","檢"],["独","獨"],
+  ["画","畫"],["真","眞"],["経","經"],["絵","繪"],["続","續"],["総","總"],["蔵","藏"],
+  ["薬","藥"],["虫","蟲"],["覧","覽"],["豊","豐"],["転","轉"],["軽","輕"],["辺","邊"],
+  ["銭","錢"],["録","錄"],["関","關"],["険","險"],["雑","雜"],["静","靜"],["験","驗"],
+  ["髪","髮"],["麦","麥"],["黄","黃"],["黒","黑"],["価","價"],["仮","假"],["伝","傳"],
+  ["党","黨"],["剣","劍"],["労","勞"],["収","收"],["囲","圍"],["図","圖"],["塩","鹽"],
+  ["巣","巢"],["帯","帶"],["応","應"],["悪","惡"],["歳","歲"],["歴","歷"],["残","殘"],
+  ["浅","淺"],["満","滿"],["灯","燈"],["礼","禮"],["糸","絲"],["与","與"],["訳","譯"],
+  ["証","證"],["誉","譽"],["遅","遲"],["駆","驅"],["騒","騷"],["霊","靈"],["黙","默"],
+  ["竜","龍"],
+];
+// Ensure every old form is seeded (in the KHAC pool) so navigation resolves.
+for (const [, old] of VARIANT_PAIRS) if (!charLevel.has(old)) charLevel.set(old, "KHAC");
+
+// Bidirectional variant map: char -> Set(linked chars) among seeded chars.
+const variantMap = new Map();
+const linkVariant = (a, b) => {
+  if (!a || !b || a === b) return;
+  if (!variantMap.has(a)) variantMap.set(a, new Set());
+  variantMap.get(a).add(b);
+};
+for (const [m, o] of VARIANT_PAIRS) { linkVariant(m, o); linkVariant(o, m); }
+
 const ALL_CHARS = [...charLevel.keys()];
 const ALL_SET = new Set(ALL_CHARS);
 
@@ -314,18 +360,21 @@ RADICALS.forEach(([char, hv, mean], i) => {
 });
 L.push("");
 
-// 2. Kanji master records (one row per unique char; jlpt_level = first-introduced level)
+// 2. Kanji master records (one row per unique char; jlpt_level = first-introduced
+//    level, or KHAC for the hidden variant pool). KHAC chars may be absent from
+//    KANJIDIC2 — they're still seeded as a bare row (just the character).
 L.push(`-- ── ${ALL_CHARS.length} kanji (kanji_details = master record) ──`);
 const missing = [];
 for (const ch of ALL_CHARS) {
   const k = kanji.get(ch);
-  if (!k) { missing.push(ch); continue; }
-  const radSub = k.radicalNumber != null
-    ? `(SELECT id FROM kanji_radicals WHERE number = ${k.radicalNumber} LIMIT 1)`
+  if (!k) missing.push(ch);
+  const kd = k || {};
+  const radSub = kd.radicalNumber != null
+    ? `(SELECT id FROM kanji_radicals WHERE number = ${kd.radicalNumber} LIMIT 1)`
     : "NULL";
   L.push(
     `INSERT IGNORE INTO kanji_details (kanji_char, onyomi, kunyomi, meaning, jlpt_level, stroke_count, radical_id, is_active, is_deleted, version, created_at, updated_at) ` +
-    `SELECT ${q(ch)}, ${q(k.onyomi)}, ${q(k.kunyomi)}, ${q(k.meaning)}, ${q(charLevel.get(ch))}, ${k.stroke ?? "NULL"}, ${radSub}, b'1', b'0', 0, NOW(6), NOW(6) FROM DUAL;`
+    `SELECT ${q(ch)}, ${q(kd.onyomi)}, ${q(kd.kunyomi)}, ${q(kd.meaning)}, ${q(charLevel.get(ch))}, ${kd.stroke ?? "NULL"}, ${radSub}, b'1', b'0', 0, NOW(6), NOW(6) FROM DUAL;`
   );
 }
 L.push("");
@@ -340,6 +389,21 @@ for (const ch of ALL_CHARS) {
       `INSERT INTO kanji_readings (kanji_id, reading_type, value, priority, is_active, is_deleted, version, created_at, updated_at) ` +
       `SELECT k.id, 'HAN_VIET', ${q(r)}, ${i}, b'1', b'0', 0, NOW(6), NOW(6) FROM kanji_details k ` +
       `WHERE k.kanji_char = ${q(ch)} AND NOT EXISTS (SELECT 1 FROM kanji_readings r WHERE r.kanji_id = k.id AND r.reading_type = 'HAN_VIET' AND r.value = ${q(r)});`
+    );
+  });
+}
+L.push("");
+
+// 3a. Alternate-writing links (VARIANT) — value = the other character.
+L.push("-- ── Alternate-writing links (VARIANT / cách viết khác) ──");
+for (const ch of ALL_CHARS) {
+  const vs = variantMap.get(ch);
+  if (!vs) continue;
+  [...vs].forEach((v, i) => {
+    L.push(
+      `INSERT INTO kanji_readings (kanji_id, reading_type, value, priority, is_active, is_deleted, version, created_at, updated_at) ` +
+      `SELECT k.id, 'VARIANT', ${q(v)}, ${i}, b'1', b'0', 0, NOW(6), NOW(6) FROM kanji_details k ` +
+      `WHERE k.kanji_char = ${q(ch)} AND NOT EXISTS (SELECT 1 FROM kanji_readings r WHERE r.kanji_id = k.id AND r.reading_type = 'VARIANT' AND r.value = ${q(v)});`
     );
   });
 }
@@ -388,14 +452,17 @@ const data = {
   radicals: RADICALS.map(([character, hv, meaning], i) => ({
     number: i + 1, character, hanViet: hv, meaning, strokeCount: radicalStrokeCount(i + 1),
   })),
-  kanji: ALL_CHARS.filter((ch) => kanji.get(ch)).map((ch) => {
-    const k = kanji.get(ch);
+  kanji: ALL_CHARS.map((ch) => {
+    const k = kanji.get(ch) || {};
     const sd = strokeMap.get(ch);
+    const vs = variantMap.get(ch);
     return {
       character: ch,
-      onyomi: k.onyomi, kunyomi: k.kunyomi, meaning: k.meaning,
-      jlptLevel: charLevel.get(ch), strokeCount: k.stroke, radicalNumber: k.radicalNumber,
+      onyomi: k.onyomi ?? null, kunyomi: k.kunyomi ?? null, meaning: k.meaning ?? null,
+      jlptLevel: charLevel.get(ch), strokeCount: k.stroke ?? null, radicalNumber: k.radicalNumber ?? null,
       hanViet: hanViet.get(ch) || [],
+      // Alternate-writing characters (cách viết khác).
+      variants: vs ? [...vs] : [],
       // KanjiVG payload stored as a JSON string in kanji_details.stroke_data.
       strokeData: sd ? JSON.stringify(sd) : null,
       svgViewbox: sd ? sd.v : null,
@@ -416,12 +483,15 @@ fs.writeFileSync(jsonOut, JSON.stringify(data, null, 2) + "\n", "utf8");
 console.log(`Wrote ${OUT}`);
 console.log(`Wrote ${jsonOut}`);
 console.log(`  radicals   : ${RADICALS.length}`);
-console.log(`  kanji      : ${kanji.size}/${ALL_CHARS.length} unique`);
+console.log(`  kanji      : ${ALL_CHARS.length} unique (${kanji.size} in KANJIDIC2)`);
+console.log(`  khac pool  : ${[...charLevel.values()].filter((l) => l === "KHAC").length} hidden chars (no deck)`);
+console.log(`  variants   : ${variantMap.size} chars with a 'cách viết khác' link`);
 console.log(`  han-viet   : ${hanViet.size} kanji have readings`);
 for (const lv of LEVELS) {
   const present = lv.chars.filter((ch) => kanji.get(ch)).length;
   console.log(`  deck ${lv.level.padEnd(3)}: ${present}/${lv.chars.length}`);
 }
-const noRad = ALL_CHARS.filter((c) => kanji.get(c) && kanji.get(c).radicalNumber == null);
-if (missing.length) console.log(`  MISSING in KANJIDIC2: ${missing.join(" ")}`);
-if (noRad.length) console.log(`  no radical: ${noRad.join(" ")}`);
+// Curated old-forms that KANJIDIC2 doesn't know (sanity check for typos).
+const badOld = VARIANT_PAIRS.filter(([, o]) => !kanji.get(o)).map(([, o]) => o);
+if (badOld.length) console.log(`  variant old-forms not in KANJIDIC2 (check!): ${badOld.join(" ")}`);
+console.log(`  KHAC/bare (no KANJIDIC2 data): ${missing.length}`);

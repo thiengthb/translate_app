@@ -7,6 +7,7 @@ import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiStrokeAnimator } from "./components/KanjiStrokeAnimator";
 import { KanjiChietTu } from "./components/KanjiChietTu";
 import { KanjiDeckStrip } from "./components/KanjiDeckStrip";
+import { KanjiVariantLinks } from "./components/KanjiVariantLinks";
 import { parseKvg, hasDecomposition } from "./components/kanjiVg";
 
 /**
@@ -60,6 +61,10 @@ export default function KanjiDetailPage() {
 
   const hanViet = readings.filter((r) => r.readingType === "HAN_VIET").map((r) => r.value).filter(Boolean);
   const nanori = readings.filter((r) => r.readingType === "NANORI").map((r) => r.value).filter(Boolean);
+  const variants = readings
+    .filter((r) => r.readingType === "VARIANT")
+    .map((r) => r.value)
+    .filter((v): v is string => !!v);
   const kvg = parseKvg(kanji?.strokeData);
 
   const Row = ({ label, value }: { label: string; value?: string | number | null }) =>
@@ -109,7 +114,8 @@ export default function KanjiDetailPage() {
                   label="Bộ thủ"
                   value={radical ? `${radical.character}${radical.hanViet ? ` (${radical.hanViet})` : ""}` : undefined}
                 />
-                <Row label="Cấp độ" value={kanji.jlptLevel} />
+                <Row label="Cấp độ" value={kanji.jlptLevel === "KHAC" ? undefined : kanji.jlptLevel} />
+                <KanjiVariantLinks variants={variants} />
               </div>
             </div>
 
