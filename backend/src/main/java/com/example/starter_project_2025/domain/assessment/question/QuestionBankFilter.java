@@ -8,9 +8,6 @@ import lombok.Builder;
 public class QuestionBankFilter extends BaseFilter {
 
     @FilterField
-    Long categoryId;
-
-    @FilterField
     Long levelId;
 
     @FilterField

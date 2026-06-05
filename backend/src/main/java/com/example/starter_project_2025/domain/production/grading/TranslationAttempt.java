@@ -44,6 +44,10 @@ public class TranslationAttempt extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     String llmJudgeFeedback;
 
+    /** AI rewrite of the learner's own sentence into correct, natural Japanese. */
+    @Column(columnDefinition = "TEXT")
+    String llmCorrection;
+
     @Column(length = 20)
     String finalVerdict;
 }

@@ -135,6 +135,28 @@ public class DictionaryController {
         return ResponseEntity.ok(dictionaryService.searchKanji(q, Math.min(limit, 20)));
     }
 
+    // ── Từ vựng tổng hợp — duyệt toàn bộ từ vựng / kanji có lọc level ──
+
+    @GetMapping("/browse/words")
+    @Operation(summary = "Duyệt toàn bộ từ vựng (phân trang, lọc tùy chọn theo level N5…N1)")
+    public ResponseEntity<BrowseResult<WordSearchResult>> browseWords(
+            @RequestParam(required = false) String level,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(dictionaryService.browseWords(
+                level, Math.max(page, 0), Math.min(Math.max(size, 1), 50)));
+    }
+
+    @GetMapping("/browse/kanjis")
+    @Operation(summary = "Duyệt toàn bộ kanji (phân trang, lọc tùy chọn theo JLPT level N5…N1)")
+    public ResponseEntity<BrowseResult<KanjiSearchResult>> browseKanjis(
+            @RequestParam(required = false) String level,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size) {
+        return ResponseEntity.ok(dictionaryService.browseKanjis(
+                level, Math.max(page, 0), Math.min(Math.max(size, 1), 60)));
+    }
+
     @GetMapping("/featured")
     @Operation(summary = "Lấy từ vựng và kanji đề xuất cho trang chủ từ điển")
     public ResponseEntity<FeaturedResult> featured(

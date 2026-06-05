@@ -33,7 +33,7 @@ export default function QuestionFormPage() {
 
   return (
     <MainLayout pathName={{ "/questions": "Question Bank", [`/questions/${questionId ?? "new"}/edit`]: pathLabel, "/questions/new": pathLabel }}>
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className="w-full max-w-4xl mx-auto space-y-5">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate("/questions")}>
             <ArrowLeft className="size-4 mr-1" /> Question Bank

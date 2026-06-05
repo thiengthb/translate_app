@@ -4,413 +4,72 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="fix merge">
-      <change afterPath="$PROJECT_DIR$/.codemoss/prompt.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/claudeCodeTabState.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/translate_app.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/CloudinaryConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/config/KuromojiConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/Deck.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck/DeckServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/deck_item/DeckItemServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeck.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/favorite_deck/FavoriteDeckServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/ContentType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/Flashcard.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRenderDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRenderService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSide.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideContent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideContentRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardSideRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplate.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/FlashcardTemplateServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/flashcard/SideType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/Folder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/folder/FolderServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgress.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/card_progress/QuizletCardProgressServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/session_item/QuizletSessionItemServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_log/QuizletStudyLogServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySession.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/quizlet/study_session/QuizletStudySessionServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/algorithm_config/SrsAlgorithmConfigServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_log/AnkiReviewLogServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSession.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session/AnkiReviewSessionServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/review_session_item/AnkiReviewSessionItemServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgress.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_progress/AnkiSrsProgressServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSetting.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/srs_setting/AnkiSrsSettingsRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiReviewRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyCardDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/srs/study/AnkiStudyQueueDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/Tag.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/library/tag/TagServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ExerciseResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectionResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorRegistry.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/DetectorSupport.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/GrammarDetector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/ConditionalBaDetector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/NakerebaNaranaiDetector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/TeShimauDetector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/detector/impl/YouniPurposeDetector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/JudgeVerdictCache.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/JudgeVerdictCacheRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/ScenarioRecency.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/ScenarioRecencyRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttemptRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarMarker.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarMarkerRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSubUse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/GrammarSubUseRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ReferenceSentence.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ReferenceSentenceRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStub.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/ScenarioStubRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/converter/CommonMistakesConverter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grammar/model/CommonMistake.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptCache.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptCacheRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/seed/ProductionSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/SeedDeckInitializer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalysisRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalysisResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/AnalyzeService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/JapaneseTextUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/analyze/TokenDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/UserAnalyticsController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/UserAnalyticsService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/user/dto/UserAnalyticsResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/LeaderboardServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/dto/LeaderboardEntry.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/leaderboard/dto/PublicProfileResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakActivity.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakActivityRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/StreakServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/UserStreak.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/UserStreakRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/CalendarResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/CheckInResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/analyze.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/leaderboard.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/ankiSrsSetting.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/ankiStudy.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/deck.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/deck_item.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/favorite_deck.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/flashcard.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/flashcardTemplate.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/folder.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/srsAlgorithmConfig.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/library/tag.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/streak.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/api/features/userAnalytics.api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/common/KeyboardShortcutsDialog.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/common/ScrollHintContainer.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/TableSkeleton.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/constants.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnLayout.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnPinning.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useColumnResize.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useDateFormats.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useDensity.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTableModals.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useRowExpansion.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useSavedViews.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableKeyboard.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableLayoutMetrics.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableUrlSync.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableVirtualization.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/BulkEditModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/TableView.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/TableView.types.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/EditableCell.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/chart/ChartView.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/header/DateFormatButton.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/header/HeaderMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ActiveFilterChips.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/BulkActionBar.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/DataIOMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/DisplayOptionsMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/RefreshIndicator.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/datatable/types.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestActionsRow.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestLogo.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestMobileMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestNavLinks.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/HeaderActionButton.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavGroup.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavItem.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/PinnedSection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/RecentSection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarBranding.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarFooterPanel.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSearch.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useFilteredNavGroups.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useGroupCollapseState.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarFavorites.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarRecent.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/types.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/streak/StreakBadge.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/DeckTemplateDesigner.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/presets.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/template-generation.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/features/card-template-designer/types.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useDebouncedValue.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useKeyboardShortcutsDialog.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useLeaderboard.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useLogoutShortcut.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useStreak.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useThemePreference.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/hooks/useUserAnalytics.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/lib/keyboard-shortcuts.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/UserDashboardPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/GrowthChart.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/RecentUsersList.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/RoleDistributionChart.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/SummaryCards.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/TopStreaksList.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/help/KeyboardShortcutsPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/management/library/folder/index.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/publicProfile/PublicProfilePage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/StreakPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakCalendar.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakStats.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStudyPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CommunityPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateAnkiDeckPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateDeckPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateQuizletDeckPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/DeckPreviewPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardSettingsModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardStudyPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/LibraryPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/pages/student/TemplateEditorModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/dashboard.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/anki_srs_setting.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/deck.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/deck_item.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/favorite_deck.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/flashcard.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/folder.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/srs_algorithm_config.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/library/tag.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/types/features/streak.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/utils/auth.utils.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/similarity-service/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/similarity-service/app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/similarity-service/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(production): implement AI-generated exercise composition and enhance grading feedback">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/autoregister/AutoCrudEndpointRegistrar.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/autoregister/AutoCrudEndpointRegistrar.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/domain/BaseEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/domain/BaseEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/service/BaseCrudServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/crud/service/BaseCrudServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileStorageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/base/file/FileStorageService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/token/refresh/RefreshTokenServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/token/refresh/RefreshTokenServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/demo/tag/Tag.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/demo/tag/Tag.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/UserRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/axios.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/axios.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ErrorBoundary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ErrorBoundary.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/ToggleTheme.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ToggleTheme.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/ProTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/ProTable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/NoResult.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/NoResult.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/dataio/ImportResultModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/dataio/ImportResultModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useAutoPageSize.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useAutoPageSize.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTable.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useProTable.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableMutations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableMutations.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableQuery.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/hook/useTableQuery.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/modal/DetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/DetailModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/modal/form/FormModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/modal/form/FormModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/Pagination.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/Pagination.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/RowActions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/RowActions.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/SortableHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/SortableHeader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardView.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ColumnToggle.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/SearchInput.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/SearchInput.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/Toolbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/Toolbar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/ToolbarActions.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/filter/FilterPopover.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/toolbar/filter/FilterPopover.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainHeader.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/NavMain.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/Sidebar.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserMenu.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auth/Login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/auth/Login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/types/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="be0e565e-0ccd-4678-9190-d3bbef66ee99" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="3a6be4b4-ffb6-4f85-9a1b-34f0e665e70e" />
+            <option name="modeId" value="Ask" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="be0e565e-0ccd-4678-9190-d3bbef66ee99" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="gemini-3.1-pro-preview" />
+            <option name="status" value="Completed" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="ee963474-c1f5-4183-9bdd-5eb73134effe" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="gemini-3.1-pro-preview" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="fd17a77c-1b79-451b-9141-4dcea2363e64" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="gemini-3.1-pro-preview" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
+      <entry key="_C:/Users/Admin/OneDrive/Documents/FPT_University/SWD" value="3EOrKNbOsBGDYefwSTxU3WuROmy" />
+      <entry key="_C:/Users/Admin/OneDrive/Documents/FPT_University/SWD/backend" value="3EOskrVBj4iSYWgbisXxMnGaTV1" />
       <entry key="_D:/StarterProject1203/StarterProject" value="3C1vl6hiINF7XxcPzzxh0qtA0au" />
       <entry key="_D:/prjdichnew" value="3EITj47Fb4GHEnHpZ2yjehBIfNg" />
       <entry key="_D:/prjdichnew/backend" value="3EIkLSuKfPFsNnafoe3CO2PDyAA" />
     </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="agent-panel" value="Gemini 3.1 Pro" />
+      <entry key="chat-panel" value="Gemini 3.1 Pro" />
+    </selectedModels>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -420,9 +79,10 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="feature/translator" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -436,7 +96,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f2fe1c27-9351-4f52-a44b-20eeb1da22db&quot;
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -461,39 +121,63 @@
   &quot;associatedIndex&quot;: 3
 }</component>
   <component name="ProjectId" id="3C1vl6hiINF7XxcPzzxh0qtA0au" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="gemini-3.1-pro-preview" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Maven.starter_project_2025 [clean].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.StarterProject2025Application.executor": "Run",
-    "git-widget-placeholder": "Merging feature/dictionary",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/prjdichnew",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven.starter_project_2025 [clean].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Test-by-ân&quot;,
+    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/OneDrive/Documents/FPT_University/SWD/frontend/public&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.2.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Admin\OneDrive\Documents\FPT_University\SWD\frontend\public" />
       <recent name="D:\prjdichnew\frontend\src\pages" />
       <recent name="D:\prjdichnew\frontend\src\components" />
       <recent name="D:\prjdichnew\frontend\src\api\features" />
@@ -538,8 +222,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
       </set>
     </attachedChunks>
   </component>
@@ -567,6 +250,36 @@
       <workItem from="1780014436214" duration="10898000" />
       <workItem from="1780035901607" duration="2450000" />
       <workItem from="1780046527102" duration="10243000" />
+      <workItem from="1780060394353" duration="476000" />
+      <workItem from="1780061099939" duration="6777000" />
+      <workItem from="1780099997212" duration="5919000" />
+      <workItem from="1780109229697" duration="1338000" />
+      <workItem from="1780111286869" duration="1941000" />
+      <workItem from="1780120481297" duration="348000" />
+      <workItem from="1780125291206" duration="1417000" />
+      <workItem from="1780126736562" duration="4764000" />
+      <workItem from="1780134446813" duration="62000" />
+      <workItem from="1780146881069" duration="609000" />
+      <workItem from="1780187916009" duration="90000" />
+      <workItem from="1780189256367" duration="2355000" />
+      <workItem from="1780210846929" duration="4010000" />
+      <workItem from="1780220722990" duration="7100000" />
+      <workItem from="1780288203601" duration="74000" />
+      <workItem from="1780288290905" duration="6445000" />
+      <workItem from="1780329301013" duration="164000" />
+      <workItem from="1780329573447" duration="4827000" />
+      <workItem from="1780388944138" duration="288000" />
+      <workItem from="1780389328306" duration="1234000" />
+      <workItem from="1780416906767" duration="10624000" />
+      <workItem from="1780445862455" duration="1906000" />
+      <workItem from="1780459191126" duration="890000" />
+      <workItem from="1780466498166" duration="4109000" />
+      <workItem from="1780493427307" duration="1969000" />
+      <workItem from="1780500222342" duration="1245000" />
+      <workItem from="1780556472172" duration="3120000" />
+      <workItem from="1780582286513" duration="4671000" />
+      <workItem from="1780595446343" duration="3702000" />
+      <workItem from="1780635363057" duration="4543000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -656,25 +369,222 @@
       <option name="project" value="LOCAL" />
       <updated>1780056910269</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
+      <option name="closed" value="true" />
+      <created>1780068282096</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1780068282096</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic">
+      <option name="closed" value="true" />
+      <created>1780073234215</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1780073234215</updated>
+    </task>
+    <task id="LOCAL-00014" summary="feat(configuration) update workspace.xml to reflect recent changes and task updates">
+      <option name="closed" value="true" />
+      <created>1780073660156</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1780073660156</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat(translation): integrate DeepL API for text translation and add language selection features">
+      <option name="closed" value="true" />
+      <created>1780131669704</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1780131669704</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files">
+      <option name="closed" value="true" />
+      <created>1780154891240</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1780154891240</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat(translation): implement translation analysis service with alternatives and grammar detection">
+      <option name="closed" value="true" />
+      <created>1780162018999</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1780162018999</updated>
+    </task>
+    <task id="LOCAL-00018" summary="feat(grammar): update grading logic and thresholds for improved accuracy">
+      <option name="closed" value="true" />
+      <created>1780169662480</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1780169662480</updated>
+    </task>
+    <task id="LOCAL-00019" summary="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary">
+      <option name="closed" value="true" />
+      <created>1780253170901</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1780253170901</updated>
+    </task>
+    <task id="LOCAL-00020" summary="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core">
+      <option name="closed" value="true" />
+      <created>1780328637631</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1780328637631</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat(analyze): refactor translation handling to use submitted state and improve API call logic">
+      <option name="closed" value="true" />
+      <created>1780331036949</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1780331036949</updated>
+    </task>
+    <task id="LOCAL-00022" summary="refactor(workspace): update workspace configuration and clean up unused paths">
+      <option name="closed" value="true" />
+      <created>1780385603885</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1780385603885</updated>
+    </task>
+    <task id="LOCAL-00023" summary="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic">
+      <option name="closed" value="true" />
+      <created>1780427094305</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1780427094305</updated>
+    </task>
+    <task id="LOCAL-00024" summary="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns">
+      <option name="closed" value="true" />
+      <created>1780427410701</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1780427410701</updated>
+    </task>
+    <task id="LOCAL-00025" summary="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize">
+      <option name="closed" value="true" />
+      <created>1780467496069</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1780467496069</updated>
+    </task>
+    <task id="LOCAL-00026" summary="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize">
+      <option name="closed" value="true" />
+      <created>1780470118334</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1780470118334</updated>
+    </task>
+    <task id="LOCAL-00027" summary="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese">
+      <option name="closed" value="true" />
+      <created>1780495400059</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1780495400059</updated>
+    </task>
+    <task id="LOCAL-00028" summary="feat(translator): update Ollama API configuration and adjust task duration in workspace settings">
+      <option name="closed" value="true" />
+      <created>1780500283158</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1780500283158</updated>
+    </task>
+    <task id="LOCAL-00029" summary="feat(production): implement AI-generated exercise composition and enhance grading feedback">
+      <option name="closed" value="true" />
+      <created>1780599874560</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1780599874560</updated>
+    </task>
+    <task id="LOCAL-00030" summary="feat(auth): implement global auth modal and redirect for login/register routes">
+      <option name="closed" value="true" />
+      <created>1780639601881</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1780639601881</updated>
+    </task>
+    <task id="LOCAL-00031" summary="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication">
+      <option name="closed" value="true" />
+      <created>1780639629023</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1780639629023</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/Test-by-ân" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="test add" />
-    <MESSAGE value="fix dictionary" />
-    <MESSAGE value="fix frontend" />
-    <MESSAGE value="feat(dictionary): fix dictionary UI" />
-    <MESSAGE value="feat(dictionary): fix UI and add voice" />
-    <MESSAGE value="feat(dictionary): fix UI add search kanji likes mazii" />
-    <MESSAGE value="feat(dictionary): chinh sua UI va them de xuat tu vung" />
-    <MESSAGE value="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji" />
-    <MESSAGE value="feat(dictionary): chinh them phan vi du tu vung" />
     <MESSAGE value="feat(dictionary): add word" />
     <MESSAGE value="fix merge" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix merge" />
+    <MESSAGE value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
+    <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
+    <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
+    <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
+    <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
+    <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
+    <MESSAGE value="perf(grammar): replace runtime regex loop with Aho-Corasick + compiled-Pattern index&#10;&#10;- Add org.ahocorasick:ahocorasick 0.6.3 to pom.xml&#10;- Rewrite GrammarSpotterService: lazy-built GrammarIndex caches an&#10;  Aho-Corasick trie (plain-string markers, O(n) scan) plus pre-compiled&#10;  java.util.regex.Pattern entries (regex markers); double-checked locking&#10;  keeps the index thread-safe. Add invalidateIndex() called by seeder.&#10;- Remove spotGrammar() from OllamaClient — grammar detection is now&#10;  fully deterministic and offline; no Ollama at scan runtime.&#10;- TranslationAnalysisService: grammar = dictionary only (spotter.spot()).&#10;- GrammarDictionarySeeder: call grammarSpotter.invalidateIndex() after&#10;  each seed run so the fresh patterns are picked up immediately.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
+    <MESSAGE value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
+    <MESSAGE value="feat(grammar): update grading logic and thresholds for improved accuracy" />
+    <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
+    <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
+    <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
+    <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
+    <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
+    <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
+    <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
+    <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
+    <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
+    <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
+    <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
+    <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
+    <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
+    <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -1,20 +1,27 @@
 package com.example.starter_project_2025.domain.production.prompt;
 
+import com.example.starter_project_2025.domain.production.api.ImportPromptsRequest;
+import com.example.starter_project_2025.domain.production.api.ImportPromptsResponse;
+import com.example.starter_project_2025.domain.production.api.PendingPromptResponse;
 import com.example.starter_project_2025.domain.production.grading.ScenarioRecency;
 import com.example.starter_project_2025.domain.production.grading.ScenarioRecencyRepository;
 import com.example.starter_project_2025.domain.production.grammar.*;
-import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,10 +32,9 @@ public class PromptService {
 
     private final ScenarioStubRepository scenarioRepository;
     private final ReferenceSentenceRepository referenceRepository;
-    private final GrammarMarkerRepository markerRepository;
     private final PromptCacheRepository promptCacheRepository;
     private final ScenarioRecencyRepository recencyRepository;
-    private final GeminiClient geminiClient;
+    private final GrammarSubUseRepository subUseRepository;
 
     @Transactional
     public PromptCache buildExercise(Long userId, GrammarSubUse subUse) {
@@ -44,15 +50,254 @@ public class PromptService {
         return cache;
     }
 
+    /**
+     * Persist a freshly AI-generated exercise (reference + scenario + prompt cache)
+     * for the given grammar point and return the cached prompt. Kept short and
+     * transactional; the slow LLM call happens before this in the caller.
+     */
+    @Transactional
+    public PromptCache persistGenerated(GrammarSubUse subUse, String situation, String l1Prompt,
+                                        String l2Reference, String register) {
+        ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                .subUse(subUse)
+                .l1Text(situation)
+                .l2Text(l2Reference)
+                .source("GENERATED")
+                .build());
+
+        ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                .subUse(subUse)
+                .register(register)
+                .situationContext(situation)
+                .l1PromptTemplate(l1Prompt)
+                .source("GENERATED")
+                .build());
+
+        return promptCacheRepository.save(PromptCache.builder()
+                .subUse(subUse)
+                .scenario(scenario)
+                .referenceSentence(ref)
+                .l1Prompt(l1Prompt)
+                .build());
+    }
+
+    /**
+     * Persist a live AI-composed exercise (reference + scenario + prompt cache) that is
+     * served immediately to the requesting learner and then discarded from the pools.
+     *
+     * <p>Unlike {@link #persistGenerated}, the rows are tagged {@code source = "AUTO"}.
+     * That value matches neither the shared-pool filter ({@code null}/{@code APPROVED} in
+     * {@code findApprovedBySubUseId}) nor the review-queue filter ({@code GENERATED} in
+     * {@code findPendingReview}), so a freshly composed prompt is invisible to other
+     * learners and to the teacher review page — it exists only so grading can resolve it
+     * by {@code promptId}. The slow LLM call happens before this in the caller.
+     */
+    @Transactional
+    public PromptCache persistComposed(GrammarSubUse subUse, String situation, String l1Prompt,
+                                       String l2Reference, String register) {
+        ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                .subUse(subUse)
+                .l1Text(situation)
+                .l2Text(l2Reference)
+                .source("AUTO")
+                .build());
+
+        ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                .subUse(subUse)
+                .register(register)
+                .situationContext(situation)
+                .l1PromptTemplate(l1Prompt)
+                .source("AUTO")
+                .build());
+
+        return promptCacheRepository.save(PromptCache.builder()
+                .subUse(subUse)
+                .scenario(scenario)
+                .referenceSentence(ref)
+                .l1Prompt(l1Prompt)
+                .build());
+    }
+
+    /**
+     * Bulk-import externally AI-generated prompts into the review queue. Each item
+     * becomes a pending ({@code source = "GENERATED"}) reference + scenario +
+     * prompt-cache triple — exactly like {@link #persistGenerated} — so it surfaces
+     * at {@code /production/review} and only joins the shared pool once approved.
+     *
+     * <p>Idempotent per grammar point: an item is skipped when a reference with the
+     * same {@code l2Reference} already exists for that sub-use, so re-importing the
+     * same batch is safe. Items whose {@code detectorKey} matches no grammar point
+     * are skipped and reported in {@code unknownKeys}.
+     */
+    @Transactional
+    public ImportPromptsResponse importGenerated(List<ImportPromptsRequest.Item> items) {
+        int imported = 0;
+        int skipped = 0;
+        Set<String> unknownKeys = new LinkedHashSet<>();
+        // Cache existing l2 texts per sub-use so dedup is one query per grammar point.
+        Map<Long, Set<String>> existingBySubUse = new HashMap<>();
+
+        for (ImportPromptsRequest.Item item : items) {
+            GrammarSubUse subUse = subUseRepository.findByDetectorKey(item.detectorKey().trim()).orElse(null);
+            if (subUse == null) {
+                unknownKeys.add(item.detectorKey().trim());
+                skipped++;
+                continue;
+            }
+
+            Set<String> existing = existingBySubUse.computeIfAbsent(subUse.getId(), id ->
+                    referenceRepository.findBySubUseId(id).stream()
+                            .map(ReferenceSentence::getL2Text)
+                            .filter(Objects::nonNull)
+                            .map(String::trim)
+                            .collect(Collectors.toCollection(HashSet::new)));
+
+            String l2 = item.l2Reference().trim();
+            if (!existing.add(l2)) {   // already present → duplicate
+                skipped++;
+                continue;
+            }
+
+            String situation = item.situation().trim();
+            String register = isBlank(item.register()) ? "polite" : item.register().trim();
+            String l1Prompt = isBlank(item.l1PromptTemplate()) ? situation : item.l1PromptTemplate().trim();
+
+            ReferenceSentence ref = referenceRepository.save(ReferenceSentence.builder()
+                    .subUse(subUse)
+                    .l1Text(situation)
+                    .l2Text(l2)
+                    .source("GENERATED")
+                    .build());
+
+            ScenarioStub scenario = scenarioRepository.save(ScenarioStub.builder()
+                    .subUse(subUse)
+                    .register(register)
+                    .situationContext(situation)
+                    .l1PromptTemplate(l1Prompt)
+                    .source("GENERATED")
+                    .build());
+
+            promptCacheRepository.save(PromptCache.builder()
+                    .subUse(subUse)
+                    .scenario(scenario)
+                    .referenceSentence(ref)
+                    .l1Prompt(l1Prompt)
+                    .build());
+
+            imported++;
+        }
+
+        return new ImportPromptsResponse(imported, skipped, new ArrayList<>(unknownKeys));
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
+    /**
+     * Promote a generated prompt's scenario + reference from pending
+     * ({@code source = "GENERATED"}) to {@code "APPROVED"} so the shared random
+     * pool may serve it. No-op for already-approved/seeded content.
+     */
+    @Transactional
+    public void approveGenerated(Long promptId) {
+        PromptCache cache = promptCacheRepository.findById(promptId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prompt not found"));
+
+        ScenarioStub scenario = cache.getScenario();
+        if (scenario != null && "GENERATED".equals(scenario.getSource())) {
+            scenario.setSource("APPROVED");
+            scenarioRepository.save(scenario);
+        }
+
+        ReferenceSentence reference = cache.getReferenceSentence();
+        if (reference != null && "GENERATED".equals(reference.getSource())) {
+            reference.setSource("APPROVED");
+            referenceRepository.save(reference);
+        }
+    }
+
+    /**
+     * Reuse a curated (seeded/approved) prompt for this grammar point instead of
+     * generating a fresh one — used for public LEVEL sources. Returns {@code null}
+     * when fewer than {@code minPool} curated prompts exist (caller should generate
+     * to grow the pool). Picks randomly while avoiding scenarios shown recently.
+     */
+    @Transactional
+    public PromptCache reuseApproved(Long userId, Long subUseId, int minPool) {
+        List<PromptCache> pool = new ArrayList<>(promptCacheRepository.findApprovedBySubUseId(subUseId));
+        if (pool.size() < minPool) {
+            return null;
+        }
+        Collections.shuffle(pool);
+
+        Map<Long, LocalDateTime> recent = recencyRepository
+                .findByUserIdAndLastShownAtAfter(userId, LocalDateTime.now().minusDays(RECENCY_DAYS))
+                .stream()
+                .collect(Collectors.toMap(r -> r.getScenario().getId(), ScenarioRecency::getLastShownAt));
+        Set<Long> blocked = recent.keySet();
+
+        PromptCache chosen = pool.stream()
+                .filter(pc -> pc.getScenario() != null && !blocked.contains(pc.getScenario().getId()))
+                .findFirst()
+                .orElseGet(() -> pool.stream()
+                        .min(Comparator.comparing(pc -> pc.getScenario() == null
+                                ? LocalDateTime.MIN
+                                : recent.getOrDefault(pc.getScenario().getId(), LocalDateTime.MIN)))
+                        .orElse(pool.get(0)));
+
+        if (chosen.getScenario() != null) {
+            recordRecency(userId, chosen.getScenario());
+        }
+        return chosen;
+    }
+
+    /**
+     * Reject a generated prompt: mark its scenario + reference {@code REJECTED} so it
+     * stays out of both the pool and the pending queue, without deleting history
+     * (learner attempts referencing it remain valid).
+     */
+    @Transactional
+    public void rejectGenerated(Long promptId) {
+        PromptCache cache = promptCacheRepository.findById(promptId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prompt not found"));
+
+        ScenarioStub scenario = cache.getScenario();
+        if (scenario != null && "GENERATED".equals(scenario.getSource())) {
+            scenario.setSource("REJECTED");
+            scenarioRepository.save(scenario);
+        }
+
+        ReferenceSentence reference = cache.getReferenceSentence();
+        if (reference != null && "GENERATED".equals(reference.getSource())) {
+            reference.setSource("REJECTED");
+            referenceRepository.save(reference);
+        }
+    }
+
+    /** Generated prompts awaiting review (newest first), as a flat DTO for the queue. */
+    @Transactional(readOnly = true)
+    public List<PendingPromptResponse> listPendingReview() {
+        return promptCacheRepository.findPendingReview().stream()
+                .map(pc -> {
+                    GrammarSubUse su = pc.getSubUse();
+                    ReferenceSentence ref = pc.getReferenceSentence();
+                    ScenarioStub sc = pc.getScenario();
+                    return new PendingPromptResponse(
+                            pc.getId(),
+                            su != null ? su.getId() : null,
+                            su != null ? su.getName() : null,
+                            su != null ? su.getJlptLevel() : null,
+                            pc.getL1Prompt(),
+                            ref != null ? ref.getL2Text() : null,
+                            sc != null ? sc.getRegister() : null,
+                            pc.getCreatedAt());
+                })
+                .toList();
+    }
+
     private PromptCache generateAndCache(GrammarSubUse subUse, ScenarioStub scenario, ReferenceSentence reference) {
-        String l1Prompt = null;
-        if (geminiClient.isAvailable()) {
-            String marker = pickMarkerHint(subUse, scenario);
-            l1Prompt = geminiClient.generatePrompt(subUse, scenario, marker);
-        }
-        if (l1Prompt == null || l1Prompt.isBlank()) {
-            l1Prompt = scenario.getL1PromptTemplate();
-        }
+        String l1Prompt = scenario.getL1PromptTemplate();
         if (l1Prompt == null || l1Prompt.isBlank()) {
             l1Prompt = "[SITUATION] " + scenario.getSituationContext()
                     + "\n[WORDS] free\n[REGISTER] " + scenario.getRegister();
@@ -67,20 +312,9 @@ public class PromptService {
         return promptCacheRepository.save(cache);
     }
 
-    private String pickMarkerHint(GrammarSubUse subUse, ScenarioStub scenario) {
-        List<GrammarMarker> markers = markerRepository.findBySubUseId(subUse.getId());
-        if (markers.isEmpty()) return "";
-        return markers.stream()
-                .filter(m -> scenario.getRegister() == null || scenario.getRegister().equalsIgnoreCase(m.getRegister()))
-                .findFirst()
-                .or(() -> markers.stream().min(Comparator.comparing(
-                        m -> m.getFrequencyRank() == null ? Integer.MAX_VALUE : m.getFrequencyRank())))
-                .map(GrammarMarker::getMarkerPattern)
-                .orElse("");
-    }
-
     private ScenarioStub pickScenario(Long userId, GrammarSubUse subUse) {
-        List<ScenarioStub> scenarios = scenarioRepository.findBySubUseId(subUse.getId());
+        // Pool-eligible only: seeded or approved — pending AI scenarios are excluded.
+        List<ScenarioStub> scenarios = scenarioRepository.findApprovedBySubUseId(subUse.getId());
         if (scenarios.isEmpty()) {
             throw new ResourceNotFoundException("No scenarios for grammar sub-use " + subUse.getId());
         }
@@ -101,7 +335,8 @@ public class PromptService {
     }
 
     private ReferenceSentence pickReference(GrammarSubUse subUse) {
-        List<ReferenceSentence> refs = referenceRepository.findBySubUseId(subUse.getId());
+        // Pool-eligible only: seeded or approved — pending AI references are excluded.
+        List<ReferenceSentence> refs = referenceRepository.findApprovedBySubUseId(subUse.getId());
         if (refs.isEmpty()) {
             throw new ResourceNotFoundException("No reference sentences for grammar sub-use " + subUse.getId());
         }

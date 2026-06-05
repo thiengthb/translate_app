@@ -1,7 +1,5 @@
 package com.example.starter_project_2025.system.analyze;
 
-import com.atilika.kuromoji.ipadic.Token;
-import com.atilika.kuromoji.ipadic.Tokenizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +11,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnalyzeService {
 
-    private final Tokenizer tokenizer;
+    private final SudachiTokenizer tokenizer;
 
     private static final Map<String, String> POS_VI = Map.ofEntries(
             Map.entry("名詞", "danh từ"),
@@ -55,7 +53,7 @@ public class AnalyzeService {
                 .build();
     }
 
-    private TokenDTO toDto(Token token) {
+    private TokenDTO toDto(SudachiToken token) {
         String surface = token.getSurface();
         String reading = JapaneseTextUtils.orNull(token.getReading());
         String hiraganaReading = JapaneseTextUtils.katakanaToHiragana(reading);

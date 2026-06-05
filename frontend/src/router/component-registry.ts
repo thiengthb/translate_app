@@ -1,9 +1,8 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
+import { LoginRouteRedirect, RegisterRouteRedirect } from "@/components/auth/AuthRouteRedirect";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
-import { Login } from "@/pages/auth/Login";
-import RegisterPage from "@/pages/auth/RegisterPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
@@ -20,7 +19,10 @@ import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
+import ReviewPage from "@/pages/production/ReviewPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
+import NotebookPage from "@/pages/dictionary/NotebookPage";
+import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
@@ -42,6 +44,15 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
+import KanjiRadicalGamePage from "@/pages/games/kanji-radical/KanjiRadicalGamePage";
+import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
+import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
+import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
+import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
+import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
+import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
+import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -56,6 +67,8 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  { path: "/notebook", component: NotebookPage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
@@ -96,6 +109,24 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
+
+  // ── Games ──
+  // Static (always available to any authenticated user). The board is
+  // fully client-side today; radical/prompt data is a placeholder that
+  // can be swapped for a backend feed later without touching the route.
+  { path: "/games/kanji-radical", component: KanjiRadicalGamePage },
+
+  { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
+  // Static (not module-driven) so the route always resolves — the Kanji
+  // dashboard is the feature's own landing, reached from the sidebar menu
+  // or a dedicated entry button, independent of the DB Module table.
+  { path: "/kanji-study", component: KanjiHomePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/decks", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
+  { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
+  { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },
@@ -112,11 +143,12 @@ export const routes: RouteConfig[] = [
   { path: "/users/:userId", component: PublicProfilePage },
   { path: "/analyze", component: AnalyzePage },
   { path: "/production", component: ProductionPage },
+  { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
-  { path: "/login", component: Login, isPublic: true },
+  { path: "/login", component: LoginRouteRedirect, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
-  { path: "/register", component: RegisterPage, isPublic: true },
+  { path: "/register", component: RegisterRouteRedirect, isPublic: true },
   { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},

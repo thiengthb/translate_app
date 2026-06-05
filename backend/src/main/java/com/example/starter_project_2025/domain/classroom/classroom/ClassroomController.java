@@ -75,6 +75,10 @@ public class ClassroomController {
             @PathVariable Long classroomId,
             @RequestBody MemberRequest body
     ) {
+        // Prefer inviting by email; fall back to userId for backward compatibility.
+        if (body.getEmail() != null && !body.getEmail().isBlank()) {
+            return ResponseEntity.ok(classroomService.addMemberByEmail(classroomId, body.getEmail()));
+        }
         return ResponseEntity.ok(classroomService.addMember(classroomId, body.getUserId()));
     }
 
@@ -113,6 +117,7 @@ public class ClassroomController {
     @Data
     public static class MemberRequest {
         private Long userId;
+        private String email;
     }
 
     @Data

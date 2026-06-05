@@ -318,14 +318,26 @@ export default function CommunityPage() {
   const handleToggleFavorite = useCallback(async (deck: DeckDTO) => {
     if (deck.id == null || currentUserId == null) return;
     setTogglingFav(deck.id);
+    const deckId = deck.id;
+    // Keep the visible favourite count in sync with the heart, like a "like":
+    // the backend adjusts deck.favoriteCount, but the card renders the value
+    // from the decks array, so mirror the change here for an instant update.
+    const bumpCount = (delta: number) =>
+      setDecks((prev) =>
+        prev.map((d) =>
+          d.id === deckId ? { ...d, favoriteCount: Math.max(0, (d.favoriteCount ?? 0) + delta) } : d
+        )
+      );
     try {
-      const existing = favoriteByDeckId.get(deck.id);
+      const existing = favoriteByDeckId.get(deckId);
       if (existing && existing.id != null) {
         await favoriteDeckApi.unfavorite(existing.id);
         setFavorites((prev) => prev.filter((f) => f.id !== existing.id));
+        bumpCount(-1);
       } else {
-        const created = await favoriteDeckApi.favorite(currentUserId, deck.id);
+        const created = await favoriteDeckApi.favorite(currentUserId, deckId);
         setFavorites((prev) => [...prev, created]);
+        bumpCount(+1);
       }
     } catch {
       toast.error("Không thể cập nhật yêu thích.");

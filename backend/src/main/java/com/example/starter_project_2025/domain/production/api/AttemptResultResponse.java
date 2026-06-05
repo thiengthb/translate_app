@@ -18,4 +18,9 @@ public class AttemptResultResponse {
     private Double judgeScore;
 
     private String feedback;
+
+    /** AI rewrite of the learner's own sentence into correct, natural Japanese. */
+    private String correction;
+
+    private String referenceAnswer;
 }

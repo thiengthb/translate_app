@@ -50,8 +50,8 @@ const getMembers = async (classroomId: number): Promise<ClassMemberDTO[]> => {
   return res.data;
 };
 
-const addMember = async (classroomId: number, userId: number): Promise<ClassMemberDTO> => {
-  const res = await axiosInstance.post<ClassMemberDTO>(`/classrooms/${classroomId}/members`, { userId });
+const addMemberByEmail = async (classroomId: number, email: string): Promise<ClassMemberDTO> => {
+  const res = await axiosInstance.post<ClassMemberDTO>(`/classrooms/${classroomId}/members`, { email });
   return res.data;
 };
 
@@ -127,7 +127,7 @@ export const classroomApi = {
   joinClassroom,
   regenerateInviteCode,
   getMembers,
-  addMember,
+  addMemberByEmail,
   removeMember,
   getDecks,
   addDeck,

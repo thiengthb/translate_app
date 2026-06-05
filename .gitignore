@@ -1,0 +1,15 @@
+# Environment files with secrets — keep new ones out of git.
+# NOTE: backend/.env is ALREADY tracked by git; this rule does NOT untrack it
+# (gitignore only affects untracked files). Removing the committed .env and
+# rotating leaked secrets is a TEAM decision — coordinate before doing it.
+.env
+*.env
+!*.env.example
+!*env.example
+
+# Local tooling
+.DS_Store
+
+# Kanji seed: raw downloaded source data (KANJIDIC2 / Unihan, ~33MB).
+# Re-fetch via backend/scripts/README-kanji-seed.md; only the generator + SQL are kept.
+backend/scripts/_kanji_data/

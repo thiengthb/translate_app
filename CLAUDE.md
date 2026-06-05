@@ -190,6 +190,7 @@ Per request:
 ```bash
 # Backend (cwd: backend/)
 ./mvnw spring-boot:run         # dev, H2 in-memory at http://localhost:8080
+                               # (lần đầu: auto-downloads Sudachi dict ~70 MB)
 ./mvnw clean package           # production jar
 APP_PROFILE=mysql ./mvnw spring-boot:run   # switch DB
 
@@ -204,6 +205,8 @@ admin@example.com   / password123   (full perm)
 teacher@example.com / password123   (BOOK_*)
 student@example.com / password123   (read-only)
 ```
+
+> **Sudachi JP tokenizer**: Lần đầu chạy backend sẽ tự download từ điển từ GitHub (~70 MB). Nó được cache vào `.sudachi-cache/` (ngoài `target/`) nên không cần download lại sau đó. Nếu network bị gián đoạn, chỉ cần chạy lại `./mvnw spring-boot:run`.
 
 H2 console: http://localhost:8080/h2-console (JDBC `jdbc:h2:mem:base_crud`, user `sa`, no password).
 Swagger: http://localhost:8080/swagger-ui.html.

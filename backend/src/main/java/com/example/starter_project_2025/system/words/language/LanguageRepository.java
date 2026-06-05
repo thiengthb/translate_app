@@ -12,6 +12,5 @@ public interface LanguageRepository extends BaseCrudRepository<Language, Long> {
 
     boolean existsByCodeAndIdNot(String code, Long id);
 
-    // Used by the vocabulary import/export to resolve a Language by its code.
     Optional<Language> findByCode(String code);
 }

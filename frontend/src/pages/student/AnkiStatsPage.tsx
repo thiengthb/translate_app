@@ -171,7 +171,7 @@ export default function AnkiStatsPage() {
 
   useEffect(() => {
     if (!userId) return;
-    deckApi.getPage({ page: 0, size: 100 }, undefined, { userId } as never)
+    deckApi.getPage({ page: 0, size: 100 }, undefined, { userId, studyMode: "ANKI" } as never)
       .then((r) => setAnkiDecks(r.content ?? [])).catch(() => {});
   }, [userId]);
 
@@ -306,7 +306,7 @@ export default function AnkiStatsPage() {
             <Panel
               title="Review Intervals"
               subtitle="Delays until review cards are shown again."
-              footer={<>Median interval: {stats.avgIntervalDays.toFixed(1)} days</>}
+              footer={<>Average interval: {stats.avgIntervalDays.toFixed(1)} days</>}
             >
               <BarChart
                 data={intervals}
@@ -318,7 +318,7 @@ export default function AnkiStatsPage() {
             <Panel
               title="Card Ease"
               subtitle="The lower the ease, the more frequently a card will appear."
-              footer={<>Median ease: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
+              footer={<>Average ease: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
             >
               <BarChart
                 data={eases}
