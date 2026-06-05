@@ -37,7 +37,11 @@ export interface KanjiDashboardData {
   activity: DayBucket[];
 }
 
-const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
+const LEVEL_ORDER = [
+  "SC1", "SC2", "SC3", "SC4", "SC5", "SC6",
+  "TC1", "TC2", "TC3", "NC",
+  "N5", "N4", "N3", "N2", "N1",
+];
 
 /** Local yyyy-mm-dd key (avoids UTC off-by-one from toISOString). */
 function dayKey(d: Date): string {

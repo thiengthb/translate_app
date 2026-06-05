@@ -20,9 +20,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,7 +76,8 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
         }
 
         // 2. Kanji master records + their Hán-Việt readings.
-        List<KanjiDetail> ordered = new ArrayList<>();
+        // Keyed by character so the decks below can reference them.
+        Map<String, KanjiDetail> byChar = new HashMap<>();
         for (JsonNode k : root.path("kanji")) {
             Integer radNum = intOrNull(k, "radicalNumber");
             KanjiDetail detail = detailRepository.save(KanjiDetail.builder()
@@ -89,8 +88,11 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
                     .jlptLevel(text(k, "jlptLevel"))
                     .strokeCount(intOrNull(k, "strokeCount"))
                     .radical(radNum != null ? byNumber.get(radNum) : null)
+                    .strokeData(text(k, "strokeData"))
+                    .svgViewbox(text(k, "svgViewbox"))
+                    .strokeSource(text(k, "strokeSource"))
                     .build());
-            ordered.add(detail);
+            byChar.put(detail.getCharacter(), detail);
 
             int priority = 0;
             for (JsonNode hv : k.path("hanViet")) {
@@ -103,27 +105,34 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
             }
         }
 
-        // 3. Built-in system deck containing all seeded kanji.
-        KanjiDeck deck = deckRepository.save(KanjiDeck.builder()
-                .title("JLPT N5 (built-in)")
-                .description("79 Hán tự cơ bản trình độ N5.")
-                .visibility("PUBLIC")
-                .isSystem(true)
-                .jlptLevel("N5")
-                .totalKanji(ordered.size())
-                .build());
-
-        int order = 0;
-        for (KanjiDetail detail : ordered) {
-            deckItemRepository.save(KanjiDeckItem.builder()
-                    .deck(deck)
-                    .kanji(detail)
-                    .orderIndex(order++)
+        // 3. Built-in system decks (one per level: N5 + grades 1-3). A kanji shared
+        //    across levels is referenced by every deck it belongs to.
+        int deckCount = 0;
+        for (JsonNode d : root.path("decks")) {
+            KanjiDeck deck = deckRepository.save(KanjiDeck.builder()
+                    .title(text(d, "title"))
+                    .description(text(d, "description"))
+                    .visibility("PUBLIC")
+                    .isSystem(true)
+                    .jlptLevel(text(d, "level"))
+                    .totalKanji(d.path("characters").size())
                     .build());
+            deckCount++;
+
+            int order = 0;
+            for (JsonNode c : d.path("characters")) {
+                KanjiDetail detail = byChar.get(c.asText());
+                if (detail == null) continue;
+                deckItemRepository.save(KanjiDeckItem.builder()
+                        .deck(deck)
+                        .kanji(detail)
+                        .orderIndex(order++)
+                        .build());
+            }
         }
 
-        log.info("Kanji Study seed complete: {} radicals, {} kanji, deck '{}' with {} items.",
-                byNumber.size(), ordered.size(), deck.getTitle(), ordered.size());
+        log.info("Kanji Study seed complete: {} radicals, {} kanji, {} decks.",
+                byNumber.size(), byChar.size(), deckCount);
     }
 
     private static String text(JsonNode node, String field) {

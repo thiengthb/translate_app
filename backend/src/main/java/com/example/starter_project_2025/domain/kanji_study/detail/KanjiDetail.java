@@ -58,7 +58,7 @@ public class KanjiDetail extends BaseEntity {
     String meaning;
 
     @Column(name = "jlpt_level", length = 8)
-    @FieldMeta(label = "JLPT Level", type = "text", order = 5, group = "Basic")
+    @FieldMeta(label = "Cấp độ", type = "text", order = 5, group = "Basic")
     String jlptLevel;
 
     @ManyToOne(fetch = FetchType.LAZY)

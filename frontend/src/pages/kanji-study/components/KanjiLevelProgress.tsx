@@ -36,7 +36,7 @@ export function KanjiLevelProgress({ levels, totalLearned, statusCounts }: Props
       <CardContent className="space-y-3">
         {levels.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">
-            Chưa có cấp độ nào. Hãy thêm deck (kèm cấp độ JLPT) trong mục Content → Decks.
+            Chưa có cấp độ nào. Hãy thêm deck (kèm cấp độ) trong mục Content → Decks.
           </p>
         ) : (
           levels.map((lv) => {
