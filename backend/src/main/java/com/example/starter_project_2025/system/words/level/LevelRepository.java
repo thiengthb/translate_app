@@ -12,6 +12,5 @@ public interface LevelRepository extends BaseCrudRepository<Level, Long> {
 
     boolean existsByCodeAndIdNot(String code, Long id);
 
-    // Used by DataIO relation lookup when importing Word rows (level by code).
     Optional<Level> findByCode(String code);
 }

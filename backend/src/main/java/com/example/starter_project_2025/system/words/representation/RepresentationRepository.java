@@ -12,6 +12,5 @@ public interface RepresentationRepository extends BaseCrudRepository<Representat
 
     boolean existsByCodeAndIdNot(String code, Long id);
 
-    // Used by DataIO relation lookup when importing Word rows (representation by code).
     Optional<Representation> findByCode(String code);
 }

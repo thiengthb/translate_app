@@ -32,16 +32,18 @@ const registerSchema = z
 interface RegisterFormProps {
     onSubmit: (data: RegisterRequest) => void;
     loading: boolean;
+    /** Optional pre-filled email (e.g. captured from the landing hero). */
+    defaultEmail?: string;
 }
 
-export function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
+export function RegisterForm({ onSubmit, loading, defaultEmail }: RegisterFormProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const { t } = useTranslation();
     const form = useForm<RegisterRequest>({
         resolver: zodResolver(registerSchema),
         mode: "onChange",
-        defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" },
+        defaultValues: { firstName: "", lastName: "", email: defaultEmail ?? "", password: "", confirmPassword: "" },
     });
 
     return (

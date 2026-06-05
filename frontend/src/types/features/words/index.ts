@@ -236,6 +236,61 @@ export interface WordAudio {
   source: string; // "forvo"
 }
 
+// ── GrammarSubUse ──────────────────────────────────────────────────────
+export interface CommonMistake {
+  pattern?: string;
+  hint?: string;
+}
+
+export interface GrammarSubUseDTO extends BaseDTO {
+  name?: string;
+  jlptLevel?: string;
+  nuanceDescription?: string;
+  detectorKey?: string;
+  commonMistakes?: CommonMistake[];
+}
+
+export interface GrammarSubUseFilter extends BaseFilter {
+  jlptLevel?: string;
+}
+
+// ── GrammarMarker ──────────────────────────────────────────────────────
+export interface GrammarMarkerDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  markerPattern?: string;
+  register?: string;
+  frequencyRank?: number;
+  detectorSubkey?: string;
+}
+
+export interface GrammarMarkerFilter extends BaseFilter {
+  subUseId?: number;
+}
+
+// ── ReferenceSentence ──────────────────────────────────────────────────
+export interface ReferenceSentenceDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  l1Text?: string;
+  l2Text?: string;
+}
+
+export interface ReferenceSentenceFilter extends BaseFilter {
+  subUseId?: number;
+}
+
+// ── ScenarioStub ───────────────────────────────────────────────────────
+export interface ScenarioStubDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  situationContext?: string;
+  register?: string;
+  l1PromptTemplate?: string;
+}
+
+export interface ScenarioStubFilter extends BaseFilter {
+  subUseId?: number;
 // ── Notebook (sổ tay từ vựng/kanji lưu trên server, per-user) ──────────
 export interface NotebookWordEntry {
   entryId: number;
