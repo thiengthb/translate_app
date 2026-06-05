@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { getCurrentUserId } from "@/utils/auth.utils";
 import {
   acceptedAnswers, formatSeconds, getUserAnswerText,
   getUserSelectedOptionId, getUserSelectedOptionIds, isCorrectOption,
@@ -34,7 +35,7 @@ export default function QuizResultPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([assessmentApi.getAttempt(Number(attemptId)), assessmentApi.fetchQuizById(id)])
+    Promise.all([assessmentApi.getAttemptForReview(Number(attemptId)), assessmentApi.fetchQuizById(id)])
       .then(async ([a, q]) => {
         if (cancelled) return;
         setAttempt(a); setQuiz(q);
@@ -83,7 +84,11 @@ export default function QuizResultPage() {
   /* ── Context: assignment attempt vs free-play quiz attempt ── */
   const isAssignment = attempt.assignmentId != null && assignment != null;
   const cid = assignment?.classroomId;
-  const backHref = isAssignment ? `/classrooms/${cid}` : `/quizzes/${id}`;
+  // The viewer may be the student who took it, or a teacher reviewing it.
+  const isViewerOwner = attempt.userId === getCurrentUserId();
+  const backHref = isAssignment
+    ? (isViewerOwner ? `/classrooms/${cid}` : `/classrooms/${cid}/stats/${assignment!.id}`)
+    : `/quizzes/${id}`;
 
   // Assignment attempts get a group-context breadcrumb (Home › <group> ›
   // <assignment>) by hiding the /quizzes URL segments; free-play attempts keep
@@ -130,7 +135,7 @@ export default function QuizResultPage() {
             <Button variant="outline" size="sm" onClick={() => setShowReview((s) => !s)}>
               {showReview ? "Hide" : "Review"} answers
             </Button>
-            {(quiz?.allowRetake ?? true) && (
+            {isViewerOwner && (quiz?.allowRetake ?? true) && (
               <Button size="sm" onClick={retake} disabled={retaking}>
                 {retaking ? "Starting…" : "Retake"}
               </Button>

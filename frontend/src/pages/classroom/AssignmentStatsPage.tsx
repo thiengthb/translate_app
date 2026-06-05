@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { classroomApi } from "@/api";
 import type { AttemptSummary, ClassAssignmentDTO, ClassroomDTO, GradebookDTO, StudentResultDTO } from "@/types";
 import type { AttemptStatus } from "@/types";
@@ -24,6 +24,7 @@ export default function AssignmentStatsPage() {
   const { classroomId, assignmentId } = useParams<{ classroomId: string; assignmentId: string }>();
   const cid = Number(classroomId);
   const aid = Number(assignmentId);
+  const navigate = useNavigate();
 
   const [classroom, setClassroom]   = useState<ClassroomDTO | null>(null);
   const [assignment, setAssignment] = useState<ClassAssignmentDTO | null>(null);
@@ -157,7 +158,17 @@ export default function AssignmentStatsPage() {
           ) : (
             <ul className="divide-y divide-border/50">
               {gradebook!.results.map((r) => (
-                <StudentRow key={r.userId} r={r} open={expanded.has(r.userId)} onToggle={() => toggle(r.userId)} />
+                <StudentRow
+                  key={r.userId}
+                  r={r}
+                  open={expanded.has(r.userId)}
+                  onToggle={() => toggle(r.userId)}
+                  onViewAttempt={
+                    assignment?.quizId != null
+                      ? (attemptId) => navigate(`/quizzes/${assignment.quizId}/result/${attemptId}`)
+                      : undefined
+                  }
+                />
               ))}
             </ul>
           )}
@@ -182,7 +193,10 @@ function StatTile({ icon, label, value, tone }: {
 }
 
 /* ── Student row (expandable) ── */
-function StudentRow({ r, open, onToggle }: { r: StudentResultDTO; open: boolean; onToggle: () => void }) {
+function StudentRow({ r, open, onToggle, onViewAttempt }: {
+  r: StudentResultDTO; open: boolean; onToggle: () => void;
+  onViewAttempt?: (attemptId: number) => void;
+}) {
   const submittedAttempts = r.attempts.filter((a) => a.status === "SUBMITTED");
   const bestPct = submittedAttempts.length
     ? Math.max(...submittedAttempts.map((a) => a.percentage ?? 0))
@@ -240,7 +254,7 @@ function StudentRow({ r, open, onToggle }: { r: StudentResultDTO; open: boolean;
             <p className="py-3 text-center text-xs text-muted-foreground">No attempts yet.</p>
           ) : (
             <div className="space-y-1.5">
-              {r.attempts.map((a) => <AttemptRow key={a.attemptId} a={a} />)}
+              {r.attempts.map((a) => <AttemptRow key={a.attemptId} a={a} onView={onViewAttempt} />)}
             </div>
           )}
         </div>
@@ -250,11 +264,23 @@ function StudentRow({ r, open, onToggle }: { r: StudentResultDTO; open: boolean;
 }
 
 /* ── One attempt detail row ── */
-function AttemptRow({ a }: { a: AttemptSummary }) {
+function AttemptRow({ a, onView }: { a: AttemptSummary; onView?: (attemptId: number) => void }) {
   const pct = a.percentage ?? 0;
   const isSubmitted = a.status === "SUBMITTED";
+  // Only submitted attempts have a reviewable result page.
+  const clickable = isSubmitted && onView != null;
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm">
+    <div
+      onClick={clickable ? () => onView!(a.attemptId) : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onView!(a.attemptId); } } : undefined}
+      title={clickable ? "View result" : undefined}
+      className={cn(
+        "flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm",
+        clickable && "cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/40"
+      )}
+    >
       <span className="flex items-center gap-2 shrink-0">
         <span className="inline-flex size-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary tabular-nums">
           {a.attemptNumber}

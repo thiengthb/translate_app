@@ -207,6 +207,13 @@ const getAttempt = async (attemptId: number): Promise<QuizAttemptDTO> => {
   return res.data;
 };
 
+// Like getAttempt, but also allows the group owner (teacher) to view a
+// student's attempt that belongs to one of their assignments.
+const getAttemptForReview = async (attemptId: number): Promise<QuizAttemptDTO> => {
+  const res = await axiosInstance.get<QuizAttemptDTO>(`/attempts/${attemptId}/review`);
+  return res.data;
+};
+
 const getMyAttempts = async (quizId: number): Promise<QuizAttemptDTO[]> => {
   const res = await axiosInstance.get<QuizAttemptDTO[]>("/attempts/my", { params: { quizId } });
   return res.data;
@@ -256,6 +263,7 @@ export const assessmentApi = {
   submitAnswer,
   submitAttempt,
   getAttempt,
+  getAttemptForReview,
   getMyAttempts,
   getQuizProgress,
 };
