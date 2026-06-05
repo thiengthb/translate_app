@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
     Pen, Loader2, Volume2, Bookmark, BookmarkCheck, X, Star, GitBranch,
-    Sparkles, AlertCircle, Languages, Layers,
+    Sparkles, AlertCircle, Languages, Layers, BookMarked, StickyNote,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -460,6 +460,21 @@ export default function DictionaryPage() {
 
                 {/* ── Kho từ vựng tổng hợp (entry point sang /vocabulary) ── */}
                 {!loading && <VocabularyHubCard stats={hubStats} />}
+
+                {/* ── Sổ tay (entry point sang /notebook, kèm preview mục mới lưu) ── */}
+                {!loading && (
+                    <NotebookHubCard
+                        words={savedWords}
+                        kanjis={savedKanjis}
+                        furigana={furigana}
+                        onWordClick={quickVocabSearch}
+                        onKanjiClick={(ch) => {
+                            setSearchMode("kanji");
+                            setQuery(ch);
+                            handleSearch(ch, "kanji");
+                        }}
+                    />
+                )}
 
                 {/* ── Featured ── */}
                 {!loading && featured && (
@@ -1160,6 +1175,136 @@ function VocabularyHubCard({ stats }: { stats: { words: number; kanjis: number }
                     ))}
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
                 </div>
+            </div>
+        </Card>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Notebook hub card — entry point sang trang "Sổ tay" (/notebook).
+// Nút nhỏ trên header quá kín đáo; card này show số liệu thật + preview
+// các mục mới lưu gần nhất (click tra lại ngay), và hướng dẫn cách lưu
+// khi sổ tay còn trống.
+// ══════════════════════════════════════════════════════════════════════
+const NOTEBOOK_PREVIEW_WORDS  = 4;
+const NOTEBOOK_PREVIEW_KANJIS = 6;
+
+function NotebookHubCard({ words, kanjis, furigana, onWordClick, onKanjiClick }: {
+    words: WordSearchResult[];
+    kanjis: DictionaryKanjiDetail[];
+    furigana: boolean;
+    onWordClick: (w: string) => void;
+    onKanjiClick: (ch: string) => void;
+}) {
+    const total = words.length + kanjis.length;
+    const previewWords  = words.slice(0, NOTEBOOK_PREVIEW_WORDS);
+    const previewKanjis = kanjis.slice(0, NOTEBOOK_PREVIEW_KANJIS);
+    const moreCount = total - previewWords.length - previewKanjis.length;
+
+    return (
+        <Card className="gap-0 py-0 overflow-hidden">
+            <div className="relative p-4 sm:p-5">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent" />
+
+                {/* Header */}
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <BookMarked className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                            <BookMarked className="sm:hidden h-4 w-4 text-primary" />
+                            Sổ tay của tôi
+                            {total > 0 && (
+                                <Badge variant="secondary" className="px-1.5 h-4 text-[10px]">{total}</Badge>
+                            )}
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                            {total > 0 ? (
+                                <>
+                                    Đã lưu{" "}
+                                    {words.length > 0 && (
+                                        <span className="font-semibold text-foreground">{words.length} từ vựng</span>
+                                    )}
+                                    {words.length > 0 && kanjis.length > 0 && " và "}
+                                    {kanjis.length > 0 && (
+                                        <span className="font-semibold text-foreground">{kanjis.length} kanji</span>
+                                    )}{" "}
+                                    — đồng bộ theo tài khoản, kèm ghi chú cá nhân để ôn tập
+                                </>
+                            ) : (
+                                <>Lưu từ vựng & kanji hay gặp để ôn tập — đồng bộ theo tài khoản trên mọi thiết bị</>
+                            )}
+                        </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                            <Link to="/notebook">
+                                <BookMarked className="h-3.5 w-3.5" />
+                                Mở sổ tay
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Preview các mục mới lưu / empty hint */}
+                {total > 0 ? (
+                    <div className="relative mt-3 flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mr-0.5">
+                            Mới lưu
+                        </span>
+                        {previewWords.map((w) => (
+                            <button
+                                key={`w-${w.id}`}
+                                type="button"
+                                onClick={() => onWordClick(w.word)}
+                                title={w.meaningText ?? w.word}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border bg-card text-sm font-semibold text-foreground transition-all hover:border-primary/40 hover:text-primary hover:shadow-sm hover:-translate-y-px"
+                            >
+                                {furigana && w.reading && w.reading !== w.word ? (
+                                    <FuriganaText word={w.word} reading={w.reading}
+                                        rubyClassName="text-[8px] text-muted-foreground" />
+                                ) : (
+                                    <span>{w.word}</span>
+                                )}
+                                {w.levelCode && JLPT[w.levelCode] && (
+                                    <span className={`text-[9px] font-bold ${JLPT[w.levelCode].text}`}>
+                                        {w.levelCode}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                        {previewKanjis.map((k) => (
+                            <button
+                                key={`k-${k.character}`}
+                                type="button"
+                                onClick={() => onKanjiClick(k.character)}
+                                title={k.meaning ?? k.character}
+                                className="flex items-center justify-center w-8 h-8 rounded-md border bg-card text-base font-bold text-foreground transition-all hover:border-primary/40 hover:text-primary hover:shadow-sm hover:-translate-y-px"
+                            >
+                                {k.character}
+                            </button>
+                        ))}
+                        {moreCount > 0 && (
+                            <Link
+                                to="/notebook"
+                                className="px-2 py-1 rounded-md border border-dashed text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground hover:border-primary/40"
+                            >
+                                +{moreCount} mục
+                            </Link>
+                        )}
+                    </div>
+                ) : (
+                    <div className="relative mt-3 flex items-center gap-2 rounded-lg border border-dashed bg-muted/30 px-3 py-2.5">
+                        <StickyNote className="h-4 w-4 text-primary/70 shrink-0" />
+                        <p className="text-xs text-muted-foreground leading-snug">
+                            Sổ tay còn trống — tra một từ rồi nhấn{" "}
+                            <Bookmark className="inline h-3 w-3 mx-0.5 align-[-2px]" />
+                            trên kết quả để lưu vào đây
+                        </p>
+                    </div>
+                )}
             </div>
         </Card>
     );
