@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing): replace background image with video on LandingPage">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing): simplify video background styling on LandingPage">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -536,7 +536,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780642564811</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="feat(landing): simplify video background styling on LandingPage">
+      <option name="closed" value="true" />
+      <created>1780645700683</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1780645700684</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -553,7 +561,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Test-by-ân" />
+                        <option value="Test-by-ân" />
                       </list>
                     </value>
                   </entry>
@@ -566,7 +574,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix merge" />
     <MESSAGE value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
     <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
     <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
@@ -591,7 +598,8 @@
     <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
     <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
     <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(landing): replace background image with video on LandingPage" />
+    <MESSAGE value="feat(landing): simplify video background styling on LandingPage" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(landing): simplify video background styling on LandingPage" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
