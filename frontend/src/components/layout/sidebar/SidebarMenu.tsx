@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ChevronsDownUp, ChevronsUpDown, Search as SearchIcon } from "lucide-react";
 
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { Button } from "@/components/ui/button";
 
 import {
     Sidebar,
@@ -17,16 +18,32 @@ import { iconMap } from "@/components/datatable/iconMap";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
 
 import { NavGroup } from "./NavGroup";
+import { NavItem } from "./NavItem";
+import { KanjiBrandIcon } from "@/pages/kanji-study/components/KanjiBrandIcon";
 import { PinnedSection } from "./PinnedSection";
 import { RecentSection } from "./RecentSection";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { SidebarBranding } from "./SidebarBranding";
 import { SidebarSearch } from "./SidebarSearch";
+import { SidebarSettings } from "./SidebarSettings";
+import type { LucideIcon } from "lucide-react";
 import type { SidebarNavGroup, SidebarNavItem } from "./types";
+
+/** Entry point of the self-contained Kanji-study area. */
+const KANJI_HOME = "/kanji-study";
+/**
+ * Every kanji-feature module URL — both the study area (`/kanji-study…`) and
+ * the per-entity CRUD admin pages (`/kanji-radicals`, `/kanji-decks`,
+ * `/kanji-details`, `/kanji-readings`, `/kanji-reading-sets`, …). All of
+ * them are collapsed out of the regular sidebar into a single 漢 launcher
+ * that opens the feature's own in-page nav.
+ */
+const isKanjiUrl = (url?: string) => !!url && url.startsWith("/kanji-");
 
 import { useFilteredNavGroups } from "./hooks/useFilteredNavGroups";
 import { useGroupCollapseState } from "./hooks/useGroupCollapseState";
 import { useSidebarFavorites } from "./hooks/useSidebarFavorites";
+import { useSidebarPreferences } from "./hooks/useSidebarPreferences";
 import { useSidebarRecent } from "./hooks/useSidebarRecent";
 
 /**
@@ -53,6 +70,7 @@ export function SidebarMenu() {
     const isCollapsed = state !== "expanded";
 
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const { preferences, setPreference } = useSidebarPreferences();
     const { isFavorite, toggle: toggleFavorite } = useSidebarFavorites();
     const {
         isOpen: isGroupOpen,
@@ -76,7 +94,9 @@ export function SidebarMenu() {
                 id: String(group.id ?? group.name ?? "group"),
                 name: group.name ?? "Menu",
                 items: group.modules
-                    .filter((m) => !!m.url)
+                    // Kanji-study modules are surfaced via the dedicated 漢
+                    // launcher (below), not as regular sidebar rows.
+                    .filter((m) => !!m.url && !isKanjiUrl(m.url))
                     .map<SidebarNavItem>((m) => ({
                         key: m.url ?? "",
                         title: m.title ?? "Untitled",
@@ -90,6 +110,23 @@ export function SidebarMenu() {
             }))
             .filter((g) => g.items.length > 0);
     }, [location.pathname, moduleGroups]);
+
+    // ─── Kanji-study launcher ───────────────────────────────────────────────
+    // Shown only if the user actually has a kanji module (permission-gated by
+    // the BE). A single 漢 row that opens the feature's own sidebar-less area.
+    const kanjiLauncher = useMemo<SidebarNavItem | null>(() => {
+        const hasKanji = moduleGroups.some((g) =>
+            g.modules.some((m) => isKanjiUrl(m.url)),
+        );
+        if (!hasKanji) return null;
+        return {
+            key: KANJI_HOME,
+            title: "Kanji Study",
+            url: KANJI_HOME,
+            icon: KanjiBrandIcon as unknown as LucideIcon,
+            isActive: location.pathname.startsWith(KANJI_HOME),
+        };
+    }, [moduleGroups, location.pathname]);
 
     // ─── Derived: flat lookup tables for favorites / recent ─────────────────
     const itemByKey = useMemo(() => {
@@ -168,8 +205,10 @@ export function SidebarMenu() {
                                 : ChevronsUpDown;
                             return (
                                 <TooltipWrapper content={nextLabel}>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="default"
+                                        size="icon"
                                         onClick={() =>
                                             setAllGroups(
                                                 navGroups.map((g) => g.name),
@@ -177,10 +216,10 @@ export function SidebarMenu() {
                                             )
                                         }
                                         aria-label={nextLabel}
-                                        className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+                                        className="shrink-0 h-7 w-7"
                                     >
                                         <Icon size={14} />
-                                    </button>
+                                    </Button>
                                 </TooltipWrapper>
                             );
                         })()
@@ -188,30 +227,50 @@ export function SidebarMenu() {
                 />
 
                 <ScrollHintContainer>
-                    {showSecondarySections && favoriteItems.length > 0 && (
+                    {!isSearching && kanjiLauncher && (
                         <>
-                            <PinnedSection
-                                items={favoriteItems}
-                                favoriteFor={favoriteFor}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
+                            <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
+                                <SidebarMenuList>
+                                    <NavItem
+                                        item={kanjiLauncher}
+                                        variant="top"
+                                        collapsed={isCollapsed}
+                                        activeAppearance={isCollapsed ? "solid" : "soft"}
+                                    />
+                                </SidebarMenuList>
+                            </SidebarGroup>
+                            {!isCollapsed && <SidebarSeparator className="mx-2 my-1" />}
                         </>
                     )}
 
-                    {showSecondarySections && recentItems.length > 0 && (
-                        <>
-                            <RecentSection
-                                items={recentItems}
-                                onRemoveItem={removeRecentItem}
-                                onClearAll={clearRecentAll}
-                            />
-                            {!isCollapsed && (
-                                <SidebarSeparator className="mx-2 my-1" />
-                            )}
-                        </>
-                    )}
+                    {showSecondarySections &&
+                        preferences.showPinned &&
+                        favoriteItems.length > 0 && (
+                            <>
+                                <PinnedSection
+                                    items={favoriteItems}
+                                    favoriteFor={favoriteFor}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
+
+                    {showSecondarySections &&
+                        preferences.showRecent &&
+                        recentItems.length > 0 && (
+                            <>
+                                <RecentSection
+                                    items={recentItems}
+                                    onRemoveItem={removeRecentItem}
+                                    onClearAll={clearRecentAll}
+                                />
+                                {!isCollapsed && (
+                                    <SidebarSeparator className="mx-2 my-1" />
+                                )}
+                            </>
+                        )}
 
                     {isSearching && !hasSearchResults && !isCollapsed && (
                         <div className="px-4 py-6 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
@@ -261,6 +320,11 @@ export function SidebarMenu() {
                     ))}
                 </ScrollHintContainer>
             </SidebarContent>
+
+            <SidebarSettings
+                preferences={preferences}
+                setPreference={setPreference}
+            />
         </Sidebar>
     );
 }

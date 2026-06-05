@@ -16,4 +16,10 @@ export interface EntityConfig {
     schema: EntitySchema;
     /** Nếu set, nút "Tạo" sẽ điều hướng tới route này thay vì mở modal tạo mặc định. */
     createRoute?: string;
+    /**
+     * Nếu set, hành động "Sửa" trên mỗi hàng sẽ điều hướng tới route này thay vì
+     * mở modal sửa mặc định. Dùng `:id` làm placeholder cho id bản ghi
+     * (vd: "/card-templates/:id/edit").
+     */
+    editRoute?: string;
 }

@@ -12,16 +12,27 @@ import {
 } from "@/components/ui/breadcrumb.tsx";
 import { iconMap } from "@/components/datatable/iconMap";
 import { InfoLabel } from "@/components/common/InfoLabel";
+import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus.ts";
 import { cn } from "@/lib/utils";
 
+const MAX_CRUMB_LEN = 15;
+
+function truncateCrumb(text: string): { display: string; full: string; truncated: boolean } {
+    if (text.length <= MAX_CRUMB_LEN) return { display: text, full: text, truncated: false };
+    return { display: text.slice(0, MAX_CRUMB_LEN) + "…", full: text, truncated: true };
+}
+
 type Props = {
     pathTitles?: Record<string, string>;
-    /** When true (default), the last segment renders as the current page
-     *  (non-clickable). When false, all segments are clickable links. */
     hasPage?: boolean;
-    /** Path segments to drop from the crumb trail entirely. */
     ignorePaths?: string[];
+    parentCrumb?: { href: string; title: string };
+    /** Override the ⓘ tooltip description for the last (current) segment. */
+    pageDescription?: string;
+    /** Custom icon rendered to the left of the last (current) crumb title.
+     *  Takes precedence over the sidebar-module icon. */
+    leadingIcon?: React.ReactNode;
 };
 
 function formatPath(path: string) {
@@ -31,24 +42,15 @@ function formatPath(path: string) {
         .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/**
- * Fallback page descriptions for the breadcrumb ⓘ tooltip on routes that are
- * NOT backed by a `@ResourceMenu` module (static pages — profile, settings,
- * help, role homes, library flows…). Module pages get their description from
- * the backend; these cover the rest so every endpoint can explain itself.
- * Keyed by full path.
- */
 const PAGE_DESCRIPTIONS: Record<string, string> = {
     "/profile": "Your account profile and personal details.",
     "/settings": "Personalize theme, color, typography and language.",
     "/help/shortcuts": "All keyboard shortcuts available across the app.",
     "/student": "Learning area for students.",
     "/teacher": "Workspace for teachers.",
-    "/library": "Your collection of study decks.",
-    "/community": "Browse and clone public decks shared by others.",
-    "/create-deck": "Pick a study mode and create a new deck.",
-    "/create-deck/quizlet": "Create a fast flip-card (Quizlet) deck.",
-    "/create-deck/anki": "Create a spaced-repetition (Anki) deck.",
+    "/library": "Bộ sưu tập deck học tập của bạn.",
+    "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
+    "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
     "/analyze": "Break down the grammar of a Japanese sentence.",
     "/production": "Practice composing Japanese sentences.",
     "/notifications": "Your notification inbox.",
@@ -56,29 +58,13 @@ const PAGE_DESCRIPTIONS: Record<string, string> = {
         "Thêm từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ — tất cả trong một lần.",
 };
 
-/**
- * Top-bar breadcrumb.
- *
- *   [🏠] › Parent › Người dùng
- *    └─ home icon          └─ current page (font-medium, no link)
- *                              + active module's icon when matched
- *
- * Design choices:
- *   - Compact `text-sm` throughout — fits an h-14/h-16 top bar without
- *     looking like a page title (previously the last item was
- *     `text-2xl font-bold` which dwarfed the rest of the chrome).
- *   - Leading home-icon button anchors users back to `/`.
- *   - Active module's icon precedes its label — a glance tells you
- *     which page you're on without reading.
- *   - `ChevronRight` separator (lucide) — visual chevron reads cleaner
- *     than the literal `>` character at small sizes.
- *   - Hover background on parent links so the click targets read
- *     clearly mid-scroll.
- */
 export default function DynamicBreadcrumbs({
     pathTitles,
     hasPage = true,
     ignorePaths = [],
+    parentCrumb,
+    pageDescription,
+    leadingIcon,
 }: Props) {
     const location = useLocation();
     const { data: moduleGroups } = useActiveModuleGroups();
@@ -88,20 +74,31 @@ export default function DynamicBreadcrumbs({
         [ignorePaths],
     );
 
-    const paths = useMemo(
-        () =>
-            location.pathname
-                .split("/")
-                .filter(Boolean)
-                .filter((p) => !ignoreSet.has(p.toLowerCase())),
-        [location.pathname, ignoreSet],
-    );
+    /**
+     * Build (segment, href) pairs from the real pathname. Ignored segments are
+     * skipped for display but the href for each kept segment still reflects the
+     * full original path up to that point — so "/deck/123/anki" with
+     * ignorePaths=["deck","123"] gives [{ segment:"anki", href:"/deck/123/anki" }].
+     */
+    const segmentPairs = useMemo(() => {
+        const all = location.pathname.split("/").filter(Boolean);
+        const result: { segment: string; href: string }[] = [];
+        all.forEach((seg, idx) => {
+            if (!ignoreSet.has(seg.toLowerCase())) {
+                result.push({
+                    segment: seg,
+                    href: "/" + all.slice(0, idx + 1).join("/"),
+                });
+            }
+        });
+        return result;
+    }, [location.pathname, ignoreSet]);
 
     const activeModule = useMemo(
         () =>
             moduleGroups
-                ?.flatMap((group) => group.modules)
-                ?.find((module) => module.url === location.pathname),
+                ?.flatMap((g) => g.modules)
+                ?.find((m) => m.url === location.pathname),
         [moduleGroups, location.pathname],
     );
 
@@ -113,11 +110,12 @@ export default function DynamicBreadcrumbs({
         return key ? iconMap[key] : null;
     }, [activeModule]);
 
-    // Empty path (root) → just the home icon.
-    if (paths.length === 0) {
+    const isEmpty = segmentPairs.length === 0 && !parentCrumb;
+
+    if (isEmpty) {
         return (
             <Breadcrumb>
-                <BreadcrumbList className="text-sm gap-1.5">
+                <BreadcrumbList className="text-[15px] gap-2">
                     <BreadcrumbItem>
                         <HomeLink />
                     </BreadcrumbItem>
@@ -128,64 +126,123 @@ export default function DynamicBreadcrumbs({
 
     return (
         <Breadcrumb>
-            <BreadcrumbList className="text-sm gap-1.5 flex-nowrap">
-                {/* Always show home as the first anchor. */}
+            <BreadcrumbList className="text-[15px] gap-2 flex-nowrap">
                 <BreadcrumbItem>
                     <HomeLink />
                 </BreadcrumbItem>
 
-                {paths.map((segment, index) => {
-                    const href = "/" + paths.slice(0, index + 1).join("/");
-                    const isLast = index === paths.length - 1;
+                {/* Optional explicit parent (e.g. "My Library" → /library) */}
+                {parentCrumb && (
+                    <BreadcrumbItem className="flex items-center gap-2">
+                        <BreadcrumbSeparator className="text-muted-foreground/50">
+                            <ChevronRight className="size-4" />
+                        </BreadcrumbSeparator>
+                        <BreadcrumbLink asChild>
+                            {(() => {
+                                const { display, full, truncated } = truncateCrumb(parentCrumb.title);
+                                const link = (
+                                    <Link
+                                        to={parentCrumb.href}
+                                        className={cn(
+                                            "px-2 py-1 rounded-md text-muted-foreground",
+                                            "hover:text-foreground hover:bg-accent/70 transition-colors",
+                                        )}
+                                    >
+                                        {display}
+                                    </Link>
+                                );
+                                return truncated
+                                    ? <TooltipWrapper content={full} side="bottom">{link}</TooltipWrapper>
+                                    : link;
+                            })()}
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                )}
+
+                {segmentPairs.map(({ segment, href }, index) => {
+                    const isLast = index === segmentPairs.length - 1;
                     const title =
                         pathTitles?.[href] ??
                         pathTitles?.[segment] ??
+                        (isLast ? activeModule?.title : undefined) ??
                         formatPath(segment);
+                    const { display, full, truncated } = truncateCrumb(title);
+
+                    // Description backs the ⓘ tooltip on the current page
+                    // crumb. Resolve it once; when none exists we skip the
+                    // InfoLabel entirely so no empty ⓘ is shown.
+                    const description = isLast
+                        ? pageDescription ??
+                          activeModule?.description ??
+                          PAGE_DESCRIPTIONS[href]
+                        : undefined;
+                    const hasDescription =
+                        !!description && description.trim().length > 0;
 
                     return (
                         <BreadcrumbItem
                             key={href}
-                            className="flex items-center gap-1.5"
+                            className="flex items-center gap-2"
                         >
                             <BreadcrumbSeparator className="text-muted-foreground/50">
-                                <ChevronRight className="size-3.5" />
+                                <ChevronRight className="size-4" />
                             </BreadcrumbSeparator>
 
                             {isLast && hasPage ? (
-                                <span className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md">
-                                    {ModuleIcon && (
+                                <span className="flex items-center gap-2 px-2 py-1 rounded-md">
+                                    {leadingIcon ? (
+                                        leadingIcon
+                                    ) : ModuleIcon ? (
                                         <ModuleIcon
-                                            className="size-4 text-primary shrink-0"
+                                            className="size-[18px] text-primary shrink-0"
                                             aria-hidden
                                         />
-                                    )}
-                                    {/* ⓘ next to the page name reveals the
-                                        module's description on hover — page
-                                        context without spending header space. */}
-                                    <InfoLabel
-                                        title={
-                                            <BreadcrumbPage className="text-foreground font-medium truncate">
-                                                {title}
+                                    ) : null}
+                                    {(() => {
+                                        // Only wrap in a tooltip when the title
+                                        // is actually truncated; only attach the
+                                        // ⓘ InfoLabel when a description exists.
+                                        const page = (
+                                            <BreadcrumbPage className="text-foreground font-medium">
+                                                {display}
                                             </BreadcrumbPage>
-                                        }
-                                        info={
-                                            activeModule?.description ??
-                                            PAGE_DESCRIPTIONS[href]
-                                        }
-                                        side="bottom"
-                                    />
+                                        );
+                                        const titled = truncated ? (
+                                            <TooltipWrapper content={full} side="bottom">
+                                                {page}
+                                            </TooltipWrapper>
+                                        ) : (
+                                            page
+                                        );
+                                        return hasDescription ? (
+                                            <InfoLabel
+                                                title={titled}
+                                                info={description}
+                                                side="bottom"
+                                            />
+                                        ) : (
+                                            titled
+                                        );
+                                    })()}
                                 </span>
                             ) : (
                                 <BreadcrumbLink asChild>
-                                    <Link
-                                        to={href}
-                                        className={cn(
-                                            "px-1.5 py-0.5 rounded-md text-muted-foreground",
-                                            "hover:text-foreground hover:bg-accent/70 transition-colors",
-                                        )}
-                                    >
-                                        {title}
-                                    </Link>
+                                    {(() => {
+                                        const link = (
+                                            <Link
+                                                to={href}
+                                                className={cn(
+                                                    "px-2 py-1 rounded-md text-muted-foreground",
+                                                    "hover:text-foreground hover:bg-accent/70 transition-colors",
+                                                )}
+                                            >
+                                                {display}
+                                            </Link>
+                                        );
+                                        return truncated
+                                            ? <TooltipWrapper content={full} side="bottom">{link}</TooltipWrapper>
+                                            : link;
+                                    })()}
                                 </BreadcrumbLink>
                             )}
                         </BreadcrumbItem>
@@ -196,16 +253,15 @@ export default function DynamicBreadcrumbs({
     );
 }
 
-// ─── Home anchor link ───────────────────────────────────────────────────────
 function HomeLink() {
     return (
         <BreadcrumbLink asChild>
             <Link
                 to="/"
                 aria-label="Trang chủ"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-colors"
             >
-                <Home className="size-4" />
+                <Home className="size-[18px]" />
             </Link>
         </BreadcrumbLink>
     );

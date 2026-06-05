@@ -40,6 +40,16 @@ public class QuizController {
         return ResponseEntity.ok(quizActionService.duplicate(quizId, userId));
     }
 
+    /** Copy a public/shared quiz into your own library (deep-copies its questions). */
+    @PostMapping("/{quizId}/clone")
+    public ResponseEntity<QuizDTO> clone(
+            @PathVariable Long quizId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(quizActionService.cloneForUser(quizId, userId));
+    }
+
     @GetMapping("/{quizId}/questions")
     public ResponseEntity<List<QuizQuestionDTO>> questions(@PathVariable Long quizId) {
         return ResponseEntity.ok(quizActionService.getQuestions(quizId));

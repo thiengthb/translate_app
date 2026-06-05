@@ -21,16 +21,23 @@ import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
 import ReviewPage from "@/pages/production/ReviewPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
+import NotebookPage from "@/pages/dictionary/NotebookPage";
+import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
-import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
-import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
-import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
-import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
+import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
+import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
+import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
+import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
+import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
+import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
+import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
+import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
 import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
 import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
 import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
@@ -38,6 +45,14 @@ import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
 import KanjiRadicalGamePage from "@/pages/games/kanji-radical/KanjiRadicalGamePage";
+import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
+import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
+import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
+import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
+import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
+import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
+import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -52,6 +67,8 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  { path: "/notebook", component: NotebookPage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
@@ -59,12 +76,29 @@ export const routes: RouteConfig[] = [
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
-  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
+  // Card-template management is the base-CRUD ProTable (entityConfig at
+  // pages/management/library/card-template/index.tsx, auto-registered via
+  // buildEntityRoutes + the @ResourceMenu module). Create / Edit route to the
+  // standalone, deck-independent designer below.
+  { path: "/card-templates/new", component: CardTemplateEditPage, requiredPermission: "FLASHCARD_TEMPLATE_CREATE" },
+  { path: "/card-templates/:templateId/preview", component: CardTemplatePreviewPage, requiredPermission: "FLASHCARD_TEMPLATE_READ" },
+  { path: "/card-templates/:templateId/edit", component: CardTemplateEditPage, requiredPermission: "FLASHCARD_TEMPLATE_UPDATE" },
+  { path: "/deck/:deckId/edit", component: EditQuizletDeckPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  // Legacy alias — the unified study screen detects the `/anki` suffix and
+  // defaults to SRS mode, keeping old links + the Anki editors' backTo working.
+  { path: "/deck/:deckId/anki", component: DeckStudyPage, requiredPermission: "DECK_READ" },
+  { path: "/deck/:deckId/card/:flashcardId/edit", component: AnkiCardEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
+  { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
+  { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
+  { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
+  // /question-tags is now driven by the entityConfig at
+  // pages/management/assessment/question-tag/index.tsx (ProTable via AutoCrudPage),
+  // auto-registered through buildEntityRoutes() — same pattern as the Users page.
   { path: "/quizzes", component: QuizListPage, isModuleDriven: true },
   { path: "/quizzes/create", component: QuizCreateEditPage, requiredPermission: "QUIZ_CREATE" },
   { path: "/quizzes/:quizId", component: QuizDetailPage, requiredPermission: "QUIZ_READ" },
@@ -82,6 +116,17 @@ export const routes: RouteConfig[] = [
   // can be swapped for a backend feed later without touching the route.
   { path: "/games/kanji-radical", component: KanjiRadicalGamePage },
 
+  { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
+  // Static (not module-driven) so the route always resolves — the Kanji
+  // dashboard is the feature's own landing, reached from the sidebar menu
+  // or a dedicated entry button, independent of the DB Module table.
+  { path: "/kanji-study", component: KanjiHomePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/decks", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
+  { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
+  { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

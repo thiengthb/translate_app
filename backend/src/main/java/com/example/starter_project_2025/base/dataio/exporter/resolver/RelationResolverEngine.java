@@ -1,6 +1,7 @@
 package com.example.starter_project_2025.base.dataio.exporter.resolver;
 
 import com.example.starter_project_2025.base.dataio.exporter.metadata.ExportFieldMeta;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -35,7 +36,13 @@ public class RelationResolverEngine {
             Object current = obj;
 
             for (String part : path.split("\\.")) {
-                Field f = current.getClass().getDeclaredField(part);
+                // Unwrap lazy Hibernate proxies (e.g. a LAZY @ManyToOne such as
+                // Word.representation) so field reflection hits the real entity
+                // class — a proxy's runtime class is a subclass and its own field
+                // slots are never populated.
+                current = Hibernate.unproxy(current);
+
+                Field f = findField(current.getClass(), part);
                 f.setAccessible(true);
                 current = f.get(current);
 
@@ -47,5 +54,18 @@ public class RelationResolverEngine {
         } catch (Exception e) {
             throw new RuntimeException("Cannot resolve relation path: " + path, e);
         }
+    }
+
+    // Walk up the class hierarchy so inherited fields (e.g. on BaseEntity) and
+    // proxy superclasses resolve correctly.
+    private Field findField(Class<?> type, String name) throws NoSuchFieldException {
+        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+            try {
+                return c.getDeclaredField(name);
+            } catch (NoSuchFieldException ignored) {
+                // try superclass
+            }
+        }
+        throw new NoSuchFieldException(name);
     }
 }

@@ -8,8 +8,9 @@ export interface DeckDTO extends BaseDTO {
   title?: string;
   description?: string;
   visibility?: string;
-  studyMode?: "QUIZLET" | "ANKI";
   coverImageUrl?: string;
+  deckIcon?: string;
+  deckColor?: string;
   sourceLanguage?: string;
   targetLanguage?: string;
   totalCards?: number;
@@ -17,6 +18,10 @@ export interface DeckDTO extends BaseDTO {
   favoriteCount?: number;
   viewCount?: number;
   templateId?: number | null;
+  /** Read-only owner display name (firstName + lastName). */
+  ownerName?: string;
+  /** Read-only: true when the owner holds the ADMIN role. */
+  ownerIsAdmin?: boolean;
 }
 
 export interface DeckFilter extends BaseFilter {
@@ -24,7 +29,6 @@ export interface DeckFilter extends BaseFilter {
   folderId?: number;
   title?: string;
   visibility?: string;
-  studyMode?: "QUIZLET" | "ANKI";
 }
 
 export interface ApplyTemplateRequest {

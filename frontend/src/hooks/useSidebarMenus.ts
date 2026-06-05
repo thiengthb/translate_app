@@ -3,7 +3,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { ModuleDTO, ModuleGroupDTO, Pagination } from "@/types";
 import type { RootState } from "@/store/store";
 import { canAccessByPermission } from "@/utils/rbac.utils";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 
 export type SidebarModule = ModuleDTO & {
@@ -89,5 +89,11 @@ export function useActiveModuleGroups(enabled = true) {
                 .filter((group) => group.modules.length > 0);
         },
         staleTime: 5 * 60 * 1000,
+        // Keep the last good menu while a refetch (or an activeRole queryKey
+        // change) is in flight. Without this the data resets to [] for a beat,
+        // which unregisters every module-driven route (incl. /dashboard) and
+        // empties the sidebar — so navigating "home" hits NotFoundRedirect and
+        // 404s. Retaining the previous data keeps those routes alive.
+        placeholderData: keepPreviousData,
     });
 }

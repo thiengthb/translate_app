@@ -4,12 +4,12 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface MainLayoutTopBarProps {
-    /** Path → title map used by DynamicBreadcrumbs to override auto-generated labels. */
     pathName?: Record<string, string>;
-    /** Optional content rendered to the right of the breadcrumb — used by
-     *  pages that need tabs / segmented controls / quick filters at the
-     *  chrome level (e.g. `/users` has Manage / Analytic tabs here). */
     headerExtra?: React.ReactNode;
+    parentCrumb?: { href: string; title: string };
+    ignorePaths?: string[];
+    pageDescription?: string;
+    breadcrumbIcon?: React.ReactNode;
 }
 
 /**
@@ -25,35 +25,43 @@ interface MainLayoutTopBarProps {
  *      toggled via ⌘B / sidebar branding click / footer chevron.
  *
  * Sizing notes:
- *   - height  : 48px (h-12) across all breakpoints — was 56/64.
- *               Inner controls are h-7..h-8 so an 8px breathing room
- *               on either side remains comfortable.
- *   - padding : 12px / 16px horizontal — keeps content off the edge.
+ *   - height  : 56px (h-14) across all breakpoints. Inner controls sit at
+ *               h-8 so a comfortable breathing room on either side remains.
+ *   - padding : 12px / 16px / 24px horizontal (px-3 sm:px-4 lg:px-6) —
+ *               matches the page content area below so breadcrumbs line up
+ *               vertically with the content beneath them.
  *   - breadcrumbs scroll horizontally if they overflow on narrow screens
  *     instead of wrapping or pushing HeaderRight off-screen.
  */
 export function MainLayoutTopBar({
     pathName,
     headerExtra,
+    parentCrumb,
+    ignorePaths,
+    pageDescription,
+    breadcrumbIcon,
 }: MainLayoutTopBarProps) {
     return (
-        <header className="flex h-12 shrink-0 items-center gap-1.5 px-3 sm:px-4 min-w-0">
-            <SidebarTrigger className="md:hidden -ml-1" />
+        <header className="flex h-14 shrink-0 items-center gap-2 px-3 sm:px-4 lg:px-6 min-w-0">
+            <SidebarTrigger className="md:hidden -ml-1 size-8" />
             <Separator
                 orientation="vertical"
-                className="md:hidden !h-5"
+                className="md:hidden !h-6"
             />
-            {/* Breadcrumbs shrink first to give `headerExtra` (tabs etc.)
-                room. The scrollable overflow keeps long crumb trails from
-                pushing actions off the right edge. */}
             <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <DynamicBreadcrumbs pathTitles={pathName} />
+                <DynamicBreadcrumbs
+                    pathTitles={pathName}
+                    parentCrumb={parentCrumb}
+                    ignorePaths={ignorePaths}
+                    pageDescription={pageDescription}
+                    leadingIcon={breadcrumbIcon}
+                />
             </div>
             {headerExtra && (
                 <>
                     <Separator
                         orientation="vertical"
-                        className="!h-5 hidden sm:block"
+                        className="!h-6 hidden sm:block"
                     />
                     <div className="flex items-center min-w-0">{headerExtra}</div>
                 </>

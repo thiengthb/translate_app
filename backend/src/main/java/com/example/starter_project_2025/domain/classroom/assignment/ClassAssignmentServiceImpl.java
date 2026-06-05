@@ -120,6 +120,9 @@ public class ClassAssignmentServiceImpl
             User user = userRepository.findById(member.getUserId()).orElse(null);
             String displayName = user != null ? user.getFullName() : ("User #" + member.getUserId());
 
+            // Every attempt (all statuses), oldest → newest, numbered for the UI.
+            List<AttemptSummaryDTO> attemptDtos = buildAttemptSummaries(attempts);
+
             if (submitted.isEmpty()) {
                 results.add(StudentResultDTO.builder()
                         .userId(member.getUserId())
@@ -129,6 +132,7 @@ public class ClassAssignmentServiceImpl
                         .latestScore(null)
                         .isPassed(false)
                         .submittedAt(null)
+                        .attempts(attemptDtos)
                         .build());
                 continue;
             }
@@ -150,6 +154,7 @@ public class ClassAssignmentServiceImpl
                     .latestScore(latest.getEarnedScore())
                     .isPassed(passed)
                     .submittedAt(latest.getSubmittedAt())
+                    .attempts(attemptDtos)
                     .build());
 
             if (passed) passedCount++;
@@ -170,6 +175,37 @@ public class ClassAssignmentServiceImpl
     }
 
     /* ── helpers ── */
+
+    /** Map a student's raw attempts → numbered summaries, oldest → newest. */
+    private List<AttemptSummaryDTO> buildAttemptSummaries(List<QuizAttempt> attempts) {
+        List<QuizAttempt> ordered = attempts.stream()
+                .sorted(Comparator.comparing(QuizAttempt::getStartedAt,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+
+        List<AttemptSummaryDTO> summaries = new ArrayList<>();
+        int number = 1;
+        for (QuizAttempt a : ordered) {
+            summaries.add(AttemptSummaryDTO.builder()
+                    .attemptId(a.getId())
+                    .attemptNumber(number++)
+                    .status(a.getStatus())
+                    .earnedScore(a.getEarnedScore())
+                    .totalScore(a.getTotalScore())
+                    .percentage(a.getPercentage())
+                    .isPassed(a.isPassed())
+                    .correctQuestions(a.getCorrectQuestions())
+                    .wrongQuestions(a.getWrongQuestions())
+                    .skippedQuestions(a.getSkippedQuestions())
+                    .totalQuestions(a.getTotalQuestions())
+                    .timeSpentSeconds(a.getTimeSpentSeconds())
+                    .startedAt(a.getStartedAt())
+                    .submittedAt(a.getSubmittedAt())
+                    .build());
+        }
+        return summaries;
+    }
+
     private ClassAssignment load(Long id) {
         return assignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));

@@ -10,6 +10,7 @@ import com.example.starter_project_2025.system.words.word_kanji.WordKanjiReposit
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class DictionaryServiceImpl implements DictionaryService {
         String q    = query.trim();
         String kana = RomajiConverter.isRomaji(q) ? RomajiConverter.toHiragana(q) : q;
         return searchRepository.search(q, kana, PageRequest.of(0, limit))
-                               .stream().map(this::toResult).toList();
+                               .stream().map(this::toWordResult).toList();
     }
 
     @Override
@@ -94,7 +95,7 @@ public class DictionaryServiceImpl implements DictionaryService {
         List<Kanji> kanjis = kanjiRepository.findFeaturedKanjis(PageRequest.of(0, kanjiLimit));
 
         return FeaturedResult.builder()
-                .words(words.stream().map(this::toResult).toList())
+                .words(words.stream().map(this::toWordResult).toList())
                 .kanjis(kanjis.stream().map(k -> KanjiSearchResult.builder()
                         .character(k.getCharacter())
                         .meaning(k.getMeaning())
@@ -106,6 +107,50 @@ public class DictionaryServiceImpl implements DictionaryService {
                         .words(List.of())
                         .build()).toList())
                 .build();
+    }
+
+    @Override
+    public BrowseResult<WordSearchResult> browseWords(String level, int page, int size) {
+        Page<Word> result = searchRepository.browse(normalizeLevel(level), PageRequest.of(page, size));
+        return BrowseResult.<WordSearchResult>builder()
+                .items(result.getContent().stream().map(this::toWordResult).toList())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalItems(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .build();
+    }
+
+    @Override
+    public BrowseResult<KanjiSearchResult> browseKanjis(String level, int page, int size) {
+        Page<Kanji> result = kanjiRepository.browse(normalizeLevel(level), PageRequest.of(page, size));
+        // Không kèm danh sách từ liên quan (như featured) để tránh N+1 khi duyệt trang dài.
+        return BrowseResult.<KanjiSearchResult>builder()
+                .items(result.getContent().stream()
+                        .map(k -> KanjiSearchResult.builder()
+                                .character(k.getCharacter())
+                                .meaning(k.getMeaning())
+                                .onyomi(k.getOnyomi())
+                                .kunyomi(k.getKunyomi())
+                                .stroke(k.getStroke())
+                                .radical(k.getRadical())
+                                .jlptLevel(k.getJlptLevel())
+                                .words(List.of())
+                                .build())
+                        .toList())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalItems(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .build();
+    }
+
+    /** "" / "ALL" → null (không lọc); còn lại chuẩn hóa N5…N1 về chữ hoa. */
+    private static String normalizeLevel(String level) {
+        if (level == null || level.isBlank() || "ALL".equalsIgnoreCase(level.trim())) {
+            return null;
+        }
+        return level.trim().toUpperCase();
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
@@ -121,8 +166,11 @@ public class DictionaryServiceImpl implements DictionaryService {
     }
 
     // ── Mappers ────────────────────────────────────────────────────────
+    // toWordResult / toKanjiResult là public (khai báo trên interface) để
+    // NotebookService tái sử dụng — sổ tay trả về đúng shape của search.
 
-    private KanjiSearchResult toKanjiResult(Kanji k) {
+    @Override
+    public KanjiSearchResult toKanjiResult(Kanji k) {
         List<KanjiSearchResult.WordInfo> relatedWords = wordKanjiRepository
                 .findByCharacterWithWords(k.getCharacter(), PageRequest.of(0, 8))
                 .stream()
@@ -173,7 +221,8 @@ public class DictionaryServiceImpl implements DictionaryService {
                 .build();
     }
 
-    private WordSearchResult toResult(Word word) {
+    @Override
+    public WordSearchResult toWordResult(Word word) {
         List<WordSearchResult.KanjiInfo> kanjis = word.getWordKanjis() == null
                 ? List.of()
                 : word.getWordKanjis().stream()

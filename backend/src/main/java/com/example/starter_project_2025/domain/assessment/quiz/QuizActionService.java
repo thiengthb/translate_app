@@ -17,5 +17,12 @@ public interface QuizActionService {
 
     QuizDTO duplicate(Long quizId, Long userId);
 
+    /**
+     * Deep-copy a (public/shared) quiz into the given user's library — like cloning a deck.
+     * Every referenced question is copied into the user's own question bank so the clone
+     * is fully owned and editable by them.
+     */
+    QuizDTO cloneForUser(Long quizId, Long userId);
+
     List<QuizQuestionDTO> getQuestions(Long quizId);
 }

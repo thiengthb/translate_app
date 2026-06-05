@@ -1,48 +1,108 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { deckApi, tagApi } from "@/api";
 import type { DeckDTO, TagDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { FlashcardSettingsModal } from "@/pages/student/FlashcardSettingsModal";
-import { PaginationBar } from "@/components/common/PaginationBar";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { DataPagination } from "@/components/common/DataPagination";
 import { cn } from "@/lib/utils";
+import {
+  BookOpen, Check, Layers, LayoutGrid, List,
+  MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, Trash2, X,
+} from "lucide-react";
+import { getCurrentUserId } from "@/utils/auth.utils";
+import { COLOR_PRESETS } from "@/lib/color-presets";
+import { TemplateLibrary } from "@/pages/student/shared/TemplateLibrary";
+import { EmptyState } from "@/components/common/EmptyState";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
+import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
+import { toast } from "sonner";
+import { useFillPageSize } from "@/hooks/useFillPageSize";
+import { DeckTitleRow, DeckStatsInline, VisibilityBadge } from "@/pages/student/shared/deckCardParts";
+import { LibrarySortMenu, type LibrarySortOption } from "@/pages/student/shared/LibrarySortMenu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ActionButton from "@/components/datatable/common/ActionButton";
+
+/* ── Deck | Template segmented control (rendered in the top bar) ── */
+function LibraryKindTabs({ tab, onChange }: { tab: "deck" | "template"; onChange: (t: "deck" | "template") => void }) {
+  const item = (value: "deck" | "template", label: string, Icon: typeof BookOpen) => (
+    <button
+      onClick={() => onChange(value)}
+      className={cn(
+        "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+        tab === value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+      )}
+    >
+      <Icon className="size-3.5" />
+      {label}
+    </button>
+  );
+  return (
+    <div className="flex items-center gap-0.5">
+      {item("deck", "Deck", BookOpen)}
+      {item("template", "Mẫu thẻ", Layers)}
+    </div>
+  );
+}
 
 const DECKS_PER_PAGE = 12;
 
-/* Directional horizontal slide for page changes (next → slide left, prev → slide right). */
+/* ── Deck sort ("filter") options — backed by real deck fields ── */
+type DeckSortKey = "newest" | "recent" | "most_viewed" | "name" | "oldest";
+
+const DECK_SORT_OPTIONS: LibrarySortOption<DeckSortKey>[] = [
+  { value: "newest", label: "Mới nhất" },
+  { value: "recent", label: "Truy cập gần đây" },
+  { value: "most_viewed", label: "Xem nhiều nhất" },
+  { value: "name", label: "Tên (A → Z)" },
+  { value: "oldest", label: "Cũ nhất" },
+];
+
+function compareDecks(a: DeckDTO, b: DeckDTO, key: DeckSortKey): number {
+  switch (key) {
+    case "oldest":      return (a.createdAt ?? "").localeCompare(b.createdAt ?? "");
+    case "recent":      return (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "");
+    case "most_viewed": return (b.viewCount ?? 0) - (a.viewCount ?? 0);
+    case "name":        return (a.title ?? "").localeCompare(b.title ?? "");
+    case "newest":
+    default:            return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+  }
+}
+
+/** Fixed tag colour palette — the app's preset swatches (no free colour picker). */
+const TAG_COLORS = COLOR_PRESETS.map((p) => p.swatch);
+
+/**
+ * Sentinel tag colour meaning "follow the app's accent". Tags stored with this
+ * value (or no colour) render with the live `var(--primary)`, so they re-tint
+ * when the user changes the app's color preset. It's the default for new tags.
+ */
+const APP_TAG_COLOR = "app";
+/** Resolve a stored tag colour to a solid CSS colour (sentinel → app accent). */
+const tagColorSolid = (c?: string | null) => (!c || c === APP_TAG_COLOR ? "var(--primary)" : c);
+/** Translucent fill for chip/pill backgrounds — works for both hex and var(). */
+const tagColorSoft = (c?: string | null) => `color-mix(in srgb, ${tagColorSolid(c)} 14%, transparent)`;
+
+type ViewMode = "list" | "grid";
+
 const pageSlideVariants = {
   enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
 };
-import {
-  BookOpen, Brain, Check, ChevronDown, ChevronUp, LayoutGrid, List,
-  MoreHorizontal, Plus, Search, SlidersHorizontal, Sparkles, Tag, X,
-} from "lucide-react";
-import { getCurrentUserId } from "@/utils/auth.utils";
 
-type ViewMode = "list" | "grid";
 
-/* ── Deck gradient palette (picked by deck.id % length) ── */
-const GRADIENTS = [
-  "from-violet-500 to-purple-600",
-  "from-blue-500 to-cyan-500",
-  "from-amber-400 to-orange-500",
-  "from-emerald-400 to-teal-500",
-  "from-rose-400 to-pink-500",
-  "from-indigo-500 to-blue-600",
-  "from-sky-400 to-blue-500",
-  "from-fuchsia-500 to-violet-500",
-  "from-lime-400 to-green-500",
-  "from-red-400 to-rose-500",
-];
-
-function getDeckGradient(id?: number) {
-  if (id == null) return GRADIENTS[0];
-  return GRADIENTS[id % GRADIENTS.length];
-}
+import { deckBgStyle, deckIconComponent } from "@/lib/deckVisual";
 
 /* ── Shared deck-item props ── */
 interface DeckItemProps {
@@ -54,6 +114,7 @@ interface DeckItemProps {
   onDelete: () => void;
   onTagToggle: (tagId: number) => void;
   onOpenSettings: () => void;
+  onEdit: () => void;
 }
 
 /* ─────────────────────────────────────────
@@ -61,6 +122,14 @@ interface DeckItemProps {
 ───────────────────────────────────────── */
 export default function LibraryPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: "deck" | "template" = searchParams.get("tab") === "template" ? "template" : "deck";
+  const setTab = (next: "deck" | "template") => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "deck") params.delete("tab");
+    else params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [decks, setDecks] = useState<DeckDTO[]>([]);
   const [tags, setTags] = useState<TagDTO[]>([]);
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
@@ -69,21 +138,36 @@ export default function LibraryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [openDeckMenu, setOpenDeckMenu] = useState<number | null>(null);
   const [settingsDeck, setSettingsDeck] = useState<DeckDTO | null>(null);
-  const [page, setPage] = useState(1); // 1-based
-  const [pageDir, setPageDir] = useState(0); // 1 = next, -1 = prev (drives slide direction)
+  const [page, setPage] = useState(1);
+  const [pageDir, setPageDir] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "list"; } catch { return "list"; }
+    try { return (localStorage.getItem("libraryViewMode") as ViewMode) ?? "grid"; } catch { return "grid"; }
   });
+  const [sortBy, setSortBy] = useState<DeckSortKey>(() => {
+    try { return (localStorage.getItem("librarySortBy") as DeckSortKey) ?? "newest"; } catch { return "newest"; }
+  });
+  const changeSortBy = (key: DeckSortKey) => {
+    setSortBy(key);
+    try { localStorage.setItem("librarySortBy", key); } catch { /* ignore */ }
+  };
 
   /* ── New tag modal ── */
   const [newTagOpen, setNewTagOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
-  const [newTagColor, setNewTagColor] = useState("#6366f1");
+  const [newTagColor, setNewTagColor] = useState<string>(APP_TAG_COLOR);
   const [isSavingTag, setIsSavingTag] = useState(false);
 
-  /* ── Fetch ── */
+  /* ── Delete-tag confirm ── */
+  const [tagToDelete, setTagToDelete] = useState<TagDTO | null>(null);
+  const [isDeletingTag, setIsDeletingTag] = useState(false);
+
+  /* ── Fetch — only the current user's own tags ── */
   useEffect(() => {
-    tagApi.getPage({ page: 0, size: 100 }).then((r) => setTags(r.content ?? (r as any).items ?? []));
+    const userId = getCurrentUserId();
+    if (userId == null) { setTags([]); return; }
+    tagApi
+      .getPage({ page: 0, size: 100 }, undefined, { userId } as never)
+      .then((r) => setTags(r.content ?? (r as any).items ?? []));
   }, []);
 
   /* Debounce the search box so we don't hit the API on every keystroke. */
@@ -111,19 +195,27 @@ export default function LibraryPage() {
     return decks.filter((d) => d.tagIds?.includes(selectedTagId));
   }, [decks, selectedTagId]);
 
-  /* ── Pagination (client-side, over the filtered list) ── */
-  const totalPages = Math.max(1, Math.ceil(filteredDecks.length / DECKS_PER_PAGE));
-  const safePage = Math.min(page, totalPages);
-  const pagedDecks = useMemo(
-    () => filteredDecks.slice((safePage - 1) * DECKS_PER_PAGE, safePage * DECKS_PER_PAGE),
-    [filteredDecks, safePage]
+  // Sort ("filter") applied on top of the tag filter.
+  const sortedDecks = useMemo(
+    () => [...filteredDecks].sort((a, b) => compareDecks(a, b, sortBy)),
+    [filteredDecks, sortBy]
   );
 
-  // Reset to the first page whenever the filtered set changes.
+  /* ── Pagination (client-side) — page size fills the viewport ── */
+  const gridRef = useRef<HTMLDivElement>(null);
+  const perPage = useFillPageSize(gridRef, [viewMode, sortedDecks.length > 0], DECKS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(sortedDecks.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const pagedDecks = useMemo(
+    () => sortedDecks.slice((safePage - 1) * perPage, safePage * perPage),
+    [sortedDecks, safePage, perPage]
+  );
+
+  // Reset to the first page whenever the filtered/sorted set changes.
   useEffect(() => {
     setPageDir(-1);
     setPage(1);
-  }, [selectedTagId, debouncedSearch]);
+  }, [selectedTagId, debouncedSearch, sortBy]);
 
   const handlePageChange = (next: number) => {
     setPageDir(next >= safePage ? 1 : -1);
@@ -135,7 +227,6 @@ export default function LibraryPage() {
     setViewMode(mode);
     try { localStorage.setItem("libraryViewMode", mode); } catch {}
   };
-
   const nextViewMode: ViewMode = viewMode === "list" ? "grid" : "list";
 
   const handleCreateTag = async () => {
@@ -144,13 +235,30 @@ export default function LibraryPage() {
     try {
       const userId = getCurrentUserId();
       await tagApi.create({ name: newTagName.trim(), color: newTagColor, userId, isActive: true } as any);
-      const r = await tagApi.getPage({ page: 0, size: 100 });
+      const r = await tagApi.getPage({ page: 0, size: 100 }, undefined, { userId } as never);
       setTags(r.content ?? (r as any).items ?? []);
       setNewTagName("");
-      setNewTagColor("#6366f1");
+      setNewTagColor(APP_TAG_COLOR);
       setNewTagOpen(false);
     } finally {
       setIsSavingTag(false);
+    }
+  };
+
+  const handleDeleteTag = async () => {
+    const id = tagToDelete?.id;
+    if (id == null) return;
+    setIsDeletingTag(true);
+    try {
+      await tagApi.delete(String(id));
+      setTags((prev) => prev.filter((t) => t.id !== id));
+      if (selectedTagId === id) setSelectedTagId(null);
+      setTagToDelete(null);
+      toast.success("Đã xóa tag.");
+    } catch {
+      toast.error("Không thể xóa tag.");
+    } finally {
+      setIsDeletingTag(false);
     }
   };
 
@@ -161,11 +269,30 @@ export default function LibraryPage() {
   };
 
   const handleTagToggle = async (deck: DeckDTO, tagId: number) => {
-    const current = new Set<number>(deck.tagIds ?? []);
-    if (current.has(tagId)) current.delete(tagId);
-    else current.add(tagId);
-    await deckApi.update(String(deck.id), { ...deck, tagIds: Array.from(current) } as any);
-    setDecks((prev) => prev.map((d) => d.id === deck.id ? { ...d, tagIds: Array.from(current) } : d));
+    const prevTagIds = deck.tagIds ?? [];
+    const next = new Set<number>(prevTagIds);
+    if (next.has(tagId)) next.delete(tagId);
+    else next.add(tagId);
+    const nextTagIds = Array.from(next);
+
+    // Optimistic: reflect the toggle in the UI immediately so the modal's
+    // checkbox responds on click instead of waiting for the network round-trip.
+    setDecks((prev) => prev.map((d) => d.id === deck.id ? { ...d, tagIds: nextTagIds } : d));
+
+    try {
+      // Send ONLY tagIds — never the whole deck. The update mapper ignores null
+      // properties, so other fields are preserved, and omitting the stale client
+      // `version` lets Hibernate use the freshly-loaded entity's version. Sending
+      // the full deck would carry a stale @Version and make quick successive
+      // toggles fail with an optimistic-locking conflict.
+      const saved = await deckApi.update(String(deck.id), { tagIds: nextTagIds } as any);
+      // Reconcile with the canonical server response.
+      setDecks((prev) => prev.map((d) => d.id === deck.id ? { ...d, ...saved } : d));
+    } catch {
+      // Roll back on failure and let the user know.
+      setDecks((prev) => prev.map((d) => d.id === deck.id ? { ...d, tagIds: prevTagIds } : d));
+      toast.error("Không thể cập nhật tag.");
+    }
   };
 
   const itemProps = (deck: DeckDTO): DeckItemProps => ({
@@ -177,110 +304,117 @@ export default function LibraryPage() {
     onDelete: () => deck.id != null && handleDeleteDeck(deck.id),
     onTagToggle: (tagId) => handleTagToggle(deck, tagId),
     onOpenSettings: () => setSettingsDeck(deck),
+    onEdit: () => deck.id != null && navigate(`/deck/${deck.id}/edit`),
   });
 
   return (
-    <MainLayout pathName={{ "/library": "Your Library" }}>
+    <MainLayout headerExtra={<LibraryKindTabs tab={tab} onChange={setTab} />}>
+      {tab === "template" ? (
+        <TemplateLibrary mode="owned" />
+      ) : (
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
-        {/* ════════ TOP — Tags + Create ════════ */}
-        <div className="flex items-start gap-3 px-6 pt-5 pb-3 border-b border-border shrink-0">
-          <TagFilterBar
-            tags={tags}
-            selectedTagId={selectedTagId}
-            onSelect={setSelectedTagId}
-            onNewTag={() => setNewTagOpen(true)}
-          />
-
+        {/* ════════ TOP — All + new tag · Sort · View · Search · Create ════════ */}
+        <div className="flex items-center gap-2 px-1 pt-2 pb-3 shrink-0">
+          {/* "All" filter + new tag — the tag chips live on the row below */}
+          <TagTab label="All" active={selectedTagId === null} onClick={() => setSelectedTagId(null)} />
           <button
-            onClick={() => navigate("/create-deck")}
-            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+            onClick={() => setNewTagOpen(true)}
+            title="Tạo tag mới"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
           >
-            <Sparkles className="size-3.5" />
-            Create deck
+            <Plus className="size-3.5" />
           </button>
-        </div>
+          <div className="flex-1" />
 
-        {/* ════════ TOOLBAR — Count + View + Search ════════ */}
-        <div className="flex items-center justify-between px-6 py-3 shrink-0">
-          <p className="text-sm text-muted-foreground">
-            {filteredDecks.length} {filteredDecks.length === 1 ? "deck" : "decks"}
-            {selectedTagId != null && (
-              <span className="ml-1">
-                in <span className="font-medium text-foreground">{tags.find((t) => t.id === selectedTagId)?.name}</span>
-              </span>
-            )}
-          </p>
+          {/* Sort ("filter") */}
+          <LibrarySortMenu value={sortBy} options={DECK_SORT_OPTIONS} onChange={changeSortBy} />
 
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
+          {/* View mode toggle */}
+          <TooltipWrapper content={`Chuyển sang dạng ${nextViewMode === "grid" ? "lưới" : "danh sách"}`}>
             <button
               onClick={() => changeViewMode(nextViewMode)}
-              title={`Switch to ${nextViewMode} view`}
-              aria-label={`Switch to ${nextViewMode} view`}
-              className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Đổi kiểu hiển thị"
+              className="shrink-0 inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
                   key={nextViewMode}
-                  initial={{ opacity: 0, scale: 0.85, rotate: -8 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, rotate: 8 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.12 }}
                 >
-                  {nextViewMode === "grid" ? (
-                    <LayoutGrid className="size-4" />
-                  ) : (
-                    <List className="size-4" />
-                  )}
+                  {nextViewMode === "grid" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
                 </motion.span>
               </AnimatePresence>
             </button>
+          </TooltipWrapper>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search decks…"
-                className="w-52 pl-9 pr-8 py-2 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
+          {/* Search */}
+          <div className="relative shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm deck…"
+              className="w-44 sm:w-52 h-9 pl-9 pr-8 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
+
+          {/* Create — icon-only, like ProTable */}
+          <ActionButton
+            onClick={() => navigate("/create-deck")}
+            tooltip="Tạo deck mới"
+            variant="default"
+            icon={<Plus size={16} />}
+          />
         </div>
 
+        {/* ════════ TAG FILTER — one row, scrolls horizontally when long ════════ */}
+        {tags.length > 0 && (
+          <div className="shrink-0 px-1 pb-2">
+            {/* pt-2/pr-2 give the top-right delete badge room so the horizontal
+                viewport (overflow-y-hidden) doesn't clip it. */}
+            <ScrollHintContainer axis="horizontal" viewportClassName="pb-0.5">
+              <div className="flex w-max items-center gap-2 pt-2 pr-2">
+                {tags.map((tag) => (
+                  <TagTab
+                    key={tag.id}
+                    label={tag.name ?? "—"}
+                    color={tag.color}
+                    active={selectedTagId === tag.id}
+                    onClick={() => setSelectedTagId(selectedTagId === tag.id ? null : tag.id!)}
+                    onDelete={() => setTagToDelete(tag)}
+                  />
+                ))}
+              </div>
+            </ScrollHintContainer>
+          </div>
+        )}
+
         {/* ════════ CONTENT ════════ */}
-        <ScrollHintContainer axis="vertical" viewportClassName="px-6">
+        <ScrollHintContainer axis="vertical" viewportClassName="px-1">
           {isLoading && decks.length === 0 ? (
             <div className="flex items-center justify-center h-40">
               <div className="size-5 border-2 border-border border-t-foreground rounded-full animate-spin" />
             </div>
           ) : filteredDecks.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-40 gap-2"
-            >
-              <BookOpen className="size-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                {searchQuery
-                  ? "No decks match your search"
-                  : selectedTagId != null
-                  ? "No decks in this tag"
-                  : "No decks yet — create one!"}
-              </p>
-            </motion.div>
+            <EmptyState
+              className="h-40"
+              icon={<BookOpen className="size-7" />}
+              title="Không có deck"
+              action={{ label: "Tạo deck", icon: <Sparkles className="size-4" />, onClick: () => navigate("/create-deck") }}
+            />
           ) : (
-            /* ─── Sliding page container (direction follows next/prev) ─── */
             <AnimatePresence mode="wait" custom={pageDir} initial={false}>
               <motion.div
                 key={safePage}
@@ -292,27 +426,17 @@ export default function LibraryPage() {
                 transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {viewMode === "list" ? (
-                  /* ─── LIST VIEW (Quizlet-style) ─── */
-                  <ul className="space-y-1 py-2 pb-6">
+                  <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 py-2 pb-4">
                     {pagedDecks.map((deck) => (
-                      <li
-                        key={deck.id}
-                        className="relative"
-                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                      >
+                      <div key={deck.id} className="relative" style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}>
                         <DeckRow {...itemProps(deck)} />
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 ) : (
-                  /* ─── GRID VIEW (Mazii-style) ─── */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-6">
+                  <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-2 pb-4">
                     {pagedDecks.map((deck) => (
-                      <div
-                        key={deck.id}
-                        className="relative"
-                        style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}
-                      >
+                      <div key={deck.id} className="relative" style={{ zIndex: openDeckMenu === deck.id ? 40 : undefined }}>
                         <DeckCard {...itemProps(deck)} />
                       </div>
                     ))}
@@ -323,18 +447,20 @@ export default function LibraryPage() {
           )}
         </ScrollHintContainer>
 
-        {/* ════════ FOOTER — fixed pagination (doesn't scroll) ════════ */}
-        {!isLoading && totalPages > 1 && (
-          <div className="shrink-0 border-t border-border bg-background px-6 py-2 flex justify-end">
-            <PaginationBar
-              currentPage={safePage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              totalItems={filteredDecks.length}
-            />
-          </div>
-        )}
+        {/* ════════ FOOTER — total (left) + pagination (right) ════════ */}
+        <div className="shrink-0 border-t border-border bg-background px-2 py-1.5 flex items-center justify-between min-h-[44px]">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Tổng:{" "}
+            <span className="font-semibold text-foreground">{filteredDecks.length}</span>
+          </span>
+          <DataPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
+      )}
 
       {/* ════════ MODAL — New tag ════════ */}
       <AnimatePresence>
@@ -346,55 +472,109 @@ export default function LibraryPage() {
               onClick={() => setNewTagOpen(false)}
             />
             <motion.div
-              className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4"
+              className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-4"
               initial={{ opacity: 0, scale: 0.95, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.18 }}
             >
-              <div className="rounded-2xl border border-border bg-card shadow-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-foreground">Create new tag</h2>
-                  <button onClick={() => setNewTagOpen(false)} className="text-muted-foreground hover:text-foreground">
-                    <X className="size-4" />
-                  </button>
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xl">
+                {/* Header — title (left) · live preview + close (right) */}
+                <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Tag className="size-4" />
+                    </span>
+                    <h2 className="text-base font-semibold text-foreground">Create new tag</h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {/* Live preview pill — mirrors the tag tabs */}
+                    <span
+                      className="inline-flex h-7 max-w-[150px] items-center gap-1.5 rounded-full border border-border px-2.5 text-xs font-medium"
+                      style={{ backgroundColor: tagColorSoft(newTagColor), color: tagColorSolid(newTagColor) }}
+                    >
+                      <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tagColorSolid(newTagColor) }} />
+                      <span className="truncate">{newTagName.trim() || "Tag name"}</span>
+                    </span>
+                    <button
+                      onClick={() => setNewTagOpen(false)}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-3">
+
+                {/* Body */}
+                <div className="space-y-3.5 px-5 py-4">
+                  {/* Name */}
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Tag name</label>
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tag name</label>
                     <input
                       autoFocus
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       placeholder="e.g. Grammar"
-                      className="w-full text-sm rounded-lg border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      maxLength={50}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
                       onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Color</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={newTagColor}
-                        onChange={(e) => setNewTagColor(e.target.value)}
-                        className="size-9 rounded-lg border border-input cursor-pointer bg-background"
-                      />
-                      <span className="text-sm text-muted-foreground font-mono">{newTagColor}</span>
+
+                  {/* Color palette */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Color</label>
+                    <div className="grid grid-cols-10 gap-2">
+                      {/* App color — follows the current theme accent; the default. */}
+                      <button
+                        type="button"
+                        title="Theo màu app — đổi theo chủ đề hiện tại"
+                        onClick={() => setNewTagColor(APP_TAG_COLOR)}
+                        className={cn(
+                          "relative flex size-7 items-center justify-center rounded-full transition-transform hover:scale-110",
+                          newTagColor === APP_TAG_COLOR
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-card scale-110"
+                            : "ring-1 ring-black/5 dark:ring-white/10"
+                        )}
+                        style={{ backgroundColor: "var(--primary)" }}
+                      >
+                        <Sparkles className="size-3.5 text-primary-foreground" />
+                      </button>
+                      {TAG_COLORS.map((c) => {
+                        const active = newTagColor.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            title={c}
+                            onClick={() => setNewTagColor(c)}
+                            className={cn(
+                              "relative flex size-7 items-center justify-center rounded-full transition-transform hover:scale-110",
+                              active ? "ring-2 ring-primary ring-offset-2 ring-offset-card scale-110" : "ring-1 ring-black/5 dark:ring-white/10"
+                            )}
+                            style={{ backgroundColor: c }}
+                          >
+                            {active && <Check className="size-3.5 text-white drop-shadow-sm" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+
                 </div>
-                <div className="flex gap-2 pt-1">
+
+                {/* Footer */}
+                <div className="flex gap-2 border-t border-border px-5 py-3.5">
                   <button
                     onClick={() => setNewTagOpen(false)}
-                    className="flex-1 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="flex-1 rounded-lg border border-border py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateTag}
                     disabled={!newTagName.trim() || isSavingTag}
-                    className="flex-1 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    className="flex-1 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                   >
                     {isSavingTag ? "Creating…" : "Create"}
                   </button>
@@ -413,6 +593,18 @@ export default function LibraryPage() {
           onClose={() => setSettingsDeck(null)}
         />
       )}
+
+      {/* ════════ MODAL — Confirm delete tag ════════ */}
+      <ConfirmDialog
+        open={tagToDelete != null}
+        title="Xóa tag"
+        description={`Bạn có chắc muốn xóa tag "${tagToDelete?.name ?? ""}"? Các deck đang gắn tag này sẽ không còn được lọc theo nó.`}
+        confirmLabel="Xóa tag"
+        cancelLabel="Hủy"
+        loading={isDeletingTag}
+        onConfirm={handleDeleteTag}
+        onCancel={() => setTagToDelete(null)}
+      />
     </MainLayout>
   );
 }
@@ -420,415 +612,493 @@ export default function LibraryPage() {
 /* ─────────────────────────────────────────
    Tag tab pill
 ───────────────────────────────────────── */
-function TagTab({ label, color, active, onClick }: {
+const TAG_LABEL_MAX = 10;
+
+function TagTab({ label, color, active, onClick, onDelete }: {
   label: string; color?: string; active: boolean; onClick: () => void;
+  /** When provided, a delete badge appears at the tag's top-right corner. */
+  onDelete?: () => void;
 }) {
-  return (
+  const truncated = label.length > TAG_LABEL_MAX;
+  const shown = truncated ? `${label.slice(0, TAG_LABEL_MAX)}…` : label;
+  const button = (
     <button
       onClick={onClick}
       className={cn(
-        "shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
+        "shrink-0 flex h-8 items-center gap-1.5 px-3.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
         active
           ? "bg-primary text-primary-foreground border-primary shadow-sm"
           : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent"
       )}
     >
-      {color && <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />}
-      {label}
+      {color && <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: tagColorSolid(color) }} />}
+      {shown}
     </button>
   );
-}
+  // Long names are truncated on the bar — reveal the full name on hover.
+  const pill = truncated ? <TooltipWrapper content={label}>{button}</TooltipWrapper> : button;
 
-/* ─────────────────────────────────────────
-   Tag filter bar — wraps to one row by default; expands when there are
-   too many tags so they never run off-screen or force horizontal scrolling.
-───────────────────────────────────────── */
-function TagFilterBar({
-  tags,
-  selectedTagId,
-  onSelect,
-  onNewTag,
-}: {
-  tags: TagDTO[];
-  selectedTagId: number | null;
-  onSelect: (id: number | null) => void;
-  onNewTag: () => void;
-}) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [overflowing, setOverflowing] = useState(false);
+  if (!onDelete) return pill;
 
-  // Detect whether the (collapsed) single row is hiding any tags.
-  useEffect(() => {
-    const el = rowRef.current;
-    if (!el) return;
-    const measure = () => {
-      if (expanded) return; // while expanded we always offer "Thu gọn"
-      setOverflowing(el.scrollHeight - el.clientHeight > 4);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [tags, expanded]);
-
-  const showToggle = expanded || overflowing;
-
+  // The delete badge sits in the top-right corner and reveals on hover/focus.
   return (
-    <div className="flex items-start gap-2 flex-1 min-w-0">
-      <div
-        ref={rowRef}
+    <div className="group/tag relative shrink-0">
+      {pill}
+      <button
+        type="button"
+        aria-label={`Xóa tag ${label}`}
+        title="Xóa tag"
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
         className={cn(
-          "flex flex-wrap items-center gap-2 min-w-0",
-          expanded
-            ? "max-h-40 overflow-y-auto scrollbar-none"
-            : "max-h-9 overflow-hidden"
+          "absolute -right-2 -top-2 z-10 flex size-5 items-center justify-center rounded-full",
+          "border-2 border-background bg-destructive text-destructive-foreground shadow-sm",
+          // Reveal with a gentle scale + fade on hover/focus; pop slightly on hover.
+          "scale-75 opacity-0 transition-all duration-150 hover:scale-110 hover:bg-destructive/90",
+          "group-hover/tag:scale-100 group-hover/tag:opacity-100",
+          "focus-visible:scale-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40",
         )}
       >
-        <TagTab label="All" active={selectedTagId === null} onClick={() => onSelect(null)} />
-        {tags.map((tag) => (
-          <TagTab
-            key={tag.id}
-            label={tag.name ?? "—"}
-            color={tag.color}
-            active={selectedTagId === tag.id}
-            onClick={() => onSelect(selectedTagId === tag.id ? null : tag.id!)}
-          />
-        ))}
-      </div>
-
-      {/* Right-side controls stay visible regardless of collapse state */}
-      <div className="shrink-0 flex items-center gap-2">
-        {showToggle && (
-          <button
-            onClick={() => setExpanded((e) => !e)}
-            className="inline-flex items-center gap-1 px-2.5 h-8 rounded-full border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors whitespace-nowrap"
-            title={expanded ? "Collapse tags" : "Show all tags"}
-          >
-            {expanded ? (
-              <><ChevronUp className="size-3.5" /> Thu gọn</>
-            ) : (
-              <><ChevronDown className="size-3.5" /> Tất cả thẻ</>
-            )}
-          </button>
-        )}
-        <button
-          onClick={onNewTag}
-          className="size-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-          title="New tag"
-        >
-          <Plus className="size-3.5" />
-        </button>
-      </div>
+        <X className="size-2.5" strokeWidth={3} />
+      </button>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────
-   Mode badge
-───────────────────────────────────────── */
-function ModeBadge({ mode, ghost }: { mode?: string; ghost?: boolean }) {
-  if (!mode) return null;
-  if (ghost) {
-    return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white backdrop-blur-sm">
-        {mode}
-      </span>
-    );
-  }
-  if (mode === "ANKI") {
-    return (
-      <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-500 border border-sky-500/20">
-        Anki
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-500 border border-indigo-500/20">
-      Quizlet
-    </span>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Shared overflow menu (tag picker + delete)
+   Shared overflow menu (edit · settings · add-to-tag · remove)
+   "Add to tag" opens a dedicated modal (TagPickerModal) instead of an
+   inline/flyout list, so it never clips on edge cards and reads the same
+   in both list and grid views.
 ───────────────────────────────────────── */
 function DeckOverflowMenu({
   menuOpen,
-  tagPickerOpen,
   onToggleMenu,
   onClose,
-  onToggleTagPicker,
-  allTags,
-  deckTagIds,
-  onTagToggle,
+  onOpenTagModal,
   onDelete,
   onOpenSettings,
+  onEdit,
   showSettings,
   buttonCls,
 }: {
   menuOpen: boolean;
-  tagPickerOpen: boolean;
   onToggleMenu: () => void;
   onClose: () => void;
-  onToggleTagPicker: () => void;
-  allTags: TagDTO[];
-  deckTagIds: Set<number>;
-  onTagToggle: (id: number) => void;
+  onOpenTagModal: () => void;
   onDelete: () => void;
   onOpenSettings: () => void;
+  onEdit: () => void;
   showSettings: boolean;
   buttonCls?: string;
 }) {
+  // Controlled Radix dropdown — same primitives as the page's sort/filter menu
+  // (LibrarySortMenu) so the two read identically. The parent owns which deck's
+  // menu is open (single-open + z-index boost), so map open-state through it.
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={onToggleMenu}
-        className={cn(
-          "p-1.5 rounded-md transition-colors cursor-pointer",
-          buttonCls ?? "text-muted-foreground hover:text-foreground hover:bg-background"
-        )}
+    <div onClick={(e) => e.stopPropagation()}>
+      <DropdownMenu
+        open={menuOpen}
+        onOpenChange={(open) => (open ? onToggleMenu() : onClose())}
       >
-        <MoreHorizontal className="size-4" />
-      </button>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Tùy chọn deck"
+            className={cn(
+              "p-1.5 rounded-md transition-colors cursor-pointer",
+              buttonCls ?? "text-muted-foreground hover:text-foreground hover:bg-background data-[state=open]:bg-accent data-[state=open]:text-foreground"
+            )}
+          >
+            <MoreHorizontal className="size-4" />
+          </button>
+        </DropdownMenuTrigger>
 
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={onClose} />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ duration: 0.12 }}
-              className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 text-sm text-popover-foreground"
-            >
-              {/* Study settings — per-deck (Anki only) */}
-              {showSettings && (
-                <>
-                  <button
-                    onClick={() => { onClose(); onOpenSettings(); }}
-                    className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center gap-2 cursor-pointer"
-                  >
-                    <SlidersHorizontal className="size-3.5 text-muted-foreground" />
-                    Study settings
-                  </button>
-                  <div className="my-1 border-t border-border" />
-                </>
-              )}
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Tùy chọn deck
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
 
-              {/* Tag picker */}
-              <div className="relative">
-                <button
-                  onClick={onToggleTagPicker}
-                  className="w-full px-3 py-2 text-left hover:bg-accent transition-colors rounded-sm flex items-center justify-between cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Tag className="size-3.5 text-muted-foreground" />
-                    Add to tag
+          <DropdownMenuItem onSelect={onEdit}>
+            <Pencil />
+            Chỉnh sửa
+          </DropdownMenuItem>
+
+          {showSettings && (
+            <DropdownMenuItem onSelect={onOpenSettings}>
+              <SlidersHorizontal />
+              Cài đặt học
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem onSelect={onOpenTagModal}>
+            <Tag />
+            Gắn tag
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+            <Trash2 />
+            Xóa deck
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Tag picker modal — choose which tags a deck belongs to.
+   Toggling persists immediately (onTagToggle); the check state reflects the
+   deck's live tagIds, so it updates as the parent re-renders.
+───────────────────────────────────────── */
+function TagPickerModal({
+  open,
+  onClose,
+  deck,
+  allTags,
+  deckTagIds,
+  onTagToggle,
+}: {
+  open: boolean;
+  onClose: () => void;
+  deck: DeckDTO;
+  allTags: TagDTO[];
+  deckTagIds: Set<number>;
+  onTagToggle: (tagId: number) => void;
+}) {
+  // Esc closes the modal.
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            className="fixed left-1/2 top-1/2 z-[100] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 px-4"
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.18 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Tag className="size-4" />
                   </span>
-                  <Plus className="size-3 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold leading-tight text-foreground">Gắn tag</h2>
+                    <p className="truncate text-xs text-muted-foreground">{deck.title ?? "Deck"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  aria-label="Đóng"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <X className="size-4" />
                 </button>
-
-                <AnimatePresence>
-                  {tagPickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ duration: 0.1 }}
-                      className="absolute right-full top-0 mr-1 w-44 rounded-xl border border-border bg-popover shadow-lg py-1 z-30"
-                    >
-                      {allTags.length === 0 ? (
-                        <p className="px-3 py-2 text-xs text-muted-foreground">No tags yet</p>
-                      ) : allTags.map((tag) => (
-                        <button
-                          key={tag.id}
-                          onClick={() => onTagToggle(tag.id!)}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? "#888" }} />
-                          <span className="flex-1 truncate">{tag.name}</span>
-                          {deckTagIds.has(tag.id!) && <Check className="size-3.5 text-primary shrink-0" />}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
-              <div className="my-1 border-t border-border" />
-              <button
-                onClick={onDelete}
-                className="w-full px-3 py-2 text-left text-destructive hover:bg-accent transition-colors rounded-sm cursor-pointer"
-              >
-                Remove
-              </button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
+              {/* Tag list */}
+              <div className="max-h-72 overflow-y-auto p-2">
+                {allTags.length === 0 ? (
+                  <div className="px-3 py-10 text-center">
+                    <Tag className="mx-auto mb-2 size-6 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">Chưa có tag nào.</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground/70">Tạo tag ở thanh lọc phía trên.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {allTags.map((tag) => {
+                      const checked = tag.id != null && deckTagIds.has(tag.id);
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => tag.id != null && onTagToggle(tag.id)}
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-accent",
+                            checked && "bg-accent/40"
+                          )}
+                        >
+                          <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: tagColorSolid(tag.color) }} />
+                          <span className="flex-1 truncate text-foreground">{tag.name}</span>
+                          <span
+                            className={cn(
+                              "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
+                              checked ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                            )}
+                          >
+                            {checked && <Check className="size-3.5" />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end border-t border-border bg-muted/30 px-5 py-3">
+                <button
+                  onClick={onClose}
+                  className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Xong
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
 
 /* ─────────────────────────────────────────
    LIST VIEW — Quizlet-style row
 ───────────────────────────────────────── */
-function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
+function DeckRow({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings, onEdit }: DeckItemProps) {
   const navigate = useNavigate();
-  const [tagPickerOpen, setTagPickerOpen] = useState(false);
-  const gradient = getDeckGradient(deck.id);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const gradStyle  = deckBgStyle(deck);
+  const DeckIcon   = deckIconComponent(deck);
   const deckTagIds = new Set<number>(deck.tagIds ?? []);
+  const deckTags   = allTags.filter((t) => t.id != null && deckTagIds.has(t.id));
 
   return (
-    <motion.div
-      whileHover={menuOpen ? undefined : { x: 3 }}
-      transition={{ duration: 0.1 }}
+    <div
       className={cn(
-        "relative flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-accent group border border-transparent hover:border-border/40 transition-colors",
+        // Horizontal bar — same info + tooltips as the card. Hover only
+        // brightens (border + shadow), no slide/bounce.
+        "group relative flex h-full items-center gap-3 rounded-lg border border-border/60 bg-card px-3.5 py-2.5 shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
-      {/* Colored icon */}
-      <motion.div
-        whileHover={{ scale: 1.08 }}
-        className={cn("shrink-0 size-11 rounded-xl bg-linear-to-br flex items-center justify-center shadow-sm", gradient)}
-      >
-        {deck.studyMode === "ANKI"
-          ? <Brain className="size-5 text-white" />
-          : <BookOpen className="size-5 text-white" />}
-      </motion.div>
+      {/* Public/private — pushed onto the top-right corner, overlapping the border */}
+      <VisibilityBadge
+        deck={deck}
+        className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full border border-border bg-card shadow-sm"
+      />
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{deck.title ?? "Untitled"}</p>
-          <ModeBadge mode={deck.studyMode} />
-        </div>
-        <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
-          <p className="text-xs text-muted-foreground">{deck.totalCards ?? 0} terms</p>
-          {allTags.filter((t) => t.id != null && deckTagIds.has(t.id!)).map((t) => (
-            <span key={t.id} className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-              <span className="size-1.5 rounded-full" style={{ backgroundColor: t.color ?? "#888" }} />
-              {t.name}
-            </span>
-          ))}
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg shadow-sm" style={gradStyle}>
+        <DeckIcon className="size-5 text-white" />
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <DeckTitleRow deck={deck} showVisibility={false} />
+        {/* Card count · New/Learning/Review · tags — all on one line */}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="shrink-0 text-xs text-muted-foreground">{deck.totalCards ?? 0} thẻ</span>
+          <DeckStatsInline deck={deck} />
+          <div className="min-w-0 flex-1 flex"><DeckTags tags={deckTags} /></div>
         </div>
       </div>
 
-      {/* Menu */}
       <div className={cn("shrink-0 transition-opacity", menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
         <DeckOverflowMenu
           menuOpen={menuOpen}
-          tagPickerOpen={tagPickerOpen}
-          onToggleMenu={() => { menuOpen ? onMenuClose() : onMenuOpen(); setTagPickerOpen(false); }}
-          onClose={() => { onMenuClose(); setTagPickerOpen(false); }}
-          onToggleTagPicker={() => setTagPickerOpen((o) => !o)}
-          allTags={allTags}
-          deckTagIds={deckTagIds}
-          onTagToggle={onTagToggle}
+          onToggleMenu={() => { menuOpen ? onMenuClose() : onMenuOpen(); }}
+          onClose={onMenuClose}
+          onOpenTagModal={() => setTagModalOpen(true)}
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
-          showSettings={deck.studyMode === "ANKI"}
+          onEdit={onEdit}
+          showSettings={true}
         />
       </div>
-    </motion.div>
+
+      <TagPickerModal
+        open={tagModalOpen}
+        onClose={() => setTagModalOpen(false)}
+        deck={deck}
+        allTags={allTags}
+        deckTagIds={deckTagIds}
+        onTagToggle={onTagToggle}
+      />
+    </div>
   );
 }
 
 /* ─────────────────────────────────────────
    GRID VIEW — Mazii-style card
 ───────────────────────────────────────── */
-function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings }: DeckItemProps) {
+/* ─────────────────────────────────────────
+   Tags on a single line — overflow collapses into a "+N" chip whose tooltip
+   lists the hidden tags. Width is measured; fit is estimated from name length.
+───────────────────────────────────────── */
+const TAG_CHIP_MAX = 10;
+
+function TagChip({ tag }: { tag: TagDTO }) {
+  const name = tag.name ?? "—";
+  const truncated = name.length > TAG_CHIP_MAX;
+  const shown = truncated ? `${name.slice(0, TAG_CHIP_MAX)}…` : name;
+  const chip = (
+    <span
+      className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+      style={{ backgroundColor: tagColorSoft(tag.color), color: tagColorSolid(tag.color) }}
+    >
+      <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: tagColorSolid(tag.color) }} />
+      {shown}
+    </span>
+  );
+  return truncated ? <TooltipWrapper content={name}>{chip}</TooltipWrapper> : chip;
+}
+
+function OneLineTags({ tags }: { tags: TagDTO[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const GAP = 6;
+  const PLUS = 34; // reserved width for the "+N" chip
+  // Chips cap names at TAG_CHIP_MAX chars (+ ellipsis), so estimate off that.
+  const estW = (t: TagDTO) => Math.min(t.name?.length ?? 1, TAG_CHIP_MAX + 1) * 6.2 + 26;
+
+  let visibleCount = tags.length;
+  if (width > 0) {
+    let used = 0;
+    visibleCount = 0;
+    for (let i = 0; i < tags.length; i++) {
+      const tw = estW(tags[i]) + (i > 0 ? GAP : 0);
+      const reserve = i < tags.length - 1 ? PLUS + GAP : 0;
+      if (used + tw + reserve <= width) { used += tw; visibleCount++; } else break;
+    }
+    if (visibleCount === 0) visibleCount = 1; // always show at least one
+  }
+
+  const visible = tags.slice(0, visibleCount);
+  const hidden = tags.slice(visibleCount);
+
+  return (
+    <div ref={ref} className="flex items-center gap-1.5 overflow-hidden">
+      {visible.map((t) => <TagChip key={t.id} tag={t} />)}
+      {hidden.length > 0 && (
+        <TooltipWrapper content={hidden.map((t) => t.name ?? "—").join(", ")}>
+          <span className="shrink-0 cursor-default rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            +{hidden.length}
+          </span>
+        </TooltipWrapper>
+      )}
+    </div>
+  );
+}
+
+/* ── One-line tags, or a tag-height dashed pill with a single dot ("Chưa có tag" on hover) ── */
+function DeckTags({ tags }: { tags: TagDTO[] }) {
+  if (tags.length === 0) {
+    return (
+      <TooltipWrapper content="Chưa có tag">
+        <span className="inline-flex h-5 shrink-0 cursor-default items-center justify-center rounded-full border border-dashed border-border px-2.5">
+          <span className="size-1.5 rounded-full bg-muted-foreground/40" />
+        </span>
+      </TooltipWrapper>
+    );
+  }
+  return <OneLineTags tags={tags} />;
+}
+
+function DeckCard({ deck, allTags, menuOpen, onMenuOpen, onMenuClose, onDelete, onTagToggle, onOpenSettings, onEdit }: DeckItemProps) {
   const navigate = useNavigate();
-  const [tagPickerOpen, setTagPickerOpen] = useState(false);
-  const gradient = getDeckGradient(deck.id);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const gradStyle  = deckBgStyle(deck);
+  const DeckIcon   = deckIconComponent(deck);
   const deckTagIds = new Set<number>(deck.tagIds ?? []);
+  const deckTags   = allTags.filter((t) => t.id != null && deckTagIds.has(t.id));
 
   return (
     <motion.div
-      whileHover={menuOpen ? undefined : { y: -5, transition: { duration: 0.18, ease: "easeOut" } }}
-      whileTap={menuOpen ? undefined : { scale: 0.98 }}
       className={cn(
-        "group relative rounded-2xl border border-border/60 shadow-sm hover:shadow-xl transition-shadow bg-card",
+        // NOTE: no `overflow-hidden` here — it would clip the overflow menu's
+        // dropdown + the "Add to tag" submenu (which opens leftward). The
+        // gradient header clips its own decorative blobs instead.
+        // Hover only brightens (shadow + border + ring) — no lift/bounce.
+        // h-full → fill the stretched grid cell so every card is the same height.
+        "group relative flex h-full flex-col rounded-xl border border-border/60 bg-card shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-lg",
         menuOpen ? "cursor-default" : "cursor-pointer"
       )}
-      onClick={() => navigate(deck.studyMode === "ANKI" ? `/deck/${deck.id}/anki` : `/deck/${deck.id}`)}
+      onClick={() => navigate(`/deck/${deck.id}`)}
     >
-      {/* ── Gradient header ── */}
-      <div className={cn("relative h-24 bg-linear-to-br overflow-hidden rounded-t-2xl", gradient)}>
-        {/* Decorative blobs */}
+      {/* Gradient header */}
+      <div className="relative h-24 overflow-hidden rounded-t-xl shrink-0" style={gradStyle}>
         <div className="absolute -top-5 -right-5 size-20 rounded-full bg-white/10" />
         <div className="absolute top-6 -right-2 size-10 rounded-full bg-white/10" />
         <div className="absolute -bottom-3 left-4 size-14 rounded-full bg-black/10" />
 
-        {/* Icon */}
-        <div className="absolute bottom-3 left-4 size-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
-          {deck.studyMode === "ANKI"
-            ? <Brain className="size-5 text-white" />
-            : <BookOpen className="size-5 text-white" />}
-        </div>
-
-        {/* Mode badge */}
-        <div className="absolute top-2.5 left-4">
-          <ModeBadge mode={deck.studyMode} ghost />
+        <div className="absolute bottom-3 left-4 size-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
+          <DeckIcon className="size-5 text-white" />
         </div>
       </div>
 
-      {/* Menu — appears on hover. Kept OUTSIDE the overflow-hidden header
-          so the open dropdown isn't clipped (and stays clickable). */}
+      {/* Menu — outside overflow-hidden so dropdown isn't clipped */}
       <div className={cn(
         "absolute top-1.5 right-1.5 z-20 transition-opacity",
         menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
       )}>
         <DeckOverflowMenu
           menuOpen={menuOpen}
-          tagPickerOpen={tagPickerOpen}
-          onToggleMenu={() => { menuOpen ? onMenuClose() : onMenuOpen(); setTagPickerOpen(false); }}
-          onClose={() => { onMenuClose(); setTagPickerOpen(false); }}
-          onToggleTagPicker={() => setTagPickerOpen((o) => !o)}
-          allTags={allTags}
-          deckTagIds={deckTagIds}
-          onTagToggle={onTagToggle}
+          onToggleMenu={() => { menuOpen ? onMenuClose() : onMenuOpen(); }}
+          onClose={onMenuClose}
+          onOpenTagModal={() => setTagModalOpen(true)}
           onDelete={onDelete}
           onOpenSettings={onOpenSettings}
-          showSettings={deck.studyMode === "ANKI"}
+          onEdit={onEdit}
+          showSettings={true}
           buttonCls="p-1.5 rounded-md text-white/80 hover:text-white hover:bg-white/20 transition-colors"
         />
       </div>
 
-      {/* ── Card body ── */}
-      <div className="p-4 space-y-2">
-        <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug min-h-10">
-          {deck.title ?? "Untitled"}
-        </p>
+      <TagPickerModal
+        open={tagModalOpen}
+        onClose={() => setTagModalOpen(false)}
+        deck={deck}
+        allTags={allTags}
+        deckTagIds={deckTagIds}
+        onTagToggle={onTagToggle}
+      />
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">
-            {deck.totalCards ?? 0} terms
-          </span>
-          {allTags.filter((t) => t.id != null && deckTagIds.has(t.id!)).map((t) => (
-            <span
-              key={t.id}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-              style={{ backgroundColor: `${t.color ?? "#888"}20`, color: t.color ?? "#888" }}
-            >
-              <span className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: t.color ?? "#888" }} />
-              {t.name}
-            </span>
-          ))}
+      {/* Card body */}
+      <div className="p-3.5 flex-1 flex flex-col gap-2">
+        <DeckTitleRow deck={deck} />
+        <div className="flex items-center gap-2 text-xs">
+          <span className="font-medium text-muted-foreground">{deck.totalCards ?? 0} thẻ</span>
+          <div className="ml-auto"><DeckStatsInline deck={deck} /></div>
+        </div>
+        <div className="mt-auto">
+          <DeckTags tags={deckTags} />
         </div>
       </div>
 
-      {/* Hover glow effect on card bottom */}
       <div className={cn(
-        "absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+        "absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300",
         "ring-2 ring-inset ring-primary/10"
       )} />
     </motion.div>

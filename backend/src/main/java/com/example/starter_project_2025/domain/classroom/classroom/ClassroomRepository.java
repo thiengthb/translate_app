@@ -14,4 +14,6 @@ public interface ClassroomRepository extends BaseCrudRepository<Classroom, Long>
     boolean existsByInviteCode(String inviteCode);
 
     List<Classroom> findByOwnerIdAndIsDeletedFalse(Long ownerId);
+
+    List<Classroom> findByVisibilityAndIsDeletedFalseOrderByCreatedAtDesc(String visibility);
 }

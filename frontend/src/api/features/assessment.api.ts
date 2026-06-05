@@ -3,8 +3,9 @@ import type {
   QuestionBankDTO,
   QuestionOptionDTO,
   QuestionQueryParams,
+  QuestionTagDTO,
+  QuestionTagQueryParams,
   QuizAttemptDTO,
-  QuizCategoryDTO,
   QuizDTO,
   QuizQueryParams,
   QuizQuestionDTO,
@@ -15,35 +16,6 @@ import type {
 
 type Page<T> = { content?: T[]; items?: T[] };
 const list = <T>(data: Page<T>): T[] => data.content ?? data.items ?? [];
-
-/* ─────────────────────────────────────────
-   Quiz categories
-───────────────────────────────────────── */
-const fetchCategories = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<Page<QuizCategoryDTO>>("/quiz-categories", {
-    params: { page: 0, size: 200, sort: "orderIndex,asc" },
-  });
-  return list(res.data);
-};
-
-const fetchCategoryTree = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<QuizCategoryDTO[]>("/quiz-categories/tree");
-  return res.data;
-};
-
-const createCategory = async (data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.post<QuizCategoryDTO>("/quiz-categories", { isActive: true, ...data });
-  return res.data;
-};
-
-const updateCategory = async (id: number, data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.put<QuizCategoryDTO>(`/quiz-categories/${id}`, data);
-  return res.data;
-};
-
-const deleteCategory = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`/quiz-categories/${id}`);
-};
 
 /* ─────────────────────────────────────────
    Quizzes
@@ -159,6 +131,59 @@ const reorderOptions = async (questionId: number, orderedIds: number[]): Promise
   await axiosInstance.put(`/questions/${questionId}/options/reorder`, orderedIds);
 };
 
+/** Current content version of a question (audit). */
+const getQuestionVersion = async (
+  questionId: number
+): Promise<{ questionId: number; currentVersion: number }> => {
+  const res = await axiosInstance.get(`/questions/${questionId}/version`);
+  return res.data;
+};
+
+/* ─────────────────────────────────────────
+   Question tags
+───────────────────────────────────────── */
+const fetchQuestionTags = async (params: QuestionTagQueryParams = {}): Promise<QuestionTagDTO[]> => {
+  const res = await axiosInstance.get<Page<QuestionTagDTO>>("/question-tags", {
+    params: { page: 0, size: 200, sort: "name,asc", ...params },
+  });
+  return list(res.data);
+};
+
+const createQuestionTag = async (data: Partial<QuestionTagDTO>): Promise<QuestionTagDTO> => {
+  const res = await axiosInstance.post<QuestionTagDTO>("/question-tags", { isActive: true, ...data });
+  return res.data;
+};
+
+const updateQuestionTag = async (id: number, data: Partial<QuestionTagDTO>): Promise<QuestionTagDTO> => {
+  const res = await axiosInstance.put<QuestionTagDTO>(`/question-tags/${id}`, data);
+  return res.data;
+};
+
+const deleteQuestionTag = async (id: number): Promise<void> => {
+  await axiosInstance.delete(`/question-tags/${id}`);
+};
+
+/** Attach tags to a question (idempotent). */
+const addQuestionTags = async (questionId: number, tagIds: number[]): Promise<void> => {
+  await axiosInstance.post(`/questions/${questionId}/tags`, { tagIds });
+};
+
+/** Detach a single tag from a question. */
+const removeQuestionTag = async (questionId: number, tagId: number): Promise<void> => {
+  await axiosInstance.delete(`/questions/${questionId}/tags/${tagId}`);
+};
+
+/** Questions matching the given tags (matchAll=true → ALL tags, false → ANY). */
+const fetchQuestionsByTags = async (
+  tagIds: number[],
+  matchAll = false
+): Promise<QuestionBankDTO[]> => {
+  const res = await axiosInstance.get<QuestionBankDTO[]>("/questions/by-tags", {
+    params: { tagIds: tagIds.join(","), matchAll },
+  });
+  return res.data;
+};
+
 /* ─────────────────────────────────────────
    Attempts
 ───────────────────────────────────────── */
@@ -199,11 +224,6 @@ const getQuizProgress = async (userId: number, quizId: number): Promise<UserQuiz
 };
 
 export const assessmentApi = {
-  fetchCategories,
-  fetchCategoryTree,
-  createCategory,
-  updateCategory,
-  deleteCategory,
   fetchQuizzes,
   fetchPublicQuizzes,
   fetchQuizById,
@@ -224,6 +244,14 @@ export const assessmentApi = {
   addOption,
   removeOption,
   reorderOptions,
+  getQuestionVersion,
+  fetchQuestionTags,
+  createQuestionTag,
+  updateQuestionTag,
+  deleteQuestionTag,
+  addQuestionTags,
+  removeQuestionTag,
+  fetchQuestionsByTags,
   startAttempt,
   submitAnswer,
   submitAttempt,

@@ -9,12 +9,6 @@ import lombok.Builder;
 public class QuizFilter extends BaseFilter {
 
     @FilterField
-    Long quizTypeId;
-
-    @FilterField
-    Long categoryId;
-
-    @FilterField
     Long levelId;
 
     @FilterField
