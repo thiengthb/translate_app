@@ -9,13 +9,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
 
 /**
- * Destructive confirmation dialog — mirrors the ProTable delete modal
- * (`datatable/modal/ConfirmDeleteModal`): red Trash icon chip in the title,
- * a description, and an outline Cancel / red Delete button pair. Labels stay
- * configurable so callers can localize them.
+ * Confirmation dialog. Defaults to the destructive (delete) style — red Trash
+ * chip + red confirm button. Pass `tone="warning"` for a non-destructive guard
+ * (e.g. "discard unsaved changes?") which uses an amber alert chip and the
+ * primary confirm button. Labels stay configurable so callers can localize.
  */
 export const ConfirmDialog: React.FC<{
   open: boolean;
@@ -26,6 +26,7 @@ export const ConfirmDialog: React.FC<{
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
+  tone?: "danger" | "warning";
 }> = ({
   open,
   title = "Xác nhận xóa",
@@ -35,10 +36,13 @@ export const ConfirmDialog: React.FC<{
   onConfirm,
   onCancel,
   loading = false,
+  tone = "danger",
 }) => {
   const displayDescription =
     description ||
     "Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn tác.";
+
+  const isDanger = tone === "danger";
 
   return (
     <Dialog
@@ -51,8 +55,19 @@ export const ConfirmDialog: React.FC<{
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <Trash2 className="h-5 w-5 text-red-600" />
+            <div
+              className={
+                "flex h-10 w-10 items-center justify-center rounded-full " +
+                (isDanger
+                  ? "bg-red-100 dark:bg-red-900/30"
+                  : "bg-amber-100 dark:bg-amber-900/30")
+              }
+            >
+              {isDanger ? (
+                <Trash2 className="h-5 w-5 text-red-600" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              )}
             </div>
             {title}
           </DialogTitle>
@@ -66,22 +81,17 @@ export const ConfirmDialog: React.FC<{
               {cancelLabel}
             </Button>
             <Button
-              variant="destructive"
+              variant={isDanger ? "destructive" : "default"}
               onClick={onConfirm}
               disabled={loading}
-              className="bg-red-600 hover:bg-red-700"
+              className={isDanger ? "bg-red-600 hover:bg-red-700" : undefined}
             >
               {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {confirmLabel}
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {confirmLabel}
-                </>
-              )}
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : isDanger ? (
+                <Trash2 className="mr-2 h-4 w-4" />
+              ) : null}
+              {confirmLabel}
             </Button>
           </div>
         </DialogFooter>

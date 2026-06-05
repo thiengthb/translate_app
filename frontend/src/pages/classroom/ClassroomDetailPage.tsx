@@ -20,6 +20,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import {
   BarChart3, BookOpen, CalendarClock, Check, ChevronRight, ClipboardList, Copy,
   Eye, GraduationCap, Image as ImageIcon, LayoutGrid, List, Loader2, Play, Plus, RefreshCw,
@@ -56,6 +57,10 @@ export default function ClassroomDetailPage() {
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const [tab, setTab] = useState("assignments");
+  // Generic confirm for destructive actions (remove member / remove deck).
+  const [pendingAction, setPendingAction] =
+    useState<null | { title: string; description: string; run: () => Promise<void> }>(null);
+  const [actionBusy, setActionBusy] = useState(false);
   const [assignmentView, setAssignmentView] = useState<AssignmentView>(() => {
     try { return (localStorage.getItem(ASSIGNMENT_VIEW_KEY) as AssignmentView) ?? "list"; }
     catch { return "list"; }
@@ -267,7 +272,14 @@ export default function ClassroomDetailPage() {
                             type="button"
                             title="Remove from class"
                             className="absolute top-2 right-2 size-7 rounded-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-all"
-                            onClick={(e) => { e.stopPropagation(); cls.removeDeck(d.deckId).then(() => toast.success("Removed.")); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPendingAction({
+                                title: "Remove deck?",
+                                description: `Remove “${d.deckTitle}” from this group? Members will no longer see it here.`,
+                                run: async () => { await cls.removeDeck(d.deckId); toast.success("Removed."); },
+                              });
+                            }}
                           >
                             <Trash2 className="size-3.5" />
                           </button>
@@ -342,7 +354,11 @@ export default function ClassroomDetailPage() {
                         <Button
                           variant="ghost" size="sm"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={async () => { await cls.removeMember(m.userId); toast.success("Removed."); }}
+                          onClick={() => setPendingAction({
+                            title: "Remove member?",
+                            description: `Remove ${m.displayName} from this group?`,
+                            run: async () => { await cls.removeMember(m.userId); toast.success("Removed."); },
+                          })}
                         >
                           <UserMinus className="size-4" />
                         </Button>
@@ -383,6 +399,24 @@ export default function ClassroomDetailPage() {
         onClose={() => setDeckPickerOpen(false)}
         excludeIds={decks.map((d) => d.deckId)}
         onAdd={async (deckId) => { await cls.addDeck(deckId); toast.success("Deck added."); }}
+      />
+
+      {/* Shared confirm for destructive actions (remove member / remove deck). */}
+      <ConfirmDialog
+        open={pendingAction != null}
+        loading={actionBusy}
+        title={pendingAction?.title}
+        description={pendingAction?.description}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          if (!pendingAction) return;
+          setActionBusy(true);
+          try { await pendingAction.run(); }
+          catch { toast.error("Action failed."); }
+          finally { setActionBusy(false); setPendingAction(null); }
+        }}
+        onCancel={() => { if (!actionBusy) setPendingAction(null); }}
       />
     </MainLayout>
   );

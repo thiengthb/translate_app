@@ -14,6 +14,7 @@ import { Check, ChevronLeft, ChevronRight, ListChecks, Loader2, Save, Send, Libr
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { QuestionBankSelector } from "./QuestionBankSelector";
 import { SelectedQuestionsPanel } from "./SelectedQuestionsPanel";
 
@@ -34,6 +35,7 @@ export default function QuizCreateEditPage() {
   // If the author cancels without ever saving/publishing, that draft and its
   // quick-created private questions are discarded.
   const [keepDraft, setKeepDraft] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   // Two-step wizard: 1 = configuration, 2 = question selection.
   const [step, setStep] = useState<1 | 2>(1);
@@ -124,6 +126,17 @@ export default function QuizCreateEditPage() {
       try { await assessmentApi.discardQuiz(id); } catch { /* best-effort */ }
     }
     navigate("/quizzes");
+  };
+
+  // There's something to lose if a draft already exists or any field was filled.
+  const hasUnsavedWork =
+    !keepDraft &&
+    (id != null || title.trim() !== "" || description.trim() !== "" || questions.length > 0);
+
+  // Guard the Cancel button so an accidental click doesn't silently discard work.
+  const requestCancel = () => {
+    if (hasUnsavedWork) setDiscardOpen(true);
+    else void handleCancel();
   };
 
   const handlePublish = async () => {
@@ -304,7 +317,7 @@ export default function QuizCreateEditPage() {
         <div className="flex items-center justify-between gap-2">
           {step === 1 ? (
             <>
-              <Button variant="ghost" onClick={handleCancel}>Cancel</Button>
+              <Button variant="ghost" onClick={requestCancel}>Cancel</Button>
               <Button onClick={handleNext} disabled={saving || !step1Valid}>
                 {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : null}
                 Next: select questions
@@ -328,6 +341,18 @@ export default function QuizCreateEditPage() {
           )}
         </div>
       </div>
+
+      {/* Guard against accidentally quitting a quiz you're creating. */}
+      <ConfirmDialog
+        open={discardOpen}
+        tone="warning"
+        title="Discard this quiz?"
+        description="You haven't finished creating this quiz. Your draft and any added questions will be permanently deleted."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setDiscardOpen(false); void handleCancel(); }}
+        onCancel={() => setDiscardOpen(false)}
+      />
     </MainLayout>
   );
 }

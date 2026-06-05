@@ -16,6 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { Check, Copy, GraduationCap, Loader2, LogIn, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -297,6 +298,13 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
   const [name, setName]               = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving]           = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+
+  const dirty = name.trim() !== "" || description.trim() !== "";
+  const requestClose = () => {
+    if (dirty) setConfirmCloseOpen(true);
+    else onClose();
+  };
 
   const submit = async () => {
     if (!name.trim()) { toast.error("Name is required."); return; }
@@ -314,7 +322,7 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) requestClose(); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create group</DialogTitle>
@@ -338,12 +346,23 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}Create
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmCloseOpen}
+        tone="warning"
+        title="Discard new group?"
+        description="The details you entered will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmCloseOpen(false); onClose(); }}
+        onCancel={() => setConfirmCloseOpen(false)}
+      />
     </Dialog>
   );
 }

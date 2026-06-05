@@ -10,6 +10,7 @@ import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { Check, ImageIcon, Loader2, Music, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { TagChips } from "./QuestionTags";
 
 /* ── Media input: click to upload a local file OR paste a link ── */
@@ -157,6 +158,7 @@ export function QuestionForm({
   ownerQuizId?: number | null;
 }) {
   const [saving, setSaving] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [questionType, setQuestionType] = useState<QuestionType>("SINGLE_CHOICE");
   const [prompt, setPrompt] = useState("");
   const [promptAudioUrl, setPromptAudioUrl] = useState("");
@@ -342,6 +344,18 @@ export function QuestionForm({
     : filledOptions.length >= 2 && hasCorrect;
   const canSave = prompt.trim() !== "" && optionsValid;
 
+  // Guard the Cancel button: if there's content typed, confirm before discarding.
+  const hasContent =
+    prompt.trim() !== "" ||
+    explanation.trim() !== "" ||
+    hint.trim() !== "" ||
+    filledOptions.length > 0 ||
+    acceptedAnswers.some((a) => a.trim() !== "");
+  const requestCancel = () => {
+    if (hasContent) setConfirmCancelOpen(true);
+    else onCancel();
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -508,11 +522,22 @@ export function QuestionForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button variant="ghost" onClick={requestCancel}>Cancel</Button>
         <Button onClick={handleSave} disabled={saving || !canSave}>
           {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}Save question
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        tone="warning"
+        title="Discard this question?"
+        description="Your changes to this question haven't been saved and will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmCancelOpen(false); onCancel(); }}
+        onCancel={() => setConfirmCancelOpen(false)}
+      />
     </div>
   );
 }
