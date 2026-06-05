@@ -114,7 +114,7 @@ export const routes: RouteConfig[] = [
   // Static (always available to any authenticated user). The board is
   // fully client-side today; radical/prompt data is a placeholder that
   // can be swapped for a backend feed later without touching the route.
-  { path: "/games/kanji-radical", component: KanjiRadicalGamePage },
+  { path: "/kanji-radical", component: KanjiRadicalGamePage },
 
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
@@ -141,8 +141,8 @@ export const routes: RouteConfig[] = [
   // and skips the module-driven AutoCrudPage for the same URL.
   { path: "/users", component: UsersPage, requiredPermission: "USER_READ" },
   { path: "/users/:userId", component: PublicProfilePage },
-  { path: "/analyze", component: AnalyzePage },
-  { path: "/production", component: ProductionPage },
+  { path: "/translator", component: AnalyzePage },
+  { path: "/sentence_practice", component: ProductionPage },
   { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },

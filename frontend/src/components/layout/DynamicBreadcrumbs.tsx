@@ -51,8 +51,8 @@ const PAGE_DESCRIPTIONS: Record<string, string> = {
     "/library": "Bộ sưu tập deck học tập của bạn.",
     "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
     "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
-    "/analyze": "Break down the grammar of a Japanese sentence.",
-    "/production": "Practice composing Japanese sentences.",
+    "/translator": "Break down the grammar of a Japanese sentence.",
+    "/sentence_practice": "Practice composing Japanese sentences.",
     "/notifications": "Your notification inbox.",
     "/words/create":
         "Thêm từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ — tất cả trong một lần.",

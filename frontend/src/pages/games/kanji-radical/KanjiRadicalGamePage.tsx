@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { GameBoard } from "./GameBoard";
 
-const PATH_NAME = { "/games/kanji-radical": "Bộ Thủ Karuta" };
+const PATH_NAME = { "/kanji-radical": "Bộ Thủ Karuta" };
 
 /**
  * Page shell for the Kanji Radical card game. The immersive board lives in

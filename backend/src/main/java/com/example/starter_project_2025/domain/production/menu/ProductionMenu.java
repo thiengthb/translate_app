@@ -17,10 +17,10 @@ import com.example.starter_project_2025.init.annotation.ResourceMenu;
  * user — matching the open {@code /api/production} endpoints.
  */
 @ResourceMenu(
-        title = "Luyện viết câu",
+        title = "Sentence Practice",
         group = "Tiếng Nhật",
         icon = "pencil",
-        url = "/production",
+        url = "/sentence_practice",
         order = 8,
         description = "Luyện viết câu tiếng Nhật: AI sinh đề ngẫu nhiên, hoặc chọn mẫu ngữ pháp để luyện theo bộ."
 )
