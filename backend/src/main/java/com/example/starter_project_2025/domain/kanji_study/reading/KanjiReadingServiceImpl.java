@@ -5,8 +5,8 @@ import com.example.starter_project_2025.base.crud.spec.AutoSpecBuilder;
 import com.example.starter_project_2025.base.event.EntityEvent;
 import com.example.starter_project_2025.exception.BusinessValidationException;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
-import com.example.starter_project_2025.system.words.kanji.Kanji;
-import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetail;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetailRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,7 +30,7 @@ public class KanjiReadingServiceImpl implements KanjiReadingService {
 
     KanjiReadingRepository kanjiReadingRepository;
     KanjiReadingMapper kanjiReadingMapper;
-    KanjiRepository kanjiRepository;
+    KanjiDetailRepository kanjiDetailRepository;
     AuditLogService auditLogService;
     ApplicationEventPublisher eventPublisher;
     AutoSpecBuilder autoSpecBuilder;
@@ -64,7 +64,7 @@ public class KanjiReadingServiceImpl implements KanjiReadingService {
 
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
+        KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
         if (kanji == null) {
             addError(errors, "kanjiId", "Kanji not found");
             throw new BusinessValidationException(errors);
@@ -101,7 +101,7 @@ public class KanjiReadingServiceImpl implements KanjiReadingService {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         if (request.getKanjiId() != null && !request.getKanjiId().equals(entity.getKanji().getId())) {
-            Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
+            KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
             if (kanji == null) {
                 addError(errors, "kanjiId", "Kanji not found");
                 throw new BusinessValidationException(errors);

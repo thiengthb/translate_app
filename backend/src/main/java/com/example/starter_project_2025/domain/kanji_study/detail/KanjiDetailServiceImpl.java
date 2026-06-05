@@ -3,10 +3,10 @@ package com.example.starter_project_2025.domain.kanji_study.detail;
 import com.example.starter_project_2025.base.audit.AuditLogService;
 import com.example.starter_project_2025.base.crud.spec.AutoSpecBuilder;
 import com.example.starter_project_2025.base.event.EntityEvent;
+import com.example.starter_project_2025.domain.kanji_study.radical.KanjiRadical;
+import com.example.starter_project_2025.domain.kanji_study.radical.KanjiRadicalRepository;
 import com.example.starter_project_2025.exception.BusinessValidationException;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
-import com.example.starter_project_2025.system.words.kanji.Kanji;
-import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,7 +31,7 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
     KanjiDetailRepository kanjiDetailRepository;
     KanjiDetailMapper kanjiDetailMapper;
-    KanjiRepository kanjiRepository;
+    KanjiRadicalRepository kanjiRadicalRepository;
     AuditLogService auditLogService;
     ApplicationEventPublisher eventPublisher;
     AutoSpecBuilder autoSpecBuilder;
@@ -57,7 +57,7 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
         return kanjiDetailRepository.findById(id)
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
                 .map(kanjiDetailMapper::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji detail not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji not found"));
     }
 
     @Override
@@ -65,19 +65,16 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
-        if (kanji == null) {
-            addError(errors, "kanjiId", "Kanji not found");
+        if (kanjiDetailRepository.existsByCharacter(request.getCharacter())) {
+            addError(errors, "character", "Kanji already exists");
             throw new BusinessValidationException(errors);
         }
 
-        if (kanjiDetailRepository.existsByKanjiId(request.getKanjiId())) {
-            addError(errors, "kanjiId", "Detail already exists for this kanji");
-            throw new BusinessValidationException(errors);
-        }
+        KanjiRadical radical = resolveRadical(request.getRadicalId(), errors);
+        if (!errors.isEmpty()) throw new BusinessValidationException(errors);
 
         KanjiDetail entity = kanjiDetailMapper.toEntity(request);
-        entity.setKanji(kanji);
+        entity.setRadical(radical);
         if (entity.getIsActive() == null) entity.setIsActive(true);
         if (entity.getIsDeleted() == null) entity.setIsDeleted(false);
 
@@ -94,23 +91,22 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
         KanjiDetail entity = kanjiDetailRepository.findById(id)
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji detail not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji not found"));
 
         KanjiDetail beforeSnapshot = cloneForAudit(entity);
 
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        if (request.getKanjiId() != null && !request.getKanjiId().equals(entity.getKanji().getId())) {
-            Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
-            if (kanji == null) {
-                addError(errors, "kanjiId", "Kanji not found");
-                throw new BusinessValidationException(errors);
-            }
-            if (kanjiDetailRepository.existsByKanjiIdAndIdNot(request.getKanjiId(), entity.getId())) {
-                addError(errors, "kanjiId", "Detail already exists for this kanji");
-                throw new BusinessValidationException(errors);
-            }
-            entity.setKanji(kanji);
+        if (request.getCharacter() != null && !request.getCharacter().equals(entity.getCharacter())
+                && kanjiDetailRepository.existsByCharacterAndIdNot(request.getCharacter(), entity.getId())) {
+            addError(errors, "character", "Kanji already exists");
+            throw new BusinessValidationException(errors);
+        }
+
+        if (request.getRadicalId() != null) {
+            KanjiRadical radical = resolveRadical(request.getRadicalId(), errors);
+            if (!errors.isEmpty()) throw new BusinessValidationException(errors);
+            entity.setRadical(radical);
         }
 
         kanjiDetailMapper.update(entity, request);
@@ -128,7 +124,7 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
         KanjiDetail entity = kanjiDetailRepository.findById(id)
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji detail not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji not found"));
 
         entity.setIsDeleted(true);
         KanjiDetail saved = kanjiDetailRepository.save(entity);
@@ -139,6 +135,14 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
     /* ── helpers ─────────────────────────────────────────────────── */
 
+    /** Resolve an optional radical id; records an error (does not throw) if the id is unknown. */
+    private KanjiRadical resolveRadical(Long radicalId, Map<String, List<String>> errors) {
+        if (radicalId == null) return null;
+        KanjiRadical radical = kanjiRadicalRepository.findById(radicalId).orElse(null);
+        if (radical == null) addError(errors, "radicalId", "Radical not found");
+        return radical;
+    }
+
     private Specification<KanjiDetail> notDeleted() {
         return (root, query, cb) -> cb.equal(root.get("isDeleted"), false);
     }
@@ -147,9 +151,10 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
         if (keyword == null || keyword.isBlank()) return null;
         String like = "%" + keyword.toLowerCase() + "%";
         return (root, query, cb) -> {
+            Predicate ch = cb.like(cb.lower(root.get("character")), like);
+            Predicate meaning = cb.like(cb.lower(root.get("meaning").as(String.class)), like);
             Predicate form = cb.like(cb.lower(root.get("formExplanation").as(String.class)), like);
-            Predicate etym = cb.like(cb.lower(root.get("etymology").as(String.class)), like);
-            return cb.or(form, etym);
+            return cb.or(ch, meaning, form);
         };
     }
 
@@ -160,7 +165,16 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
     private KanjiDetail cloneForAudit(KanjiDetail src) {
         KanjiDetail copy = new KanjiDetail();
         copy.setId(src.getId());
-        copy.setKanji(src.getKanji());
+        copy.setCharacter(src.getCharacter());
+        copy.setOnyomi(src.getOnyomi());
+        copy.setKunyomi(src.getKunyomi());
+        copy.setMeaning(src.getMeaning());
+        copy.setJlptLevel(src.getJlptLevel());
+        copy.setRadical(src.getRadical());
+        copy.setStrokeCount(src.getStrokeCount());
+        copy.setStrokeData(src.getStrokeData());
+        copy.setSvgViewbox(src.getSvgViewbox());
+        copy.setStrokeSource(src.getStrokeSource());
         copy.setFormExplanation(src.getFormExplanation());
         copy.setEtymology(src.getEtymology());
         copy.setIsActive(src.getIsActive());

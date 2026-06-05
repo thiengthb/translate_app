@@ -8,8 +8,8 @@ import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.security.UserPrincipal;
 import com.example.starter_project_2025.system.rbac.user.User;
 import com.example.starter_project_2025.system.rbac.user.UserRepository;
-import com.example.starter_project_2025.system.words.kanji.Kanji;
-import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetail;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetailRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,7 +36,7 @@ public class KanjiProgressServiceImpl implements KanjiProgressService {
     KanjiProgressRepository kanjiProgressRepository;
     KanjiProgressMapper kanjiProgressMapper;
     UserRepository userRepository;
-    KanjiRepository kanjiRepository;
+    KanjiDetailRepository kanjiDetailRepository;
     AuditLogService auditLogService;
     ApplicationEventPublisher eventPublisher;
     AutoSpecBuilder autoSpecBuilder;
@@ -70,7 +70,7 @@ public class KanjiProgressServiceImpl implements KanjiProgressService {
         User user = resolveUser(request.getUserId());
         if (user == null) addError(errors, "userId", "User not found");
 
-        Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
+        KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
         if (kanji == null) addError(errors, "kanjiId", "Kanji not found");
 
         if (!errors.isEmpty()) throw new BusinessValidationException(errors);

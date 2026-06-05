@@ -7,8 +7,8 @@ import com.example.starter_project_2025.domain.kanji_study.session.KanjiStudySes
 import com.example.starter_project_2025.domain.kanji_study.session.KanjiStudySessionRepository;
 import com.example.starter_project_2025.exception.BusinessValidationException;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
-import com.example.starter_project_2025.system.words.kanji.Kanji;
-import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetail;
+import com.example.starter_project_2025.domain.kanji_study.detail.KanjiDetailRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,7 +33,7 @@ public class KanjiSessionItemServiceImpl implements KanjiSessionItemService {
     KanjiSessionItemRepository kanjiSessionItemRepository;
     KanjiSessionItemMapper kanjiSessionItemMapper;
     KanjiStudySessionRepository kanjiStudySessionRepository;
-    KanjiRepository kanjiRepository;
+    KanjiDetailRepository kanjiDetailRepository;
     AuditLogService auditLogService;
     ApplicationEventPublisher eventPublisher;
     AutoSpecBuilder autoSpecBuilder;
@@ -67,7 +67,7 @@ public class KanjiSessionItemServiceImpl implements KanjiSessionItemService {
         KanjiStudySession session = kanjiStudySessionRepository.findById(request.getSessionId()).orElse(null);
         if (session == null) addError(errors, "sessionId", "Kanji study session not found");
 
-        Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
+        KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
         if (kanji == null) addError(errors, "kanjiId", "Kanji not found");
 
         if (!errors.isEmpty()) throw new BusinessValidationException(errors);
@@ -107,7 +107,7 @@ public class KanjiSessionItemServiceImpl implements KanjiSessionItemService {
         }
 
         if (request.getKanjiId() != null && !request.getKanjiId().equals(entity.getKanji().getId())) {
-            Kanji kanji = kanjiRepository.findById(request.getKanjiId()).orElse(null);
+            KanjiDetail kanji = kanjiDetailRepository.findById(request.getKanjiId()).orElse(null);
             if (kanji == null) {
                 addError(errors, "kanjiId", "Kanji not found");
                 throw new BusinessValidationException(errors);

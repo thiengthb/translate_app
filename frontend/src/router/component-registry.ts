@@ -42,12 +42,13 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
-import CreateQuizletDeckPage from "@/pages/student/CreateQuizletDeckPage";
-import CreateAnkiDeckPage from "@/pages/student/CreateAnkiDeckPage";
-import FlashcardStudyPage from "@/pages/student/FlashcardStudyPage";
-import AnkiStudyPage from "@/pages/student/AnkiStudyPage";
+import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
+import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
+import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
+import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -102,12 +103,16 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
-  { path: "/create-deck/quizlet", component: CreateQuizletDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/create-deck/anki", component: CreateAnkiDeckPage, requiredPermission: "DECK_CREATE" },
-  { path: "/deck/:deckId", component: FlashcardStudyPage, requiredPermission: "DECK_READ" },
-  { path: "/deck/:deckId/anki", component: AnkiStudyPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
-  { path: "/kanji-study", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ", isModuleDriven: true },
+  // Static (not module-driven) so the route always resolves — the Kanji
+  // dashboard is the feature's own landing, reached from the sidebar menu
+  // or a dedicated entry button, independent of the DB Module table.
+  { path: "/kanji-study", component: KanjiHomePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/decks", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
+  { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
+  { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

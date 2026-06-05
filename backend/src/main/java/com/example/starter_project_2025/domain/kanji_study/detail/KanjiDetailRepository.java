@@ -4,11 +4,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface KanjiDetailRepository
         extends JpaRepository<KanjiDetail, Long>, JpaSpecificationExecutor<KanjiDetail> {
 
-    boolean existsByKanjiId(Long kanjiId);
+    boolean existsByCharacter(String character);
 
-    boolean existsByKanjiIdAndIdNot(Long kanjiId, Long id);
+    boolean existsByCharacterAndIdNot(String character, Long id);
+
+    Optional<KanjiDetail> findByCharacter(String character);
 }

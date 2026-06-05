@@ -2,7 +2,7 @@ import { createBaseApiService } from "@/api/base-service.api";
 import type {
   KanjiDetailDTO, KanjiDetailFilter,
   KanjiReadingDTO, KanjiReadingFilter,
-  KanjiStrokeOrderDTO, KanjiStrokeOrderFilter,
+  KanjiRadicalDTO, KanjiRadicalFilter,
   KanjiDeckDTO, KanjiDeckFilter,
   KanjiDeckItemDTO, KanjiDeckItemFilter,
   KanjiStudySessionDTO, KanjiStudySessionFilter,
@@ -17,7 +17,7 @@ import type {
 // Kanji data extensions
 export const kanjiDetailApi = createBaseApiService<KanjiDetailDTO, KanjiDetailFilter>({ path: "/kanji-details" });
 export const kanjiReadingApi = createBaseApiService<KanjiReadingDTO, KanjiReadingFilter>({ path: "/kanji-readings" });
-export const kanjiStrokeOrderApi = createBaseApiService<KanjiStrokeOrderDTO, KanjiStrokeOrderFilter>({ path: "/kanji-stroke-orders" });
+export const kanjiRadicalApi = createBaseApiService<KanjiRadicalDTO, KanjiRadicalFilter>({ path: "/kanji-radicals" });
 
 // Own study system (decks)
 export const kanjiDeckApi = createBaseApiService<KanjiDeckDTO, KanjiDeckFilter>({ path: "/kanji-decks" });
