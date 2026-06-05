@@ -11,13 +11,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronRight, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Check, ChevronRight, Loader2, Pencil, Plus, Search, Tag as TagIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
-import { QuestionForm } from "./QuestionForm";
-import { TagBadges, TagChips } from "./QuestionTags";
+import { QuestionFormSheet } from "./QuestionFormSheet";
+import { TagBadges } from "./QuestionTags";
+import {
+  getQuestionTagColor,
+  QuestionTagPickerSheet,
+  QuestionTagPill,
+} from "./QuestionTagPickerSheet";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
 
 const PAGE_SIZES = [10, 20, 50];
@@ -34,6 +39,7 @@ export function QuestionBankSelector({
   selectedIds,
   onToggle,
   quizId,
+  onChanged,
 }: {
   /** questionIds currently in the quiz. */
   selectedIds: Set<number>;
@@ -41,6 +47,8 @@ export function QuestionBankSelector({
   onToggle: (questionId: number) => void | Promise<void>;
   /** The quiz being edited — quick-created questions become private to it. */
   quizId?: number | null;
+  /** A question may have changed and the parent should reload selected placements. */
+  onChanged?: () => void | Promise<void>;
 }) {
   const [questions, setQuestions] = useState<QuestionBankDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +56,8 @@ export function QuestionBankSelector({
   // null = closed, { q: null } = create, { q: question } = edit.
   const [form, setForm] = useState<{ q: QuestionBankDTO | null } | null>(null);
   const [confirmDel, setConfirmDel] = useState<QuestionBankDTO | null>(null);
+  const [tagEditor, setTagEditor] = useState<QuestionBankDTO | null>(null);
+  const [savingTagIds, setSavingTagIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
 
   /* ── Tag filter ── */
@@ -93,6 +103,42 @@ export function QuestionBankSelector({
       return next;
     });
 
+  const patchQuestionTags = (questionId: number, tags: QuestionTagDTO[]) => {
+    const tagIds = tags.map((t) => t.id);
+    setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, tags, tagIds } : q)));
+    setTagEditor((prev) => (prev?.id === questionId ? { ...prev, tags, tagIds } : prev));
+  };
+
+  const handleQuestionTagToggle = async (question: QuestionBankDTO, tag: QuestionTagDTO) => {
+    const currentTags = question.tags ?? allTags.filter((t) => question.tagIds?.includes(t.id));
+    const hasTag = currentTags.some((t) => t.id === tag.id);
+    const nextTags = hasTag ? currentTags.filter((t) => t.id !== tag.id) : [...currentTags, tag];
+
+    setSavingTagIds((prev) => new Set(prev).add(tag.id));
+    patchQuestionTags(question.id, nextTags);
+    try {
+      if (hasTag) await assessmentApi.removeQuestionTag(question.id, tag.id);
+      else await assessmentApi.addQuestionTags(question.id, [tag.id]);
+      toast.success(hasTag ? "Tag removed." : "Tag added.");
+      load();
+      await onChanged?.();
+    } catch {
+      patchQuestionTags(question.id, currentTags);
+      toast.error("Failed to update question tags.");
+    } finally {
+      setSavingTagIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tag.id);
+        return next;
+      });
+    }
+  };
+
+  const handleQuestionTagCreated = async (tag: QuestionTagDTO) => {
+    setAllTags((prev) => (prev.some((t) => t.id === tag.id) ? prev : [...prev, tag]));
+    if (tagEditor) await handleQuestionTagToggle(tagEditor, tag);
+  };
+
   // Any change to the result set or page size returns to page 1.
   useEffect(() => {
     setPage(1);
@@ -116,9 +162,9 @@ export function QuestionBankSelector({
 
       {/* Tag filter */}
       {allTags.length > 0 && (
-        <div className="space-y-2 rounded-lg border border-dashed p-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Filter by tag</span>
+        <div className="space-y-2 rounded-xl border bg-background/80 p-2.5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filter by tag</span>
             {selectedTagIds.size > 0 && (
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -135,7 +181,24 @@ export function QuestionBankSelector({
               </div>
             )}
           </div>
-          <TagChips tags={allTags} selectedIds={selectedTagIds} onToggle={toggleTag} />
+          <ScrollHintContainer axis="horizontal" viewportClassName="pb-0.5">
+            <div className="flex w-max items-center gap-2 py-1">
+              <QuestionTagPill
+                label="All"
+                active={selectedTagIds.size === 0}
+                onClick={() => setSelectedTagIds(new Set())}
+              />
+              {allTags.map((tag) => (
+                <QuestionTagPill
+                  key={tag.id}
+                  label={tag.name}
+                  active={selectedTagIds.has(tag.id)}
+                  color={getQuestionTagColor(tag)}
+                  onClick={() => toggleTag(tag.id)}
+                />
+              ))}
+            </div>
+          </ScrollHintContainer>
         </div>
       )}
 
@@ -159,7 +222,7 @@ export function QuestionBankSelector({
                 <span className="hidden sm:block w-16 shrink-0">Level</span>
                 <span className="w-28 shrink-0">Type</span>
                 <span className="hidden sm:block w-10 shrink-0 text-right">Opts</span>
-                <span className="w-[58px] shrink-0" aria-hidden />
+                <span className="w-[88px] shrink-0" aria-hidden />
               </div>
               {/* Rows (current page) */}
               {pageItems.map((q, i) => (
@@ -170,6 +233,7 @@ export function QuestionBankSelector({
                   selected={selectedIds.has(q.id)}
                   onToggle={() => onToggle(q.id)}
                   onEdit={() => setForm({ q })}
+                  onTags={() => setTagEditor(q)}
                   onDelete={() => setConfirmDel(q)}
                 />
               ))}
@@ -203,34 +267,37 @@ export function QuestionBankSelector({
         </div>
       )}
 
-      {/* Create / edit question dialog */}
-      <Dialog open={form != null} onOpenChange={(o) => !o && setForm(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{form?.q ? "Edit question" : "New question"}</DialogTitle>
-            <DialogDescription>
-              {form?.q
-                ? "Update this question. Changes apply wherever it's used."
-                : "Create a question — it's added to this quiz only."}
-            </DialogDescription>
-          </DialogHeader>
-          {/* ScrollHintContainer scrolls the form with no visible scrollbar. */}
-          <ScrollHintContainer viewportClassName="px-1 py-1">
-            <QuestionForm
-              question={form?.q ?? undefined}
-              ownerQuizId={form?.q ? undefined : quizId}
-              onCancel={() => setForm(null)}
-              onSaved={(saved) => {
-                const wasCreate = form?.q == null;
-                setForm(null);
-                load();
-                // Newly-created questions get auto-added to the quiz.
-                if (wasCreate && !selectedIds.has(saved.id)) onToggle(saved.id);
-              }}
-            />
-          </ScrollHintContainer>
-        </DialogContent>
-      </Dialog>
+      {/* Create / edit question side sheet */}
+      <QuestionFormSheet
+        open={form != null}
+        question={form?.q ?? null}
+        ownerQuizId={quizId}
+        onOpenChange={(open) => {
+          if (!open) setForm(null);
+        }}
+        onSaved={(saved) => {
+          const wasCreate = form?.q == null;
+          setForm(null);
+          load();
+          void onChanged?.();
+          // Newly-created questions get auto-added to the quiz.
+          if (wasCreate && !selectedIds.has(saved.id)) onToggle(saved.id);
+        }}
+      />
+
+      <QuestionTagPickerSheet
+        open={tagEditor != null}
+        question={tagEditor}
+        tags={allTags}
+        savingTagIds={savingTagIds}
+        onOpenChange={(open) => {
+          if (!open) setTagEditor(null);
+        }}
+        onToggleTag={(tag) => {
+          if (tagEditor) void handleQuestionTagToggle(tagEditor, tag);
+        }}
+        onTagCreated={(tag) => void handleQuestionTagCreated(tag)}
+      />
 
       {/* Delete confirmation */}
       <Dialog open={confirmDel != null} onOpenChange={(o) => !deleting && !o && setConfirmDel(null)}>
@@ -257,6 +324,7 @@ export function QuestionBankSelector({
                   toast.success("Question deleted.");
                   setConfirmDel(null);
                   load();
+                  await onChanged?.();
                 } catch {
                   toast.error("Failed to delete question.");
                 } finally {
@@ -284,6 +352,7 @@ function BankQuestionRow({
   selected,
   onToggle,
   onEdit,
+  onTags,
   onDelete,
 }: {
   question: QuestionBankDTO;
@@ -291,6 +360,7 @@ function BankQuestionRow({
   selected: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  onTags: () => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -365,8 +435,16 @@ function BankQuestionRow({
           {q.options.length}
         </span>
 
-        {/* Edit / delete (don't toggle selection) */}
+        {/* Tags / edit / delete (don't toggle selection) */}
         <span className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            title="Choose tags"
+            onClick={(e) => { e.stopPropagation(); onTags(); }}
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <TagIcon className="size-3.5" />
+          </button>
           <button
             type="button"
             title="Edit question"

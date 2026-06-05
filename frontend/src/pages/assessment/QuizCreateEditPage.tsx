@@ -211,16 +211,17 @@ export default function QuizCreateEditPage() {
     );
   }
 
-  return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "New quiz" }}>
-      <div className={cn("w-full mx-auto space-y-6 transition-[max-width]", step === 1 ? "max-w-3xl" : "max-w-full")}>
-        {/* Stepper */}
-        <StepBar step={step} onStepClick={goToStep} />
+  const headerExtra = <StepBar step={step} onStepClick={goToStep} />;
 
+  return (
+    <MainLayout
+      pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "Create" }}
+      headerExtra={headerExtra}
+    >
+      <div className={cn("w-full mx-auto space-y-6 transition-[max-width]", step === 1 ? "max-w-3xl" : "max-w-full")}>
         {/* ── Step 1 · Configuration ── */}
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Step 1 · Quiz configuration</h3>
             <div className="space-y-1.5">
               <Label>Title</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Quiz title" />
@@ -276,7 +277,6 @@ export default function QuizCreateEditPage() {
         {/* ── Step 2 · Question selection (two tabs) ── */}
         {step === 2 && (
           <div className="space-y-3">
-            <h3 className="font-semibold">Step 2 · Select questions</h3>
             <Tabs defaultValue="bank" className="space-y-3">
               <TabsList>
                 <TabsTrigger value="bank" className="gap-1.5">
@@ -298,6 +298,9 @@ export default function QuizCreateEditPage() {
                   selectedIds={selectedQuestionIds}
                   onToggle={handleToggleQuestion}
                   quizId={id}
+                  onChanged={() => {
+                    if (id != null) return reloadQuestions(id);
+                  }}
                 />
               </TabsContent>
 
@@ -307,6 +310,9 @@ export default function QuizCreateEditPage() {
                   quizId={id}
                   onRemove={handleRemoveQuestion}
                   onAddCreated={handleAddQuestion}
+                  onChanged={() => {
+                    if (id != null) return reloadQuestions(id);
+                  }}
                 />
               </TabsContent>
             </Tabs>
@@ -364,20 +370,20 @@ function StepBar({ step, onStepClick }: { step: 1 | 2; onStepClick: (s: 1 | 2) =
     { n: 2 as const, label: "Questions" },
   ];
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex h-8 items-center gap-2 whitespace-nowrap">
       {steps.map((s, i) => {
         const isActive = step === s.n;
         const isDone = step > s.n;
         return (
-          <div key={s.n} className="flex items-center gap-3">
+          <div key={s.n} className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onStepClick(s.n)}
-              className="flex items-center gap-2 group"
+              className="group flex h-8 items-center gap-2 rounded-full px-1.5 transition-colors hover:bg-accent/60"
             >
               <span
                 className={
-                  "flex size-7 items-center justify-center rounded-full text-xs font-semibold transition-colors " +
+                  "flex size-6 items-center justify-center rounded-full text-xs font-semibold transition-colors " +
                   (isActive
                     ? "bg-primary text-primary-foreground"
                     : isDone
@@ -389,14 +395,14 @@ function StepBar({ step, onStepClick }: { step: 1 | 2; onStepClick: (s: 1 | 2) =
               </span>
               <span
                 className={
-                  "text-sm font-medium transition-colors " +
+                  "hidden text-sm font-medium transition-colors sm:inline " +
                   (isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")
                 }
               >
                 {s.label}
               </span>
             </button>
-            {i === 0 && <div className="h-px w-8 sm:w-12 bg-border" />}
+            {i === 0 && <div className="h-px w-6 bg-border sm:w-10" />}
           </div>
         );
       })}

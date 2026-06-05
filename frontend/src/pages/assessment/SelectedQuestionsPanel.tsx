@@ -1,14 +1,13 @@
 import { useState } from "react";
+import { assessmentApi } from "@/api";
 import type { QuestionBankDTO, QuizQuestionDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { ChevronRight, ListChecks, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, ListChecks, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
-import { QuestionForm } from "./QuestionForm";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
+import { QuestionFormSheet } from "./QuestionFormSheet";
 import { TagBadges } from "./QuestionTags";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
 
@@ -23,6 +22,7 @@ export function SelectedQuestionsPanel({
   quizId,
   onRemove,
   onAddCreated,
+  onChanged,
 }: {
   /** quiz_question rows for this quiz, each with its `question` populated. */
   placements: QuizQuestionDTO[];
@@ -32,8 +32,29 @@ export function SelectedQuestionsPanel({
   onRemove: (quizQuestionId: number) => void | Promise<void>;
   /** A new question was created — add it to the quiz (by question id). */
   onAddCreated: (questionId: number) => void | Promise<void>;
+  /** A selected question changed and the parent should reload placements. */
+  onChanged?: () => void | Promise<void>;
 }) {
   const [formOpen, setFormOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<QuestionBankDTO | null>(null);
+  const [confirmDel, setConfirmDel] = useState<QuizQuestionDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteQuestion = async () => {
+    if (!confirmDel?.question) return;
+    setDeleting(true);
+    try {
+      await onRemove(confirmDel.id);
+      await assessmentApi.deleteQuestion(confirmDel.question.id);
+      toast.success("Question deleted.");
+      setConfirmDel(null);
+      await onChanged?.();
+    } catch {
+      toast.error("Failed to delete question.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -56,30 +77,59 @@ export function SelectedQuestionsPanel({
       ) : (
         <div className="rounded-lg border overflow-hidden divide-y divide-border/40">
           {placements.map((p, i) => (
-            <SelectedRow key={p.id} index={i} placement={p} onRemove={() => onRemove(p.id)} />
+            <SelectedRow
+              key={p.id}
+              index={i}
+              placement={p}
+              deleting={deleting && confirmDel?.id === p.id}
+              onEdit={() => p.question && setEditingQuestion(p.question)}
+              onRemove={() => onRemove(p.id)}
+              onDelete={() => setConfirmDel(p)}
+            />
           ))}
         </div>
       )}
 
       {/* Create a new (quiz-private) question */}
-      <Dialog open={formOpen} onOpenChange={(o) => !o && setFormOpen(false)}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>New question</DialogTitle>
-            <DialogDescription>Create a question — it's added to this quiz only.</DialogDescription>
-          </DialogHeader>
-          <ScrollHintContainer viewportClassName="px-1 py-1">
-            <QuestionForm
-              ownerQuizId={quizId}
-              onCancel={() => setFormOpen(false)}
-              onSaved={(created) => {
-                setFormOpen(false);
-                void onAddCreated(created.id);
-              }}
-            />
-          </ScrollHintContainer>
-        </DialogContent>
-      </Dialog>
+      <QuestionFormSheet
+        open={formOpen}
+        ownerQuizId={quizId}
+        onOpenChange={setFormOpen}
+        onSaved={(created) => {
+          setFormOpen(false);
+          void onAddCreated(created.id);
+        }}
+      />
+
+      <QuestionFormSheet
+        open={editingQuestion != null}
+        question={editingQuestion}
+        ownerQuizId={quizId}
+        onOpenChange={(open) => {
+          if (!open) setEditingQuestion(null);
+        }}
+        onSaved={() => {
+          setEditingQuestion(null);
+          void onChanged?.();
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDel != null}
+        loading={deleting}
+        title="Delete question?"
+        description={
+          confirmDel?.question
+            ? `This permanently deletes "${confirmDel.question.prompt.slice(0, 60)}${confirmDel.question.prompt.length > 60 ? "..." : ""}" and removes it from this quiz.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={deleteQuestion}
+        onCancel={() => {
+          if (!deleting) setConfirmDel(null);
+        }}
+      />
     </div>
   );
 }
@@ -88,11 +138,17 @@ export function SelectedQuestionsPanel({
 function SelectedRow({
   index,
   placement: p,
+  deleting,
+  onEdit,
   onRemove,
+  onDelete,
 }: {
   index: number;
   placement: QuizQuestionDTO;
-  onRemove: () => void;
+  deleting: boolean;
+  onEdit: () => void;
+  onRemove: () => void | Promise<void>;
+  onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const q = p.question;
@@ -137,15 +193,36 @@ function SelectedRow({
           </span>
         )}
 
-        {/* Remove */}
+        {/* Edit / remove / delete */}
+        {q && (
+          <button
+            type="button"
+            title="Edit question"
+            onClick={onEdit}
+            className="shrink-0 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        )}
         <button
           type="button"
           title="Remove from quiz"
           onClick={onRemove}
-          className="shrink-0 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          className="shrink-0 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
         >
-          <Trash2 className="size-3.5" />
+          <X className="size-3.5" />
         </button>
+        {q && (
+          <button
+            type="button"
+            title="Delete question"
+            onClick={onDelete}
+            disabled={deleting}
+            className="shrink-0 flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-60"
+          >
+            {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+          </button>
+        )}
       </div>
 
       {open && q && (
