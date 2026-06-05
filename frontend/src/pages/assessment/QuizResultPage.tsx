@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronsDownUp, ChevronsUpDown, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import {
@@ -31,6 +31,7 @@ export default function QuizResultPage() {
   const [group, setGroup] = useState<ClassroomDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
+  const [expandedQuestionIds, setExpandedQuestionIds] = useState<Set<number>>(new Set());
   const [retaking, setRetaking] = useState(false);
 
   useEffect(() => {
@@ -80,15 +81,35 @@ export default function QuizResultPage() {
   if (!attempt) return null;
 
   const passed = attempt.isPassed;
+  const reviewIds = attempt.attemptQuestions.map((q) => q.id);
+  const allReviewExpanded = reviewIds.length > 0 && reviewIds.every((qid) => expandedQuestionIds.has(qid));
+
+  const toggleReview = () => {
+    setShowReview((current) => {
+      const next = !current;
+      if (next && expandedQuestionIds.size === 0) setExpandedQuestionIds(new Set(reviewIds));
+      return next;
+    });
+  };
+
+  const toggleAllReviewQuestions = () => {
+    setExpandedQuestionIds(allReviewExpanded ? new Set() : new Set(reviewIds));
+  };
+
+  const toggleReviewQuestion = (qid: number) => {
+    setExpandedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(qid)) next.delete(qid);
+      else next.add(qid);
+      return next;
+    });
+  };
 
   /* ── Context: assignment attempt vs free-play quiz attempt ── */
   const isAssignment = attempt.assignmentId != null && assignment != null;
   const cid = assignment?.classroomId;
   // The viewer may be the student who took it, or a teacher reviewing it.
   const isViewerOwner = attempt.userId === getCurrentUserId();
-  const backHref = isAssignment
-    ? (isViewerOwner ? `/classrooms/${cid}` : `/classrooms/${cid}/stats/${assignment!.id}`)
-    : `/quizzes/${id}`;
 
   // Assignment attempts get a group-context breadcrumb (Home › <group> ›
   // <assignment>) by hiding the /quizzes URL segments; free-play attempts keep
@@ -99,8 +120,18 @@ export default function QuizResultPage() {
         parentCrumb: { href: `/classrooms/${cid}`, title: group?.name ?? "Group" },
         ignorePaths: ["quizzes", String(id), "result"],
         breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
+        pageDescription: "Submitted quiz result and answer review.",
       }
-    : { pathName: { "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz?.title ?? "Quiz" } };
+    : {
+        pathName: {
+          "/quizzes": "Quizzes",
+          [`/quizzes/${id}`]: quiz?.title ?? "Quiz",
+          [`/quizzes/${id}/result/${attemptId}`]: "Result",
+        },
+        ignorePaths: ["result"],
+        breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
+        pageDescription: "Submitted quiz result and answer review.",
+      };
 
   return (
     <MainLayout {...layoutProps}>
@@ -108,9 +139,6 @@ export default function QuizResultPage() {
         {/* Nav bar (mirrors the quiz session header) */}
         <header className="flex items-center justify-between gap-4 border-b border-border pb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Button variant="ghost" size="sm" className="shrink-0 gap-1" onClick={() => navigate(backHref)}>
-              <ChevronLeft className="size-4" />{isAssignment ? "Group" : "Back"}
-            </Button>
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <p className="text-sm font-semibold truncate">{isAssignment ? assignment!.title : (quiz?.title ?? "Quiz")}</p>
@@ -132,9 +160,19 @@ export default function QuizResultPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={() => setShowReview((s) => !s)}>
+            <Button variant="outline" size="sm" onClick={toggleReview}>
               {showReview ? "Hide" : "Review"} answers
             </Button>
+            {showReview && (
+              <Button variant="outline" size="sm" onClick={toggleAllReviewQuestions}>
+                {allReviewExpanded ? (
+                  <ChevronsDownUp className="size-4 mr-1" />
+                ) : (
+                  <ChevronsUpDown className="size-4 mr-1" />
+                )}
+                {allReviewExpanded ? "Close all" : "Open all"}
+              </Button>
+            )}
             {isViewerOwner && (quiz?.allowRetake ?? true) && (
               <Button size="sm" onClick={retake} disabled={retaking}>
                 {retaking ? "Starting…" : "Retake"}
@@ -172,14 +210,19 @@ export default function QuizResultPage() {
 
               const userPicked = (id: number) =>
                 isMulti ? userSelIds.includes(id) : userSelId === id;
+              const isExpanded = expandedQuestionIds.has(q.id);
 
               return (
                 <Card key={q.id} className="overflow-hidden p-0">
                   {/* Question header */}
-                  <div className={cn(
-                    "flex items-start gap-3 px-4 py-3 border-b border-border/60",
+                  <button
+                    type="button"
+                    onClick={() => toggleReviewQuestion(q.id)}
+                    className={cn(
+                    "flex w-full items-start gap-3 px-4 py-3 border-b border-border/60 text-left transition-colors hover:bg-accent/40",
                     q.isCorrect == null ? "bg-amber-500/5" : q.isCorrect ? "bg-green-500/5" : "bg-red-500/5"
                   )}>
+                    <ChevronDown className={cn("mt-1 size-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
                     <span className={cn(
                       "shrink-0 mt-0.5 size-6 rounded-full flex items-center justify-center text-xs font-bold",
                       q.isCorrect == null ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
@@ -188,7 +231,7 @@ export default function QuizResultPage() {
                     )}>
                       {i + 1}
                     </span>
-                    <p className="flex-1 text-sm font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
+                    <p className="flex-1 min-w-0 truncate text-sm font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
                     {q.isCorrect == null ? (
                       <span className="text-xs font-medium text-amber-600 shrink-0">Pending</span>
                     ) : q.isCorrect ? (
@@ -196,10 +239,10 @@ export default function QuizResultPage() {
                     ) : (
                       <span className="text-xs font-medium text-red-600 shrink-0">Wrong</span>
                     )}
-                  </div>
+                  </button>
 
                   {/* Options */}
-                  {options.length > 0 && (
+                  {isExpanded && options.length > 0 && (
                     <div className="px-4 py-3 space-y-2">
                       {options.map((o, oi) => {
                         const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
@@ -226,7 +269,7 @@ export default function QuizResultPage() {
                             )}>
                               {String.fromCharCode(65 + oi)}
                             </span>
-                            <span className="flex-1 leading-snug">{o.content}</span>
+                            <span className="flex-1 min-w-0 truncate leading-snug">{o.content}</span>
                             {picked && variant === "selected-correct" && (
                               <span className="text-[10px] font-semibold text-green-600 shrink-0">Your answer</span>
                             )}
@@ -243,20 +286,20 @@ export default function QuizResultPage() {
                   )}
 
                   {/* FILL_BLANK */}
-                  {q.questionType === "FILL_BLANK" && (
+                  {isExpanded && q.questionType === "FILL_BLANK" && (
                     <div className="px-4 pb-3 space-y-2">
                       {userText && (
                         <div className={cn(
                           "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
                           q.isCorrect ? "border-green-400 bg-green-500/10" : "border-red-400 bg-red-500/10"
                         )}>
-                          <span className="flex-1">{userText}</span>
+                          <span className="flex-1 min-w-0 truncate">{userText}</span>
                           <span className="text-[10px] font-semibold text-muted-foreground shrink-0">Your answer</span>
                         </div>
                       )}
                       {acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
                         <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-500/5 px-3 py-2 text-sm dark:border-green-800">
-                          <span className="flex-1 text-green-700 dark:text-green-400">
+                          <span className="flex-1 min-w-0 truncate text-green-700 dark:text-green-400">
                             {acceptedAnswers(q.correctAnswerSnapshot).join(" · ")}
                           </span>
                           <span className="text-[10px] font-medium text-green-600 shrink-0">Correct answer</span>
@@ -266,9 +309,9 @@ export default function QuizResultPage() {
                   )}
 
                   {/* Explanation */}
-                  {typeof snap.explanation === "string" && snap.explanation && (
+                  {isExpanded && typeof snap.explanation === "string" && snap.explanation && (
                     <div className="px-4 pb-3 pt-0">
-                      <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+                      <p className="truncate text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
                         {snap.explanation}
                       </p>
                     </div>
