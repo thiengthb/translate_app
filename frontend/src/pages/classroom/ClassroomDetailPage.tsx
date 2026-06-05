@@ -55,6 +55,7 @@ export default function ClassroomDetailPage() {
   const [editingAssignment, setEditingAssignment] = useState<ClassAssignmentDTO | null>(null);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
+  const [tab, setTab] = useState("assignments");
   const [assignmentView, setAssignmentView] = useState<AssignmentView>(() => {
     try { return (localStorage.getItem(ASSIGNMENT_VIEW_KEY) as AssignmentView) ?? "list"; }
     catch { return "list"; }
@@ -106,8 +107,52 @@ export default function ClassroomDetailPage() {
   return (
     <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
-        {/* ── Hero Header ── */}
-        <Card className="overflow-hidden p-0 border-0 shadow-md">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+          {/* ── Tabs + contextual action, on one row near the breadcrumb ── */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <TabsList className="justify-start gap-1 h-auto p-1">
+              <TabsTrigger value="assignments" className="gap-1.5">
+                <ClipboardList className="size-4" />Assignments
+              </TabsTrigger>
+              <TabsTrigger value="materials" className="gap-1.5">
+                <BookOpen className="size-4" />Materials
+              </TabsTrigger>
+              <TabsTrigger value="members" className="gap-1.5">
+                <Users className="size-4" />Members
+              </TabsTrigger>
+              {isOwner && (
+                <TabsTrigger value="settings" className="gap-1.5">Settings</TabsTrigger>
+              )}
+            </TabsList>
+
+            {/* Right-aligned action that changes with the active tab */}
+            <div className="flex items-center gap-2">
+              {tab === "assignments" && (
+                <>
+                  <button
+                    onClick={() => changeAssignmentView(assignmentView === "list" ? "card" : "list")}
+                    title={assignmentView === "list" ? "Switch to card view" : "Switch to list view"}
+                    className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {assignmentView === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+                  </button>
+                  {isOwner && (
+                    <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
+                      <Plus className="size-4 mr-1.5" />Create assignment
+                    </Button>
+                  )}
+                </>
+              )}
+              {tab === "materials" && isOwner && (
+                <Button size="sm" onClick={() => setDeckPickerOpen(true)}>
+                  <Plus className="size-4 mr-1.5" />Add deck
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Hero Header ── */}
+          <Card className="overflow-hidden p-0 border-0 shadow-md">
           {/* Cover banner */}
           <div className="relative h-44 bg-linear-to-br from-violet-500 to-indigo-600">
             {classroom.coverImageUrl && (
@@ -152,40 +197,8 @@ export default function ClassroomDetailPage() {
           </div>
         </Card>
 
-        {/* ── Tabs ── */}
-        <Tabs defaultValue="assignments">
-          <TabsList className="w-full justify-start gap-1 h-auto p-1">
-            <TabsTrigger value="assignments" className="gap-1.5">
-              <ClipboardList className="size-4" />Assignments
-            </TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5">
-              <BookOpen className="size-4" />Materials
-            </TabsTrigger>
-            <TabsTrigger value="members" className="gap-1.5">
-              <Users className="size-4" />Members
-            </TabsTrigger>
-            {isOwner && (
-              <TabsTrigger value="settings" className="gap-1.5">Settings</TabsTrigger>
-            )}
-          </TabsList>
-
           {/* ── Assignments ── */}
           <TabsContent value="assignments" className="mt-4 space-y-3">
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => changeAssignmentView(assignmentView === "list" ? "card" : "list")}
-                title={assignmentView === "list" ? "Switch to card view" : "Switch to list view"}
-                className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                {assignmentView === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
-              </button>
-              {isOwner && (
-                <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
-                  <Plus className="size-4 mr-1.5" />Create assignment
-                </Button>
-              )}
-            </div>
-
             {visibleAssignments.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
                 <ClipboardList className="size-8 opacity-40" />
@@ -226,13 +239,6 @@ export default function ClassroomDetailPage() {
 
           {/* ── Materials ── */}
           <TabsContent value="materials" className="mt-4 space-y-4">
-            {isOwner && (
-              <div className="flex justify-end">
-                <Button size="sm" onClick={() => setDeckPickerOpen(true)}>
-                  <Plus className="size-4 mr-1.5" />Add deck
-                </Button>
-              </div>
-            )}
             {decks.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
                 <BookOpen className="size-8 opacity-40" />
@@ -301,7 +307,7 @@ export default function ClassroomDetailPage() {
                 className="max-w-xs"
               />
               {isOwner && (
-                <AddMemberInline onAdd={async (uid) => { await cls.addMember(uid); toast.success("Member added."); }} />
+                <AddMemberInline onAdd={async (email) => { await cls.addMember(email); toast.success("Member added."); }} />
               )}
             </div>
             <Table>
@@ -515,14 +521,37 @@ function AssignmentCard({ a, isOwner, onStats, onEdit, onPublish, onClose, onSta
   );
 }
 
-/* ── Add member by id ── */
-function AddMemberInline({ onAdd }: { onAdd: (userId: number) => Promise<void> }) {
-  const [uid, setUid] = useState("");
+/* ── Add member by email ── */
+function AddMemberInline({ onAdd }: { onAdd: (email: string) => Promise<void> }) {
+  const [email, setEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const submit = async () => {
+    const value = email.trim();
+    if (!value) return;
+    setAdding(true);
+    try {
+      await onAdd(value);
+      setEmail("");
+    } catch {
+      toast.error("No user found with that email.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
-      <Input value={uid} onChange={(e) => setUid(e.target.value)} placeholder="User ID" className="w-28" />
-      <Button variant="outline" size="sm" disabled={!uid} onClick={async () => { await onAdd(Number(uid)); setUid(""); }}>
-        <Plus className="size-4 mr-1" />Add
+      <Input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+        placeholder="Invite by email…"
+        className="w-56"
+      />
+      <Button variant="outline" size="sm" disabled={!email.trim() || adding} onClick={submit}>
+        {adding ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Plus className="size-4 mr-1" />}Add
       </Button>
     </div>
   );
@@ -667,7 +696,7 @@ function SettingsForm({
       </div>
       <div className="space-y-1.5">
         <Label>Description</Label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} maxLength={500} className="max-h-48 resize-none" />
       </div>
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>

@@ -2,6 +2,8 @@ package com.example.starter_project_2025.domain.classroom.assignment;
 
 import com.example.starter_project_2025.base.crud.dto.BaseDTO;
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
+import com.example.starter_project_2025.base.crud.dto.OnUpdate;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -31,6 +33,7 @@ public class ClassAssignmentDTO extends BaseDTO {
     String description;
 
     @Builder.Default
+    @Min(value = 1, groups = {OnCreate.class, OnUpdate.class}, message = "Max attempts must be at least 1")
     Integer maxAttempts = 1;
 
     @Builder.Default

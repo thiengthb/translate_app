@@ -365,7 +365,7 @@ export function QuestionForm({
 
       <div className="space-y-1.5">
         <Label>Prompt</Label>
-        <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} placeholder="The question text…" />
+        <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} maxLength={500} className="max-h-40 resize-none" placeholder="The question text…" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -480,11 +480,11 @@ export function QuestionForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Explanation</Label>
-          <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} />
+          <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Hint</Label>
-          <Textarea value={hint} onChange={(e) => setHint(e.target.value)} rows={2} />
+          <Textarea value={hint} onChange={(e) => setHint(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" />
         </div>
       </div>
 

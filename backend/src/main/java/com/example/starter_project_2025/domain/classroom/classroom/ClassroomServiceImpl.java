@@ -251,6 +251,19 @@ public class ClassroomServiceImpl
     }
 
     @Override
+    public ClassMemberDTO addMemberByEmail(Long classroomId, String email) {
+        String normalized = email == null ? "" : email.trim();
+        if (normalized.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        User user = userRepository.findByEmail(normalized)
+                .or(() -> userRepository.findByEmail(normalized.toLowerCase()))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No user found with email " + normalized));
+        return addMember(classroomId, user.getId());
+    }
+
+    @Override
     public void removeMember(Long classroomId, Long userId) {
         memberRepository.findByClassroomIdAndUserId(classroomId, userId).ifPresent(m -> {
             m.setIsActive(false);

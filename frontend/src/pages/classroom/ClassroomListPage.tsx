@@ -331,6 +331,8 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
+              maxLength={500}
+              className="max-h-40 resize-none"
               placeholder="What is this group about?"
             />
           </div>

@@ -99,7 +99,7 @@ export function SearchableSelect({
         </div>
 
         {/* Options (max `maxVisible` rows, then scroll) */}
-        <div className="overflow-y-auto p-1" style={{ maxHeight: maxVisible * ROW_PX + 8 }}>
+        <div className="scrollbar-hidden overflow-y-auto p-1" style={{ maxHeight: maxVisible * ROW_PX + 8 }}>
           {filtered.length === 0 ? (
             <p className="px-2 py-3 text-center text-xs text-muted-foreground">No results</p>
           ) : (

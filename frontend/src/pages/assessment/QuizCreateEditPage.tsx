@@ -198,7 +198,7 @@ export default function QuizCreateEditPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Description</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What is this quiz about?" />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" placeholder="What is this quiz about?" />
             </div>
             <div className="space-y-1.5">
               <Label>Difficulty</Label>
