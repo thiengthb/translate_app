@@ -115,7 +115,12 @@ function buildEntityConfig(meta: EntityMetadata, all: EntityMetadata[]): EntityC
     .map((f) => buildFieldSchema(f, byEntity));
 
   const schema: EntitySchema = {
-    entityName: meta.entityName.toLowerCase(),
+    // Use the backend permission resource (e.g. "KANJI_RADICAL") rather than the
+    // collapsed entity name ("kanjiradical"): useTablePermissions derives the
+    // <RESOURCE>_READ key from this, and a camelCase entity name would lose the
+    // word boundary ("KANJIRADICAL_READ" ≠ "KANJI_RADICAL_READ"), disabling the
+    // list query for every multi-word metadata-driven entity.
+    entityName: (meta.resource || meta.entityName).toLowerCase(),
     idField: "id",
     fields: [...userFields, ...(auditableFieldsSchema as FieldSchema[])],
   };

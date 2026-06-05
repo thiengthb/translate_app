@@ -1,0 +1,66 @@
+// The 214 Kangxi radicals (bộ thủ) with Sino-Vietnamese (Hán-Việt) names.
+// Reference data for the Kanji Study radical list. Index = radical number - 1.
+// Each entry: [character, hanViet, meaning(EN)].
+export const RADICALS = [
+  ["一","nhất","one"],["丨","cổn","line"],["丶","chủ","dot"],["丿","phiệt","slash"],
+  ["乙","ất","second"],["亅","quyết","hook"],["二","nhị","two"],["亠","đầu","lid"],
+  ["人","nhân","man"],["儿","nhân","legs"],["入","nhập","enter"],["八","bát","eight"],
+  ["冂","quynh","down box"],["冖","mịch","cover"],["冫","băng","ice"],["几","kỷ","table"],
+  ["凵","khảm","open box"],["刀","đao","knife"],["力","lực","power"],["勹","bao","wrap"],
+  ["匕","chủy","spoon"],["匚","phương","box"],["匸","hệ","hiding enclosure"],["十","thập","ten"],
+  ["卜","bốc","divination"],["卩","tiết","seal"],["厂","hán","cliff"],["厶","khư","private"],
+  ["又","hựu","again"],["口","khẩu","mouth"],["囗","vi","enclosure"],["土","thổ","earth"],
+  ["士","sĩ","scholar"],["夂","truy","go"],["夊","tuy","go slowly"],["夕","tịch","evening"],
+  ["大","đại","big"],["女","nữ","woman"],["子","tử","child"],["宀","miên","roof"],
+  ["寸","thốn","inch"],["小","tiểu","small"],["尢","uông","lame"],["尸","thi","corpse"],
+  ["屮","triệt","sprout"],["山","sơn","mountain"],["巛","xuyên","river"],["工","công","work"],
+  ["己","kỷ","oneself"],["巾","cân","turban"],["干","can","dry"],["幺","yêu","short thread"],
+  ["广","nghiễm","dotted cliff"],["廴","dẫn","long stride"],["廾","củng","two hands"],["弋","dặc","shoot"],
+  ["弓","cung","bow"],["彐","kệ","snout"],["彡","sam","bristle"],["彳","xích","step"],
+  ["心","tâm","heart"],["戈","qua","halberd"],["戶","hộ","door"],["手","thủ","hand"],
+  ["支","chi","branch"],["攴","phộc","rap"],["文","văn","script"],["斗","đẩu","dipper"],
+  ["斤","cân","axe"],["方","phương","square"],["无","vô","not"],["日","nhật","sun"],
+  ["曰","viết","say"],["月","nguyệt","moon"],["木","mộc","tree"],["欠","khiếm","lack"],
+  ["止","chỉ","stop"],["歹","đãi","death"],["殳","thù","weapon"],["毋","vô","do not"],
+  ["比","tỉ","compare"],["毛","mao","fur"],["氏","thị","clan"],["气","khí","steam"],
+  ["水","thủy","water"],["火","hỏa","fire"],["爪","trảo","claw"],["父","phụ","father"],
+  ["爻","hào","lines"],["爿","tường","half tree trunk"],["片","phiến","slice"],["牙","nha","fang"],
+  ["牛","ngưu","cow"],["犬","khuyển","dog"],["玄","huyền","profound"],["玉","ngọc","jade"],
+  ["瓜","qua","melon"],["瓦","ngõa","tile"],["甘","cam","sweet"],["生","sinh","life"],
+  ["用","dụng","use"],["田","điền","field"],["疋","thất","bolt of cloth"],["疒","nạch","sickness"],
+  ["癶","bát","footsteps"],["白","bạch","white"],["皮","bì","skin"],["皿","mãnh","dish"],
+  ["目","mục","eye"],["矛","mâu","spear"],["矢","thỉ","arrow"],["石","thạch","stone"],
+  ["示","thị","spirit"],["禸","nhựu","track"],["禾","hòa","grain"],["穴","huyệt","cave"],
+  ["立","lập","stand"],["竹","trúc","bamboo"],["米","mễ","rice"],["糸","mịch","silk"],
+  ["缶","phũ","jar"],["网","võng","net"],["羊","dương","sheep"],["羽","vũ","feather"],
+  ["老","lão","old"],["而","nhi","and"],["耒","lỗi","plow"],["耳","nhĩ","ear"],
+  ["聿","duật","brush"],["肉","nhục","meat"],["臣","thần","minister"],["自","tự","self"],
+  ["至","chí","arrive"],["臼","cữu","mortar"],["舌","thiệt","tongue"],["舛","suyễn","oppose"],
+  ["舟","chu","boat"],["艮","cấn","stopping"],["色","sắc","color"],["艸","thảo","grass"],
+  ["虍","hô","tiger"],["虫","trùng","insect"],["血","huyết","blood"],["行","hành","walk enclosure"],
+  ["衣","y","clothes"],["襾","á","cover"],["見","kiến","see"],["角","giác","horn"],
+  ["言","ngôn","speech"],["谷","cốc","valley"],["豆","đậu","bean"],["豕","thỉ","pig"],
+  ["豸","trĩ","badger"],["貝","bối","shell"],["赤","xích","red"],["走","tẩu","run"],
+  ["足","túc","foot"],["身","thân","body"],["車","xa","cart"],["辛","tân","bitter"],
+  ["辰","thần","morning"],["辵","sước","walk"],["邑","ấp","city"],["酉","dậu","wine"],
+  ["釆","biện","distinguish"],["里","lý","village"],["金","kim","gold"],["長","trường","long"],
+  ["門","môn","gate"],["阜","phụ","mound"],["隶","đãi","slave"],["隹","chuy","short-tailed bird"],
+  ["雨","vũ","rain"],["青","thanh","blue/green"],["非","phi","wrong"],["面","diện","face"],
+  ["革","cách","leather"],["韋","vi","tanned leather"],["韭","cửu","leek"],["音","âm","sound"],
+  ["頁","hiệt","leaf"],["風","phong","wind"],["飛","phi","fly"],["食","thực","eat"],
+  ["首","thủ","head"],["香","hương","fragrant"],["馬","mã","horse"],["骨","cốt","bone"],
+  ["高","cao","tall"],["髟","tiêu","long hair"],["鬥","đấu","fight"],["鬯","sưởng","sacrificial wine"],
+  ["鬲","cách","cauldron"],["鬼","quỷ","ghost"],["魚","ngư","fish"],["鳥","điểu","bird"],
+  ["鹵","lỗ","salt"],["鹿","lộc","deer"],["麥","mạch","wheat"],["麻","ma","hemp"],
+  ["黃","hoàng","yellow"],["黍","thử","millet"],["黑","hắc","black"],["黹","chỉ","embroidery"],
+  ["黽","mãnh","frog"],["鼎","đỉnh","tripod"],["鼓","cổ","drum"],["鼠","thử","rat"],
+  ["鼻","tị","nose"],["齊","tề","even"],["齒","xỉ","tooth"],["龍","long","dragon"],
+  ["龜","quy","turtle"],["龠","dược","flute"],
+];
+
+/** Stroke count of a Kangxi radical, derived from its number (radicals are ordered by stroke). */
+export function radicalStrokeCount(n) {
+  const bounds = [6, 29, 61, 94, 117, 146, 170, 182, 194, 200, 204, 207, 210, 212, 213, 214];
+  for (let i = 0; i < bounds.length; i++) if (n <= bounds[i]) return i + 1;
+  return null;
+}
