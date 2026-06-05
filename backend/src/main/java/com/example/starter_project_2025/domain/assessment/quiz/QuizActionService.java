@@ -25,4 +25,11 @@ public interface QuizActionService {
     QuizDTO cloneForUser(Long quizId, Long userId);
 
     List<QuizQuestionDTO> getQuestions(Long quizId);
+
+    /**
+     * Discard a never-published DRAFT quiz: removes the quiz, its question
+     * placements, and any questions that were quick-created privately for it.
+     * Used when the author cancels the create-quiz wizard.
+     */
+    void discardDraft(Long quizId, Long userId);
 }

@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronRight, Loader2, Plus, Search } from "lucide-react";
+import { Check, ChevronRight, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { QuestionForm } from "./QuestionForm";
 import { TagBadges, TagChips } from "./QuestionTags";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
@@ -32,16 +33,22 @@ const PAGE_SIZES = [10, 20, 50];
 export function QuestionBankSelector({
   selectedIds,
   onToggle,
+  quizId,
 }: {
   /** questionIds currently in the quiz. */
   selectedIds: Set<number>;
   /** Toggle a question in/out of the quiz. */
-  onToggle: (questionId: number) => void;
+  onToggle: (questionId: number) => void | Promise<void>;
+  /** The quiz being edited — quick-created questions become private to it. */
+  quizId?: number | null;
 }) {
   const [questions, setQuestions] = useState<QuestionBankDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
+  // null = closed, { q: null } = create, { q: question } = edit.
+  const [form, setForm] = useState<{ q: QuestionBankDTO | null } | null>(null);
+  const [confirmDel, setConfirmDel] = useState<QuestionBankDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   /* ── Tag filter ── */
   const [allTags, setAllTags] = useState<QuestionTagDTO[]>([]);
@@ -56,11 +63,13 @@ export function QuestionBankSelector({
     setLoading(true);
     const term = search.trim().toLowerCase();
     const tagIds = Array.from(selectedTagIds);
+    // Scope the bank list to shared questions + this quiz's private ones.
+    const scope = quizId != null ? { ownerQuizId: quizId } : {};
     const request = tagIds.length > 0
       ? assessmentApi.fetchQuestionsByTags(tagIds, matchAll)
           // tag endpoint doesn't take a search term — filter client-side
           .then((qs) => (term ? qs.filter((q) => q.prompt.toLowerCase().includes(term)) : qs))
-      : assessmentApi.fetchQuestions(term ? { search: search.trim() } : {});
+      : assessmentApi.fetchQuestions(term ? { search: search.trim(), ...scope } : scope);
     request
       .then(setQuestions)
       .catch(() => toast.error("Failed to load questions."))
@@ -102,7 +111,7 @@ export function QuestionBankSelector({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search questions…" className="pl-9" />
         </div>
-        <Button variant="outline" onClick={() => setFormOpen(true)}><Plus className="size-4 mr-1" />New</Button>
+        <Button variant="outline" onClick={() => setForm({ q: null })}><Plus className="size-4 mr-1" />New</Button>
       </div>
 
       {/* Tag filter */}
@@ -149,7 +158,8 @@ export function QuestionBankSelector({
                 <span className="flex-1 min-w-0">Question</span>
                 <span className="hidden sm:block w-16 shrink-0">Level</span>
                 <span className="w-28 shrink-0">Type</span>
-                <span className="hidden sm:block w-14 shrink-0 text-right">Options</span>
+                <span className="hidden sm:block w-10 shrink-0 text-right">Opts</span>
+                <span className="w-[58px] shrink-0" aria-hidden />
               </div>
               {/* Rows (current page) */}
               {pageItems.map((q, i) => (
@@ -159,6 +169,8 @@ export function QuestionBankSelector({
                   index={i}
                   selected={selectedIds.has(q.id)}
                   onToggle={() => onToggle(q.id)}
+                  onEdit={() => setForm({ q })}
+                  onDelete={() => setConfirmDel(q)}
                 />
               ))}
             </>
@@ -191,21 +203,71 @@ export function QuestionBankSelector({
         </div>
       )}
 
-      {/* Create-new question dialog */}
-      <Dialog open={formOpen} onOpenChange={(o) => !o && setFormOpen(false)}>
-        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+      {/* Create / edit question dialog */}
+      <Dialog open={form != null} onOpenChange={(o) => !o && setForm(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>New question</DialogTitle>
-            <DialogDescription>Create a question, then it's added to this quiz.</DialogDescription>
+            <DialogTitle>{form?.q ? "Edit question" : "New question"}</DialogTitle>
+            <DialogDescription>
+              {form?.q
+                ? "Update this question. Changes apply wherever it's used."
+                : "Create a question — it's added to this quiz only."}
+            </DialogDescription>
           </DialogHeader>
-          <QuestionForm
-            onCancel={() => setFormOpen(false)}
-            onSaved={(created) => {
-              setFormOpen(false);
-              load();
-              if (!selectedIds.has(created.id)) onToggle(created.id);
-            }}
-          />
+          {/* ScrollHintContainer scrolls the form with no visible scrollbar. */}
+          <ScrollHintContainer viewportClassName="px-1 py-1">
+            <QuestionForm
+              question={form?.q ?? undefined}
+              ownerQuizId={form?.q ? undefined : quizId}
+              onCancel={() => setForm(null)}
+              onSaved={(saved) => {
+                const wasCreate = form?.q == null;
+                setForm(null);
+                load();
+                // Newly-created questions get auto-added to the quiz.
+                if (wasCreate && !selectedIds.has(saved.id)) onToggle(saved.id);
+              }}
+            />
+          </ScrollHintContainer>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <Dialog open={confirmDel != null} onOpenChange={(o) => !deleting && !o && setConfirmDel(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete question?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes the question{confirmDel && ` “${confirmDel.prompt.slice(0, 60)}${confirmDel.prompt.length > 60 ? "…" : ""}”`}
+              {" "}and removes it from this quiz. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmDel(null)} disabled={deleting}>Cancel</Button>
+            <Button
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async () => {
+                if (!confirmDel) return;
+                setDeleting(true);
+                try {
+                  // Remove the placement first if it's in the quiz, then delete.
+                  if (selectedIds.has(confirmDel.id)) await onToggle(confirmDel.id);
+                  await assessmentApi.deleteQuestion(confirmDel.id);
+                  toast.success("Question deleted.");
+                  setConfirmDel(null);
+                  load();
+                } catch {
+                  toast.error("Failed to delete question.");
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Trash2 className="size-4 mr-1.5" />}
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -221,13 +283,18 @@ function BankQuestionRow({
   index,
   selected,
   onToggle,
+  onEdit,
+  onDelete,
 }: {
   question: QuestionBankDTO;
   index: number;
   selected: boolean;
   onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isPrivate = q.ownerQuizId != null;
 
   return (
     <>
@@ -270,7 +337,14 @@ function BankQuestionRow({
         </span>
 
         {/* Prompt */}
-        <span className="flex-1 min-w-0 text-sm font-medium truncate">{q.prompt}</span>
+        <span className="flex-1 min-w-0 text-sm font-medium truncate flex items-center gap-1.5">
+          <span className="truncate">{q.prompt}</span>
+          {isPrivate && (
+            <Badge variant="outline" className="shrink-0 text-[9px] border-amber-400/50 text-amber-600">
+              Quiz only
+            </Badge>
+          )}
+        </span>
 
         {/* Level */}
         <span className="hidden sm:flex w-16 shrink-0">
@@ -287,8 +361,28 @@ function BankQuestionRow({
         </span>
 
         {/* Options count */}
-        <span className="hidden sm:block w-14 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+        <span className="hidden sm:block w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
           {q.options.length}
+        </span>
+
+        {/* Edit / delete (don't toggle selection) */}
+        <span className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            title="Edit question"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            title="Delete question"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
         </span>
       </div>
 

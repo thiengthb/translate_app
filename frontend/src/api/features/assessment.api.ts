@@ -53,6 +53,12 @@ const deleteQuiz = async (id: number): Promise<void> => {
   await axiosInstance.delete(`/quizzes/${id}`);
 };
 
+// Discard a never-published draft + its quick-created private questions
+// (used when the author cancels the create-quiz wizard).
+const discardQuiz = async (id: number): Promise<void> => {
+  await axiosInstance.post(`/quizzes/${id}/discard`);
+};
+
 const publishQuiz = async (id: number): Promise<QuizDTO> => {
   const res = await axiosInstance.put<QuizDTO>(`/quizzes/${id}/publish`);
   return res.data;
@@ -235,6 +241,7 @@ export const assessmentApi = {
   fetchPublicQuizzes,
   fetchQuizById,
   createQuiz,
+  discardQuiz,
   updateQuiz,
   deleteQuiz,
   publishQuiz,

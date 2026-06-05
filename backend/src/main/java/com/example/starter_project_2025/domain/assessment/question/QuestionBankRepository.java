@@ -15,6 +15,9 @@ public interface QuestionBankRepository extends BaseCrudRepository<QuestionBank,
             + "where t.id = :tagId and q.isDeleted = false")
     List<QuestionBank> findByTagsId(@Param("tagId") Long tagId);
 
+    /** Live questions that are private to a given quiz. */
+    List<QuestionBank> findByOwnerQuizIdAndIsDeletedFalse(Long ownerQuizId);
+
     /** Questions carrying AT LEAST ONE of the given tags (OR). */
     @Query("select distinct q from QuestionBank q join q.tags t "
             + "where t.id in :tagIds and q.isDeleted = false")

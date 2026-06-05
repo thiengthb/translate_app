@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { SearchableSelect } from "@/components/common/SearchableSelect";
-import { Check, ChevronLeft, ChevronRight, Loader2, Save, Send } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, ChevronLeft, ChevronRight, ListChecks, Loader2, Save, Send, Library } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { cn } from "@/lib/utils";
 import { QuestionBankSelector } from "./QuestionBankSelector";
+import { SelectedQuestionsPanel } from "./SelectedQuestionsPanel";
 
 const DIFFICULTIES: DifficultyLevel[] = ["EASY", "MEDIUM", "HARD", "N5", "N4", "N3", "N2", "N1"];
 
@@ -28,6 +30,10 @@ export default function QuizCreateEditPage() {
   const [loading, setLoading] = useState(!!quizId);
   const [saving, setSaving] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestionDTO[]>([]);
+  // A NEW quiz auto-saves a draft when entering step 2 (so questions can attach).
+  // If the author cancels without ever saving/publishing, that draft and its
+  // quick-created private questions are discarded.
+  const [keepDraft, setKeepDraft] = useState(false);
 
   // Two-step wizard: 1 = configuration, 2 = question selection.
   const [step, setStep] = useState<1 | 2>(1);
@@ -108,12 +114,22 @@ export default function QuizCreateEditPage() {
 
   const handleSaveDraft = async () => {
     const savedId = await persist();
-    if (savedId) toast.success("Draft saved.");
+    if (savedId) { setKeepDraft(true); toast.success("Draft saved."); }
+  };
+
+  // Cancelling a never-saved NEW quiz throws away the auto-created draft and any
+  // questions quick-created privately for it.
+  const handleCancel = async () => {
+    if (!isEditMode && id != null && !keepDraft) {
+      try { await assessmentApi.discardQuiz(id); } catch { /* best-effort */ }
+    }
+    navigate("/quizzes");
   };
 
   const handlePublish = async () => {
     const savedId = await persist();
     if (!savedId) return;
+    setKeepDraft(true);
     if (questions.length === 0) { toast.error("Add at least one question before publishing."); return; }
     try {
       await assessmentApi.publishQuiz(savedId);
@@ -244,22 +260,43 @@ export default function QuizCreateEditPage() {
           </div>
         )}
 
-        {/* ── Step 2 · Question selection ── */}
+        {/* ── Step 2 · Question selection (two tabs) ── */}
         {step === 2 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Step 2 · Select questions</h3>
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {questions.length} selected
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Click a question to add or remove it from this quiz.
-            </p>
-            <QuestionBankSelector
-              selectedIds={selectedQuestionIds}
-              onToggle={handleToggleQuestion}
-            />
+            <h3 className="font-semibold">Step 2 · Select questions</h3>
+            <Tabs defaultValue="bank" className="space-y-3">
+              <TabsList>
+                <TabsTrigger value="bank" className="gap-1.5">
+                  <Library className="size-4" />Question bank
+                </TabsTrigger>
+                <TabsTrigger value="selected" className="gap-1.5">
+                  <ListChecks className="size-4" />Selected
+                  <span className="ml-0.5 rounded-full bg-primary/15 px-1.5 text-[11px] font-semibold text-primary tabular-nums">
+                    {questions.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="bank" className="mt-0">
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Click a question to add or remove it. Nothing is saved until you create the quiz.
+                </p>
+                <QuestionBankSelector
+                  selectedIds={selectedQuestionIds}
+                  onToggle={handleToggleQuestion}
+                  quizId={id}
+                />
+              </TabsContent>
+
+              <TabsContent value="selected" className="mt-0">
+                <SelectedQuestionsPanel
+                  placements={questions}
+                  quizId={id}
+                  onRemove={handleRemoveQuestion}
+                  onAddCreated={handleAddQuestion}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
 
@@ -267,7 +304,7 @@ export default function QuizCreateEditPage() {
         <div className="flex items-center justify-between gap-2">
           {step === 1 ? (
             <>
-              <Button variant="ghost" onClick={() => navigate("/quizzes")}>Cancel</Button>
+              <Button variant="ghost" onClick={handleCancel}>Cancel</Button>
               <Button onClick={handleNext} disabled={saving || !step1Valid}>
                 {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : null}
                 Next: select questions

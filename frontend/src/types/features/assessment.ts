@@ -86,6 +86,8 @@ export interface QuestionBankDTO {
   difficultyLevel: DifficultyLevel | null;
   defaultScore: number;
   isActive: boolean;
+  /** When set, the question is private to this quiz (hidden from the shared bank). */
+  ownerQuizId?: number | null;
   /** Optimistic-lock version (BaseDTO). */
   version: number;
   /** Content version — bumped only when the question's content changes. */
@@ -214,6 +216,12 @@ export interface QuestionQueryParams {
   /** Filter to questions carrying this single tag. */
   tagId?: number;
   search?: string;
+  /**
+   * Quiz wizard scope: include shared bank questions PLUS this quiz's private
+   * (quick-created) ones. Omitted everywhere else, so the shared bank hides
+   * quiz-private questions.
+   */
+  ownerQuizId?: number;
 }
 
 export interface QuestionTagQueryParams {

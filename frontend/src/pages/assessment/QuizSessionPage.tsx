@@ -312,15 +312,18 @@ export default function QuizSessionPage() {
             <div className="grid grid-cols-5 gap-1.5">
               {questions.map((qq, i) => {
                 const onPage = i >= pageStart && i < pageEnd;
+                const marked = flagged.has(qq.id);
                 return (
                   <button key={qq.id} onClick={() => goToQuestion(i)}
                     className={cn("relative flex aspect-square items-center justify-center rounded-lg border text-xs font-semibold tabular-nums transition-colors",
                       onPage && "ring-1 ring-primary",
                       qq.isAnswered
                         ? "bg-green-500/15 border-green-500/30 text-green-600"
-                        : "bg-background border-border text-muted-foreground hover:bg-accent")}>
+                        : "bg-background border-border text-muted-foreground hover:bg-accent",
+                      // Marked questions: border takes the amber mark colour.
+                      marked && "border-amber-400")}>
                     {i + 1}
-                    {flagged.has(qq.id) && (
+                    {marked && (
                       <Star className="absolute -top-1.5 -right-1.5 size-3.5 fill-amber-400 text-amber-500" />
                     )}
                   </button>

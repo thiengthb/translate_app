@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { assessmentApi } from "@/api";
+import { fileApi } from "@/api/features/file.api";
 import type { QuestionBankDTO, QuestionTagDTO, QuestionType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,50 +12,40 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TagChips } from "./QuestionTags";
 
-/* ── Media URL input with file-picker + inline preview ── */
+/* ── Media input: click to upload a local file OR paste a link ── */
 function MediaInput({
   label, value, onChange, type,
 }: {
   label: string; value: string; onChange: (v: string) => void; type: "image" | "audio";
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [previewSrc, setPreviewSrc] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
 
-  /* Sync external URL → preview */
-  useEffect(() => {
-    if (value.startsWith("http") || value.startsWith("data:") || value.startsWith("blob:")) {
-      setPreviewSrc(value);
-    } else {
-      setPreviewSrc("");
-    }
-  }, [value]);
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // A picked file is uploaded to the file store, which returns a URL we save —
+  // exactly like a pasted link. (Same flow as the group cover image.)
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = ""; // allow re-picking the same file
     if (!file) return;
-    e.target.value = "";
 
-    if (type === "image") {
-      if (file.size > 3 * 1024 * 1024) {
-        toast.error("Image too large (max 3 MB). Upload to a host and paste the URL.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        onChange(dataUrl);
-        setPreviewSrc(dataUrl);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      /* Audio: object URL for preview only — data: URIs for audio are too large. */
-      const url = URL.createObjectURL(file);
-      setPreviewSrc(url);
-      toast.info("Audio preview shown. Upload to a file host and paste the URL to save.");
+    const maxMb = type === "image" ? 5 : 10;
+    if (type === "image" && !file.type.startsWith("image/")) { toast.error("Please choose an image file."); return; }
+    if (type === "audio" && !file.type.startsWith("audio/")) { toast.error("Please choose an audio file."); return; }
+    if (file.size > maxMb * 1024 * 1024) { toast.error(`File too large (max ${maxMb} MB).`); return; }
+
+    setUploading(true);
+    try {
+      const uploaded = await fileApi.upload(file, "question", undefined, type === "image" ? "promptImageUrl" : "promptAudioUrl");
+      onChange(uploaded.url);
+      toast.success(`${type === "image" ? "Image" : "Audio"} uploaded.`);
+    } catch {
+      toast.error("Upload failed.");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const clear = () => { onChange(""); setPreviewSrc(""); };
+  const showPreview = !!value && (value.startsWith("http") || value.startsWith("data:") || value.startsWith("blob:"));
 
   return (
     <div className="space-y-1.5">
@@ -62,41 +53,48 @@ function MediaInput({
         {type === "image" ? <ImageIcon className="size-3.5" /> : <Music className="size-3.5" />}
         {label}
       </Label>
-      <div className="flex gap-1.5">
-        <Input
+      {/* Single combined control: paste a link in the field, or click the
+          embedded icon to upload a file. */}
+      <div className="flex items-center rounded-md border border-input bg-transparent pr-1 shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
+        <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="https://…"
-          className="flex-1 text-xs"
+          placeholder="Paste a link, or click → to upload"
+          className="flex-1 min-w-0 bg-transparent px-3 py-2 text-xs outline-none placeholder:text-muted-foreground"
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="shrink-0 px-2"
-          title={`Pick ${type} file`}
-          onClick={() => fileRef.current?.click()}
-        >
-          {type === "image" ? <ImageIcon className="size-4" /> : <Music className="size-4" />}
-        </Button>
         {value && (
-          <Button type="button" variant="ghost" size="sm" className="shrink-0 px-2 text-muted-foreground" onClick={clear}>
+          <button
+            type="button"
+            title="Clear"
+            onClick={() => onChange("")}
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
             <X className="size-4" />
-          </Button>
+          </button>
         )}
+        <button
+          type="button"
+          title={`Upload ${type} file`}
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+        >
+          {uploading
+            ? <Loader2 className="size-4 animate-spin" />
+            : type === "image" ? <ImageIcon className="size-4" /> : <Music className="size-4" />}
+        </button>
         <input ref={fileRef} type="file" accept={type === "image" ? "image/*" : "audio/*"} className="hidden" onChange={handleFile} />
       </div>
       {/* Preview */}
-      {previewSrc && type === "image" && (
+      {showPreview && type === "image" && (
         <img
-          src={previewSrc}
+          src={value}
           alt="preview"
-          onError={() => setPreviewSrc("")}
           className="max-h-40 rounded-md border border-border object-contain bg-muted/30"
         />
       )}
-      {previewSrc && type === "audio" && (
-        <audio controls src={previewSrc} className="w-full h-9" />
+      {showPreview && type === "audio" && (
+        <audio controls src={value} className="w-full h-9" />
       )}
     </div>
   );
@@ -150,11 +148,13 @@ const isTrueFalseShape = (opts: OptionDraft[]): boolean =>
  * Rendered full-page by QuestionFormPage and inline inside QuestionPickerModal.
  */
 export function QuestionForm({
-  question, onSaved, onCancel,
+  question, onSaved, onCancel, ownerQuizId,
 }: {
   question?: QuestionBankDTO | null;
   onSaved: (q: QuestionBankDTO) => void;
   onCancel: () => void;
+  /** When creating from the quiz wizard, makes the new question private to this quiz. */
+  ownerQuizId?: number | null;
 }) {
   const [saving, setSaving] = useState(false);
   const [questionType, setQuestionType] = useState<QuestionType>("SINGLE_CHOICE");
@@ -321,7 +321,10 @@ export function QuestionForm({
       };
       const saved = question
         ? await assessmentApi.updateQuestion(question.id, payload)
-        : await assessmentApi.createQuestion(payload);
+        // New questions from the quiz wizard are private to that quiz.
+        : await assessmentApi.createQuestion(
+            ownerQuizId != null ? { ...payload, ownerQuizId } : payload,
+          );
       toast.success("Question saved.");
       onSaved(saved);
     } catch {
