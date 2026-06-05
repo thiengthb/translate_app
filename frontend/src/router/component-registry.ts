@@ -1,9 +1,8 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
+import { LoginRouteRedirect, RegisterRouteRedirect } from "@/components/auth/AuthRouteRedirect";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
-import { Login } from "@/pages/auth/Login";
-import RegisterPage from "@/pages/auth/RegisterPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
@@ -102,9 +101,9 @@ export const routes: RouteConfig[] = [
   { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
-  { path: "/login", component: Login, isPublic: true },
+  { path: "/login", component: LoginRouteRedirect, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
-  { path: "/register", component: RegisterPage, isPublic: true },
+  { path: "/register", component: RegisterRouteRedirect, isPublic: true },
   { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},

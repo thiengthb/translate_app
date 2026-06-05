@@ -1,16 +1,10 @@
-import { ArrowRight, LogIn } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import NotificationCenter from "@/components/notification/NotificationCenter";
-import ToggleTheme from "@/components/ToggleTheme";
 import { MoreMenu } from "@/components/layout/header/MoreMenu";
 import { UserDropdownMenu } from "@/components/layout/UserDropdownMenu";
 
-import { useTranslation } from "@/contexts/I18nContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useMyStreak } from "@/hooks/useStreak";
 import { formatRoleLabel } from "@/utils/rbac.utils";
@@ -41,8 +35,6 @@ interface GuestActionsRowProps {
  * they have no avatar yet.
  */
 export function GuestActionsRow({ isAuthPage }: GuestActionsRowProps) {
-    const navigate = useNavigate();
-    const { t } = useTranslation();
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const { activeRole } = usePermissions();
     const { data: streak } = useMyStreak(isAuthenticated);
@@ -80,40 +72,7 @@ export function GuestActionsRow({ isAuthPage }: GuestActionsRowProps) {
         );
     }
 
-    // Unauthenticated visitor — no avatar to nest settings inside, keep
-    // language + theme inline (or in MoreMenu on mobile).
-    return (
-        <div className="flex items-center gap-1 sm:gap-2">
-            <div className="hidden md:flex items-center gap-0.5">
-                <LanguageSwitcher />
-                <ToggleTheme />
-            </div>
-
-            <div className="md:hidden">
-                <MoreMenu />
-            </div>
-
-            {!isAuthPage && (
-                <>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/login")}
-                        className="gap-1.5"
-                    >
-                        <LogIn size={15} />
-                        <span className="hidden sm:inline">{t("nav.login")}</span>
-                    </Button>
-                    <Button
-                        size="sm"
-                        onClick={() => navigate("/register")}
-                        className="gap-1.5"
-                    >
-                        <span>{t("nav.register")}</span>
-                        <ArrowRight size={15} className="hidden sm:inline" />
-                    </Button>
-                </>
-            )}
-        </div>
-    );
+    // Unauthenticated visitor — header actions removed; the landing page
+    // already surfaces login/register in its hero.
+    return null;
 }

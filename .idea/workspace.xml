@@ -4,22 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(production): implement AI-generated exercise composition and enhance production page functionality">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(production): implement AI-generated exercise composition and enhance grading feedback">
+      <change afterPath="$PROJECT_DIR$/frontend/public/login-bg.jpeg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/auth/AuthModal.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/auth/AuthRouteRedirect.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/auth/LoginForm.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/auth/auth-modal.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/contexts/AuthModalContext.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.env" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/AttemptResultResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/GenerateExerciseRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/GenerateExerciseRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/api/ProductionController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/generation/ExerciseGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/GradingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/grading/TranslationAttempt.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/GeminiClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/llm/JudgeResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/menu/ProductionDrillMenu.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/domain/production/prompt/PromptService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/features/production.api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/DrillPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/RegisterForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/auth/RegisterForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/GuestLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestActionsRow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestActionsRow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auth/Login.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auth/RegisterPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -175,7 +174,7 @@
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/prjdichnew&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/OneDrive/Documents/FPT_University/SWD/frontend/public&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
@@ -191,6 +190,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Admin\OneDrive\Documents\FPT_University\SWD\frontend\public" />
       <recent name="D:\prjdichnew\frontend\src\pages" />
       <recent name="D:\prjdichnew\frontend\src\components" />
       <recent name="D:\prjdichnew\frontend\src\api\features" />
@@ -291,7 +291,8 @@
       <workItem from="1780500222342" duration="1245000" />
       <workItem from="1780556472172" duration="3120000" />
       <workItem from="1780582286513" duration="4671000" />
-      <workItem from="1780595446343" duration="2356000" />
+      <workItem from="1780595446343" duration="3702000" />
+      <workItem from="1780635363057" duration="2720000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -517,7 +518,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780500283158</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="feat(production): implement AI-generated exercise composition and enhance grading feedback">
+      <option name="closed" value="true" />
+      <created>1780599874560</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1780599874560</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -547,7 +556,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(dictionary): chinh sua UI va them de xuat tu vung" />
     <MESSAGE value="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji" />
     <MESSAGE value="feat(dictionary): chinh them phan vi du tu vung" />
     <MESSAGE value="feat(dictionary): add word" />
@@ -572,7 +580,8 @@
     <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
     <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
     <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
+    <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
