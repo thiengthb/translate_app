@@ -41,11 +41,24 @@ export default function LandingPage() {
             <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-24 text-white overflow-hidden">
                 {/* Background image + vignette (inside the section so it paints
                     above GuestLayout's opaque background). */}
-                <div
+                <video
                     aria-hidden
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: "url('/login-bg.jpeg')", backgroundColor: "#1e293b" }}
-                />
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    poster="/login-bg.jpeg"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{
+                        backgroundColor: "#1e293b",
+                        // Phóng to & neo gốc trên-trái để góc dưới-phải
+                        // (chứa watermark Gemini) tràn ra ngoài khung.
+                        transform: "scale(1.18)",
+                        transformOrigin: "top left",
+                    }}
+                >
+                    <source src="/login-bg.mp4" type="video/mp4" />
+                </video>
                 <div
                     aria-hidden
                     className="absolute inset-0"
