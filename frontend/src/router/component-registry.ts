@@ -20,6 +20,10 @@ import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
 import ReviewPage from "@/pages/production/ReviewPage";
+import GrammarDashboardPage from "@/pages/grammar/GrammarDashboardPage";
+import GrammarSessionPage from "@/pages/grammar/GrammarSessionPage";
+import GrammarLevelPage from "@/pages/grammar/GrammarLevelPage";
+import GrammarDetailPage from "@/pages/grammar/GrammarDetailPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
@@ -144,6 +148,14 @@ export const routes: RouteConfig[] = [
   { path: "/translator", component: AnalyzePage },
   { path: "/sentence_practice", component: ProductionPage },
   { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
+
+  // ── Grammar Learning (SRS) ──
+  // /grammar is the learner home (DB-driven menu via @ResourceMenu on
+  // GrammarDashboardController). The rest are reached by navigation.
+  { path: "/grammar", component: GrammarDashboardPage, isModuleDriven: true },
+  { path: "/grammar/learn", component: GrammarSessionPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
+  { path: "/grammar/levels/:level", component: GrammarLevelPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
+  { path: "/grammar/detail/:subUseId", component: GrammarDetailPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   { path: "/login", component: LoginRouteRedirect, isPublic: true },
