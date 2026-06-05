@@ -28,6 +28,8 @@ public interface ClassroomService extends BaseCrudService<Long, ClassroomDTO, Ba
 
     ClassMemberDTO addMember(Long classroomId, Long userId);
 
+    ClassMemberDTO addMemberByEmail(Long classroomId, String email);
+
     void removeMember(Long classroomId, Long userId);
 
     List<ClassDeckDTO> getDecks(Long classroomId);

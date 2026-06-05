@@ -2,15 +2,21 @@ package com.example.starter_project_2025.system.words.word;
 
 import com.example.starter_project_2025.base.dataio.importer.result.ImportResult;
 import com.example.starter_project_2025.base.dataio.importer.result.RowError;
+import com.example.starter_project_2025.system.words.example.Example;
+import com.example.starter_project_2025.system.words.language.Language;
 import com.example.starter_project_2025.system.words.language.LanguageRepository;
 import com.example.starter_project_2025.system.words.level.Level;
 import com.example.starter_project_2025.system.words.level.LevelRepository;
+import com.example.starter_project_2025.system.words.mean.Meaning;
 import com.example.starter_project_2025.system.words.representation.Representation;
 import com.example.starter_project_2025.system.words.representation.RepresentationRepository;
 import com.opencsv.CSVReader;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -20,6 +26,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -28,8 +35,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -40,8 +49,10 @@ import java.util.stream.Collectors;
  * dùng DataIO generic. Mỗi dòng file = MỘT từ; các nghĩa/ví dụ được "gộp" vào
  * một ô theo cú pháp delimiter (xem template / sheet hướng dẫn).
  *
- * <p>Import tái sử dụng đúng luồng tạo từ {@link WordService#createFull} — cùng
- * transaction, cùng cách tạo meanings/examples như màn hình "Tạo từ vựng".
+ * <p>Import được tối ưu cho file lớn (hàng chục nghìn dòng): bảng mã nạp một
+ * lần vào Map, kiểm tra trùng in-memory, và ghi theo lô nhiều dòng mỗi
+ * transaction thay vì mỗi dòng một commit. Cách dựng entity (meanings/examples
+ * cascade từ Word) giữ nguyên như {@link WordService#createFull}.
  */
 @Service
 @RequiredArgsConstructor
@@ -49,10 +60,15 @@ import java.util.stream.Collectors;
 public class WordDataIoService {
 
     WordRepository wordRepository;
-    WordService wordService;
     RepresentationRepository representationRepository;
     LevelRepository levelRepository;
     LanguageRepository languageRepository;
+    TransactionTemplate transactionTemplate;
+
+    /** Flush + clear sau mỗi lô để persistence context không phình theo cỡ file. */
+    @NonFinal
+    @PersistenceContext
+    EntityManager entityManager;
 
     // ── Tên cột (đồng bộ template + export + import) ──
     static final String COL_WORD = "Word";
@@ -129,9 +145,31 @@ public class WordDataIoService {
     }
 
     // ═══════════════════════════ IMPORT ═══════════════════════════
-    // KHÔNG @Transactional ở đây: mỗi dòng commit độc lập qua
-    // wordService.createFull (mỗi lần là một transaction riêng). Một dòng lỗi
-    // không làm rollback những dòng đã thành công.
+    // Tối ưu cho file lớn (vd 15k dòng — trước đây mất 15+ phút):
+    // - Bảng mã (Representation/Level/Language) nạp MỘT lần vào Map; trước đây
+    //   mỗi dòng tốn ~8-12 SELECT tra mã (findByCode rồi createFull findById lại).
+    // - Khoá chống trùng (word + reading) nạp MỘT lần vào Set, kiểm tra in-memory
+    //   thay vì existsByWordAndReading từng dòng.
+    // - Ghi theo lô CHUNK_SIZE dòng/transaction thay vì mỗi dòng một commit
+    //   (15k commit là phần tốn thời gian nhất). Lô nào lỗi DB → ghi lại từng
+    //   dòng của lô đó để vẫn báo lỗi đúng số dòng, các dòng tốt không bị
+    //   rollback oan.
+    // KHÔNG @Transactional ở method này — mỗi lô là một transaction riêng qua
+    // transactionTemplate.
+
+    static final int CHUNK_SIZE = 500;
+
+    /** Bảng mã nạp sẵn cho cả phiên import — tránh SELECT lặp theo từng dòng. */
+    private record ImportLookups(
+            Map<String, Representation> representations,
+            Map<String, Level> levels,
+            Map<String, Language> languages,
+            Language jaLanguage,
+            Language viLanguage) {}
+
+    /** Một dòng đã qua validate, chờ ghi. Giữ row gốc để dựng lại entity khi retry. */
+    private record PendingRow(int rowIndex, Map<String, String> row) {}
+
     public ImportResult importFile(MultipartFile file) {
         ImportResult result = new ImportResult();
 
@@ -142,43 +180,114 @@ public class WordDataIoService {
             throw new RuntimeException("Không đọc được file: " + rootMessage(e), e);
         }
 
+        ImportLookups lookups = loadLookups();
+
+        // Khoá chống trùng = (word + reading): nạp một lần từ DB; dòng hợp lệ
+        // trong file cũng được thêm vào nên trùng lặp ngay trong file vẫn bị chặn.
+        Set<String> existingKeys = new HashSet<>();
+        for (Object[] pair : wordRepository.findAllWordReadingPairs()) {
+            existingKeys.add(dupKey((String) pair[0], (String) pair[1]));
+        }
+
+        // ── Pha 1: validate + lọc trùng (thuần in-memory, không chạm DB) ──
+        List<PendingRow> pending = new ArrayList<>();
         int rowIndex = 2; // hàng 1 là tiêu đề
         for (Map<String, String> row : rows) {
             try {
-                if (isBlankRow(row)) {
-                    rowIndex++;
-                    continue;
-                }
+                if (isBlankRow(row)) continue;
 
-                // Chống trùng: khoá = (word + reading). Vì mỗi createFull commit
-                // riêng, lần kiểm tra này thấy được cả từ đã có sẵn trong DB lẫn
-                // từ vừa được nhập ở các dòng trước trong cùng file.
                 String word = trim(row.get(COL_WORD));
                 String reading = emptyToNull(trim(row.get(COL_READING)));
                 if (word.isBlank()) {
                     throw new IllegalArgumentException("Thiếu cột '" + COL_WORD + "'");
                 }
-                if (wordRepository.existsByWordAndReading(word, reading)) {
+                if (!existingKeys.add(dupKey(word, reading))) {
                     result.setSkippedCount(result.getSkippedCount() + 1);
                     result.getErrors().add(new RowError(rowIndex,
                             "Bỏ qua (đã tồn tại): '" + word + "'"
                                     + (reading != null ? " [" + reading + "]" : "")));
-                    rowIndex++;
                     continue;
                 }
 
-                wordService.createFull(toRequest(row));
-                result.setSuccessCount(result.getSuccessCount() + 1);
+                toEntity(row, lookups); // validate sớm — dòng lỗi không vào lô ghi
+                pending.add(new PendingRow(rowIndex, row));
             } catch (Exception e) {
                 result.getErrors().add(new RowError(rowIndex, rootMessage(e)));
                 result.setFailureCount(result.getFailureCount() + 1);
+            } finally {
+                rowIndex++;
             }
-            rowIndex++;
+        }
+
+        // ── Pha 2: ghi theo lô ──
+        for (int from = 0; from < pending.size(); from += CHUNK_SIZE) {
+            List<PendingRow> chunk = pending.subList(from, Math.min(from + CHUNK_SIZE, pending.size()));
+            try {
+                saveChunk(chunk, lookups);
+                result.setSuccessCount(result.getSuccessCount() + chunk.size());
+            } catch (Exception chunkError) {
+                // Lô hỏng (vd ràng buộc DB) → ghi từng dòng để cô lập dòng lỗi.
+                for (PendingRow pr : chunk) {
+                    try {
+                        saveChunk(List.of(pr), lookups);
+                        result.setSuccessCount(result.getSuccessCount() + 1);
+                    } catch (Exception e) {
+                        result.getErrors().add(new RowError(pr.rowIndex(), rootMessage(e)));
+                        result.setFailureCount(result.getFailureCount() + 1);
+                    }
+                }
+            }
         }
         return result;
     }
 
-    private WordCreateRequest toRequest(Map<String, String> row) {
+    /**
+     * Ghi một lô dòng trong MỘT transaction. Entity được dựng lại từ row gốc
+     * (không tái dùng instance của lần ghi hỏng — tránh entity dính ID/version
+     * cũ sau rollback). Flush + clear cuối lô để OSIV không giữ cả file trong
+     * persistence context.
+     */
+    private void saveChunk(List<PendingRow> chunk, ImportLookups lookups) {
+        transactionTemplate.executeWithoutResult(tx -> {
+            for (PendingRow pr : chunk) {
+                wordRepository.save(toEntity(pr.row(), lookups));
+            }
+            entityManager.flush();
+            entityManager.clear();
+        });
+    }
+
+    private ImportLookups loadLookups() {
+        Map<String, Representation> reps = new HashMap<>();
+        for (Representation r : representationRepository.findAll()) {
+            if (r.getCode() != null) reps.put(r.getCode(), r);
+        }
+        Map<String, Level> levels = new HashMap<>();
+        for (Level l : levelRepository.findAll()) {
+            if (l.getCode() != null) levels.put(l.getCode(), l);
+        }
+        Map<String, Language> langs = new HashMap<>();
+        for (Language l : languageRepository.findAll()) {
+            if (l.getCode() != null) langs.put(l.getCode(), l);
+        }
+        return new ImportLookups(reps, levels, langs,
+                firstLanguage(langs, JA_CODES), firstLanguage(langs, VI_CODES));
+    }
+
+    private Language firstLanguage(Map<String, Language> langs, String... codes) {
+        for (String c : codes) {
+            Language found = langs.get(c);
+            if (found != null) return found;
+        }
+        return null; // chỉ lỗi khi dòng thực sự có Examples — xem parseExamples
+    }
+
+    /** Khoá chống trùng; reading null/rỗng quy về "". */
+    private String dupKey(String word, String reading) {
+        return word + '\u0000' + (reading == null ? "" : reading);
+    }
+
+    private Word toEntity(Map<String, String> row, ImportLookups lookups) {
         String word = trim(row.get(COL_WORD));
         if (word.isBlank())
             throw new IllegalArgumentException("Thiếu cột '" + COL_WORD + "'");
@@ -186,37 +295,38 @@ public class WordDataIoService {
         String repCode = trim(row.get(COL_REPRESENTATION));
         if (repCode.isBlank())
             throw new IllegalArgumentException("Thiếu cột '" + COL_REPRESENTATION + "'");
-        Representation rep = representationRepository.findByCode(repCode)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy Representation có mã '" + repCode + "'"));
+        Representation rep = lookups.representations().get(repCode);
+        if (rep == null)
+            throw new IllegalArgumentException("Không tìm thấy Representation có mã '" + repCode + "'");
 
         String levelCode = trim(row.get(COL_LEVEL));
         if (levelCode.isBlank())
             throw new IllegalArgumentException("Thiếu cột '" + COL_LEVEL + "'");
-        Level level = levelRepository.findByCode(levelCode)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy Level có mã '" + levelCode + "'"));
+        Level level = lookups.levels().get(levelCode);
+        if (level == null)
+            throw new IllegalArgumentException("Không tìm thấy Level có mã '" + levelCode + "'");
 
-        List<WordCreateRequest.MeaningInput> meanings = parseMeanings(trim(row.get(COL_MEANINGS)));
-        if (meanings.isEmpty())
-            throw new IllegalArgumentException("Cột '" + COL_MEANINGS + "' phải có ít nhất một nghĩa");
-
-        List<WordCreateRequest.ExampleInput> examples = parseExamples(trim(row.get(COL_EXAMPLES)));
-
-        return WordCreateRequest.builder()
+        Word entity = Word.builder()
                 .word(word)
                 .reading(emptyToNull(trim(row.get(COL_READING))))
                 .wordType(emptyToNull(trim(row.get(COL_WORD_TYPE))))
                 .frequency(parseInteger(row.get(COL_FREQUENCY)))
-                .representationId(rep.getId())
-                .levelId(level.getId())
-                .meanings(meanings)
-                .examples(examples)
+                .representation(rep)
+                .level(level)
+                .meanings(new ArrayList<>())
+                .examples(new ArrayList<>())
                 .build();
+
+        List<Meaning> meanings = parseMeanings(trim(row.get(COL_MEANINGS)), lookups, entity);
+        if (meanings.isEmpty())
+            throw new IllegalArgumentException("Cột '" + COL_MEANINGS + "' phải có ít nhất một nghĩa");
+        entity.getMeanings().addAll(meanings);
+        entity.getExamples().addAll(parseExamples(trim(row.get(COL_EXAMPLES)), lookups, entity));
+        return entity;
     }
 
-    private List<WordCreateRequest.MeaningInput> parseMeanings(String raw) {
-        List<WordCreateRequest.MeaningInput> out = new ArrayList<>();
+    private List<Meaning> parseMeanings(String raw, ImportLookups lookups, Word owner) {
+        List<Meaning> out = new ArrayList<>();
         if (raw == null || raw.isBlank()) return out;
 
         for (String part : splitItems(raw)) {
@@ -235,21 +345,30 @@ public class WordDataIoService {
             }
             if (text.isBlank()) continue;
 
-            Long languageId = resolveLanguage(code);
-            out.add(WordCreateRequest.MeaningInput.builder()
-                    .languageId(languageId)
+            Language language = lookups.languages().get(code);
+            if (language == null)
+                throw new IllegalArgumentException("Không tìm thấy ngôn ngữ có mã '" + code + "'");
+            out.add(Meaning.builder()
+                    .language(language)
                     .name(text)
+                    .word(owner)
                     .build());
         }
         return out;
     }
 
-    private List<WordCreateRequest.ExampleInput> parseExamples(String raw) {
-        List<WordCreateRequest.ExampleInput> out = new ArrayList<>();
+    private List<Example> parseExamples(String raw, ImportLookups lookups, Word owner) {
+        List<Example> out = new ArrayList<>();
         if (raw == null || raw.isBlank()) return out;
 
-        Long jaId = resolveLanguageAny(JA_CODES);
-        Long viId = resolveLanguageAny(VI_CODES);
+        Language ja = lookups.jaLanguage();
+        Language vi = lookups.viLanguage();
+        if (ja == null)
+            throw new IllegalArgumentException(
+                    "Không tìm thấy ngôn ngữ (cần một trong các mã: " + String.join(", ", JA_CODES) + ")");
+        if (vi == null)
+            throw new IllegalArgumentException(
+                    "Không tìm thấy ngôn ngữ (cần một trong các mã: " + String.join(", ", VI_CODES) + ")");
 
         for (String part : splitItems(raw)) {
             String root;
@@ -264,30 +383,15 @@ public class WordDataIoService {
             }
             if (root.isBlank()) continue;
 
-            out.add(WordCreateRequest.ExampleInput.builder()
-                    .rootLanguageId(jaId)
-                    .toLanguageId(viId)
+            out.add(Example.builder()
+                    .rootLanguage(ja)
+                    .toLanguage(vi)
                     .rootExample(root)
                     .toExample(emptyToNull(to))
+                    .word(owner)
                     .build());
         }
         return out;
-    }
-
-    private Long resolveLanguage(String code) {
-        return languageRepository.findByCode(code)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy ngôn ngữ có mã '" + code + "'"))
-                .getId();
-    }
-
-    private Long resolveLanguageAny(String... codes) {
-        for (String c : codes) {
-            var found = languageRepository.findByCode(c);
-            if (found.isPresent()) return found.get().getId();
-        }
-        throw new IllegalArgumentException(
-                "Không tìm thấy ngôn ngữ (cần một trong các mã: " + String.join(", ", codes) + ")");
     }
 
     // ═══════════════════════════ TEMPLATE ═══════════════════════════

@@ -211,6 +211,15 @@ export interface FeaturedResult {
   kanjis: DictionaryKanjiDetail[];
 }
 
+// ── Browse (Từ vựng tổng hợp — duyệt toàn bộ, phân trang) ──────────────
+export interface DictionaryBrowsePage<T> {
+  items: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 // ── Tatoeba example sentences ──────────────────────────────────────────
 export interface TatoebaExample {
   sentenceId?: number;
@@ -225,4 +234,24 @@ export interface TatoebaExample {
 export interface WordAudio {
   url: string;
   source: string; // "forvo"
+}
+
+// ── Notebook (sổ tay từ vựng/kanji lưu trên server, per-user) ──────────
+export interface NotebookWordEntry {
+  entryId: number;
+  note?: string;
+  savedAt?: string;
+  word: WordSearchResult;
+}
+
+export interface NotebookKanjiEntry {
+  entryId: number;
+  note?: string;
+  savedAt?: string;
+  kanji: DictionaryKanjiDetail;
+}
+
+export interface NotebookResponse {
+  words: NotebookWordEntry[];
+  kanjis: NotebookKanjiEntry[];
 }

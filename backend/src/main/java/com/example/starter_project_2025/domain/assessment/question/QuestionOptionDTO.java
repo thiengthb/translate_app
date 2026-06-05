@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.assessment.question;
 
 import com.example.starter_project_2025.base.crud.dto.BaseDTO;
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +24,11 @@ public class QuestionOptionDTO extends BaseDTO {
 
     String contentImageUrl;
 
+    // Pin the JSON name to "isCorrect" so the wire contract is stable regardless
+    // of Lombok/Jackson accessor-name inference. (The display bug where options
+    // always came back isCorrect=false was actually a MapStruct mapping gap in
+    // QuestionBankMapper.optionToDto, not deserialization — fixed there.)
+    @JsonProperty("isCorrect")
     @Builder.Default
     Boolean isCorrect = false;
 

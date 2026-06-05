@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { QuestionTagManagerModal } from "./QuestionTagManagerModal";
-import { TagBadges, TagChips } from "./QuestionTags";
+import { TagBadges } from "./QuestionTags";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
 
 const PAGE_SIZES = [10, 20, 50];
@@ -118,20 +118,22 @@ export default function QuestionBankPage() {
           </Button>
         </div>
 
-        {/* Tag filter */}
+        {/* Tag filter — library-style pill row (scrolls horizontally) */}
         {tags.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap shrink-0 pt-3">
-            <span className="text-xs font-medium text-muted-foreground">Filter:</span>
-            <TagChips tags={tags} selectedIds={selectedTagIds} onToggle={toggleTag} />
-            {selectedTagIds.size > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedTagIds(new Set())}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
-              >
-                Clear
-              </button>
-            )}
+          <div className="shrink-0 pt-3">
+            <ScrollHintContainer axis="horizontal" viewportClassName="pb-0.5">
+              <div className="flex w-max items-center gap-2 py-1">
+                <TagPill label="All" active={selectedTagIds.size === 0} onClick={() => setSelectedTagIds(new Set())} />
+                {tags.map((t) => (
+                  <TagPill
+                    key={t.id}
+                    label={t.name}
+                    active={selectedTagIds.has(t.id)}
+                    onClick={() => toggleTag(t.id)}
+                  />
+                ))}
+              </div>
+            </ScrollHintContainer>
           </div>
         )}
 
@@ -160,6 +162,7 @@ export default function QuestionBankPage() {
               {/* Header */}
               <div className="flex items-center gap-3 h-10 px-3 bg-muted border-b text-xs font-semibold text-foreground">
                 <span className="w-4 shrink-0" aria-hidden />
+                <span className="w-7 shrink-0 text-center">#</span>
                 <span className="flex-1 min-w-0">Question</span>
                 <span className="hidden sm:block w-16 shrink-0">Level</span>
                 <span className="w-28 shrink-0">Type</span>
@@ -172,6 +175,7 @@ export default function QuestionBankPage() {
                   key={q.id}
                   question={q}
                   index={i}
+                  order={pageStart + i + 1}
                   deleting={deletingId === q.id}
                   onEdit={() => openEdit(q)}
                   onDelete={() => handleDelete(q)}
@@ -216,6 +220,24 @@ export default function QuestionBankPage() {
   );
 }
 
+/* Library-style filter pill (rounded-full, primary-fill when active). */
+function TagPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "shrink-0 flex h-8 items-center gap-1.5 px-3.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
+        active
+          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+          : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 /* ─────────────────────────────────────────
    Single bank row (ProTable style): chevron + prompt + meta + actions,
    expanding to a full-width options preview below.
@@ -223,12 +245,14 @@ export default function QuestionBankPage() {
 function BankRow({
   question: q,
   index,
+  order,
   deleting,
   onEdit,
   onDelete,
 }: {
   question: QuestionBankDTO;
   index: number;
+  order: number;
   deleting: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -254,6 +278,11 @@ function BankRow({
         {/* Expand chevron */}
         <span className="shrink-0 flex items-center justify-center size-4 text-muted-foreground">
           <ChevronRight className={cn("size-4 transition-transform duration-200", open && "rotate-90")} />
+        </span>
+
+        {/* Order number */}
+        <span className="w-7 shrink-0 text-center text-xs font-semibold text-muted-foreground tabular-nums">
+          {order}
         </span>
 
         {/* Prompt */}

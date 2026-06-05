@@ -27,6 +27,12 @@ public interface QuestionBankMapper extends BaseCrudMapper<QuestionBank, Questio
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void update(@MappingTarget QuestionBank question, QuestionBankDTO dto);
 
+    // The entity's primitive `boolean isCorrect` is exposed by Lombok as the
+    // getter isCorrect(), so MapStruct sees its property as "correct"; the DTO's
+    // wrapper `Boolean isCorrect` is "isCorrect". Without this explicit mapping
+    // the names don't match and MapStruct silently drops the flag — every option
+    // came back isCorrect=false regardless of what was stored.
     @Mapping(target = "questionId", source = "question.id")
+    @Mapping(target = "isCorrect", source = "correct")
     QuestionOptionDTO optionToDto(QuestionOption option);
 }

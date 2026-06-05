@@ -331,6 +331,8 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
+              maxLength={500}
+              className="max-h-40 resize-none"
               placeholder="What is this group about?"
             />
           </div>
@@ -362,8 +364,14 @@ function JoinGroupDialog({ open, onClose, onJoined }: {
       setCode("");
       onJoined();
     } catch (e: unknown) {
-      const status = (e as { response?: { status?: number } })?.response?.status;
-      toast.error(status === 404 ? "Invalid code." : status === 409 ? "Group is full." : "Could not join.");
+      const resp = (e as { response?: { status?: number; data?: { message?: string } } })?.response;
+      const status = resp?.status;
+      // Prefer the server's reason (e.g. "You are already a member…", "Classroom is full")
+      // and fall back to a status-based message.
+      toast.error(
+        resp?.data?.message ||
+          (status === 404 ? "Invalid code." : status === 409 ? "You can't join this group." : "Could not join."),
+      );
     } finally {
       setJoining(false);
     }

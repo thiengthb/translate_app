@@ -21,4 +21,12 @@ public interface WordRepository extends BaseCrudRepository<Word, Long> {
               and w.isDeleted = false
             """)
     boolean existsByWordAndReading(@Param("word") String word, @Param("reading") String reading);
+
+    /**
+     * Dùng cho import file lớn: nạp toàn bộ khoá (word + reading) MỘT lần để
+     * kiểm tra trùng in-memory, thay vì {@link #existsByWordAndReading} từng dòng
+     * (15k dòng = 15k SELECT).
+     */
+    @Query("select w.word, w.reading from Word w where w.isDeleted = false")
+    java.util.List<Object[]> findAllWordReadingPairs();
 }

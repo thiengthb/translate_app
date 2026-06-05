@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB Diagram — translate_app</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; }
+  header { padding: 16px 24px; border-bottom: 1px solid #1e2330; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 16px; font-weight: 600; color: #f8fafc; }
+  header span { font-size: 12px; color: #64748b; }
+  .tabs { display: flex; gap: 4px; padding: 12px 24px 0; border-bottom: 1px solid #1e2330; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; color: #64748b; transition: all 0.15s; }
+  .tab.active { background: #1e2330; border-color: #2d3748; color: #f8fafc; }
+  .tab:hover:not(.active) { color: #94a3b8; }
+  .diagram-wrap { overflow: auto; padding: 24px; min-height: calc(100vh - 100px); }
+  .diagram-pane { display: none; }
+  .diagram-pane.active { display: block; }
+  .mermaid { background: #1a1f2e; border-radius: 10px; padding: 20px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 24px; border-bottom: 1px solid #1e2330; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Database Schema</h1>
+  <span>translate_app · Spring Boot JPA · ~55 tables</span>
+</header>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>RBAC &amp; Auth</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Words / Dictionary</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Library (Decks/Cards)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Study (Quizlet / SRS)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Assessment / Quiz</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>Classroom</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>Production / Translation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#84cc16"></div>Gamification</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="show('rbac')">RBAC &amp; Auth</div>
+  <div class="tab" onclick="show('words')">Words</div>
+  <div class="tab" onclick="show('library')">Library</div>
+  <div class="tab" onclick="show('study')">Study</div>
+  <div class="tab" onclick="show('assessment')">Assessment</div>
+  <div class="tab" onclick="show('classroom')">Classroom</div>
+  <div class="tab" onclick="show('production')">Production</div>
+  <div class="tab" onclick="show('gamification')">Gamification</div>
+  <div class="tab" onclick="show('infra')">Infra</div>
+</div>
+
+<div class="diagram-wrap">
+
+<!-- RBAC & Auth -->
+<div id="pane-rbac" class="diagram-pane active">
+<div class="mermaid">
+erDiagram
+    users {
+        bigint id PK
+        string email UK
+        string passwordHash
+        string firstName
+        string lastName
+        string phone
+        string bio
+        string avatarUrl
+        string locale
+        string theme
+        string totpSecret
+        boolean totpEnabled
+        long exp
+        long coins
+        boolean isActive
+        boolean isDeleted
+        datetime createdAt
+        datetime updatedAt
+    }
+    roles {
+        bigint id PK
+        string name UK
+        string description
+    }
+    permissions {
+        bigint id PK
+        string name UK
+        string resource
+        string action
+        string description
+    }
+    user_roles {
+        bigint user_id FK
+        bigint role_id FK
+    }
+    role_permissions {
+        bigint role_id FK
+        bigint permission_id FK
+    }
+    refresh_tokens {
+        bigint id PK
+        string tokenHash UK
+        bigint userId FK
+        datetime expiresAt
+        string userAgent
+        string ipAddress
+        datetime lastUsedAt
+        datetime createdAt
+    }
+    one_time_tokens {
+        bigint id PK
+        string tokenHash UK
+        bigint userId FK
+        datetime expiresAt
+        string purpose
+        datetime createdAt
+    }
+    recovery_codes {
+        bigint id PK
+        bigint userId FK
+        string codeHash
+        datetime usedAt
+        datetime createdAt
+    }
+    module_groups {
+        bigint id PK
+        string name UK
+        string description
+        int displayOrder
+    }
+    modules {
+        bigint id PK
+        bigint module_group_id FK
+        string title
+        string url
+        string icon
+        string description
+        int displayOrder
+        string requiredPermission
+        boolean isPublic
+    }
+
+    users ||--o{ user_roles : ""
+    roles ||--o{ user_roles : ""
+    roles ||--o{ role_permissions : ""
+    permissions ||--o{ role_permissions : ""
+    users ||--o{ refresh_tokens : "has"
+    users ||--o{ one_time_tokens : "has"
+    users ||--o{ recovery_codes : "has"
+    module_groups ||--o{ modules : "contains"
+</div>
+</div>
+
+<!-- Words -->
+<div id="pane-words" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    languages {
+        bigint id PK
+        string code UK
+        string name
+    }
+    levels {
+        bigint id PK
+        string name
+        string code UK
+    }
+    representations {
+        bigint id PK
+        string name
+        string code UK
+    }
+    word_types {
+        bigint id PK
+        string name
+        string code UK
+        string description
+    }
+    words {
+        bigint id PK
+        bigint representation_id FK
+        bigint level_id FK
+        string word
+        string reading
+        string wordType
+        int frequency
+    }
+    meanings {
+        bigint id PK
+        bigint language_id FK
+        bigint word_id FK
+        text name
+    }
+    examples {
+        bigint id PK
+        bigint root_language FK
+        bigint to_language FK
+        bigint word_id FK
+        string rootExample
+        string toExample
+    }
+    kanjis {
+        bigint id PK
+        string character UK
+        text onyomi
+        text kunyomi
+        text meaning
+        string jlptLevel
+        int stroke
+        string radical
+    }
+    word_kanjis {
+        bigint id PK
+        bigint word_id FK
+        bigint kanji_id FK
+        string character
+        text onyomi
+        text kunyomi
+        text meaning
+        int stroke
+        string radical
+    }
+
+    representations ||--o{ words : ""
+    levels ||--o{ words : ""
+    languages ||--o{ meanings : ""
+    words ||--o{ meanings : "has"
+    languages ||--o{ examples : "root"
+    languages ||--o{ examples : "target"
+    words ||--o{ examples : "has"
+    words ||--o{ word_kanjis : ""
+    kanjis ||--o{ word_kanjis : ""
+</div>
+</div>
+
+<!-- Library -->
+<div id="pane-library" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    users {
+        bigint id PK
+        string email
+    }
+    folders {
+        bigint id PK
+        bigint user_id FK
+        string name
+        text description
+    }
+    tags {
+        bigint id PK
+        bigint user_id FK
+        string name
+        string color
+        text description
+    }
+    flashcard_templates {
+        bigint id PK
+        bigint userId
+        bigint deckId
+        string cardType
+        string name
+        text frontTemplate
+        text backTemplate
+        string visibility
+        boolean isSystem
+        boolean isDefault
+    }
+    decks {
+        bigint id PK
+        bigint user_id FK
+        bigint folder_id FK
+        bigint original_deck_id FK
+        bigint template_id FK
+        string title
+        string visibility
+        string sourceLanguage
+        string targetLanguage
+        int totalCards
+        int cloneCount
+        int favoriteCount
+        int viewCount
+    }
+    deck_tags {
+        bigint deck_id FK
+        bigint tag_id FK
+    }
+    flashcards {
+        bigint id PK
+        bigint wordId
+        string cardType
+        string itemType
+        bigint itemId
+        text front
+        text back
+        text hint
+        text explanation
+    }
+    flashcard_sides {
+        bigint id PK
+        bigint flashcard_id FK
+        string side
+    }
+    flashcard_side_contents {
+        bigint id PK
+        bigint side_id FK
+        string label
+        string contentType
+        text contentValue
+        int orderIndex
+        text metadata
+    }
+    deck_items {
+        bigint id PK
+        bigint deck_id FK
+        bigint flashcard_id FK
+        int orderIndex
+    }
+    favorite_decks {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+    }
+
+    users ||--o{ folders : ""
+    users ||--o{ tags : ""
+    users ||--o{ decks : "owns"
+    decks ||--o| folders : "in"
+    decks ||--o| decks : "cloned from"
+    decks ||--o| flashcard_templates : "uses"
+    decks ||--o{ deck_tags : ""
+    tags ||--o{ deck_tags : ""
+    decks ||--o{ deck_items : "contains"
+    flashcards ||--o{ deck_items : "in"
+    flashcards ||--o{ flashcard_sides : "has"
+    flashcard_sides ||--o{ flashcard_side_contents : "has"
+    users ||--o{ favorite_decks : ""
+    decks ||--o{ favorite_decks : ""
+</div>
+</div>
+
+<!-- Study -->
+<div id="pane-study" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    users {
+        bigint id PK
+        string email
+    }
+    decks {
+        bigint id PK
+        string title
+    }
+    deck_items {
+        bigint id PK
+        bigint deck_id FK
+        bigint flashcard_id FK
+    }
+    flashcards {
+        bigint id PK
+        string cardType
+    }
+
+    quizlet_study_sessions {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        string mode
+        int totalItems
+        int completedItems
+        datetime startedAt
+        datetime endedAt
+    }
+    quizlet_session_items {
+        bigint id PK
+        bigint session_id FK
+        bigint deck_item_id FK
+        bigint flashcard_id FK
+        bigint wordId
+        int itemOrder
+        text userAnswer
+        boolean isCorrect
+        string status
+        int responseTimeMs
+    }
+    quizlet_card_progress {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        bigint deck_item_id FK
+        bigint flashcard_id FK
+        string status
+        int correctCount
+        int wrongCount
+        boolean lastAnswerCorrect
+    }
+    quizlet_study_logs {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        bigint deck_item_id FK
+        bigint flashcard_id FK
+        bigint session_item_id FK
+        string result
+        int responseTimeMs
+    }
+
+    srs_algorithm_configs {
+        bigint id PK
+        string code UK
+        string name
+        string algorithmType
+        text configJson
+        boolean enabled
+    }
+    anki_srs_settings {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        bigint algorithm_config_id FK
+        double targetRetention
+        int maxReviewsPerDay
+        int maxItemsPerDay
+    }
+    anki_srs_progress {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        bigint flashcard_id FK
+        string state
+        double memoryScore
+        double easeFactor
+        int intervalDays
+        int reviewCount
+        int lapses
+    }
+    anki_review_sessions {
+        bigint id PK
+        bigint user_id FK
+        bigint deck_id FK
+        int totalItems
+        int completedItems
+        double averageScore
+        datetime startedAt
+        datetime endedAt
+    }
+    anki_review_session_items {
+        bigint id PK
+        bigint session_id FK
+        bigint flashcard_id FK
+        int itemOrder
+        string status
+    }
+    anki_review_logs {
+        bigint id PK
+        bigint user_id FK
+        bigint progress_id FK
+        bigint session_item_id FK
+        bigint flashcard_id FK
+        string rating
+        double score
+        int timeTakenMs
+        double oldMemoryScore
+        double newMemoryScore
+        double oldEaseFactor
+        double newEaseFactor
+        int oldIntervalDays
+        int newIntervalDays
+    }
+
+    users ||--o{ quizlet_study_sessions : ""
+    decks ||--o{ quizlet_study_sessions : ""
+    quizlet_study_sessions ||--o{ quizlet_session_items : ""
+    deck_items ||--o{ quizlet_session_items : ""
+    flashcards ||--o{ quizlet_session_items : ""
+    users ||--o{ quizlet_card_progress : ""
+    decks ||--o{ quizlet_card_progress : ""
+    deck_items ||--o{ quizlet_card_progress : ""
+    flashcards ||--o{ quizlet_card_progress : ""
+    users ||--o{ quizlet_study_logs : ""
+    flashcards ||--o{ quizlet_study_logs : ""
+    quizlet_session_items ||--o{ quizlet_study_logs : ""
+
+    users ||--o{ anki_srs_settings : ""
+    decks ||--o{ anki_srs_settings : ""
+    srs_algorithm_configs ||--o{ anki_srs_settings : ""
+    users ||--o{ anki_srs_progress : ""
+    decks ||--o{ anki_srs_progress : ""
+    flashcards ||--o{ anki_srs_progress : ""
+    users ||--o{ anki_review_sessions : ""
+    decks ||--o{ anki_review_sessions : ""
+    anki_review_sessions ||--o{ anki_review_session_items : ""
+    flashcards ||--o{ anki_review_session_items : ""
+    users ||--o{ anki_review_logs : ""
+    anki_srs_progress ||--o{ anki_review_logs : ""
+    anki_review_session_items ||--o{ anki_review_logs : ""
+    flashcards ||--o{ anki_review_logs : ""
+</div>
+</div>
+
+<!-- Assessment -->
+<div id="pane-assessment" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    quiz_types {
+        bigint id PK
+        string name
+        string code UK
+        text description
+    }
+    quiz_categories {
+        bigint id PK
+        bigint parentId
+        string name
+        string code UK
+        int orderIndex
+    }
+    question_tags {
+        bigint id PK
+        string name
+        string code
+        bigint createdByUser
+    }
+    question_bank {
+        bigint id PK
+        bigint categoryId
+        bigint levelId
+        string itemType
+        bigint itemId
+        bigint wordId
+        bigint kanjiId
+        bigint grammarSubUseId
+        string questionType
+        text prompt
+        text explanation
+        string difficultyLevel
+        double defaultScore
+    }
+    question_options {
+        bigint id PK
+        bigint question_id FK
+        text content
+        boolean isCorrect
+        text explanation
+        int orderIndex
+    }
+    quizzes {
+        bigint id PK
+        bigint quizTypeId
+        bigint categoryId
+        bigint levelId
+        bigint creatorId
+        bigint deckId
+        string code UK
+        string title
+        int totalQuestions
+        double totalScore
+        double passScore
+        int timeLimitMinutes
+        string difficultyLevel
+        boolean isRandomQuestion
+        boolean isRandomOption
+        boolean allowRetake
+        int maxAttempts
+    }
+    quiz_questions {
+        bigint id PK
+        bigint quizId FK
+        bigint sectionId
+        bigint questionId FK
+        int orderIndex
+        double score
+        boolean isRequired
+    }
+    quiz_attempts {
+        bigint id PK
+        bigint userId
+        bigint quizId FK
+        bigint assignmentId
+        string status
+        datetime startedAt
+        datetime submittedAt
+        int timeSpentSeconds
+        int totalQuestions
+        int correctQuestions
+        double earnedScore
+        boolean isPassed
+    }
+    quiz_attempt_questions {
+        bigint id PK
+        bigint attempt_id FK
+        bigint quizQuestionId
+        bigint originalQuestionId
+        string questionType
+        text questionSnapshot
+        text userAnswerSnapshot
+        boolean isCorrect
+        double earnedScore
+        int responseTimeMs
+        int orderIndex
+    }
+    user_quiz_progress {
+        bigint id PK
+        bigint userId
+        bigint quizId
+        int attemptCount
+        bigint bestAttemptId
+        double bestScore
+        double bestPercentage
+        string status
+        datetime firstAttemptAt
+        datetime passedAt
+    }
+
+    quiz_categories ||--o{ quiz_categories : "parent"
+    question_bank ||--o{ question_options : "has"
+    quizzes ||--o{ quiz_questions : "has"
+    question_bank ||--o{ quiz_questions : "used in"
+    quiz_attempts ||--o{ quiz_attempt_questions : "has"
+</div>
+</div>
+
+<!-- Classroom -->
+<div id="pane-classroom" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    classes {
+        bigint id PK
+        bigint ownerId
+        string name
+        text description
+        string inviteCode UK
+        string coverImageUrl
+        int maxMembers
+        string visibility
+    }
+    class_members {
+        bigint id PK
+        bigint class_id
+        bigint user_id
+        string role
+        string joinedVia
+        datetime joinedAt
+    }
+    class_decks {
+        bigint id PK
+        bigint class_id
+        bigint deck_id
+        bigint addedBy
+        datetime addedAt
+    }
+    class_assignments {
+        bigint id PK
+        bigint class_id
+        bigint quiz_id
+        bigint createdBy
+        string title
+        text description
+        int maxAttempts
+        string scoreStrategy
+        datetime availableFrom
+        datetime dueAt
+        string status
+    }
+
+    classes ||--o{ class_members : "has"
+    classes ||--o{ class_decks : "has"
+    classes ||--o{ class_assignments : "has"
+</div>
+</div>
+
+<!-- Production -->
+<div id="pane-production" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    grammar_sub_uses {
+        bigint id PK
+        string name
+        string jlptLevel
+        text nuanceDescription
+        string detectorKey UK
+    }
+    grammar_markers {
+        bigint id PK
+        bigint sub_use_id FK
+        string markerPattern
+        string register
+        int frequencyRank
+        string detectorSubkey
+    }
+    reference_sentences {
+        bigint id PK
+        bigint sub_use_id FK
+        text l1Text
+        text l2Text
+    }
+    scenario_stubs {
+        bigint id PK
+        bigint sub_use_id FK
+        text situationContext
+        string register
+        text l1PromptTemplate
+    }
+    prompt_caches {
+        bigint id PK
+        bigint sub_use_id FK
+        bigint scenario_id FK
+        bigint reference_sentence_id FK
+        text l1Prompt
+    }
+    translation_attempts {
+        bigint id PK
+        bigint userId
+        bigint prompt_id FK
+        text userAnswerL2
+        boolean detectorPassed
+        bigint marker_used_id FK
+        string llmJudgeVerdict
+        text llmJudgeFeedback
+        string finalVerdict
+        datetime attemptedAt
+    }
+    judge_verdict_caches {
+        bigint id PK
+        bigint reference_sentence_id FK
+        string learnerAnswerHash
+        string verdict
+        text feedback
+    }
+    scenario_recencies {
+        bigint id PK
+        bigint userId
+        bigint scenario_id FK
+        datetime lastSeenAt
+    }
+
+    grammar_sub_uses ||--o{ grammar_markers : "has"
+    grammar_sub_uses ||--o{ reference_sentences : "has"
+    grammar_sub_uses ||--o{ scenario_stubs : "has"
+    grammar_sub_uses ||--o{ prompt_caches : ""
+    scenario_stubs ||--o{ prompt_caches : ""
+    reference_sentences ||--o{ prompt_caches : ""
+    prompt_caches ||--o{ translation_attempts : "prompts"
+    grammar_markers ||--o{ translation_attempts : "used in"
+    reference_sentences ||--o{ judge_verdict_caches : ""
+    scenario_stubs ||--o{ scenario_recencies : ""
+</div>
+</div>
+
+<!-- Gamification -->
+<div id="pane-gamification" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    users {
+        bigint id PK
+        string email
+        long exp
+        long coins
+    }
+    user_streaks {
+        bigint id PK
+        bigint user_id FK
+        int currentStreak
+        int longestStreak
+        int totalActiveDays
+        date lastActivityDate
+        date streakStartDate
+    }
+    streak_activities {
+        bigint id PK
+        bigint user_id FK
+        date activityDate
+    }
+    user_reward_logs {
+        bigint id PK
+        bigint userId
+        string sourceType
+        bigint sourceId
+        long expGranted
+        long coinsGranted
+        string description
+        datetime grantedAt
+    }
+
+    users ||--|| user_streaks : "has"
+    users ||--o{ streak_activities : "logs"
+    users ||--o{ user_reward_logs : "earns"
+</div>
+</div>
+
+<!-- Infra -->
+<div id="pane-infra" class="diagram-pane">
+<div class="mermaid">
+erDiagram
+    audit_logs {
+        bigint id PK
+        string entityName
+        bigint entityId
+        string action
+        text beforeData
+        text afterData
+        text diff
+        bigint userId
+        string userEmail
+        string ipAddress
+        string userAgent
+        datetime createdAt
+    }
+    notifications {
+        bigint id PK
+        bigint userId
+        string title
+        text message
+        string type
+        string entityName
+        bigint entityId
+        string actionUrl
+        boolean isRead
+        datetime createdAt
+    }
+    file_attachments {
+        bigint id PK
+        string originalName
+        string storedName
+        string contentType
+        bigint fileSize
+        string storagePath
+        string storageType
+        string entityName
+        bigint entityId
+        string fieldName
+        string url
+        datetime createdAt
+    }
+    translations {
+        bigint id PK
+        string entityName
+        bigint entityId
+        string fieldName
+        string locale
+        text value
+    }
+</div>
+</div>
+
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', er: { diagramPadding: 20, layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75, entityPadding: 15, useMaxWidth: true } });
+
+  function show(id) {
+    document.querySelectorAll('.diagram-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('pane-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>

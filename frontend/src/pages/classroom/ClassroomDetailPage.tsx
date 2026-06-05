@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { assessmentApi, classroomApi, deckApi } from "@/api";
+import { fileApi } from "@/api/features/file.api";
 import type { ClassAssignmentDTO, DeckDTO } from "@/types";
 import { useClassroom } from "@/hooks/useClassroom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -17,19 +18,22 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  BookOpen, CalendarClock, Check, ChevronLeft, ClipboardList, Copy,
-  Eye, GraduationCap, Loader2, Play, Plus, RefreshCw, Trash2, Users, UserMinus,
+  BarChart3, BookOpen, CalendarClock, Check, ChevronRight, ClipboardList, Copy,
+  Eye, GraduationCap, Image as ImageIcon, LayoutGrid, List, Loader2, Play, Plus, RefreshCw,
+  Trash2, Users, UserMinus, X,
 } from "lucide-react";
 import { COLOR_PRESETS } from "@/lib/color-presets";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { CreateEditAssignmentModal } from "./CreateEditAssignmentModal";
-import { GradebookModal } from "./GradebookModal";
 import { formatDateTime } from "@/pages/assessment/_shared";
+
+type AssignmentView = "list" | "card";
+const ASSIGNMENT_VIEW_KEY = "classroomAssignmentView";
 
 const STATUS_STYLE: Record<string, { badge: string; border: string }> = {
   DRAFT:     { badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300", border: "border-l-slate-400" },
@@ -49,9 +53,19 @@ export default function ClassroomDetailPage() {
 
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<ClassAssignmentDTO | null>(null);
-  const [gradebookId, setGradebookId] = useState<number | null>(null);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
+  const [tab, setTab] = useState("assignments");
+  const [assignmentView, setAssignmentView] = useState<AssignmentView>(() => {
+    try { return (localStorage.getItem(ASSIGNMENT_VIEW_KEY) as AssignmentView) ?? "list"; }
+    catch { return "list"; }
+  });
+
+  const changeAssignmentView = (v: AssignmentView) => {
+    setAssignmentView(v);
+    try { localStorage.setItem(ASSIGNMENT_VIEW_KEY, v); } catch { /* ignore */ }
+  };
+  const openStats = (a: ClassAssignmentDTO) => navigate(`/classrooms/${cid}/stats/${a.id}`);
 
   if (loading || !classroom) {
     return (
@@ -93,15 +107,52 @@ export default function ClassroomDetailPage() {
   return (
     <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
-        <button
-          onClick={() => navigate("/classrooms")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="size-4" /> Back to groups
-        </button>
+        <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+          {/* ── Tabs + contextual action, on one row near the breadcrumb ── */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <TabsList className="justify-start gap-1 h-auto p-1">
+              <TabsTrigger value="assignments" className="gap-1.5">
+                <ClipboardList className="size-4" />Assignments
+              </TabsTrigger>
+              <TabsTrigger value="materials" className="gap-1.5">
+                <BookOpen className="size-4" />Materials
+              </TabsTrigger>
+              <TabsTrigger value="members" className="gap-1.5">
+                <Users className="size-4" />Members
+              </TabsTrigger>
+              {isOwner && (
+                <TabsTrigger value="settings" className="gap-1.5">Settings</TabsTrigger>
+              )}
+            </TabsList>
 
-        {/* ── Hero Header ── */}
-        <Card className="overflow-hidden p-0 border-0 shadow-md">
+            {/* Right-aligned action that changes with the active tab */}
+            <div className="flex items-center gap-2">
+              {tab === "assignments" && (
+                <>
+                  <button
+                    onClick={() => changeAssignmentView(assignmentView === "list" ? "card" : "list")}
+                    title={assignmentView === "list" ? "Switch to card view" : "Switch to list view"}
+                    className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {assignmentView === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+                  </button>
+                  {isOwner && (
+                    <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
+                      <Plus className="size-4 mr-1.5" />Create assignment
+                    </Button>
+                  )}
+                </>
+              )}
+              {tab === "materials" && isOwner && (
+                <Button size="sm" onClick={() => setDeckPickerOpen(true)}>
+                  <Plus className="size-4 mr-1.5" />Add deck
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Hero Header ── */}
+          <Card className="overflow-hidden p-0 border-0 shadow-md">
           {/* Cover banner */}
           <div className="relative h-44 bg-linear-to-br from-violet-500 to-indigo-600">
             {classroom.coverImageUrl && (
@@ -146,125 +197,48 @@ export default function ClassroomDetailPage() {
           </div>
         </Card>
 
-        {/* ── Tabs ── */}
-        <Tabs defaultValue="assignments">
-          <TabsList className="w-full justify-start gap-1 h-auto p-1">
-            <TabsTrigger value="assignments" className="gap-1.5">
-              <ClipboardList className="size-4" />Assignments
-            </TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5">
-              <BookOpen className="size-4" />Materials
-            </TabsTrigger>
-            <TabsTrigger value="members" className="gap-1.5">
-              <Users className="size-4" />Members
-            </TabsTrigger>
-            {isOwner && (
-              <TabsTrigger value="settings" className="gap-1.5">Settings</TabsTrigger>
-            )}
-          </TabsList>
-
           {/* ── Assignments ── */}
           <TabsContent value="assignments" className="mt-4 space-y-3">
-            {isOwner && (
-              <div className="flex justify-end">
-                <Button size="sm" onClick={() => { setEditingAssignment(null); setAssignmentModalOpen(true); }}>
-                  <Plus className="size-4 mr-1.5" />Create assignment
-                </Button>
-              </div>
-            )}
             {visibleAssignments.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
                 <ClipboardList className="size-8 opacity-40" />
                 <p className="text-sm">No assignments yet.</p>
               </div>
-            ) : (
+            ) : assignmentView === "list" ? (
               <div className="space-y-2">
-                {visibleAssignments.map((a) => {
-                  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
-                  return (
-                    <div
-                      key={a.id}
-                      className={cn(
-                        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-l-4 bg-card px-4 py-3.5 transition-shadow hover:shadow-sm",
-                        st.border
-                      )}
-                    >
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm leading-tight">{a.title}</p>
-                          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
-                            {a.status}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground/70">{a.quizTitle}</span>
-                          {a.deadline && (
-                            <>
-                              <span>·</span>
-                              <span className="flex items-center gap-1">
-                                <CalendarClock className="size-3" />
-                                Due {formatDateTime(a.deadline)}
-                              </span>
-                            </>
-                          )}
-                          {a.maxAttempts != null && (
-                            <>
-                              <span>·</span>
-                              <span>{a.maxAttempts} attempt{a.maxAttempts !== 1 ? "s" : ""}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isOwner ? (
-                          <>
-                            {a.status === "DRAFT" && (
-                              <Button size="sm" variant="outline" onClick={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}>
-                                Edit
-                              </Button>
-                            )}
-                            {a.status === "DRAFT" && (
-                              <Button
-                                size="sm" variant="outline"
-                                className="text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                onClick={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
-                              >
-                                Publish
-                              </Button>
-                            )}
-                            {a.status === "PUBLISHED" && (
-                              <Button size="sm" variant="outline"
-                                onClick={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
-                              >
-                                Close
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" onClick={() => setGradebookId(a.id)}>
-                              Gradebook
-                            </Button>
-                          </>
-                        ) : (
-                          <Button size="sm" onClick={() => startAssignment(a)}>
-                            <Play className="size-4 mr-1.5" />Start
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {visibleAssignments.map((a) => (
+                  <AssignmentRow
+                    key={a.id}
+                    a={a}
+                    isOwner={isOwner}
+                    onStats={() => openStats(a)}
+                    onEdit={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}
+                    onPublish={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
+                    onClose={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
+                    onStart={() => startAssignment(a)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {visibleAssignments.map((a) => (
+                  <AssignmentCard
+                    key={a.id}
+                    a={a}
+                    isOwner={isOwner}
+                    onStats={() => openStats(a)}
+                    onEdit={() => { setEditingAssignment(a); setAssignmentModalOpen(true); }}
+                    onPublish={() => assignmentAction(() => classroomApi.publishAssignment(a.id), "Published.")}
+                    onClose={() => assignmentAction(() => classroomApi.closeAssignment(a.id), "Closed.")}
+                    onStart={() => startAssignment(a)}
+                  />
+                ))}
               </div>
             )}
           </TabsContent>
 
           {/* ── Materials ── */}
           <TabsContent value="materials" className="mt-4 space-y-4">
-            {isOwner && (
-              <div className="flex justify-end">
-                <Button size="sm" onClick={() => setDeckPickerOpen(true)}>
-                  <Plus className="size-4 mr-1.5" />Add deck
-                </Button>
-              </div>
-            )}
             {decks.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
                 <BookOpen className="size-8 opacity-40" />
@@ -333,7 +307,7 @@ export default function ClassroomDetailPage() {
                 className="max-w-xs"
               />
               {isOwner && (
-                <AddMemberInline onAdd={async (uid) => { await cls.addMember(uid); toast.success("Member added."); }} />
+                <AddMemberInline onAdd={async (email) => { await cls.addMember(email); toast.success("Member added."); }} />
               )}
             </div>
             <Table>
@@ -404,11 +378,6 @@ export default function ClassroomDetailPage() {
         onClose={() => setAssignmentModalOpen(false)}
         onSaved={() => cls.refreshAssignments()}
       />
-      <GradebookModal
-        assignmentId={gradebookId}
-        open={gradebookId != null}
-        onClose={() => setGradebookId(null)}
-      />
       <DeckPickerDialog
         open={deckPickerOpen}
         onClose={() => setDeckPickerOpen(false)}
@@ -419,14 +388,170 @@ export default function ClassroomDetailPage() {
   );
 }
 
-/* ── Add member by id ── */
-function AddMemberInline({ onAdd }: { onAdd: (userId: number) => Promise<void> }) {
-  const [uid, setUid] = useState("");
+/* ── Assignment item — shared props ── */
+interface AssignmentItemProps {
+  a: ClassAssignmentDTO;
+  isOwner: boolean;
+  onStats: () => void;
+  onEdit: () => void;
+  onPublish: () => void;
+  onClose: () => void;
+  onStart: () => void;
+}
+
+/** Meta line: quiz · due · attempts. */
+function AssignmentMeta({ a }: { a: ClassAssignmentDTO }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <span className="font-medium text-foreground/70">{a.quizTitle}</span>
+      {a.deadline && (
+        <>
+          <span>·</span>
+          <span className="flex items-center gap-1"><CalendarClock className="size-3" />Due {formatDateTime(a.deadline)}</span>
+        </>
+      )}
+      {a.maxAttempts != null && (
+        <><span>·</span><span>{a.maxAttempts} attempt{a.maxAttempts !== 1 ? "s" : ""}</span></>
+      )}
+    </div>
+  );
+}
+
+/** Owner edit/publish/close actions (stop click-through to the card). */
+function OwnerActions({ a, onEdit, onPublish, onClose }: Pick<AssignmentItemProps, "a" | "onEdit" | "onPublish" | "onClose">) {
+  const stop = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); };
+  return (
+    <>
+      {a.status === "DRAFT" && (
+        <Button size="sm" variant="outline" onClick={stop(onEdit)}>Edit</Button>
+      )}
+      {a.status === "DRAFT" && (
+        <Button size="sm" variant="outline"
+          className="text-green-700 border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+          onClick={stop(onPublish)}>Publish</Button>
+      )}
+      {a.status === "PUBLISHED" && (
+        <Button size="sm" variant="outline" onClick={stop(onClose)}>Close</Button>
+      )}
+    </>
+  );
+}
+
+/* ── Assignment — list row ── */
+function AssignmentRow({ a, isOwner, onStats, onEdit, onPublish, onClose, onStart }: AssignmentItemProps) {
+  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
+  return (
+    <div
+      onClick={isOwner ? onStats : undefined}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-l-4 bg-card px-4 py-3.5 transition-shadow hover:shadow-sm",
+        st.border,
+        isOwner && "cursor-pointer"
+      )}
+    >
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-sm leading-tight">{a.title}</p>
+          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
+            {a.status}
+          </span>
+        </div>
+        <AssignmentMeta a={a} />
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {isOwner ? (
+          <>
+            <OwnerActions a={a} onEdit={onEdit} onPublish={onPublish} onClose={onClose} />
+            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onStats(); }}>
+              <BarChart3 className="size-4 mr-1.5" />View stats
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" onClick={onStart}>
+            <Play className="size-4 mr-1.5" />Start
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Assignment — card ── */
+function AssignmentCard({ a, isOwner, onStats, onEdit, onPublish, onClose, onStart }: AssignmentItemProps) {
+  const st = STATUS_STYLE[a.status] ?? STATUS_STYLE.DRAFT;
+  return (
+    <div
+      onClick={isOwner ? onStats : undefined}
+      className={cn(
+        "group relative flex flex-col rounded-xl border border-l-4 bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/40",
+        st.border,
+        isOwner && "cursor-pointer"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="size-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+          <ClipboardList className="size-5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-sm leading-snug line-clamp-1">{a.title}</p>
+            <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", st.badge)}>
+              {a.status}
+            </span>
+          </div>
+          <div className="mt-1"><AssignmentMeta a={a} /></div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-3">
+        {isOwner ? (
+          <>
+            <OwnerActions a={a} onEdit={onEdit} onPublish={onPublish} onClose={onClose} />
+            <span className="ml-auto flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
+              View stats <ChevronRight className="size-3.5" />
+            </span>
+          </>
+        ) : (
+          <Button size="sm" className="w-full" onClick={onStart}>
+            <Play className="size-4 mr-1.5" />Start
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Add member by email ── */
+function AddMemberInline({ onAdd }: { onAdd: (email: string) => Promise<void> }) {
+  const [email, setEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const submit = async () => {
+    const value = email.trim();
+    if (!value) return;
+    setAdding(true);
+    try {
+      await onAdd(value);
+      setEmail("");
+    } catch {
+      toast.error("No user found with that email.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
-      <Input value={uid} onChange={(e) => setUid(e.target.value)} placeholder="User ID" className="w-28" />
-      <Button variant="outline" size="sm" disabled={!uid} onClick={async () => { await onAdd(Number(uid)); setUid(""); }}>
-        <Plus className="size-4 mr-1" />Add
+      <Input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+        placeholder="Invite by email…"
+        className="w-56"
+      />
+      <Button variant="outline" size="sm" disabled={!email.trim() || adding} onClick={submit}>
+        {adding ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Plus className="size-4 mr-1" />}Add
       </Button>
     </div>
   );
@@ -511,6 +636,30 @@ function SettingsForm({
   const [maxMembers, setMaxMembers] = useState(initialMax != null ? String(initialMax) : "");
   const [coverImageUrl, setCoverImageUrl] = useState(initialCover);
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const coverFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Cover image can be a pasted link OR a locally-picked file (uploaded to the
+  // file store, which returns a URL we save just like a pasted one).
+  const handleCoverFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (coverFileRef.current) coverFileRef.current.value = ""; // allow re-picking same file
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5 MB)."); return; }
+    setUploadingCover(true);
+    try {
+      const uploaded = await fileApi.upload(file, "classroom", classroomId, "coverImageUrl");
+      setCoverImageUrl(uploaded.url);
+      toast.success("Cover image uploaded.");
+    } catch {
+      toast.error("Upload failed.");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -526,40 +675,106 @@ function SettingsForm({
   };
 
   const remove = async () => {
-    if (!confirm("Delete this group permanently? This cannot be undone.")) return;
-    try { await classroomApi.deleteClassroom(classroomId); toast.success("Group deleted."); onDeleted(); }
-    catch { toast.error("Failed to delete."); }
+    setDeleting(true);
+    try {
+      await classroomApi.deleteClassroom(classroomId);
+      toast.success("Group deleted.");
+      setConfirmOpen(false);
+      onDeleted();
+    } catch {
+      toast.error("Failed to delete.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
-    <Card className="p-6 space-y-5 max-w-xl">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-1.5">
         <Label>Group name</Label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <Input value={name} onChange={(e) => setName(e.target.value)} className="h-11" />
       </div>
       <div className="space-y-1.5">
         <Label>Description</Label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} maxLength={500} className="max-h-48 resize-none" />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
-          <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} />
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
+        <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} className="h-11" />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Cover image</Label>
+        <div className="flex gap-2">
+          <Input
+            value={coverImageUrl}
+            onChange={(e) => setCoverImageUrl(e.target.value)}
+            placeholder="Paste an image link (https://…)"
+            className="h-11 flex-1"
+          />
+          <input ref={coverFileRef} type="file" accept="image/*" className="hidden" onChange={handleCoverFile} />
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 shrink-0"
+            onClick={() => coverFileRef.current?.click()}
+            disabled={uploadingCover}
+          >
+            {uploadingCover ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <ImageIcon className="size-4 mr-1.5" />}
+            Upload
+          </Button>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Cover image URL</Label>
-          <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://…" />
-        </div>
+        <p className="text-[11px] text-muted-foreground">Paste a link or upload an image from your device (max 5 MB).</p>
+        {coverImageUrl && (
+          <div className="relative mt-1.5 w-fit">
+            <img
+              src={coverImageUrl}
+              alt="Cover preview"
+              className="h-24 rounded-md border border-border object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => setCoverImageUrl("")}
+              aria-label="Remove cover image"
+              className="absolute -right-2 -top-2 rounded-full border border-border bg-background p-0.5 text-muted-foreground shadow-sm transition-colors hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
       </div>
       <Separator />
       <div className="flex justify-between pt-1">
-        <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={remove}>
+        <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setConfirmOpen(true)}>
           <Trash2 className="size-4 mr-1.5" />Delete group
         </Button>
         <Button onClick={save} disabled={saving}>
           {saving ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}Save changes
         </Button>
       </div>
-    </Card>
+
+      {/* Delete confirmation */}
+      <Dialog open={confirmOpen} onOpenChange={(o) => !deleting && setConfirmOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete group?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes “{name.trim() || "this group"}” for everyone. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={deleting}>Cancel</Button>
+            <Button
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={remove}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Trash2 className="size-4 mr-1.5" />}
+              Delete group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

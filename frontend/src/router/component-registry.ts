@@ -21,6 +21,8 @@ import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
+import NotebookPage from "@/pages/dictionary/NotebookPage";
+import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
@@ -42,6 +44,7 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
+import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
 import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
@@ -63,6 +66,8 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  { path: "/notebook", component: NotebookPage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
@@ -103,6 +108,7 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
+  { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
   // dashboard is the feature's own landing, reached from the sidebar menu
   // or a dedicated entry button, independent of the DB Module table.

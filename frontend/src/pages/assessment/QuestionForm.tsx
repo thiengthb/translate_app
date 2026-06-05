@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { Check, ImageIcon, Loader2, Music, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TagChips, TagCreateInline } from "./QuestionTags";
+import { TagChips } from "./QuestionTags";
 
 /* ── Media URL input with file-picker + inline preview ── */
 function MediaInput({
@@ -346,28 +344,28 @@ export function QuestionForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Type</Label>
-          <Select value={questionType} onValueChange={(v) => handleTypeChange(v as QuestionType)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {ACTIVE_QUESTION_TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABELS[t] ?? t}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={questionType}
+            onValueChange={(v) => handleTypeChange(v as QuestionType)}
+            options={ACTIVE_QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] ?? t }))}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Difficulty</Label>
-          <Select value={difficulty || "none"} onValueChange={(v) => setDifficulty(v === "none" ? "" : v)}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {["EASY","MEDIUM","HARD","N5","N4","N3","N2","N1"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={difficulty || "none"}
+            onValueChange={(v) => setDifficulty(v === "none" ? "" : v)}
+            options={[
+              { value: "none", label: "None" },
+              ...["EASY", "MEDIUM", "HARD", "N5", "N4", "N3", "N2", "N1"].map((d) => ({ value: d, label: d })),
+            ]}
+          />
         </div>
       </div>
 
       <div className="space-y-1.5">
         <Label>Prompt</Label>
-        <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} placeholder="The question text…" />
+        <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} maxLength={500} className="max-h-40 resize-none" placeholder="The question text…" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -482,28 +480,27 @@ export function QuestionForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Explanation</Label>
-          <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} />
+          <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Hint</Label>
-          <Textarea value={hint} onChange={(e) => setHint(e.target.value)} rows={2} />
+          <Textarea value={hint} onChange={(e) => setHint(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" />
         </div>
       </div>
 
-      {/* Tags */}
+      {/* Tags — selection only; create/manage tags lives in the Question Bank. */}
       <div className="space-y-2">
-        <Label>Tags</Label>
+        <div className="flex items-center justify-between">
+          <Label>Tags</Label>
+          {selectedTagIds.size > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">{selectedTagIds.size} selected</span>
+          )}
+        </div>
         <TagChips
           tags={allTags}
           selectedIds={selectedTagIds}
           onToggle={toggleTag}
-          emptyHint="No tags yet — create one below."
-        />
-        <TagCreateInline
-          onCreated={(tag) => {
-            setAllTags((prev) => [...prev.filter((t) => t.id !== tag.id), tag]);
-            setSelectedTagIds((prev) => new Set(prev).add(tag.id));
-          }}
+          emptyHint="No tags yet — create them from the Question Bank."
         />
       </div>
 

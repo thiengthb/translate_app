@@ -46,6 +46,11 @@ import java.util.stream.Collectors;
 @Tag(name = "AnkiStudy", description = "Anki SM2 study session APIs")
 public class AnkiStudyController {
 
+    /** Anki-style learn-ahead window (minutes): learning/relearning cards whose
+     *  next step is due within this window are queued so the client can keep
+     *  studying them in time order rather than idling on a countdown. */
+    private static final int LEARN_AHEAD_MINUTES = 20;
+
     DeckRepository deckRepository;
     DeckItemRepository deckItemRepository;
     FlashcardRepository flashcardRepository;
@@ -134,7 +139,12 @@ public class AnkiStudyController {
             } else {
                 if ("LEARNING".equals(progress.getState()) || "RELEARNING".equals(progress.getState())) {
                     totalLearning++;
-                    if (!isDue) continue;
+                    // Learn-ahead: include learning/relearning cards due now OR
+                    // coming up within the window, so the client can keep
+                    // studying them in time order without idling (matches Anki).
+                    boolean dueSoon = progress.getNextReviewAt() == null
+                            || !progress.getNextReviewAt().isAfter(now.plusMinutes(LEARN_AHEAD_MINUTES));
+                    if (!dueSoon) continue;
                 } else if ("REVIEW".equals(progress.getState())) {
                     totalReview++;
                     if (!isDue) continue;
@@ -723,7 +733,6 @@ public class AnkiStudyController {
             }
 
             switch (p.getState()) {
-                case "NEW"        -> newC++;
                 case "LEARNING"   -> learning++;
                 case "RELEARNING" -> relearning++;
                 case "REVIEW"     -> review++;
@@ -738,12 +747,16 @@ public class AnkiStudyController {
                 LocalDate due = nextReviewAt.toLocalDate();
                 long diff = ChronoUnit.DAYS.between(today, due);
                 if (!nextReviewAt.isAfter(now)) {
+                    // Overdue (from any past day or already past today) →
+                    // count in dueToday AND show in the T-bar of Future Due chart.
                     dueToday++;
                     dueReviewCards++;
-                } else if (diff == 1) {
-                    dueTomorrow++;
+                    futureDue[0]++;
+                } else {
+                    // Due in the future
+                    if (diff == 1) dueTomorrow++;
+                    if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
                 }
-                if (diff >= 0 && diff <= 30) futureDue[(int) diff]++;
             }
 
             sumMemory    += p.getMemoryScore();
