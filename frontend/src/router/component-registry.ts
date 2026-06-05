@@ -32,6 +32,7 @@ import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
 import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
 import DeckStudyPage from "@/features/deck-study/DeckStudyPage";
+import FlashcardSchedulePreviewPage from "@/pages/student/FlashcardSchedulePreviewPage";
 import AnkiCardEditPage from "@/pages/student/AnkiCardEditPage";
 import AnkiTemplateEditPage from "@/pages/student/AnkiTemplateEditPage";
 import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
@@ -89,6 +90,7 @@ export const routes: RouteConfig[] = [
   { path: "/deck/:deckId/anki", component: DeckStudyPage, requiredPermission: "DECK_READ" },
   { path: "/deck/:deckId/card/:flashcardId/edit", component: AnkiCardEditPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
+  { path: "/deck/:deckId/srs-preview", component: FlashcardSchedulePreviewPage, requiredPermission: "DECK_READ" },
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
