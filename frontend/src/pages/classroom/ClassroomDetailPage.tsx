@@ -17,7 +17,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   BarChart3, BookOpen, CalendarClock, Check, ChevronLeft, ChevronRight, ClipboardList, Copy,
@@ -612,6 +612,8 @@ function SettingsForm({
   const [maxMembers, setMaxMembers] = useState(initialMax != null ? String(initialMax) : "");
   const [coverImageUrl, setCoverImageUrl] = useState(initialCover);
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const save = async () => {
     setSaving(true);
@@ -627,40 +629,71 @@ function SettingsForm({
   };
 
   const remove = async () => {
-    if (!confirm("Delete this group permanently? This cannot be undone.")) return;
-    try { await classroomApi.deleteClassroom(classroomId); toast.success("Group deleted."); onDeleted(); }
-    catch { toast.error("Failed to delete."); }
+    setDeleting(true);
+    try {
+      await classroomApi.deleteClassroom(classroomId);
+      toast.success("Group deleted.");
+      setConfirmOpen(false);
+      onDeleted();
+    } catch {
+      toast.error("Failed to delete.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
-    <Card className="p-6 space-y-5 max-w-xl">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-1.5">
         <Label>Group name</Label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <Input value={name} onChange={(e) => setName(e.target.value)} className="h-11" />
       </div>
       <div className="space-y-1.5">
         <Label>Description</Label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Max members (blank = ∞)</Label>
-          <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} />
+          <Input type="number" value={maxMembers} onChange={(e) => setMaxMembers(e.target.value)} className="h-11" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Cover image URL</Label>
-          <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://…" />
+          <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://…" className="h-11" />
         </div>
       </div>
       <Separator />
       <div className="flex justify-between pt-1">
-        <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={remove}>
+        <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setConfirmOpen(true)}>
           <Trash2 className="size-4 mr-1.5" />Delete group
         </Button>
         <Button onClick={save} disabled={saving}>
           {saving ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}Save changes
         </Button>
       </div>
-    </Card>
+
+      {/* Delete confirmation */}
+      <Dialog open={confirmOpen} onOpenChange={(o) => !deleting && setConfirmOpen(o)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete group?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes “{name.trim() || "this group"}” for everyone. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={deleting}>Cancel</Button>
+            <Button
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={remove}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Trash2 className="size-4 mr-1.5" />}
+              Delete group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
