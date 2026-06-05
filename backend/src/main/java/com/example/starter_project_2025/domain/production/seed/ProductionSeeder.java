@@ -2,6 +2,7 @@ package com.example.starter_project_2025.domain.production.seed;
 
 import com.example.starter_project_2025.domain.production.grammar.*;
 import com.example.starter_project_2025.domain.production.grammar.model.CommonMistake;
+import com.example.starter_project_2025.system.words.level.LevelLookup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -34,6 +35,7 @@ public class ProductionSeeder implements CommandLineRunner {
     private final GrammarMarkerRepository markerRepository;
     private final ReferenceSentenceRepository referenceRepository;
     private final ScenarioStubRepository scenarioRepository;
+    private final LevelLookup levelLookup;
 
     @Override
     public void run(String... args) {
@@ -61,7 +63,7 @@ public class ProductionSeeder implements CommandLineRunner {
         if (subUseRepository.existsByDetectorKey("n4_obligation")) return;
         GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                 .name("Nghĩa vụ (～なければならない)")
-                .jlptLevel("N4")
+                .level(levelLookup.byCode("N4"))
                 .detectorKey("n4_obligation")
                 .nuanceDescription("Diễn tả nghĩa vụ/điều bắt buộc phải làm do hoàn cảnh.")
                 .commonMistakes(List.of(
@@ -90,7 +92,7 @@ public class ProductionSeeder implements CommandLineRunner {
         if (subUseRepository.existsByDetectorKey("n4_te_shimau")) return;
         GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                 .name("Hoàn tất/tiếc nuối (～てしまう)")
-                .jlptLevel("N4")
+                .level(levelLookup.byCode("N4"))
                 .detectorKey("n4_te_shimau")
                 .nuanceDescription("Diễn tả hành động đã hoàn tất, thường kèm sắc thái tiếc nuối hoặc ngoài ý muốn.")
                 .commonMistakes(List.of(
@@ -114,7 +116,7 @@ public class ProductionSeeder implements CommandLineRunner {
         if (subUseRepository.existsByDetectorKey("n4_conditional_ba")) return;
         GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                 .name("Điều kiện (～ば)")
-                .jlptLevel("N4")
+                .level(levelLookup.byCode("N4"))
                 .detectorKey("n4_conditional_ba")
                 .nuanceDescription("Diễn tả điều kiện giả định: nếu ... thì ...")
                 .commonMistakes(List.of(
@@ -137,7 +139,7 @@ public class ProductionSeeder implements CommandLineRunner {
         if (subUseRepository.existsByDetectorKey("n3_youni")) return;
         GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                 .name("Mục đích (～ように)")
-                .jlptLevel("N3")
+                .level(levelLookup.byCode("N3"))
                 .detectorKey("n3_youni")
                 .nuanceDescription("Diễn tả mục đích/để đạt được trạng thái nào đó (thường với động từ khả năng/vô ý chí).")
                 .commonMistakes(List.of(
@@ -307,7 +309,7 @@ public class ProductionSeeder implements CommandLineRunner {
             }
             GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                     .name(p.name())
-                    .jlptLevel(p.level())
+                    .level(levelLookup.byCode(p.level()))
                     .detectorKey(p.key())
                     .nuanceDescription(p.nuance())
                     .commonMistakes(p.mistakes())

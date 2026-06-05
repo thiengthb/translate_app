@@ -1,4 +1,4 @@
-import { grammarSubUseApi, levelApi } from "@/api";
+import { grammarApi, levelApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -6,16 +6,22 @@ import {
   type FieldSchema,
 } from "@/types";
 
-const grammarSubUseSchema: EntitySchema = {
-  entityName: "grammar_sub_use",
+const grammarSchema: EntitySchema = {
+  entityName: "grammar",
   idField: "id",
   fields: [
     {
-      name: "name",
-      label: "Tên",
+      name: "form",
+      label: "Biểu thức",
       type: "text",
       sortable: true,
       bold: true,
+    },
+    {
+      name: "slug",
+      label: "Slug",
+      type: "text",
+      sortable: true,
     },
     {
       name: "levelId",
@@ -29,14 +35,13 @@ const grammarSubUseSchema: EntitySchema = {
       },
     },
     {
-      name: "detectorKey",
-      label: "Detector Key",
-      type: "text",
-      sortable: true,
+      name: "titleGloss",
+      label: "Nghĩa tóm tắt",
+      type: "textarea",
     },
     {
-      name: "nuanceDescription",
-      label: "Mô tả sắc thái",
+      name: "notes",
+      label: "Chú ý",
       type: "textarea",
     },
     ...(auditableFieldsSchema as FieldSchema[]),
@@ -44,8 +49,8 @@ const grammarSubUseSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Ngữ pháp",
-  path: "/grammar-sub-uses",
-  api: grammarSubUseApi,
-  schema: grammarSubUseSchema,
+  name: "Biểu thức ngữ pháp",
+  path: "/grammars",
+  api: grammarApi,
+  schema: grammarSchema,
 };

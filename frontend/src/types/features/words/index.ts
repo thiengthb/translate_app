@@ -236,6 +236,22 @@ export interface WordAudio {
   source: string; // "forvo"
 }
 
+// ── Grammar (expression) ───────────────────────────────────────────────
+export interface GrammarDTO extends BaseDTO {
+  slug?: string;
+  form?: string;
+  levelId?: number;
+  /** JLPT code (e.g. "N4") of levelId — read-only, for display. */
+  levelCode?: string;
+  titleGloss?: string;
+  textbookSources?: string[];
+  notes?: string;
+}
+
+export interface GrammarFilter extends BaseFilter {
+  levelId?: number;
+}
+
 // ── GrammarSubUse ──────────────────────────────────────────────────────
 export interface CommonMistake {
   pattern?: string;
@@ -244,14 +260,16 @@ export interface CommonMistake {
 
 export interface GrammarSubUseDTO extends BaseDTO {
   name?: string;
-  jlptLevel?: string;
+  levelId?: number;
+  /** JLPT code (e.g. "N4") of levelId — read-only, for display. */
+  levelCode?: string;
   nuanceDescription?: string;
   detectorKey?: string;
   commonMistakes?: CommonMistake[];
 }
 
 export interface GrammarSubUseFilter extends BaseFilter {
-  jlptLevel?: string;
+  levelId?: number;
 }
 
 // ── GrammarMarker ──────────────────────────────────────────────────────
@@ -291,6 +309,8 @@ export interface ScenarioStubDTO extends BaseDTO {
 
 export interface ScenarioStubFilter extends BaseFilter {
   subUseId?: number;
+}
+
 // ── Notebook (sổ tay từ vựng/kanji lưu trên server, per-user) ──────────
 export interface NotebookWordEntry {
   entryId: number;

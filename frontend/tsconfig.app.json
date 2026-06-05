@@ -9,7 +9,7 @@
     "skipLibCheck": true,
 
     /* TS 6 deprecate baseUrl — giữ tới khi migrate paths sang relative */
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": [

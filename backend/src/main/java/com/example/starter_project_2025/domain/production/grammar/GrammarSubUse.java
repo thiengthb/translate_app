@@ -7,6 +7,7 @@ import com.example.starter_project_2025.domain.production.grammar.converter.Comm
 import com.example.starter_project_2025.domain.production.grammar.model.CommonMistake;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
+import com.example.starter_project_2025.system.words.level.Level;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -24,15 +25,17 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("GRAMMAR_SUB_USE")
 @ResourceMenu(title = "Ngữ pháp", group = "Tiếng Nhật", icon = "book-marked", url = "/grammar-sub-uses", order = 9)
-@Searchable(fields = {"name", "jlptLevel", "detectorKey"})
+@Searchable(fields = {"name", "detectorKey"})
 @AutoCrud(path = "grammar-sub-uses")
 public class GrammarSubUse extends BaseEntity {
 
     @Column(length = 100, nullable = false)
     String name;
 
-    @Column(length = 10)
-    String jlptLevel;
+    /** JLPT proficiency level (references the shared {@code levels} table). */
+    @ManyToOne
+    @JoinColumn(name = "level_id", foreignKey = @ForeignKey(name = "fk_grammar_sub_uses_level"))
+    Level level;
 
     @Column(columnDefinition = "TEXT")
     String nuanceDescription;
@@ -69,4 +72,10 @@ public class GrammarSubUse extends BaseEntity {
     /** Optional italic note under the example. */
     @Column(columnDefinition = "TEXT")
     String exampleNote;
+
+    /** Convenience JLPT code (e.g. {@code "N4"}) derived from {@link #level}. */
+    @Transient
+    public String getJlptLevel() {
+        return level != null ? level.getCode() : null;
+    }
 }
