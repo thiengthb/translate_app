@@ -24,6 +24,9 @@ public class QuestionBankDTO extends BaseDTO {
     Long levelId;
     String itemType;
 
+    /** When set, the question is private to this quiz (hidden from the bank). */
+    Long ownerQuizId;
+
     @NotBlank(groups = OnCreate.class, message = "Question type is required")
     String questionType;
 

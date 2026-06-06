@@ -209,6 +209,35 @@ public class QuizActionServiceImpl implements QuizActionService {
         return result;
     }
 
+    @Override
+    public void discardDraft(Long quizId, Long userId) {
+        Quiz quiz = load(quizId);
+
+        // Safety: only ever discard a never-published DRAFT, and only by its owner.
+        if (userId != null && quiz.getCreatorId() != null && !userId.equals(quiz.getCreatorId())) {
+            throw new ResourceNotFoundException("Quiz not found");
+        }
+        if (!"DRAFT".equals(quiz.getStatus()) || quiz.getPublishedAt() != null) {
+            return; // published/archived quizzes are real — never auto-delete them
+        }
+
+        // 1) Delete questions that were quick-created privately for this quiz.
+        List<QuestionBank> privateQuestions =
+                questionBankRepository.findByOwnerQuizIdAndIsDeletedFalse(quizId);
+        for (QuestionBank q : privateQuestions) q.setIsDeleted(true);
+        questionBankRepository.saveAll(privateQuestions);
+
+        // 2) Delete the question placements.
+        List<QuizQuestion> placements =
+                quizQuestionRepository.findByQuizIdAndIsDeletedFalseOrderByOrderIndexAsc(quizId);
+        for (QuizQuestion qq : placements) qq.setIsDeleted(true);
+        quizQuestionRepository.saveAll(placements);
+
+        // 3) Delete the draft quiz itself.
+        quiz.setIsDeleted(true);
+        quizRepository.save(quiz);
+    }
+
     /* ── helpers ── */
     private Quiz load(Long quizId) {
         return quizRepository.findById(quizId)

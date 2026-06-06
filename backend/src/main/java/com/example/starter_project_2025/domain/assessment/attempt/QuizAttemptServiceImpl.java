@@ -11,6 +11,8 @@ import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQues
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
 import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignment;
 import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignmentRepository;
+import com.example.starter_project_2025.domain.classroom.classroom.Classroom;
+import com.example.starter_project_2025.domain.classroom.classroom.ClassroomRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.system.reward.RewardService;
 import lombok.AccessLevel;
@@ -45,6 +47,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     QuizAttemptQuestionRepository attemptQuestionRepository;
     UserQuizProgressRepository progressRepository;
     ClassAssignmentRepository classAssignmentRepository;
+    ClassroomRepository classroomRepository;
     RewardService rewardService;
 
     /* ──────────────────────────────────────────
@@ -218,6 +221,29 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     @Transactional(readOnly = true)
     public QuizAttemptDTO getAttempt(Long userId, Long attemptId) {
         QuizAttempt attempt = loadOwnedAttempt(userId, attemptId);
+        Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
+        return assembleDto(attempt, quiz);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuizAttemptDTO getAttemptForReview(Long requesterId, Long attemptId) {
+        QuizAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attempt not found"));
+
+        boolean isOwner = attempt.getUserId().equals(requesterId);
+        boolean isGroupOwner = false;
+        if (!isOwner && attempt.getAssignmentId() != null) {
+            ClassAssignment assignment = classAssignmentRepository.findById(attempt.getAssignmentId()).orElse(null);
+            if (assignment != null) {
+                Classroom classroom = classroomRepository.findById(assignment.getClassroomId()).orElse(null);
+                isGroupOwner = classroom != null && requesterId.equals(classroom.getOwnerId());
+            }
+        }
+        if (!isOwner && !isGroupOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to view this attempt");
+        }
+
         Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
         return assembleDto(attempt, quiz);
     }
