@@ -103,6 +103,17 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
                         .priority(priority++)
                         .build());
             }
+
+            // Alternate-writing (cách viết khác) links.
+            int vp = 0;
+            for (JsonNode v : k.path("variants")) {
+                readingRepository.save(KanjiReading.builder()
+                        .kanji(detail)
+                        .readingType("VARIANT")
+                        .value(v.asText())
+                        .priority(vp++)
+                        .build());
+            }
         }
 
         // 3. Built-in system decks (one per level: N5 + grades 1-3). A kanji shared
