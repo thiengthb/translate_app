@@ -1,5 +1,7 @@
 HELP.md
 target/
+# Sudachi dictionary cache (downloaded during build, ~70 MB, not committed)
+.sudachi-cache/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

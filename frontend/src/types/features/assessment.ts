@@ -26,21 +26,8 @@ export type ProgressStatus =
   | "FAILED";
 export type DifficultyLevel = "EASY" | "MEDIUM" | "HARD" | "N5" | "N4" | "N3" | "N2" | "N1";
 
-export interface QuizCategoryDTO {
-  id: number;
-  parentId: number | null;
-  name: string;
-  code: string;
-  description: string | null;
-  orderIndex: number;
-  isActive: boolean;
-  children?: QuizCategoryDTO[];
-}
-
 export interface QuizDTO {
   id: number;
-  quizTypeId: number | null;
-  categoryId: number | null;
   levelId: number | null;
   creatorId: number | null;
   deckId: number | null;
@@ -88,7 +75,6 @@ export interface QuestionTagDTO {
 
 export interface QuestionBankDTO {
   id: number;
-  categoryId: number | null;
   levelId: number | null;
   itemType: string | null;
   questionType: QuestionType;
@@ -100,6 +86,8 @@ export interface QuestionBankDTO {
   difficultyLevel: DifficultyLevel | null;
   defaultScore: number;
   isActive: boolean;
+  /** When set, the question is private to this quiz (hidden from the shared bank). */
+  ownerQuizId?: number | null;
   /** Optimistic-lock version (BaseDTO). */
   version: number;
   /** Content version — bumped only when the question's content changes. */
@@ -213,7 +201,6 @@ export interface UserQuizProgressDTO {
 
 /* ── Query param helpers ── */
 export interface QuizQueryParams {
-  categoryId?: number;
   levelId?: number;
   creatorId?: number;
   status?: QuizStatus;
@@ -223,13 +210,18 @@ export interface QuizQueryParams {
 }
 
 export interface QuestionQueryParams {
-  categoryId?: number;
   levelId?: number;
   questionType?: QuestionType;
   difficultyLevel?: DifficultyLevel;
   /** Filter to questions carrying this single tag. */
   tagId?: number;
   search?: string;
+  /**
+   * Quiz wizard scope: include shared bank questions PLUS this quiz's private
+   * (quick-created) ones. Omitted everywhere else, so the shared bank hides
+   * quiz-private questions.
+   */
+  ownerQuizId?: number;
 }
 
 export interface QuestionTagQueryParams {

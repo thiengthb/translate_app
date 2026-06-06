@@ -16,6 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { Check, Copy, GraduationCap, Loader2, LogIn, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -297,6 +298,13 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
   const [name, setName]               = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving]           = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+
+  const dirty = name.trim() !== "" || description.trim() !== "";
+  const requestClose = () => {
+    if (dirty) setConfirmCloseOpen(true);
+    else onClose();
+  };
 
   const submit = async () => {
     if (!name.trim()) { toast.error("Name is required."); return; }
@@ -314,7 +322,7 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) requestClose(); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create group</DialogTitle>
@@ -331,17 +339,30 @@ function CreateGroupDialog({ open, onClose, onCreated }: {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
+              maxLength={500}
+              className="max-h-40 resize-none"
               placeholder="What is this group about?"
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}Create
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmCloseOpen}
+        tone="warning"
+        title="Discard new group?"
+        description="The details you entered will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmCloseOpen(false); onClose(); }}
+        onCancel={() => setConfirmCloseOpen(false)}
+      />
     </Dialog>
   );
 }
@@ -362,8 +383,14 @@ function JoinGroupDialog({ open, onClose, onJoined }: {
       setCode("");
       onJoined();
     } catch (e: unknown) {
-      const status = (e as { response?: { status?: number } })?.response?.status;
-      toast.error(status === 404 ? "Invalid code." : status === 409 ? "Group is full." : "Could not join.");
+      const resp = (e as { response?: { status?: number; data?: { message?: string } } })?.response;
+      const status = resp?.status;
+      // Prefer the server's reason (e.g. "You are already a member…", "Classroom is full")
+      // and fall back to a status-based message.
+      toast.error(
+        resp?.data?.message ||
+          (status === 404 ? "Invalid code." : status === 409 ? "You can't join this group." : "Could not join."),
+      );
     } finally {
       setJoining(false);
     }

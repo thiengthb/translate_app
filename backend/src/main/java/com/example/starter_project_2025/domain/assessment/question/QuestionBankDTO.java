@@ -21,9 +21,11 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuestionBankDTO extends BaseDTO {
 
-    Long categoryId;
     Long levelId;
     String itemType;
+
+    /** When set, the question is private to this quiz (hidden from the bank). */
+    Long ownerQuizId;
 
     @NotBlank(groups = OnCreate.class, message = "Question type is required")
     String questionType;

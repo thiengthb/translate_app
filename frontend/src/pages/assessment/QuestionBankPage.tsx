@@ -6,16 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, FileQuestion, Loader2, Pencil, Plus, Search, Tag as TagIcon, Trash2 } from "lucide-react";
+import { ChevronRight, FileQuestion, Loader2, Pencil, Plus, Search, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
-import { QuestionTagManagerModal } from "./QuestionTagManagerModal";
-import { TagBadges, TagChips } from "./QuestionTags";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
+import { TagBadges } from "./QuestionTags";
+import { getQuestionTagColor, QuestionTagPill } from "./QuestionTagPickerSheet";
 import { QUESTION_TYPE_LABELS, QuestionOptionsPreview } from "./QuestionOptionsPreview";
 
 const PAGE_SIZES = [10, 20, 50];
@@ -30,8 +38,11 @@ export default function QuestionBankPage() {
   const [debounced, setDebounced] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
 
-  const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  const [newTagOpen, setNewTagOpen] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [isSavingTag, setIsSavingTag] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDel, setConfirmDel] = useState<QuestionBankDTO | null>(null);
 
   /* ── Pagination (client-side) ── */
   const [page, setPage] = useState(1);
@@ -75,12 +86,31 @@ export default function QuestionBankPage() {
       return next;
     });
 
-  const handleDelete = async (q: QuestionBankDTO) => {
-    if (!window.confirm("Delete this question? This cannot be undone.")) return;
-    setDeletingId(q.id);
+  const createTag = async () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    setIsSavingTag(true);
     try {
-      await assessmentApi.deleteQuestion(q.id);
-      setQuestions((prev) => prev.filter((x) => x.id !== q.id));
+      const created = await assessmentApi.createQuestionTag({ name });
+      setTags((prev) => (prev.some((t) => t.id === created.id) ? prev : [...prev, created]));
+      setSelectedTagIds(new Set([created.id]));
+      setNewTagName("");
+      setNewTagOpen(false);
+      toast.success("Tag created.");
+    } catch {
+      toast.error("Failed to create tag (it may already exist).");
+    } finally {
+      setIsSavingTag(false);
+    }
+  };
+
+  const performDelete = async () => {
+    if (!confirmDel) return;
+    setDeletingId(confirmDel.id);
+    try {
+      await assessmentApi.deleteQuestion(confirmDel.id);
+      setQuestions((prev) => prev.filter((x) => x.id !== confirmDel.id));
+      setConfirmDel(null);
     } catch {
       toast.error("Failed to delete question.");
     } finally {
@@ -110,30 +140,40 @@ export default function QuestionBankPage() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={() => setTagManagerOpen(true)}>
-            <TagIcon className="size-4 mr-1" /> Manage tags
-          </Button>
           <Button onClick={openNew}>
             <Plus className="size-4 mr-1" /> New question
           </Button>
         </div>
 
-        {/* Tag filter */}
-        {tags.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap shrink-0 pt-3">
-            <span className="text-xs font-medium text-muted-foreground">Filter:</span>
-            <TagChips tags={tags} selectedIds={selectedTagIds} onToggle={toggleTag} />
-            {selectedTagIds.size > 0 && (
+        {/* Tag filter — library-style pill row (scrolls horizontally) */}
+        <div className="shrink-0 pt-3">
+          <ScrollHintContainer axis="horizontal" viewportClassName="pb-0.5">
+            <div className="flex w-max items-center gap-2 py-1">
+              <QuestionTagPill
+                label="All"
+                active={selectedTagIds.size === 0}
+                onClick={() => setSelectedTagIds(new Set())}
+              />
               <button
                 type="button"
-                onClick={() => setSelectedTagIds(new Set())}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
+                onClick={() => setNewTagOpen(true)}
+                title="Create new tag"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
               >
-                Clear
+                <Plus className="size-4" />
               </button>
-            )}
-          </div>
-        )}
+              {tags.map((t) => (
+                <QuestionTagPill
+                  key={t.id}
+                  label={t.name}
+                  active={selectedTagIds.has(t.id)}
+                  color={getQuestionTagColor(t)}
+                  onClick={() => toggleTag(t.id)}
+                />
+              ))}
+            </div>
+          </ScrollHintContainer>
+        </div>
 
         {/* Content (scrolls; footer below stays pinned) */}
         <ScrollHintContainer axis="vertical" className="flex-1 min-h-0 mt-4">
@@ -160,6 +200,7 @@ export default function QuestionBankPage() {
               {/* Header */}
               <div className="flex items-center gap-3 h-10 px-3 bg-muted border-b text-xs font-semibold text-foreground">
                 <span className="w-4 shrink-0" aria-hidden />
+                <span className="w-7 shrink-0 text-center">#</span>
                 <span className="flex-1 min-w-0">Question</span>
                 <span className="hidden sm:block w-16 shrink-0">Level</span>
                 <span className="w-28 shrink-0">Type</span>
@@ -172,9 +213,10 @@ export default function QuestionBankPage() {
                   key={q.id}
                   question={q}
                   index={i}
+                  order={pageStart + i + 1}
                   deleting={deletingId === q.id}
                   onEdit={() => openEdit(q)}
-                  onDelete={() => handleDelete(q)}
+                  onDelete={() => setConfirmDel(q)}
                 />
               ))}
             </div>
@@ -207,10 +249,80 @@ export default function QuestionBankPage() {
         )}
       </div>
 
-      <QuestionTagManagerModal
-        open={tagManagerOpen}
-        onClose={() => setTagManagerOpen(false)}
-        onChanged={() => { loadTags(); loadQuestions(); }}
+      <Dialog open={newTagOpen} onOpenChange={(open) => {
+        setNewTagOpen(open);
+        if (!open) setNewTagName("");
+      }}>
+        <DialogContent className="overflow-hidden p-0 sm:max-w-[520px]">
+          <DialogHeader className="border-b border-border px-6 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <TagIcon className="size-5" />
+                </span>
+                <DialogTitle className="text-base">Create new tag</DialogTitle>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-8 items-center gap-2 rounded-full bg-primary/12 px-3 text-sm font-semibold text-primary">
+                  <span className="size-2 rounded-full bg-primary" aria-hidden />
+                  {newTagName.trim() || "Tag name"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNewTagOpen(false)}
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 px-6 py-6">
+            <label className="space-y-2 block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tag name</span>
+              <Input
+                autoFocus
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void createTag();
+                  }
+                }}
+                placeholder="e.g. Grammar"
+                className="h-12 rounded-xl"
+              />
+            </label>
+          </div>
+
+          <DialogFooter className="border-t border-border bg-muted/20 px-6 py-4 sm:justify-between">
+            <Button variant="outline" onClick={() => setNewTagOpen(false)} disabled={isSavingTag}>
+              Cancel
+            </Button>
+            <Button onClick={createTag} disabled={isSavingTag || !newTagName.trim()}>
+              {isSavingTag ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirmDel != null}
+        loading={deletingId != null}
+        title="Delete question?"
+        description={
+          confirmDel
+            ? `This permanently deletes “${confirmDel.prompt.slice(0, 60)}${confirmDel.prompt.length > 60 ? "…" : ""}”. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={performDelete}
+        onCancel={() => { if (deletingId == null) setConfirmDel(null); }}
       />
     </MainLayout>
   );
@@ -223,12 +335,14 @@ export default function QuestionBankPage() {
 function BankRow({
   question: q,
   index,
+  order,
   deleting,
   onEdit,
   onDelete,
 }: {
   question: QuestionBankDTO;
   index: number;
+  order: number;
   deleting: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -254,6 +368,11 @@ function BankRow({
         {/* Expand chevron */}
         <span className="shrink-0 flex items-center justify-center size-4 text-muted-foreground">
           <ChevronRight className={cn("size-4 transition-transform duration-200", open && "rotate-90")} />
+        </span>
+
+        {/* Order number */}
+        <span className="w-7 shrink-0 text-center text-xs font-semibold text-muted-foreground tabular-nums">
+          {order}
         </span>
 
         {/* Prompt */}

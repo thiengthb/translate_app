@@ -65,6 +65,8 @@ public class RoleDataInitializer implements CommandLineRunner {
                         "ANKI_REVIEW_SESSION_READ", "ANKI_REVIEW_SESSION_CREATE", "ANKI_REVIEW_SESSION_UPDATE", "ANKI_REVIEW_SESSION_DELETE",
                         "ANKI_REVIEW_SESSION_ITEM_READ", "ANKI_REVIEW_SESSION_ITEM_CREATE", "ANKI_REVIEW_SESSION_ITEM_UPDATE", "ANKI_REVIEW_SESSION_ITEM_DELETE",
                         "ANKI_REVIEW_LOG_READ", "ANKI_REVIEW_LOG_CREATE", "ANKI_REVIEW_LOG_UPDATE", "ANKI_REVIEW_LOG_DELETE",
+                        // ── Grammar Learning (SRS) module ──
+                        "GRAMMAR_PROGRESS_READ", "GRAMMAR_PROGRESS_CREATE", "GRAMMAR_PROGRESS_UPDATE", "GRAMMAR_PROGRESS_DELETE",
                         // ── Assessment module ──
                         "QUIZ_TYPE_READ",
                         "QUIZ_CATEGORY_READ",

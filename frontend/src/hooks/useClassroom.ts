@@ -18,7 +18,7 @@ interface UseClassroomResult {
   refreshMembers: () => Promise<void>;
   refreshDecks: () => Promise<void>;
   refreshAssignments: () => Promise<void>;
-  addMember: (userId: number) => Promise<void>;
+  addMember: (email: string) => Promise<void>;
   removeMember: (userId: number) => Promise<void>;
   addDeck: (deckId: number) => Promise<void>;
   removeDeck: (deckId: number) => Promise<void>;
@@ -74,9 +74,9 @@ export function useClassroom(classroomId: number | null): UseClassroomResult {
   }, [refreshAll]);
 
   const addMember = useCallback(
-    async (userId: number) => {
+    async (email: string) => {
       if (classroomId == null) return;
-      await classroomApi.addMember(classroomId, userId);
+      await classroomApi.addMemberByEmail(classroomId, email);
       await refreshMembers();
     },
     [classroomId, refreshMembers]

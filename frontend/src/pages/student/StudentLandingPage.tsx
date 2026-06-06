@@ -4,7 +4,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useTranslation } from "@/contexts/I18nContext";
 import { formatRoleLabel } from "@/utils/rbac.utils";
 import { motion } from "motion/react";
-import { BookOpen, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { BookOpen, CheckCircle2, Gamepad2, Sparkles } from "lucide-react";
 import type { MessageKey } from "@/i18n";
 
 const CHECKLIST: Array<{ titleKey: MessageKey; textKey: MessageKey }> = [
@@ -69,6 +70,42 @@ export default function StudentLandingPage() {
                     </motion.article>
                 ))}
             </section>
+
+            <motion.section
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.24, duration: 0.45, ease: "easeOut" }}
+                className="mt-6"
+            >
+                <div className="mb-3 flex items-center gap-2">
+                    <Gamepad2 className="size-5 text-amber-500" />
+                    <h2 className="text-lg font-semibold text-foreground">
+                        Trò chơi luyện tập
+                    </h2>
+                </div>
+                <Link
+                    to="/kanji-radical"
+                    className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 shadow-lg transition-transform hover:-translate-y-0.5"
+                >
+                    <div className="pointer-events-none absolute -right-6 -top-8 text-[8rem] leading-none text-amber-400/10 transition-transform group-hover:scale-110"
+                        style={{ fontFamily: '"Noto Serif JP", "Yu Mincho", serif' }}>
+                        部首
+                    </div>
+                    <div className="relative flex flex-col gap-2">
+                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-400/30">
+                            <Sparkles className="size-3.5" /> Mới
+                        </span>
+                        <h3 className="text-xl font-bold text-white">Bộ Thủ Karuta</h3>
+                        <p className="max-w-lg text-sm text-slate-300">
+                            Cho một từ Hán-Việt kèm hiragana — đánh ra lá bài chứa bộ thủ
+                            của chữ Kanji để ghi điểm, ghép combo và vượt qua từng vòng.
+                        </p>
+                        <span className="mt-1 text-sm font-semibold text-amber-300 group-hover:underline">
+                            Chơi ngay →
+                        </span>
+                    </div>
+                </Link>
+            </motion.section>
 
             <motion.section
                 initial={{ opacity: 0 }}

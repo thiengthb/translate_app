@@ -55,8 +55,6 @@ public class QuizActionServiceImpl implements QuizActionService {
         Quiz source = load(quizId);
 
         Quiz copy = Quiz.builder()
-                .quizTypeId(source.getQuizTypeId())
-                .categoryId(source.getCategoryId())
                 .levelId(source.getLevelId())
                 .creatorId(userId)
                 .deckId(source.getDeckId())
@@ -99,8 +97,6 @@ public class QuizActionServiceImpl implements QuizActionService {
         Quiz source = load(quizId);
 
         Quiz copy = Quiz.builder()
-                .quizTypeId(source.getQuizTypeId())
-                .categoryId(source.getCategoryId())
                 .levelId(source.getLevelId())
                 .creatorId(userId)                       // now owned by the cloner
                 .title(source.getTitle() + " (Copy)")
@@ -152,7 +148,6 @@ public class QuizActionServiceImpl implements QuizActionService {
     /** Copy a question (and its options) into a brand-new row owned by {@code userId}. */
     private QuestionBank deepCopyQuestion(QuestionBank src, Long userId) {
         QuestionBank copy = QuestionBank.builder()
-                .categoryId(src.getCategoryId())
                 .levelId(src.getLevelId())
                 .itemType(src.getItemType())
                 .itemId(src.getItemId())
@@ -214,6 +209,35 @@ public class QuizActionServiceImpl implements QuizActionService {
         return result;
     }
 
+    @Override
+    public void discardDraft(Long quizId, Long userId) {
+        Quiz quiz = load(quizId);
+
+        // Safety: only ever discard a never-published DRAFT, and only by its owner.
+        if (userId != null && quiz.getCreatorId() != null && !userId.equals(quiz.getCreatorId())) {
+            throw new ResourceNotFoundException("Quiz not found");
+        }
+        if (!"DRAFT".equals(quiz.getStatus()) || quiz.getPublishedAt() != null) {
+            return; // published/archived quizzes are real — never auto-delete them
+        }
+
+        // 1) Delete questions that were quick-created privately for this quiz.
+        List<QuestionBank> privateQuestions =
+                questionBankRepository.findByOwnerQuizIdAndIsDeletedFalse(quizId);
+        for (QuestionBank q : privateQuestions) q.setIsDeleted(true);
+        questionBankRepository.saveAll(privateQuestions);
+
+        // 2) Delete the question placements.
+        List<QuizQuestion> placements =
+                quizQuestionRepository.findByQuizIdAndIsDeletedFalseOrderByOrderIndexAsc(quizId);
+        for (QuizQuestion qq : placements) qq.setIsDeleted(true);
+        quizQuestionRepository.saveAll(placements);
+
+        // 3) Delete the draft quiz itself.
+        quiz.setIsDeleted(true);
+        quizRepository.save(quiz);
+    }
+
     /* ── helpers ── */
     private Quiz load(Long quizId) {
         return quizRepository.findById(quizId)
@@ -222,8 +246,6 @@ public class QuizActionServiceImpl implements QuizActionService {
 
     private QuizDTO toDto(Quiz quiz) {
         QuizDTO dto = QuizDTO.builder()
-                .quizTypeId(quiz.getQuizTypeId())
-                .categoryId(quiz.getCategoryId())
                 .levelId(quiz.getLevelId())
                 .creatorId(quiz.getCreatorId())
                 .deckId(quiz.getDeckId())

@@ -8,9 +8,6 @@ import lombok.Builder;
 public class QuestionBankFilter extends BaseFilter {
 
     @FilterField
-    Long categoryId;
-
-    @FilterField
     Long levelId;
 
     @FilterField
@@ -26,4 +23,12 @@ public class QuestionBankFilter extends BaseFilter {
     /** Owner scope — forced to the current user by the service (per-user bank). */
     @FilterField(entityField = "createdByUser")
     Long createdByUser;
+
+    /**
+     * Quiz wizard scope. When provided, the list returns shared bank questions
+     * PLUS this quiz's private questions. When absent, only shared questions
+     * (ownerQuizId IS NULL) are returned. Handled manually in the service, so it
+     * is intentionally NOT a @FilterField (which would force plain equality).
+     */
+    Long ownerQuizId;
 }

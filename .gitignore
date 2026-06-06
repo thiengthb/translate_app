@@ -22,3 +22,7 @@ backend/scripts/seed/*.sql
 # Kanji study diagrams — local design artifacts, regenerate via gen-kanji-diagrams.mjs.
 backend/scripts/gen-kanji-diagrams.mjs
 docs/kanji-study/
+# Sudachi dictionary cache: downloaded zip (~70MB) + extracted .dic (~217MB).
+# Auto-fetched by Maven (download-maven-plugin) on first build; never commit
+# (the .dic exceeds GitHub's 100MB file limit). See pom.xml + SudachiTokenizer.java.
+backend/.sudachi-cache/

@@ -68,6 +68,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { COLOR_PRESETS } from "@/lib/color-presets";
+import { FieldStructureEditor, type FieldDef } from "@/pages/student/shared/FieldDeckEditor";
 import type {
   AvailableTemplateField,
   CardTemplateBlock,
@@ -102,6 +103,11 @@ interface DeckTemplateDesignerProps {
   hasSampleCard: boolean;
   /** When explicitly `false`, the Save button is disabled (nothing changed). */
   dirty?: boolean;
+  /** Editable field structure. When both are provided the field editor is shown
+   *  inside the Card builder so new fields can be created here (standalone
+   *  templates). Omit for deck-tied templates whose fields come from the deck. */
+  fields?: FieldDef[];
+  onFieldsChange?: (fields: FieldDef[]) => void;
   onDraftChange: (draft: TemplateDraftFields) => void;
   onBuilderChange: (state: CardTemplateBuilderState) => void;
   onPreviewSideChange: (side: TemplateSide) => void;
@@ -156,6 +162,8 @@ export function DeckTemplateDesigner({
   hasTemplate,
   hasSampleCard,
   dirty,
+  fields,
+  onFieldsChange,
   onDraftChange,
   onBuilderChange,
   onPreviewSideChange,
@@ -244,6 +252,8 @@ export function DeckTemplateDesigner({
                 activeSide={activeSide}
                 state={builderState}
                 availableFields={availableFields}
+                fields={fields}
+                onFieldsChange={onFieldsChange}
                 onSideChange={setActiveSide}
                 onSideBlocksChange={(side, blocks) => {
                   updateSide(side, blocks);
@@ -393,15 +403,22 @@ function CardBuilderPanel({
   activeSide,
   state,
   availableFields,
+  fields,
+  onFieldsChange,
   onSideChange,
   onSideBlocksChange,
 }: {
   activeSide: TemplateSide;
   state: CardTemplateBuilderState;
   availableFields: AvailableTemplateField[];
+  fields?: FieldDef[];
+  onFieldsChange?: (fields: FieldDef[]) => void;
   onSideChange: (side: TemplateSide) => void;
   onSideBlocksChange: (side: TemplateSide, blocks: CardTemplateBlock[]) => void;
 }) {
+  // When the field structure is editable, the builder owns field creation too
+  // (the old separate "Mẫu thẻ" panel is merged in here).
+  const canEditFields = !!fields && !!onFieldsChange;
   const blocks = state.sides[activeSide];
   const enabledCount = blocks.filter((block) => block.enabled).length;
 
@@ -454,8 +471,26 @@ function CardBuilderPanel({
   return (
     <Section
       title="Card builder"
-      description="Toggle, reorder and resize the fields shown on this side."
+      description={
+        canEditFields
+          ? "Tạo trường cho mẫu, rồi bật/sắp xếp/đổi cỡ các trường trên từng mặt."
+          : "Toggle, reorder and resize the fields shown on this side."
+      }
     >
+      {/* Field structure — merged in from the old "Mẫu thẻ" panel so new fields
+          can be created right here. Hidden for deck-tied templates. */}
+      {canEditFields && (
+        <div className="mb-4 space-y-2">
+          <InfoLabel
+            title={<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trường của mẫu</p>}
+            info="Các trường mà mẫu này tham chiếu qua {{Tên trường}}. Thêm/sửa/xóa trường tại đây, rồi bấm chip bên dưới để đưa trường vào một mặt thẻ."
+            side="right"
+          />
+          <FieldStructureEditor fields={fields!} onChange={onFieldsChange!} />
+          <div className="!mt-4 border-t border-border/60" />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <Tabs value={activeSide} onValueChange={(value) => onSideChange(value as TemplateSide)}>
           <TabsList className="h-8">
@@ -503,11 +538,13 @@ function CardBuilderPanel({
       {/* Available deck fields → click to add */}
       <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          Deck fields · click to add
+          {canEditFields ? "Trường · bấm để thêm vào mặt này" : "Deck fields · click to add"}
         </p>
         {sideFields.length === 0 ? (
           <p className="text-[11px] text-muted-foreground">
-            No {activeSide.toLowerCase()} fields found in the sample card.
+            {canEditFields
+              ? `Chưa có trường ${activeSide === "FRONT" ? "mặt trước" : "mặt sau"}. Thêm ở phần "Trường của mẫu" bên trên.`
+              : `No ${activeSide.toLowerCase()} fields found in the sample card.`}
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">

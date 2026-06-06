@@ -4,34 +4,38 @@ import com.example.starter_project_2025.domain.production.detector.DetectionResu
 import com.example.starter_project_2025.domain.production.detector.DetectorRegistry;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarker;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerRepository;
+import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentence;
 import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
-import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.llm.JudgeResult;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.domain.production.prompt.PromptCache;
 import com.example.starter_project_2025.domain.production.prompt.PromptCacheRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GradingService {
 
-    private static final double MEANING_THRESHOLD = 0.6;
+    /** Score (0-1, i.e. 6.5/10) at/above which the answer is "Gần đúng" (PARTIAL). */
+    private static final double MEANING_THRESHOLD = 0.65;
+    /** Score (0-1, i.e. 8.5/10) at/above which the answer is a full PASS ("Đúng"). */
+    private static final double PASS_THRESHOLD = 0.85;
 
     private final PromptCacheRepository promptCacheRepository;
     private final ReferenceSentenceRepository referenceRepository;
     private final GrammarMarkerRepository markerRepository;
     private final DetectorRegistry detectorRegistry;
+    private final GrammarSpotterService grammarSpotter;
     private final GeminiClient geminiClient;
-    private final JudgeVerdictCacheRepository judgeCacheRepository;
     private final TranslationAttemptRepository attemptRepository;
 
     @Transactional
@@ -42,26 +46,38 @@ public class GradingService {
         GrammarSubUse subUse = prompt.getSubUse();
         ReferenceSentence reference = prompt.getReferenceSentence();
 
-        // Signal 1: deterministic detector (Kuromoji)
+        // Signal 1: grammar detection.
+        // Prefer a hand-written MeCab detector; if the sub-use has none (most
+        // data-seeded grammar points), fall back to the regex-backed grammar bank.
         DetectionResult detection = detectorRegistry.run(subUse.getDetectorKey(), answer);
+        boolean detectorPassed = detection.isPassed();
+        if (!detectorPassed && !detectorRegistry.hasDetector(subUse.getDetectorKey())) {
+            detectorPassed = grammarSpotter.matchesSubUse(subUse.getId(), answer);
+        }
         GrammarMarker markerUsed = resolveMarker(subUse.getId(), detection.getMarkerPattern());
 
-        // Signal 2: LLM judge (cached), may be null when Gemini unavailable
-        JudgeResult judge = judgeWithCache(reference, answer, subUse);
+        // Signal 2: LLM judge (Gemini) — the PRIMARY grader. Its 0-10 score already
+        // factors in meaning + correct use of the target grammar + naturalness. May be
+        // null on network/parse error or no API key. The detector above is now only a
+        // supplementary badge, it no longer gates the score.
+        JudgeResult judge = geminiClient.judge(
+                subUse.getName(), reference.getL2Text(), answer,
+                subUse.getNuanceDescription(), subUse.getCommonMistakes());
 
         String finalVerdict;
         Double judgeScore = judge == null ? null : judge.getMeaningScore();
         String judgeVerdict = judge == null ? null : judge.getVerdict();
         String feedback;
+        String correction = judge == null ? null : judge.getCorrection();
 
         if (judge == null) {
-            finalVerdict = detection.isPassed() ? "PASS" : "FAIL";
-            feedback = detection.isPassed()
-                    ? "Đã dùng đúng cấu trúc ngữ pháp mục tiêu."
+            // AI offline → fall back to the deterministic detector only.
+            finalVerdict = detectorPassed ? "PARTIAL" : "FAIL";
+            feedback = detectorPassed
+                    ? "Đã dùng đúng cấu trúc ngữ pháp mục tiêu, nhưng chưa kiểm tra được nghĩa (AI tạm offline)."
                     : "Chưa thấy cấu trúc ngữ pháp mục tiêu trong câu của bạn.";
         } else {
-            boolean meaningOk = judge.getMeaningScore() >= MEANING_THRESHOLD;
-            finalVerdict = decide(detection.isPassed(), meaningOk);
+            finalVerdict = decide(judge.getMeaningScore());
             feedback = judge.getFeedback();
         }
 
@@ -69,58 +85,27 @@ public class GradingService {
                 .userId(userId)
                 .prompt(prompt)
                 .userAnswerL2(answer)
-                .detectorPassed(detection.isPassed())
+                .detectorPassed(detectorPassed)
                 .markerUsed(markerUsed)
                 .llmJudgeScore(judgeScore)
                 .llmJudgeVerdict(judgeVerdict)
                 .llmJudgeFeedback(feedback)
+                .llmCorrection(correction)
                 .finalVerdict(finalVerdict)
                 .build();
 
         return attemptRepository.save(attempt);
     }
 
-    private String decide(boolean detectorPassed, boolean meaningOk) {
-        if (detectorPassed && meaningOk) return "PASS";
-        if (detectorPassed) return "PARTIAL";
-        if (meaningOk) return "PARTIAL";
+    /**
+     * Verdict is driven purely by the AI judge's holistic 0-10 score (normalized to 0-1):
+     * {@link #PASS_THRESHOLD}+ = PASS ("Đúng"), {@link #MEANING_THRESHOLD}+ = PARTIAL
+     * ("Gần đúng"), otherwise FAIL ("Chưa đạt"). The grammar detector is informational only.
+     */
+    private String decide(double score) {
+        if (score >= PASS_THRESHOLD) return "PASS";
+        if (score >= MEANING_THRESHOLD) return "PARTIAL";
         return "FAIL";
-    }
-
-    private JudgeResult judgeWithCache(ReferenceSentence reference, String answer, GrammarSubUse subUse) {
-        if (!geminiClient.isAvailable()) {
-            return null;
-        }
-        String hash = sha256(normalize(answer));
-
-        JudgeVerdictCache cached = judgeCacheRepository
-                .findByReferenceSentenceIdAndLearnerAnswerHash(reference.getId(), hash)
-                .orElse(null);
-        if (cached != null) {
-            return JudgeResult.builder()
-                    .meaningScore(cached.getScore() == null ? 0 : cached.getScore())
-                    .pointUsed(false)
-                    .grammarOk(false)
-                    .verdict(cached.getVerdict())
-                    .feedback(cached.getFeedback())
-                    .build();
-        }
-
-        JudgeResult judge = geminiClient.judge(
-                reference.getL2Text(), answer, subUse.getNuanceDescription(), subUse.getCommonMistakes());
-        if (judge == null) {
-            return null;
-        }
-
-        judgeCacheRepository.save(JudgeVerdictCache.builder()
-                .referenceSentence(reference)
-                .learnerAnswerHash(hash)
-                .verdict(judge.getVerdict())
-                .score(judge.getMeaningScore())
-                .feedback(judge.getFeedback())
-                .build());
-
-        return judge;
     }
 
     private GrammarMarker resolveMarker(Long subUseId, String markerPattern) {
@@ -130,23 +115,5 @@ public class GradingService {
                 .filter(m -> markerPattern.equals(m.getMarkerPattern()))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private String normalize(String s) {
-        return s == null ? "" : s.trim().replaceAll("\\s+", "");
-    }
-
-    private String sha256(String s) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(s.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return Integer.toHexString(s.hashCode());
-        }
     }
 }

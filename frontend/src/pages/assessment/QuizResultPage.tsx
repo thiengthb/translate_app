@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { assessmentApi } from "@/api";
-import type { QuizAttemptDTO, QuizDTO } from "@/types";
+import { assessmentApi, classroomApi } from "@/api";
+import type { ClassAssignmentDTO, ClassroomDTO, QuizAttemptDTO, QuizDTO } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Check, ChevronLeft, Loader2, RotateCcw, X } from "lucide-react";
+import { ChevronDown, ChevronsDownUp, ChevronsUpDown, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { getCurrentUserId } from "@/utils/auth.utils";
 import {
   acceptedAnswers, formatSeconds, getUserAnswerText,
   getUserSelectedOptionId, getUserSelectedOptionIds, isCorrectOption,
@@ -22,24 +24,49 @@ export default function QuizResultPage() {
 
   const [attempt, setAttempt] = useState<QuizAttemptDTO | null>(null);
   const [quiz, setQuiz] = useState<QuizDTO | null>(null);
+  // When the attempt belongs to a class assignment, these are loaded so the
+  // page reads as an assignment result (group-context breadcrumb + back) rather
+  // than a free-play quiz attempt.
+  const [assignment, setAssignment] = useState<ClassAssignmentDTO | null>(null);
+  const [group, setGroup] = useState<ClassroomDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
+  const [expandedQuestionIds, setExpandedQuestionIds] = useState<Set<number>>(new Set());
   const [retaking, setRetaking] = useState(false);
 
   useEffect(() => {
-    Promise.all([assessmentApi.getAttempt(Number(attemptId)), assessmentApi.fetchQuizById(id)])
-      .then(([a, q]) => { setAttempt(a); setQuiz(q); })
+    let cancelled = false;
+    Promise.all([assessmentApi.getAttemptForReview(Number(attemptId)), assessmentApi.fetchQuizById(id)])
+      .then(async ([a, q]) => {
+        if (cancelled) return;
+        setAttempt(a); setQuiz(q);
+        if (a.assignmentId != null) {
+          try {
+            const asg = await classroomApi.getAssignmentById(a.assignmentId);
+            if (cancelled) return;
+            setAssignment(asg);
+            const grp = await classroomApi.getClassroomById(asg.classroomId);
+            if (!cancelled) setGroup(grp);
+          } catch { /* fall back to plain quiz context */ }
+        }
+      })
       .catch(() => toast.error("Failed to load result."))
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [attemptId, id]);
 
   const retake = async () => {
     setRetaking(true);
     try {
-      const a = await assessmentApi.startAttempt({ quizId: id });
+      // Preserve the assignment link on retake so the new attempt still counts
+      // toward the assignment (and respects its attempt limit).
+      const a = await assessmentApi.startAttempt(
+        attempt?.assignmentId != null ? { quizId: id, assignmentId: attempt.assignmentId } : { quizId: id }
+      );
       navigate(`/quizzes/${id}/attempt/${a.id}`);
-    } catch {
-      toast.error("Could not start a new attempt.");
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      toast.error(status === 409 ? "You've reached the attempt limit." : "Could not start a new attempt.");
       setRetaking(false);
     }
   };
@@ -47,37 +74,108 @@ export default function QuizResultPage() {
   if (loading) {
     return (
       <MainLayout pathName={{ "/quizzes": "Quizzes" }}>
-        <div className="flex items-center justify-center h-60"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center h-60 text-sm text-muted-foreground">Loading…</div>
       </MainLayout>
     );
   }
   if (!attempt) return null;
 
   const passed = attempt.isPassed;
+  const reviewIds = attempt.attemptQuestions.map((q) => q.id);
+  const allReviewExpanded = reviewIds.length > 0 && reviewIds.every((qid) => expandedQuestionIds.has(qid));
+
+  const toggleReview = () => {
+    setShowReview((current) => {
+      const next = !current;
+      if (next && expandedQuestionIds.size === 0) setExpandedQuestionIds(new Set(reviewIds));
+      return next;
+    });
+  };
+
+  const toggleAllReviewQuestions = () => {
+    setExpandedQuestionIds(allReviewExpanded ? new Set() : new Set(reviewIds));
+  };
+
+  const toggleReviewQuestion = (qid: number) => {
+    setExpandedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(qid)) next.delete(qid);
+      else next.add(qid);
+      return next;
+    });
+  };
+
+  /* ── Context: assignment attempt vs free-play quiz attempt ── */
+  const isAssignment = attempt.assignmentId != null && assignment != null;
+  const cid = assignment?.classroomId;
+  // The viewer may be the student who took it, or a teacher reviewing it.
+  const isViewerOwner = attempt.userId === getCurrentUserId();
+
+  // Assignment attempts get a group-context breadcrumb (Home › <group> ›
+  // <assignment>) by hiding the /quizzes URL segments; free-play attempts keep
+  // the regular Quizzes breadcrumb.
+  const layoutProps = isAssignment
+    ? {
+        pathName: { [`/quizzes/${id}/result/${attemptId}`]: assignment!.title },
+        parentCrumb: { href: `/classrooms/${cid}`, title: group?.name ?? "Group" },
+        ignorePaths: ["quizzes", String(id), "result"],
+        breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
+        pageDescription: "Submitted quiz result and answer review.",
+      }
+    : {
+        pathName: {
+          "/quizzes": "Quizzes",
+          [`/quizzes/${id}`]: quiz?.title ?? "Quiz",
+          [`/quizzes/${id}/result/${attemptId}`]: "Result",
+        },
+        ignorePaths: ["result"],
+        breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
+        pageDescription: "Submitted quiz result and answer review.",
+      };
 
   return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz?.title ?? "Quiz" }}>
+    <MainLayout {...layoutProps}>
       <div className="space-y-6 w-full max-w-3xl mx-auto">
         {/* Nav bar (mirrors the quiz session header) */}
         <header className="flex items-center justify-between gap-4 border-b border-border pb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => navigate(`/quizzes/${id}`)} aria-label="Back to quiz">
-              <ChevronLeft className="size-4" />
-            </Button>
             <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{quiz?.title ?? "Quiz"}</p>
-              <p className={cn("text-xs font-medium", passed ? "text-green-600" : "text-red-600")}>
-                {passed ? "Passed" : "Not passed"} · {attempt.percentage.toFixed(0)}%
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="text-sm font-semibold truncate">{isAssignment ? assignment!.title : (quiz?.title ?? "Quiz")}</p>
+                {isAssignment && (
+                  <Badge variant="outline" className="shrink-0 gap-1 border-primary/30 bg-primary/5 text-primary text-[10px]">
+                    <ClipboardList className="size-3" />Assignment
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                {isAssignment ? (
+                  <>{group?.name ? `${group.name} · ` : ""}{quiz?.title ?? "Quiz"}</>
+                ) : (
+                  <span className={cn("font-medium", passed ? "text-green-600" : "text-red-600")}>
+                    {passed ? "Passed" : "Not passed"} · {attempt.percentage.toFixed(0)}%
+                  </span>
+                )}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={() => setShowReview((s) => !s)}>
+            <Button variant="outline" size="sm" onClick={toggleReview}>
               {showReview ? "Hide" : "Review"} answers
             </Button>
-            {(quiz?.allowRetake ?? true) && (
+            {showReview && (
+              <Button variant="outline" size="sm" onClick={toggleAllReviewQuestions}>
+                {allReviewExpanded ? (
+                  <ChevronsDownUp className="size-4 mr-1" />
+                ) : (
+                  <ChevronsUpDown className="size-4 mr-1" />
+                )}
+                {allReviewExpanded ? "Close all" : "Open all"}
+              </Button>
+            )}
+            {isViewerOwner && (quiz?.allowRetake ?? true) && (
               <Button size="sm" onClick={retake} disabled={retaking}>
-                {retaking ? <Loader2 className="size-4 animate-spin mr-1" /> : <RotateCcw className="size-4 mr-1" />}Retake
+                {retaking ? "Starting…" : "Retake"}
               </Button>
             )}
           </div>
@@ -85,9 +183,6 @@ export default function QuizResultPage() {
 
         {/* Result banner */}
         <Card className={cn("p-6 text-center space-y-3", passed ? "bg-green-500/5" : "bg-red-500/5")}>
-          <div className={cn("mx-auto size-16 rounded-full flex items-center justify-center", passed ? "bg-green-500/15" : "bg-red-500/15")}>
-            {passed ? <Check className="size-8 text-green-600" /> : <X className="size-8 text-red-600" />}
-          </div>
           <h1 className={cn("text-2xl font-bold", passed ? "text-green-600" : "text-red-600")}>{passed ? "Passed!" : "Not passed"}</h1>
           <p className="text-3xl font-bold tabular-nums">{attempt.percentage.toFixed(0)}%</p>
           <p className="text-sm text-muted-foreground">{attempt.earnedScore} / {attempt.totalScore} points</p>
@@ -115,14 +210,19 @@ export default function QuizResultPage() {
 
               const userPicked = (id: number) =>
                 isMulti ? userSelIds.includes(id) : userSelId === id;
+              const isExpanded = expandedQuestionIds.has(q.id);
 
               return (
                 <Card key={q.id} className="overflow-hidden p-0">
                   {/* Question header */}
-                  <div className={cn(
-                    "flex items-start gap-3 px-4 py-3 border-b border-border/60",
+                  <button
+                    type="button"
+                    onClick={() => toggleReviewQuestion(q.id)}
+                    className={cn(
+                    "flex w-full items-start gap-3 px-4 py-3 border-b border-border/60 text-left transition-colors hover:bg-accent/40",
                     q.isCorrect == null ? "bg-amber-500/5" : q.isCorrect ? "bg-green-500/5" : "bg-red-500/5"
                   )}>
+                    <ChevronDown className={cn("mt-1 size-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
                     <span className={cn(
                       "shrink-0 mt-0.5 size-6 rounded-full flex items-center justify-center text-xs font-bold",
                       q.isCorrect == null ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
@@ -131,20 +231,20 @@ export default function QuizResultPage() {
                     )}>
                       {i + 1}
                     </span>
-                    <p className="flex-1 text-sm font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
+                    <p className="flex-1 min-w-0 truncate text-sm font-semibold leading-snug">{String(snap.prompt ?? "")}</p>
                     {q.isCorrect == null ? (
                       <span className="text-xs font-medium text-amber-600 shrink-0">Pending</span>
                     ) : q.isCorrect ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-green-600 shrink-0"><Check className="size-3.5" />Correct</span>
+                      <span className="text-xs font-medium text-green-600 shrink-0">Correct</span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-600 shrink-0"><X className="size-3.5" />Wrong</span>
+                      <span className="text-xs font-medium text-red-600 shrink-0">Wrong</span>
                     )}
-                  </div>
+                  </button>
 
                   {/* Options */}
-                  {options.length > 0 && (
+                  {isExpanded && options.length > 0 && (
                     <div className="px-4 py-3 space-y-2">
-                      {options.map((o) => {
+                      {options.map((o, oi) => {
                         const correct = isCorrectOption(q.correctAnswerSnapshot, o.id);
                         const picked = userPicked(o.id);
                         const variant =
@@ -161,16 +261,15 @@ export default function QuizResultPage() {
                             variant === "neutral"          && "border-border bg-muted/30 text-muted-foreground",
                           )}>
                             <span className={cn(
-                              "shrink-0 size-5 rounded-full border-2 flex items-center justify-center",
-                              variant === "selected-correct" && "border-green-500 bg-green-500 text-white",
-                              variant === "correct"          && "border-green-400",
-                              variant === "selected-wrong"   && "border-red-400 bg-red-400 text-white",
-                              variant === "neutral"          && "border-muted-foreground/30",
+                              "shrink-0 w-5 text-center text-sm font-bold",
+                              variant === "selected-correct" && "text-green-600",
+                              variant === "correct"          && "text-green-600",
+                              variant === "selected-wrong"   && "text-red-600",
+                              variant === "neutral"          && "text-muted-foreground",
                             )}>
-                              {(variant === "selected-correct" || variant === "correct") && <Check className="size-3" />}
-                              {variant === "selected-wrong" && <X className="size-3" />}
+                              {String.fromCharCode(65 + oi)}
                             </span>
-                            <span className="flex-1 leading-snug">{o.content}</span>
+                            <span className="flex-1 min-w-0 truncate leading-snug">{o.content}</span>
                             {picked && variant === "selected-correct" && (
                               <span className="text-[10px] font-semibold text-green-600 shrink-0">Your answer</span>
                             )}
@@ -187,22 +286,20 @@ export default function QuizResultPage() {
                   )}
 
                   {/* FILL_BLANK */}
-                  {q.questionType === "FILL_BLANK" && (
+                  {isExpanded && q.questionType === "FILL_BLANK" && (
                     <div className="px-4 pb-3 space-y-2">
                       {userText && (
                         <div className={cn(
                           "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
                           q.isCorrect ? "border-green-400 bg-green-500/10" : "border-red-400 bg-red-500/10"
                         )}>
-                          {q.isCorrect ? <Check className="size-4 text-green-600 shrink-0" /> : <X className="size-4 text-red-600 shrink-0" />}
-                          <span className="flex-1">{userText}</span>
+                          <span className="flex-1 min-w-0 truncate">{userText}</span>
                           <span className="text-[10px] font-semibold text-muted-foreground shrink-0">Your answer</span>
                         </div>
                       )}
                       {acceptedAnswers(q.correctAnswerSnapshot).length > 0 && (
                         <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-500/5 px-3 py-2 text-sm dark:border-green-800">
-                          <Check className="size-4 text-green-600 shrink-0" />
-                          <span className="flex-1 text-green-700 dark:text-green-400">
+                          <span className="flex-1 min-w-0 truncate text-green-700 dark:text-green-400">
                             {acceptedAnswers(q.correctAnswerSnapshot).join(" · ")}
                           </span>
                           <span className="text-[10px] font-medium text-green-600 shrink-0">Correct answer</span>
@@ -212,10 +309,10 @@ export default function QuizResultPage() {
                   )}
 
                   {/* Explanation */}
-                  {typeof snap.explanation === "string" && snap.explanation && (
+                  {isExpanded && typeof snap.explanation === "string" && snap.explanation && (
                     <div className="px-4 pb-3 pt-0">
-                      <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
-                        💡 {snap.explanation}
+                      <p className="truncate text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+                        {snap.explanation}
                       </p>
                     </div>
                   )}

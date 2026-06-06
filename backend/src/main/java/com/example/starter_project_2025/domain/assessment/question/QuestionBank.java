@@ -41,9 +41,6 @@ import java.util.Set;
 @AuditEnabled
 public class QuestionBank extends BaseEntity {
 
-    @Column(name = "category_id")
-    Long categoryId;
-
     @Column(name = "level_id")
     Long levelId;
 
@@ -89,6 +86,14 @@ public class QuestionBank extends BaseEntity {
 
     @Column(name = "created_by_user")
     Long createdByUser;
+
+    /**
+     * When set, this question is PRIVATE to a single quiz (created on-the-fly in
+     * the quiz wizard) and is hidden from the shared question bank. Null = a
+     * reusable bank question.
+     */
+    @Column(name = "owner_quiz_id")
+    Long ownerQuizId;
 
     @Builder.Default
     @Column(name = "is_system_generated", nullable = false)

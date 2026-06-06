@@ -6,7 +6,6 @@ import type {
   QuestionTagDTO,
   QuestionTagQueryParams,
   QuizAttemptDTO,
-  QuizCategoryDTO,
   QuizDTO,
   QuizQueryParams,
   QuizQuestionDTO,
@@ -17,35 +16,6 @@ import type {
 
 type Page<T> = { content?: T[]; items?: T[] };
 const list = <T>(data: Page<T>): T[] => data.content ?? data.items ?? [];
-
-/* ─────────────────────────────────────────
-   Quiz categories
-───────────────────────────────────────── */
-const fetchCategories = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<Page<QuizCategoryDTO>>("/quiz-categories", {
-    params: { page: 0, size: 200, sort: "orderIndex,asc" },
-  });
-  return list(res.data);
-};
-
-const fetchCategoryTree = async (): Promise<QuizCategoryDTO[]> => {
-  const res = await axiosInstance.get<QuizCategoryDTO[]>("/quiz-categories/tree");
-  return res.data;
-};
-
-const createCategory = async (data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.post<QuizCategoryDTO>("/quiz-categories", { isActive: true, ...data });
-  return res.data;
-};
-
-const updateCategory = async (id: number, data: Partial<QuizCategoryDTO>): Promise<QuizCategoryDTO> => {
-  const res = await axiosInstance.put<QuizCategoryDTO>(`/quiz-categories/${id}`, data);
-  return res.data;
-};
-
-const deleteCategory = async (id: number): Promise<void> => {
-  await axiosInstance.delete(`/quiz-categories/${id}`);
-};
 
 /* ─────────────────────────────────────────
    Quizzes
@@ -81,6 +51,12 @@ const updateQuiz = async (id: number, data: Partial<QuizDTO>): Promise<QuizDTO> 
 
 const deleteQuiz = async (id: number): Promise<void> => {
   await axiosInstance.delete(`/quizzes/${id}`);
+};
+
+// Discard a never-published draft + its quick-created private questions
+// (used when the author cancels the create-quiz wizard).
+const discardQuiz = async (id: number): Promise<void> => {
+  await axiosInstance.post(`/quizzes/${id}/discard`);
 };
 
 const publishQuiz = async (id: number): Promise<QuizDTO> => {
@@ -237,6 +213,13 @@ const getAttempt = async (attemptId: number): Promise<QuizAttemptDTO> => {
   return res.data;
 };
 
+// Like getAttempt, but also allows the group owner (teacher) to view a
+// student's attempt that belongs to one of their assignments.
+const getAttemptForReview = async (attemptId: number): Promise<QuizAttemptDTO> => {
+  const res = await axiosInstance.get<QuizAttemptDTO>(`/attempts/${attemptId}/review`);
+  return res.data;
+};
+
 const getMyAttempts = async (quizId: number): Promise<QuizAttemptDTO[]> => {
   const res = await axiosInstance.get<QuizAttemptDTO[]>("/attempts/my", { params: { quizId } });
   return res.data;
@@ -254,15 +237,11 @@ const getQuizProgress = async (userId: number, quizId: number): Promise<UserQuiz
 };
 
 export const assessmentApi = {
-  fetchCategories,
-  fetchCategoryTree,
-  createCategory,
-  updateCategory,
-  deleteCategory,
   fetchQuizzes,
   fetchPublicQuizzes,
   fetchQuizById,
   createQuiz,
+  discardQuiz,
   updateQuiz,
   deleteQuiz,
   publishQuiz,
@@ -291,6 +270,7 @@ export const assessmentApi = {
   submitAnswer,
   submitAttempt,
   getAttempt,
+  getAttemptForReview,
   getMyAttempts,
   getQuizProgress,
 };

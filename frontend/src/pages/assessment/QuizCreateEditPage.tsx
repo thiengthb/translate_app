@@ -8,14 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Check, ChevronLeft, ChevronRight, Loader2, Save, Send } from "lucide-react";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, ChevronLeft, ChevronRight, ListChecks, Loader2, Save, Send, Library } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { QuestionBankSelector } from "./QuestionBankSelector";
+import { SelectedQuestionsPanel } from "./SelectedQuestionsPanel";
 
 const DIFFICULTIES: DifficultyLevel[] = ["EASY", "MEDIUM", "HARD", "N5", "N4", "N3", "N2", "N1"];
 
@@ -30,6 +31,11 @@ export default function QuizCreateEditPage() {
   const [loading, setLoading] = useState(!!quizId);
   const [saving, setSaving] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestionDTO[]>([]);
+  // A NEW quiz auto-saves a draft when entering step 2 (so questions can attach).
+  // If the author cancels without ever saving/publishing, that draft and its
+  // quick-created private questions are discarded.
+  const [keepDraft, setKeepDraft] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   // Two-step wizard: 1 = configuration, 2 = question selection.
   const [step, setStep] = useState<1 | 2>(1);
@@ -73,7 +79,6 @@ export default function QuizCreateEditPage() {
     title: title.trim(),
     description: description.trim() || null,
     creatorId: userId ?? null,
-    categoryId: null,
     difficultyLevel: difficulty !== "none" ? (difficulty as DifficultyLevel) : null,
     passScore: Number(passScore),
     timeLimitMinutes: timeLimit ? Number(timeLimit) : null,
@@ -111,12 +116,33 @@ export default function QuizCreateEditPage() {
 
   const handleSaveDraft = async () => {
     const savedId = await persist();
-    if (savedId) toast.success("Draft saved.");
+    if (savedId) { setKeepDraft(true); toast.success("Draft saved."); }
+  };
+
+  // Cancelling a never-saved NEW quiz throws away the auto-created draft and any
+  // questions quick-created privately for it.
+  const handleCancel = async () => {
+    if (!isEditMode && id != null && !keepDraft) {
+      try { await assessmentApi.discardQuiz(id); } catch { /* best-effort */ }
+    }
+    navigate("/quizzes");
+  };
+
+  // There's something to lose if a draft already exists or any field was filled.
+  const hasUnsavedWork =
+    !keepDraft &&
+    (id != null || title.trim() !== "" || description.trim() !== "" || questions.length > 0);
+
+  // Guard the Cancel button so an accidental click doesn't silently discard work.
+  const requestCancel = () => {
+    if (hasUnsavedWork) setDiscardOpen(true);
+    else void handleCancel();
   };
 
   const handlePublish = async () => {
     const savedId = await persist();
     if (!savedId) return;
+    setKeepDraft(true);
     if (questions.length === 0) { toast.error("Add at least one question before publishing."); return; }
     try {
       await assessmentApi.publishQuiz(savedId);
@@ -185,37 +211,33 @@ export default function QuizCreateEditPage() {
     );
   }
 
+  const headerExtra = <StepBar step={step} onStepClick={goToStep} />;
+
   return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "New quiz" }}>
+    <MainLayout
+      pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "Create" }}
+      headerExtra={headerExtra}
+    >
       <div className={cn("w-full mx-auto space-y-6 transition-[max-width]", step === 1 ? "max-w-3xl" : "max-w-full")}>
-        {/* Back */}
-        <button onClick={() => navigate("/quizzes")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> Back to quizzes
-        </button>
-
-        {/* Stepper */}
-        <StepBar step={step} onStepClick={goToStep} />
-
         {/* ── Step 1 · Configuration ── */}
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="font-semibold">Step 1 · Quiz configuration</h3>
             <div className="space-y-1.5">
               <Label>Title</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Quiz title" />
             </div>
             <div className="space-y-1.5">
               <Label>Description</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What is this quiz about?" />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" placeholder="What is this quiz about?" />
             </div>
             <div className="space-y-1.5">
               <Label>Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger><SelectValue placeholder="Select difficulty" /></SelectTrigger>
-                <SelectContent>
-                  {DIFFICULTIES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={difficulty === "none" ? "" : difficulty}
+                onValueChange={setDifficulty}
+                placeholder="Select difficulty"
+                options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+              />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
@@ -233,14 +255,15 @@ export default function QuizCreateEditPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Visibility</Label>
-              <Select value={visibility} onValueChange={(v) => setVisibility(v as QuizVisibility)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRIVATE">Private</SelectItem>
-                  <SelectItem value="PUBLIC">Public</SelectItem>
-                  <SelectItem value="UNLISTED">Unlisted</SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={visibility}
+                onValueChange={(v) => setVisibility(v as QuizVisibility)}
+                options={[
+                  { value: "PRIVATE", label: "Private" },
+                  { value: "PUBLIC", label: "Public" },
+                  { value: "UNLISTED", label: "Unlisted" },
+                ]}
+              />
             </div>
             <div className="space-y-2 pt-2 border-t border-border">
               <Toggle label="Randomize questions" v={isRandomQuestion} set={setIsRandomQuestion} />
@@ -251,22 +274,48 @@ export default function QuizCreateEditPage() {
           </div>
         )}
 
-        {/* ── Step 2 · Question selection ── */}
+        {/* ── Step 2 · Question selection (two tabs) ── */}
         {step === 2 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Step 2 · Select questions</h3>
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {questions.length} selected
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Click a question to add or remove it from this quiz.
-            </p>
-            <QuestionBankSelector
-              selectedIds={selectedQuestionIds}
-              onToggle={handleToggleQuestion}
-            />
+            <Tabs defaultValue="bank" className="space-y-3">
+              <TabsList>
+                <TabsTrigger value="bank" className="gap-1.5">
+                  <Library className="size-4" />Question bank
+                </TabsTrigger>
+                <TabsTrigger value="selected" className="gap-1.5">
+                  <ListChecks className="size-4" />Selected
+                  <span className="ml-0.5 rounded-full bg-primary/15 px-1.5 text-[11px] font-semibold text-primary tabular-nums">
+                    {questions.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="bank" className="mt-0">
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Click a question to add or remove it. Nothing is saved until you create the quiz.
+                </p>
+                <QuestionBankSelector
+                  selectedIds={selectedQuestionIds}
+                  onToggle={handleToggleQuestion}
+                  quizId={id}
+                  onChanged={() => {
+                    if (id != null) return reloadQuestions(id);
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="selected" className="mt-0">
+                <SelectedQuestionsPanel
+                  placements={questions}
+                  quizId={id}
+                  onRemove={handleRemoveQuestion}
+                  onAddCreated={handleAddQuestion}
+                  onChanged={() => {
+                    if (id != null) return reloadQuestions(id);
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
 
@@ -274,7 +323,7 @@ export default function QuizCreateEditPage() {
         <div className="flex items-center justify-between gap-2">
           {step === 1 ? (
             <>
-              <Button variant="ghost" onClick={() => navigate("/quizzes")}>Cancel</Button>
+              <Button variant="ghost" onClick={requestCancel}>Cancel</Button>
               <Button onClick={handleNext} disabled={saving || !step1Valid}>
                 {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : null}
                 Next: select questions
@@ -298,6 +347,18 @@ export default function QuizCreateEditPage() {
           )}
         </div>
       </div>
+
+      {/* Guard against accidentally quitting a quiz you're creating. */}
+      <ConfirmDialog
+        open={discardOpen}
+        tone="warning"
+        title="Discard this quiz?"
+        description="You haven't finished creating this quiz. Your draft and any added questions will be permanently deleted."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setDiscardOpen(false); void handleCancel(); }}
+        onCancel={() => setDiscardOpen(false)}
+      />
     </MainLayout>
   );
 }
@@ -309,20 +370,20 @@ function StepBar({ step, onStepClick }: { step: 1 | 2; onStepClick: (s: 1 | 2) =
     { n: 2 as const, label: "Questions" },
   ];
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex h-8 items-center gap-2 whitespace-nowrap">
       {steps.map((s, i) => {
         const isActive = step === s.n;
         const isDone = step > s.n;
         return (
-          <div key={s.n} className="flex items-center gap-3">
+          <div key={s.n} className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onStepClick(s.n)}
-              className="flex items-center gap-2 group"
+              className="group flex h-8 items-center gap-2 rounded-full px-1.5 transition-colors hover:bg-accent/60"
             >
               <span
                 className={
-                  "flex size-7 items-center justify-center rounded-full text-xs font-semibold transition-colors " +
+                  "flex size-6 items-center justify-center rounded-full text-xs font-semibold transition-colors " +
                   (isActive
                     ? "bg-primary text-primary-foreground"
                     : isDone
@@ -334,14 +395,14 @@ function StepBar({ step, onStepClick }: { step: 1 | 2; onStepClick: (s: 1 | 2) =
               </span>
               <span
                 className={
-                  "text-sm font-medium transition-colors " +
+                  "hidden text-sm font-medium transition-colors sm:inline " +
                   (isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")
                 }
               >
                 {s.label}
               </span>
             </button>
-            {i === 0 && <div className="h-px w-8 sm:w-12 bg-border" />}
+            {i === 0 && <div className="h-px w-6 bg-border sm:w-10" />}
           </div>
         );
       })}

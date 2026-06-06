@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { Loader2, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +30,7 @@ export function CreateEditAssignmentModal({
 }) {
   const [quizzes, setQuizzes] = useState<QuizDTO[]>([]);
   const [saving, setSaving] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -39,20 +42,14 @@ export function CreateEditAssignmentModal({
 
   useEffect(() => {
     if (!open) return;
-    Promise.all([
-      assessmentApi.fetchQuizzes().catch(() => []),
-      assessmentApi.fetchPublicQuizzes().catch(() => []),
-    ]).then(([mine, pub]) => {
-      const map = new Map<number, QuizDTO>();
-      [...mine, ...pub].forEach((q) => map.set(q.id, q));
-      setQuizzes([...map.values()]);
-    });
+    // Only published/public quizzes can be assigned.
+    assessmentApi.fetchPublicQuizzes().catch(() => []).then((pub) => setQuizzes(pub));
 
     if (assignment) {
       setTitle(assignment.title);
       setDescription(assignment.description ?? "");
       setQuizId(String(assignment.quizId));
-      setMaxAttempts(assignment.maxAttempts != null ? String(assignment.maxAttempts) : "0");
+      setMaxAttempts(assignment.maxAttempts != null ? String(assignment.maxAttempts) : "1");
       setScoreStrategy(assignment.scoreStrategy);
       setAvailableFrom(toLocalInput(assignment.availableFrom));
       setDeadline(toLocalInput(assignment.deadline));
@@ -65,6 +62,11 @@ export function CreateEditAssignmentModal({
   const persist = async (): Promise<ClassAssignmentDTO | null> => {
     if (!title.trim()) { toast.error("Title is required."); return null; }
     if (!quizId) { toast.error("Select a quiz."); return null; }
+    const attempts = Number(maxAttempts);
+    if (!Number.isInteger(attempts) || attempts < 1) {
+      toast.error("Max attempts must be a whole number of at least 1.");
+      return null;
+    }
     setSaving(true);
     try {
       const payload: Partial<ClassAssignmentDTO> = {
@@ -72,7 +74,7 @@ export function CreateEditAssignmentModal({
         quizId: Number(quizId),
         title: title.trim(),
         description: description.trim() || null,
-        maxAttempts: Number(maxAttempts) === 0 ? null : Number(maxAttempts),
+        maxAttempts: attempts,
         scoreStrategy,
         availableFrom: fromLocalInput(availableFrom),
         deadline: fromLocalInput(deadline),
@@ -107,9 +109,32 @@ export function CreateEditAssignmentModal({
   };
 
   const selectedQuiz = quizzes.find((q) => String(q.id) === quizId);
+  const quizOptions = quizzes.map((q) => ({ value: String(q.id), label: `${q.title} · ${q.totalQuestions}Q` }));
+  // Keep the currently-assigned quiz selectable even if it's no longer public.
+  if (quizId && !quizOptions.some((o) => o.value === quizId)) {
+    quizOptions.unshift({ value: quizId, label: assignment?.quizTitle ?? `Quiz #${quizId}` });
+  }
+
+  // Have any fields diverged from what was loaded (or from the empty defaults)?
+  const dirty = assignment
+    ? (title !== assignment.title ||
+       description !== (assignment.description ?? "") ||
+       quizId !== String(assignment.quizId) ||
+       maxAttempts !== (assignment.maxAttempts != null ? String(assignment.maxAttempts) : "1") ||
+       scoreStrategy !== assignment.scoreStrategy ||
+       availableFrom !== toLocalInput(assignment.availableFrom) ||
+       deadline !== toLocalInput(assignment.deadline))
+    : (title.trim() !== "" || description.trim() !== "" || quizId !== "" ||
+       maxAttempts !== "1" || scoreStrategy !== "LAST" || availableFrom !== "" || deadline !== "");
+
+  // Closing with unsaved edits asks first; an untouched form just closes.
+  const requestClose = () => {
+    if (dirty) setConfirmCloseOpen(true);
+    else onClose();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) requestClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{assignment ? "Edit assignment" : "New assignment"}</DialogTitle>
@@ -118,26 +143,39 @@ export function CreateEditAssignmentModal({
 
         <div className="space-y-3">
           <div className="space-y-1.5"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
+          <div className="space-y-1.5"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} maxLength={500} className="max-h-40 resize-none" /></div>
           <div className="space-y-1.5">
             <Label>Quiz</Label>
-            <Select value={quizId} onValueChange={setQuizId}>
-              <SelectTrigger><SelectValue placeholder="Select a quiz" /></SelectTrigger>
-              <SelectContent>
-                {quizzes.map((q) => <SelectItem key={q.id} value={String(q.id)}>{q.title} · {q.totalQuestions}Q</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={quizId}
+              onValueChange={setQuizId}
+              options={quizOptions}
+              placeholder="Select a quiz"
+              searchPlaceholder="Search quizzes…"
+              className="w-full"
+            />
             {selectedQuiz && <p className="text-xs text-muted-foreground">{selectedQuiz.totalQuestions} questions · pass {selectedQuiz.passScore}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Max attempts (0 = ∞)</Label>
-              <Input type="number" value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} />
+              <Label className="text-xs">Max attempts</Label>
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                value={maxAttempts}
+                onChange={(e) => setMaxAttempts(e.target.value)}
+                onBlur={(e) => {
+                  // Clamp to a whole number ≥ 1 (no zero, no negatives).
+                  const n = Math.floor(Number(e.target.value));
+                  setMaxAttempts(String(Number.isFinite(n) && n >= 1 ? n : 1));
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Score strategy</Label>
               <Select value={scoreStrategy} onValueChange={(v) => setScoreStrategy(v as ScoreStrategy)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="LAST">Last attempt</SelectItem>
                   <SelectItem value="HIGHEST">Highest score</SelectItem>
@@ -152,11 +190,22 @@ export function CreateEditAssignmentModal({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
           <Button variant="outline" onClick={saveDraft} disabled={saving}>{saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}Save draft</Button>
           <Button onClick={savePublish} disabled={saving}><Send className="size-4 mr-1" />Save & Publish</Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmCloseOpen}
+        tone="warning"
+        title="Discard changes?"
+        description="This assignment has unsaved changes that will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmCloseOpen(false); onClose(); }}
+        onCancel={() => setConfirmCloseOpen(false)}
+      />
     </Dialog>
   );
 }

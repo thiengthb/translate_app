@@ -9,6 +9,10 @@ import com.example.starter_project_2025.domain.assessment.quiz.Quiz;
 import com.example.starter_project_2025.domain.assessment.quiz.QuizRepository;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestion;
 import com.example.starter_project_2025.domain.assessment.quiz_question.QuizQuestionRepository;
+import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignment;
+import com.example.starter_project_2025.domain.classroom.assignment.ClassAssignmentRepository;
+import com.example.starter_project_2025.domain.classroom.classroom.Classroom;
+import com.example.starter_project_2025.domain.classroom.classroom.ClassroomRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import com.example.starter_project_2025.system.reward.RewardService;
 import lombok.AccessLevel;
@@ -42,6 +46,8 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     QuizAttemptRepository attemptRepository;
     QuizAttemptQuestionRepository attemptQuestionRepository;
     UserQuizProgressRepository progressRepository;
+    ClassAssignmentRepository classAssignmentRepository;
+    ClassroomRepository classroomRepository;
     RewardService rewardService;
 
     /* ──────────────────────────────────────────
@@ -59,6 +65,22 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         }
         if (!quiz.isAllowRetake() && existing >= 1) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Retake is not allowed for this quiz");
+        }
+
+        // Assignment-scoped limit: when this attempt is started for a class
+        // assignment, the assignment's own maxAttempts caps how many times the
+        // student may attempt it (counted only against this assignment, not
+        // free-play attempts on the same quiz).
+        Long assignmentId = request.getAssignmentId();
+        if (assignmentId != null) {
+            ClassAssignment assignment = classAssignmentRepository.findById(assignmentId).orElse(null);
+            if (assignment != null && assignment.getMaxAttempts() != null) {
+                long usedForAssignment =
+                        attemptRepository.countByUserIdAndAssignmentIdAndIsDeletedFalse(userId, assignmentId);
+                if (usedForAssignment >= assignment.getMaxAttempts()) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Maximum attempts reached for this assignment");
+                }
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -199,6 +221,29 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     @Transactional(readOnly = true)
     public QuizAttemptDTO getAttempt(Long userId, Long attemptId) {
         QuizAttempt attempt = loadOwnedAttempt(userId, attemptId);
+        Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
+        return assembleDto(attempt, quiz);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuizAttemptDTO getAttemptForReview(Long requesterId, Long attemptId) {
+        QuizAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attempt not found"));
+
+        boolean isOwner = attempt.getUserId().equals(requesterId);
+        boolean isGroupOwner = false;
+        if (!isOwner && attempt.getAssignmentId() != null) {
+            ClassAssignment assignment = classAssignmentRepository.findById(attempt.getAssignmentId()).orElse(null);
+            if (assignment != null) {
+                Classroom classroom = classroomRepository.findById(assignment.getClassroomId()).orElse(null);
+                isGroupOwner = classroom != null && requesterId.equals(classroom.getOwnerId());
+            }
+        }
+        if (!isOwner && !isGroupOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to view this attempt");
+        }
+
         Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
         return assembleDto(attempt, quiz);
     }
