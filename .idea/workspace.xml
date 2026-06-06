@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing): update task summary and last commit message for video background styling">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(routes): update paths for Analyze and Kanji Radical pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -81,7 +81,7 @@
     <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="Test-by-ân" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -165,7 +165,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
@@ -280,6 +280,8 @@
       <workItem from="1780582286513" duration="4671000" />
       <workItem from="1780595446343" duration="3702000" />
       <workItem from="1780635363057" duration="4543000" />
+      <workItem from="1780670399027" duration="6634000" />
+      <workItem from="1780724509029" duration="429000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -553,24 +555,68 @@
       <option name="project" value="LOCAL" />
       <updated>1780650206086</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="fix(workspace): update recent branch name and adjust GitHub settings">
+      <option name="closed" value="true" />
+      <created>1780660909085</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1780660909085</updated>
+    </task>
+    <task id="LOCAL-00036" summary="feat(routes): update paths for Analyze and Kanji Radical pages">
+      <option name="closed" value="true" />
+      <created>1780684519822</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1780684519822</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="User">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="thi3n" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
         <entry key="MAIN">
           <value>
             <State>
+              <option name="COLUMN_ID_WIDTH">
+                <map>
+                  <entry key="Table.Default.Author.ColumnIdWidth" value="43" />
+                  <entry key="Table.GitHub.CommitStatus.ColumnIdWidth" value="46" />
+                </map>
+              </option>
               <option name="FILTERS">
                 <map>
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/dev" />
+                        <option value="origin/feature/assessment" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="user">
+                    <value>
+                      <list>
+                        <option value="thi3n" />
                       </list>
                     </value>
                   </entry>
@@ -583,8 +629,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
-    <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
     <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
     <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
     <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
@@ -608,7 +652,9 @@
     <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
     <MESSAGE value="feat(landing): simplify video background styling on LandingPage" />
     <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(landing): update task summary and last commit message for video background styling" />
+    <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
+    <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(routes): update paths for Analyze and Kanji Radical pages" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

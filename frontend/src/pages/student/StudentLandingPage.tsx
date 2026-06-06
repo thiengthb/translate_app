@@ -84,7 +84,7 @@ export default function StudentLandingPage() {
                     </h2>
                 </div>
                 <Link
-                    to="/games/kanji-radical"
+                    to="/kanji-radical"
                     className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 shadow-lg transition-transform hover:-translate-y-0.5"
                 >
                     <div className="pointer-events-none absolute -right-6 -top-8 text-[8rem] leading-none text-amber-400/10 transition-transform group-hover:scale-110"

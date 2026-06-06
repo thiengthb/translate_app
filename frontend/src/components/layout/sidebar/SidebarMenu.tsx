@@ -32,13 +32,21 @@ import type { SidebarNavGroup, SidebarNavItem } from "./types";
 /** Entry point of the self-contained Kanji-study area. */
 const KANJI_HOME = "/kanji-study";
 /**
+ * The standalone Kanji Radical game (`/kanji-radical`) shares the `/kanji-`
+ * prefix but is NOT part of the Kanji-study feature — it must stay a normal
+ * sidebar row, not be folded into the 漢 launcher. Note it differs from the
+ * `/kanji-radical`*s* CRUD admin page by the trailing "s".
+ */
+const KANJI_RADICAL_GAME = "/kanji-radical";
+/**
  * Every kanji-feature module URL — both the study area (`/kanji-study…`) and
  * the per-entity CRUD admin pages (`/kanji-radicals`, `/kanji-decks`,
  * `/kanji-details`, `/kanji-readings`, `/kanji-reading-sets`, …). All of
  * them are collapsed out of the regular sidebar into a single 漢 launcher
- * that opens the feature's own in-page nav.
+ * that opens the feature's own in-page nav. The radical game is excluded.
  */
-const isKanjiUrl = (url?: string) => !!url && url.startsWith("/kanji-");
+const isKanjiUrl = (url?: string) =>
+    !!url && url.startsWith("/kanji-") && url !== KANJI_RADICAL_GAME;
 
 import { useFilteredNavGroups } from "./hooks/useFilteredNavGroups";
 import { useGroupCollapseState } from "./hooks/useGroupCollapseState";
