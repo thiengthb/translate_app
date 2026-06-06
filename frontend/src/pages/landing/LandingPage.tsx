@@ -49,13 +49,7 @@ export default function LandingPage() {
                     playsInline
                     poster="/login-bg.jpeg"
                     className="absolute inset-0 h-full w-full object-cover"
-                    style={{
-                        backgroundColor: "#1e293b",
-                        // Phóng to & neo gốc trên-trái để góc dưới-phải
-                        // (chứa watermark Gemini) tràn ra ngoài khung.
-                        transform: "scale(1.18)",
-                        transformOrigin: "top left",
-                    }}
+                    style={{ backgroundColor: "#1e293b" }}
                 >
                     <source src="/login-bg.mp4" type="video/mp4" />
                 </video>

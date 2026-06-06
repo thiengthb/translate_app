@@ -148,11 +148,13 @@ export default function QuizSessionPage() {
               title={marked ? "Unmark" : "Mark to revisit"}
               aria-pressed={marked}
               className={cn(
-                "shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors",
-                marked ? "bg-amber-500/10 text-amber-600" : "text-muted-foreground hover:bg-accent",
+                "shrink-0 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors",
+                marked
+                  ? "border-amber-400/60 bg-amber-500/12 text-amber-700"
+                  : "border-amber-300/70 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-300 dark:hover:bg-amber-950/35",
               )}
             >
-              <Star className={cn("size-4", marked && "fill-amber-400 text-amber-500")} />
+              <Star className={cn("size-4 text-amber-500", marked && "fill-amber-400")} />
               {marked ? "Marked" : "Mark"}
             </button>
           </div>
@@ -312,15 +314,18 @@ export default function QuizSessionPage() {
             <div className="grid grid-cols-5 gap-1.5">
               {questions.map((qq, i) => {
                 const onPage = i >= pageStart && i < pageEnd;
+                const marked = flagged.has(qq.id);
                 return (
                   <button key={qq.id} onClick={() => goToQuestion(i)}
                     className={cn("relative flex aspect-square items-center justify-center rounded-lg border text-xs font-semibold tabular-nums transition-colors",
                       onPage && "ring-1 ring-primary",
                       qq.isAnswered
                         ? "bg-green-500/15 border-green-500/30 text-green-600"
-                        : "bg-background border-border text-muted-foreground hover:bg-accent")}>
+                        : "bg-background border-border text-muted-foreground hover:bg-accent",
+                      // Marked questions: border takes the amber mark colour.
+                      marked && "border-amber-400")}>
                     {i + 1}
-                    {flagged.has(qq.id) && (
+                    {marked && (
                       <Star className="absolute -top-1.5 -right-1.5 size-3.5 fill-amber-400 text-amber-500" />
                     )}
                   </button>

@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(production): implement AI-generated exercise composition and enhance grading feedback">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(routes): update paths for Analyze and Kanji Radical pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,7 +81,7 @@
     <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/translator" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -93,12 +92,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/thiengthb/translate_app.git",
+    "accountId": "32d5ed62-08dd-467c-a3b4-0dd1bfec836d"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -166,7 +165,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
@@ -222,7 +221,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
       </set>
     </attachedChunks>
   </component>
@@ -280,6 +280,8 @@
       <workItem from="1780582286513" duration="4671000" />
       <workItem from="1780595446343" duration="3702000" />
       <workItem from="1780635363057" duration="4543000" />
+      <workItem from="1780670399027" duration="6634000" />
+      <workItem from="1780724509029" duration="429000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -529,24 +531,92 @@
       <option name="project" value="LOCAL" />
       <updated>1780639629023</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="feat(landing): replace background image with video on LandingPage">
+      <option name="closed" value="true" />
+      <created>1780642564811</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1780642564811</updated>
+    </task>
+    <task id="LOCAL-00033" summary="feat(landing): simplify video background styling on LandingPage">
+      <option name="closed" value="true" />
+      <created>1780645700683</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1780645700684</updated>
+    </task>
+    <task id="LOCAL-00034" summary="feat(landing): update task summary and last commit message for video background styling">
+      <option name="closed" value="true" />
+      <created>1780650206086</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1780650206086</updated>
+    </task>
+    <task id="LOCAL-00035" summary="fix(workspace): update recent branch name and adjust GitHub settings">
+      <option name="closed" value="true" />
+      <created>1780660909085</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1780660909085</updated>
+    </task>
+    <task id="LOCAL-00036" summary="feat(routes): update paths for Analyze and Kanji Radical pages">
+      <option name="closed" value="true" />
+      <created>1780684519822</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1780684519822</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="User">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="thi3n" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
         <entry key="MAIN">
           <value>
             <State>
+              <option name="COLUMN_ID_WIDTH">
+                <map>
+                  <entry key="Table.Default.Author.ColumnIdWidth" value="43" />
+                  <entry key="Table.GitHub.CommitStatus.ColumnIdWidth" value="46" />
+                </map>
+              </option>
               <option name="FILTERS">
                 <map>
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Test-by-ân" />
+                        <option value="origin/feature/assessment" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="user">
+                    <value>
+                      <list>
+                        <option value="thi3n" />
                       </list>
                     </value>
                   </entry>
@@ -559,11 +629,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(dictionary): add word" />
-    <MESSAGE value="fix merge" />
-    <MESSAGE value="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller" />
-    <MESSAGE value="feat(configuration) remove unused devDependencies from package.json and update workspace settings" />
-    <MESSAGE value="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic" />
     <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
     <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
     <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
@@ -584,7 +649,12 @@
     <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
     <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
     <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
+    <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
+    <MESSAGE value="feat(landing): simplify video background styling on LandingPage" />
+    <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
+    <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
+    <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(routes): update paths for Analyze and Kanji Radical pages" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

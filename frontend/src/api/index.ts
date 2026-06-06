@@ -11,6 +11,7 @@ export * from "./features/words/word.api";
 export * from "./features/words/kanji.api";
 export * from "./features/words/example.api";
 export * from "./features/words/word_kanji.api";
+export * from "./features/grammar/grammar.api";
 export * from "./features/grammar/grammar-sub-use.api";
 export * from "./features/grammar/grammar-marker.api";
 export * from "./features/grammar/reference-sentence.api";

@@ -12,6 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { Loader2, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ export function CreateEditAssignmentModal({
 }) {
   const [quizzes, setQuizzes] = useState<QuizDTO[]>([]);
   const [saving, setSaving] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -113,8 +115,26 @@ export function CreateEditAssignmentModal({
     quizOptions.unshift({ value: quizId, label: assignment?.quizTitle ?? `Quiz #${quizId}` });
   }
 
+  // Have any fields diverged from what was loaded (or from the empty defaults)?
+  const dirty = assignment
+    ? (title !== assignment.title ||
+       description !== (assignment.description ?? "") ||
+       quizId !== String(assignment.quizId) ||
+       maxAttempts !== (assignment.maxAttempts != null ? String(assignment.maxAttempts) : "1") ||
+       scoreStrategy !== assignment.scoreStrategy ||
+       availableFrom !== toLocalInput(assignment.availableFrom) ||
+       deadline !== toLocalInput(assignment.deadline))
+    : (title.trim() !== "" || description.trim() !== "" || quizId !== "" ||
+       maxAttempts !== "1" || scoreStrategy !== "LAST" || availableFrom !== "" || deadline !== "");
+
+  // Closing with unsaved edits asks first; an untouched form just closes.
+  const requestClose = () => {
+    if (dirty) setConfirmCloseOpen(true);
+    else onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) requestClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{assignment ? "Edit assignment" : "New assignment"}</DialogTitle>
@@ -170,11 +190,22 @@ export function CreateEditAssignmentModal({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={requestClose}>Cancel</Button>
           <Button variant="outline" onClick={saveDraft} disabled={saving}>{saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}Save draft</Button>
           <Button onClick={savePublish} disabled={saving}><Send className="size-4 mr-1" />Save & Publish</Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={confirmCloseOpen}
+        tone="warning"
+        title="Discard changes?"
+        description="This assignment has unsaved changes that will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => { setConfirmCloseOpen(false); onClose(); }}
+        onCancel={() => setConfirmCloseOpen(false)}
+      />
     </Dialog>
   );
 }

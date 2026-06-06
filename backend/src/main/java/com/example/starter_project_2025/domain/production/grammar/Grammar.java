@@ -6,6 +6,7 @@ import com.example.starter_project_2025.base.crud.domain.BaseEntity;
 import com.example.starter_project_2025.domain.production.grammar.converter.StringListConverter;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.init.annotation.ResourcePermission;
+import com.example.starter_project_2025.system.words.level.Level;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -28,7 +29,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ResourcePermission("GRAMMAR")
 @ResourceMenu(title = "Biểu thức ngữ pháp", group = "Tiếng Nhật", icon = "book-marked", url = "/grammars", order = 10)
-@Searchable(fields = {"form", "slug", "jlptLevel", "titleGloss"})
+@Searchable(fields = {"form", "slug", "titleGloss"})
 @AutoCrud(path = "grammars")
 public class Grammar extends BaseEntity {
 
@@ -40,8 +41,10 @@ public class Grammar extends BaseEntity {
     @Column(length = 150, nullable = false)
     String form;
 
-    @Column(length = 20)
-    String jlptLevel;
+    /** JLPT proficiency level (references the shared {@code levels} table). */
+    @ManyToOne
+    @JoinColumn(name = "level_id", foreignKey = @ForeignKey(name = "fk_grammars_level"))
+    Level level;
 
     /** Short Vietnamese gloss summary for the list title. */
     @Column(columnDefinition = "TEXT")
@@ -55,4 +58,10 @@ public class Grammar extends BaseEntity {
     /** "Chú ý" — caveats / extra notes shown at the bottom of the entry. */
     @Column(columnDefinition = "TEXT")
     String notes;
+
+    /** Convenience JLPT code (e.g. {@code "N4"}) derived from {@link #level}. */
+    @Transient
+    public String getJlptLevel() {
+        return level != null ? level.getCode() : null;
+    }
 }

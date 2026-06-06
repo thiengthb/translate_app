@@ -5,6 +5,7 @@ import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerR
 import com.example.starter_project_2025.domain.production.grammar.GrammarSpotterService;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
+import com.example.starter_project_2025.system.words.level.LevelLookup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -56,6 +57,7 @@ public class GrammarSpotterN3Seeder implements CommandLineRunner {
     private final GrammarSubUseRepository subUseRepository;
     private final GrammarMarkerRepository markerRepository;
     private final GrammarSpotterService grammarSpotter;
+    private final LevelLookup levelLookup;
 
     /** key, display pattern, JLPT level, Vietnamese nuance, detection regex (null ⇒ Track A keyword). */
     private record Entry(String key, String pattern, String level, String nuance, String regex) {}
@@ -568,7 +570,7 @@ public class GrammarSpotterN3Seeder implements CommandLineRunner {
             }
             GrammarSubUse su = subUseRepository.save(GrammarSubUse.builder()
                     .name(e.pattern())
-                    .jlptLevel(e.level())
+                    .level(levelLookup.byCode(e.level()))
                     .detectorKey(e.key())
                     .nuanceDescription(e.nuance())
                     .build());

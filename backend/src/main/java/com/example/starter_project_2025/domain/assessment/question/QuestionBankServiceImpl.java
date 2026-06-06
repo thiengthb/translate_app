@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,10 +65,39 @@ public class QuestionBankServiceImpl
     @Override
     @Transactional(readOnly = true)
     public Page<QuestionBankDTO> getAll(Pageable pageable, String search, QuestionBankFilter filter) {
+        checkPermission(com.example.starter_project_2025.base.crud.CrudAction.READ);
         QuestionBankFilter scoped = filter != null ? filter : QuestionBankFilter.builder().build();
         Long uid = getCurrentUserId();
-        if (uid != null) scoped.createdByUser = uid; // force owner scope (same package)
-        return super.getAll(pageable, search, scoped);
+
+        // Owner-quiz scoping is OR/IS-NULL logic that the generic equality filter
+        // can't express, so build the spec here and let autoSpecBuilder handle the
+        // remaining plain-equality fields (questionType, difficultyLevel, …).
+        Long ownerQuizId = scoped.ownerQuizId;
+        scoped.ownerQuizId = null;                 // don't let it reach the auto-builder
+        if (uid != null) scoped.createdByUser = uid; // per-user bank
+
+        Specification<QuestionBank> spec = Specification.where((root, q, cb) -> cb.equal(root.get("isDeleted"), false));
+        if (ownerQuizId != null) {
+            // Quiz wizard: shared questions + this quiz's private ones.
+            Long oq = ownerQuizId;
+            spec = spec.and((root, q, cb) ->
+                    cb.or(cb.isNull(root.get("ownerQuizId")), cb.equal(root.get("ownerQuizId"), oq)));
+        } else {
+            // Shared bank only: hide every quiz-private question.
+            spec = spec.and((root, q, cb) -> cb.isNull(root.get("ownerQuizId")));
+        }
+
+        Specification<QuestionBank> filterSpec = autoSpecBuilder.build(scoped);
+        if (filterSpec != null) spec = spec.and(filterSpec);
+
+        String keyword = search != null ? search.trim() : "";
+        if (!keyword.isEmpty()) {
+            String like = "%" + keyword.toLowerCase() + "%";
+            spec = spec.and((root, q, cb) -> cb.like(cb.lower(root.get("prompt")), like));
+        }
+
+        return questionBankRepository.findAll(spec, pageable)
+                .map(entity -> afterRead(questionBankMapper.toResponse(entity), entity));
     }
 
     @Override
@@ -105,6 +135,8 @@ public class QuestionBankServiceImpl
     protected void beforeCreate(QuestionBank entity, QuestionBankDTO request, ValidationContext ctx) {
         Long uid = getCurrentUserId();
         if (uid != null) entity.setCreatedByUser(uid); // owner = current user
+        // Questions quick-created in the quiz wizard are private to that quiz.
+        entity.setOwnerQuizId(request.getOwnerQuizId());
         entity.setOptions(buildOptions(entity, request));
         if (request.getTagIds() != null) {
             entity.setTags(resolveTags(request.getTagIds()));
@@ -324,7 +356,11 @@ public class QuestionBankServiceImpl
         List<QuestionBank> questions = matchAll
                 ? questionBankRepository.findByAllTagIds(distinct, distinct.size())
                 : questionBankRepository.findByAnyTagIds(distinct);
+        Long uid = getCurrentUserId();
         return questions.stream()
+                // Per-user bank + hide quiz-private questions from the tag browser.
+                .filter(q -> uid == null || uid.equals(q.getCreatedByUser()))
+                .filter(q -> q.getOwnerQuizId() == null)
                 .map(q -> afterRead(questionBankMapper.toResponse(q), q))
                 .collect(Collectors.toList());
     }

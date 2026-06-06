@@ -54,4 +54,15 @@ public class QuizController {
     public ResponseEntity<List<QuizQuestionDTO>> questions(@PathVariable Long quizId) {
         return ResponseEntity.ok(quizActionService.getQuestions(quizId));
     }
+
+    /** Discard a never-published draft and its quick-created private questions. */
+    @PostMapping("/{quizId}/discard")
+    public ResponseEntity<Void> discard(
+            @PathVariable Long quizId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        quizActionService.discardDraft(quizId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

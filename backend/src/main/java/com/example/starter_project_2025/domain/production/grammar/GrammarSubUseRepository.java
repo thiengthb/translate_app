@@ -14,8 +14,6 @@ public interface GrammarSubUseRepository extends BaseCrudRepository<GrammarSubUs
     /** Resolve a grammar point by its stable seed key — used by the bulk prompt import. */
     Optional<GrammarSubUse> findByDetectorKey(String detectorKey);
 
-    List<GrammarSubUse> findByJlptLevel(String jlptLevel);
-
     /** Usages not yet attached to a parent expression — drives the backfill. */
     List<GrammarSubUse> findByGrammarIsNull();
 

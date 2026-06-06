@@ -45,7 +45,7 @@ public class GrammarBackfillInitializer implements CommandLineRunner {
                     .orElseGet(() -> grammarRepository.save(Grammar.builder()
                             .slug(slug)
                             .form(su.getName())
-                            .jlptLevel(su.getJlptLevel())
+                            .level(su.getLevel())
                             .titleGloss(su.getNuanceDescription())
                             .build()));
             su.setGrammar(grammar);

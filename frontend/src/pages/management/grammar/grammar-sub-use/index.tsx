@@ -1,4 +1,4 @@
-import { grammarSubUseApi } from "@/api";
+import { grammarSubUseApi, levelApi } from "@/api";
 import {
   auditableFieldsSchema,
   type EntityConfig,
@@ -18,12 +18,15 @@ const grammarSubUseSchema: EntitySchema = {
       bold: true,
     },
     {
-      name: "jlptLevel",
+      name: "levelId",
       label: "Cấp độ JLPT",
-      type: "text",
-      sortable: true,
-      filterable: true,
-      filterType: "text",
+      type: "relation",
+      relation: {
+        api: levelApi,
+        valueField: "id",
+        labelField: "code",
+        multiple: false,
+      },
     },
     {
       name: "detectorKey",
