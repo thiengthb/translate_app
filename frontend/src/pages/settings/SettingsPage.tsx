@@ -1,36 +1,12 @@
-import {
-    Check,
-    Languages,
-    Monitor,
-    Moon,
-    Palette,
-    Sun,
-    Type,
-} from "lucide-react";
+import { Check, Palette, Type } from "lucide-react";
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { InfoCard } from "@/components/common/InfoCard";
 
-import { useTranslation } from "@/contexts/I18nContext";
 import { useColorPreset } from "@/hooks/useColorPreset";
-import {
-    useThemePreference,
-    type ThemePreference,
-} from "@/hooks/useThemePreference";
 import { useTypography } from "@/hooks/useTypography";
 import { COLOR_PRESETS } from "@/lib/color-presets";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/i18n";
-
-const THEME_MODES: Array<{
-    value: ThemePreference;
-    label: string;
-    Icon: React.ComponentType<{ size?: number; className?: string }>;
-}> = [
-    { value: "light", label: "Sáng", Icon: Sun },
-    { value: "dark", label: "Tối", Icon: Moon },
-    { value: "system", label: "Hệ thống", Icon: Monitor },
-];
 
 /**
  * Settings page — `/settings`.
@@ -39,78 +15,29 @@ const THEME_MODES: Array<{
  * between Cards (same `Card` / `CardHeader` / `CardTitle` /
  * `CardDescription` primitives) so the two pages feel like siblings.
  *
- *   Row 1 (lg+):  ┌── Giao diện ──────────┬── Ngôn ngữ ──┐
- *                 │  3 buttons             │  N buttons   │
- *                 └────────────────────────┴──────────────┘
- *   Row 2:        ┌── Màu chủ đạo (12 presets) ─────────────────┐
+ *   Row 1:        ┌── Màu chủ đạo (12 presets) ─────────────────┐
  *                 └─────────────────────────────────────────────┘
- *   Row 3:        ┌── Kiểu chữ ─────────  Mật độ: [G][D][T] ───┐
+ *   Row 2:        ┌── Kiểu chữ ─────────  Mật độ: [G][D][T] ───┐
  *                 │  12 font cards with live "Aa" preview       │
  *                 └─────────────────────────────────────────────┘
  *
- * All state lives in existing hooks (`useThemePreference`,
- * `useColorPreset`, `useTypography`, `useTranslation`) so changes apply
- * globally and persist across reloads + tabs.
+ * Theme (light/dark) moved to the header's Cool Theme Toggle and
+ * language switching to the user dropdown, so neither lives here.
+ * Remaining state lives in existing hooks (`useColorPreset`,
+ * `useTypography`) so changes apply globally and persist across
+ * reloads + tabs.
  */
 export default function SettingsPage() {
     return (
         <MainLayout pathName={{ "/settings": "Cài đặt" }}>
             <div className="w-full flex flex-col gap-3">
-                {/* Theme + Language paired at the top — they share the
-                    "small switcher" pattern and pack neatly side-by-side
-                    on wide screens. */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-                    <div className="lg:col-span-3">
-                        <ThemeModeSection />
-                    </div>
-                    <div className="lg:col-span-2">
-                        <LanguageSection />
-                    </div>
-                </div>
-
+                {/* Theme (light/dark) now lives in the header via the
+                    Cool Theme Toggle; language switching moved out of
+                    Settings too. Only color + typography remain here. */}
                 <ColorPresetSection />
                 <TypographySection />
             </div>
         </MainLayout>
-    );
-}
-
-// ─── Theme mode (light/dark/system) ─────────────────────────────────────────
-function ThemeModeSection() {
-    const { themePreference, setThemePreference } = useThemePreference();
-
-    return (
-        <SectionCard
-            icon={<Sun size={16} className="text-primary" />}
-            title="Giao diện"
-            description="Sáng, tối, hoặc theo hệ điều hành."
-        >
-            <div className="grid grid-cols-3 gap-1.5">
-                {THEME_MODES.map(({ value, label, Icon }) => {
-                    const active = themePreference === value;
-                    return (
-                        <SelectCard
-                            key={value}
-                            active={active}
-                            onClick={() => setThemePreference(value)}
-                            className="flex-col items-center text-center py-2.5 gap-1.5"
-                        >
-                            <span
-                                className={cn(
-                                    "inline-flex h-8 w-8 items-center justify-center rounded-full",
-                                    active
-                                        ? "bg-primary/10 text-primary"
-                                        : "bg-muted text-muted-foreground",
-                                )}
-                            >
-                                <Icon size={15} />
-                            </span>
-                            <span className="text-xs font-medium">{label}</span>
-                        </SelectCard>
-                    );
-                })}
-            </div>
-        </SectionCard>
     );
 }
 
@@ -198,58 +125,6 @@ function TypographySection() {
                             </span>
                             <span className="text-[11px] font-medium truncate">
                                 {f.name}
-                            </span>
-                        </SelectCard>
-                    );
-                })}
-            </div>
-        </SectionCard>
-    );
-}
-
-// ─── Language ───────────────────────────────────────────────────────────────
-function LanguageSection() {
-    const { locale, setLocale, locales, t } = useTranslation();
-
-    return (
-        <SectionCard
-            icon={<Languages size={16} className="text-primary" />}
-            title="Ngôn ngữ"
-            description="Ngôn ngữ hiển thị."
-        >
-            <div
-                className={cn(
-                    "grid gap-1.5",
-                    locales.length <= 2
-                        ? "grid-cols-2"
-                        : "grid-cols-2 sm:grid-cols-3",
-                )}
-            >
-                {locales.map((l) => {
-                    const active = l.code === locale;
-                    return (
-                        <SelectCard
-                            key={l.code}
-                            active={active}
-                            onClick={() => setLocale(l.code as Locale)}
-                            className="flex-col items-center text-center py-2.5 gap-1.5"
-                        >
-                            {/* Flag inside a circle mirrors the theme cards'
-                                icon chip so language + theme items share the
-                                exact same height. */}
-                            <span
-                                className={cn(
-                                    "inline-flex h-8 w-8 items-center justify-center rounded-full text-base leading-none",
-                                    active
-                                        ? "bg-primary/10"
-                                        : "bg-muted",
-                                )}
-                                aria-hidden
-                            >
-                                {l.flag}
-                            </span>
-                            <span className="text-xs font-medium leading-tight">
-                                {t(l.labelKey)}
                             </span>
                         </SelectCard>
                     );

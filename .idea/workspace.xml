@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(routes): update paths for Analyze and Kanji Radical pages">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/settings/SettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/settings/SettingsPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,12 +96,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/thiengthb/translate_app.git",
-    "accountId": "32d5ed62-08dd-467c-a3b4-0dd1bfec836d"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -221,8 +225,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
       </set>
     </attachedChunks>
   </component>
@@ -281,7 +284,8 @@
       <workItem from="1780595446343" duration="3702000" />
       <workItem from="1780635363057" duration="4543000" />
       <workItem from="1780670399027" duration="6634000" />
-      <workItem from="1780724509029" duration="429000" />
+      <workItem from="1780724509029" duration="2344000" />
+      <workItem from="1780858834601" duration="3010000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -571,7 +575,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780684519822</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages">
+      <option name="closed" value="true" />
+      <created>1780724949011</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1780724949011</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -613,13 +625,6 @@
                       </list>
                     </value>
                   </entry>
-                  <entry key="user">
-                    <value>
-                      <list>
-                        <option value="thi3n" />
-                      </list>
-                    </value>
-                  </entry>
                 </map>
               </option>
             </State>
@@ -629,7 +634,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
     <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
     <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
     <MESSAGE value="perf(grammar): replace runtime regex loop with Aho-Corasick + compiled-Pattern index&#10;&#10;- Add org.ahocorasick:ahocorasick 0.6.3 to pom.xml&#10;- Rewrite GrammarSpotterService: lazy-built GrammarIndex caches an&#10;  Aho-Corasick trie (plain-string markers, O(n) scan) plus pre-compiled&#10;  java.util.regex.Pattern entries (regex markers); double-checked locking&#10;  keeps the index thread-safe. Add invalidateIndex() called by seeder.&#10;- Remove spotGrammar() from OllamaClient — grammar detection is now&#10;  fully deterministic and offline; no Ollama at scan runtime.&#10;- TranslationAnalysisService: grammar = dictionary only (spotter.spot()).&#10;- GrammarDictionarySeeder: call grammarSpotter.invalidateIndex() after&#10;  each seed run so the fresh patterns are picked up immediately.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
@@ -654,7 +658,8 @@
     <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
     <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
     <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(routes): update paths for Analyze and Kanji Radical pages" />
+    <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
