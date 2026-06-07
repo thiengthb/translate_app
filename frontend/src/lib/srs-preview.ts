@@ -104,6 +104,59 @@ export function parseAlgorithmConfig(configJson?: string | null): AlgorithmDraft
   }
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   FSRS (Free Spaced Repetition Scheduler) — FUTURE ENHANCEMENT.
+
+   FSRS does NOT use ease_factor. It schedules from a memory model
+   (Difficulty / Stability / Retrievability) driven by a desired-retention
+   target. The scheduler itself is a backend skeleton today (review returns 501),
+   so the UI only READS an FSRS preset's config for display — it never edits the
+   parameters by hand. These helpers are additive and never touch the SM-2 path.
+   ────────────────────────────────────────────────────────────────────────── */
+
+export interface FsrsConfigView {
+  /** Target recall probability when a card becomes due (0.70–0.98). */
+  desiredRetention: number;
+  maximumIntervalDays: number;
+  fsrsVersion: string;
+  /** Model weights — managed by the optimizer, shown read-only. */
+  parameters: number[];
+  rescheduleCardsOnChange: boolean;
+}
+
+export const DEFAULT_FSRS: FsrsConfigView = {
+  desiredRetention: 0.9,
+  maximumIntervalDays: 36500,
+  fsrsVersion: "—",
+  parameters: [],
+  rescheduleCardsOnChange: false,
+};
+
+/** True when the preset schedules with FSRS (vs SM-2 / default). */
+export function isFsrsAlgorithm(algorithm?: SrsAlgorithmConfigDTO | null): boolean {
+  return (algorithm?.algorithmType ?? "SM2").toUpperCase() === "FSRS";
+}
+
+export function parseFsrsConfig(configJson?: string | null): FsrsConfigView {
+  if (!configJson?.trim()) return DEFAULT_FSRS;
+  try {
+    const parsed = JSON.parse(configJson) as Record<string, unknown>;
+    const rawParams = parsed.parameters;
+    const parameters = Array.isArray(rawParams)
+      ? rawParams.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+      : [];
+    return {
+      desiredRetention: clamp(readNumber(parsed.desiredRetention, DEFAULT_FSRS.desiredRetention), 0.7, 0.98, DEFAULT_FSRS.desiredRetention),
+      maximumIntervalDays: clamp(readNumber(parsed.maximumIntervalDays ?? parsed.maxIntervalDays, DEFAULT_FSRS.maximumIntervalDays), 1, 36500, DEFAULT_FSRS.maximumIntervalDays),
+      fsrsVersion: typeof parsed.fsrsVersion === "string" && parsed.fsrsVersion.trim() ? parsed.fsrsVersion : DEFAULT_FSRS.fsrsVersion,
+      parameters,
+      rescheduleCardsOnChange: Boolean(parsed.rescheduleCardsOnChange),
+    };
+  } catch {
+    return DEFAULT_FSRS;
+  }
+}
+
 export function normalizeSetting(
   setting: AnkiSrsSettingDTO | null,
   algorithm?: SrsAlgorithmConfigDTO | null,

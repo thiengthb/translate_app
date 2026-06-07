@@ -8,17 +8,23 @@ import { getCurrentUserId } from "@/utils/auth.utils";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
   type SettingsDraft,
+  type FsrsConfigView,
   DEFAULT_DRAFT,
   parseAlgorithmConfig,
+  parseFsrsConfig,
+  isFsrsAlgorithm,
   normalizeSetting,
   normalizeDraft,
   toAlgorithmConfigJson,
   retentionLabel,
 } from "@/lib/srs-preview";
 import {
+  AlertTriangle,
   CalendarDays,
   ChevronDown,
+  Cpu,
   Eye,
+  FlaskConical,
   Gauge,
   GraduationCap,
   HelpCircle,
@@ -28,6 +34,7 @@ import {
   Save,
   Shield,
   SlidersHorizontal,
+  Wand2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -62,6 +69,15 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
   const selectedAlgorithm = useMemo(
     () => algorithms.find((item) => item.id === draft.algorithmConfigId) ?? null,
     [algorithms, draft.algorithmConfigId],
+  );
+
+  // FSRS is a future enhancement: the deck-level modal can SELECT an FSRS preset
+  // and tune its desired retention + daily limits, but the FSRS weights live in
+  // the preset (read-only here) and scheduling itself is not implemented yet.
+  const isFsrs = isFsrsAlgorithm(selectedAlgorithm);
+  const fsrsView = useMemo<FsrsConfigView>(
+    () => parseFsrsConfig(selectedAlgorithm?.configJson),
+    [selectedAlgorithm],
   );
 
   const sanitizedDraft = useMemo(() => normalizeDraft(draft), [draft]);
@@ -147,7 +163,11 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
     const nextDraft = normalizeDraft(draft);
     const payload = {
       algorithmConfigId: nextDraft.algorithmConfigId || undefined,
-      algorithmConfigJson: toAlgorithmConfigJson(nextDraft),
+      // For FSRS we link the chosen preset as-is (its weights/version live in the
+      // preset). Sending an SM-2 config JSON would force the deck back onto an
+      // SM-2 preset, so we only write the JSON when editing an SM-2 algorithm.
+      algorithmConfigJson: isFsrs ? undefined : toAlgorithmConfigJson(nextDraft),
+      // Target retention doubles as FSRS "desired retention".
       targetRetention: Number(nextDraft.targetRetention.toFixed(2)),
       maxReviewsPerDay: nextDraft.maxReviewsPerDay,
       maxItemsPerDay: nextDraft.maxItemsPerDay,
@@ -213,7 +233,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         {deckTitle ? `${deckTitle} — study settings` : "Deck study settings"}
                       </h2>
                       <p className="truncate text-xs text-muted-foreground">
-                        Anki SM2 scheduling &amp; daily limits · applies to this deck only
+                        {isFsrs
+                          ? "FSRS scheduling (Beta) · desired retention & daily limits · applies to this deck only"
+                          : "Anki SM2 scheduling & daily limits · applies to this deck only"}
                       </p>
                     </div>
                   </div>
@@ -248,9 +270,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
 
                     <button
                       onClick={openPreview}
-                      disabled={loading}
+                      disabled={loading || isFsrs}
                       className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-                      title="See how the schedule & numbers work"
+                      title={isFsrs ? "Preview chỉ áp dụng cho SM-2" : "See how the schedule & numbers work"}
                     >
                       <Eye className="size-4" />
                       <span className="hidden sm:inline">Preview</span>
@@ -283,7 +305,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                     <Loader2 className="size-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="space-y-4">
+                    {isFsrs && <FsrsBetaBanner version={fsrsView.fsrsVersion} />}
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <SettingsPanel
                       title="Daily Limits"
                       icon={<CalendarDays className="size-5" />}
@@ -313,14 +337,20 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                     </SettingsPanel>
 
                     <SettingsPanel
-                      title="Retention"
+                      title={isFsrs ? "Desired Retention" : "Retention"}
                       icon={<Shield className="size-5" />}
-                      help="Target retention adjusts the interval modifier."
+                      help={
+                        isFsrs
+                          ? "Giá trị này càng cao, card xuất hiện thường xuyên hơn để tăng khả năng nhớ, nhưng số review mỗi ngày cũng tăng."
+                          : "Target retention adjusts the interval modifier."
+                      }
                     >
                       <div className="space-y-3">
                         <div className="flex items-end justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-foreground">Target retention</p>
+                            <p className="text-sm font-medium text-foreground">
+                              {isFsrs ? "Desired retention" : "Target retention"}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {retentionLabel(draft.targetRetention)}
                             </p>
@@ -347,6 +377,10 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                       </div>
                     </SettingsPanel>
 
+                    {isFsrs && <FsrsPanels view={fsrsView} />}
+
+                    {!isFsrs && (
+                    <>
                     <SettingsPanel
                       title="Learning"
                       icon={<GraduationCap className="size-5" />}
@@ -454,6 +488,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         onChange={(value) => patchDraft({ newInterval: value })}
                       />
                     </SettingsPanel>
+                    </>
+                    )}
+                    </div>
                   </div>
                 )}
               </ScrollHintContainer>
@@ -564,6 +601,119 @@ function TextField({
         className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-1 focus:ring-ring"
       />
     </label>
+  );
+}
+
+/* ──────────────────────────────────────────
+   FSRS (Free Spaced Repetition Scheduler) — FUTURE ENHANCEMENT (Beta).
+
+   The scheduler is a backend skeleton: studying an FSRS deck returns HTTP 501
+   and the UI honestly reports "not implemented yet" instead of faking intervals.
+   These panels make the architecture VISIBLE — desired retention is editable
+   per-deck; FSRS weights are read-only (managed by the optimizer); optimize /
+   simulator / reschedule are surfaced as "coming soon".
+────────────────────────────────────────── */
+
+function FsrsBetaBanner({ version }: { version: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
+      <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-500" />
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+          FSRS đang ở giai đoạn thử nghiệm (Beta){version && version !== "—" ? ` · ${version}` : ""}
+        </p>
+        <p className="text-xs leading-relaxed text-amber-700/90 dark:text-amber-300/90">
+          Bộ lập lịch FSRS chưa được cài đặt đầy đủ. Hệ thống <b>không tạo lịch giả</b>: nếu bạn để bộ
+          thẻ này ở chế độ FSRS, màn hình học sẽ báo chưa hỗ trợ. Để học bình thường, hãy chọn một
+          thuật toán <b>SM-2</b>. Các tuỳ chọn dưới đây đã sẵn sàng cho khi FSRS hoàn thiện.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function FsrsPanels({ view }: { view: FsrsConfigView }) {
+  const paramText =
+    view.parameters.length > 0
+      ? view.parameters.map((value) => Number(value.toFixed(4))).join(", ")
+      : "Chưa có — sẽ dùng tham số mặc định của FSRS.";
+
+  return (
+    <>
+      <SettingsPanel
+        title="FSRS Parameters"
+        icon={<Cpu className="size-5" />}
+        help="Bộ tham số của mô hình FSRS. Người dùng phổ thông không nên chỉnh tay; hệ thống có thể optimize từ lịch sử review khi đủ dữ liệu."
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Weights</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {view.parameters.length} tham số · read-only
+            </span>
+          </div>
+          <textarea
+            readOnly
+            value={paramText}
+            rows={4}
+            className="w-full resize-none rounded-lg border border-input bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed text-muted-foreground outline-none"
+          />
+          <ReadOnlyRow label="Maximum interval" value={`${view.maximumIntervalDays}d`} />
+        </div>
+      </SettingsPanel>
+
+      <SettingsPanel
+        title="Công cụ FSRS"
+        icon={<Wand2 className="size-5" />}
+        help="Optimize, mô phỏng và tính lại lịch — sẽ được bổ sung khi FSRS hoàn thiện."
+      >
+        <div className="space-y-2">
+          <ComingSoonRow
+            icon={<Wand2 className="size-4" />}
+            label="Optimize current preset"
+            desc="Phân tích lịch sử review để tìm bộ tham số phù hợp hơn."
+          />
+          <ComingSoonRow
+            icon={<FlaskConical className="size-4" />}
+            label="FSRS Simulator"
+            desc="Mô phỏng workload theo desired retention & new cards/day."
+          />
+          <ComingSoonRow
+            icon={<Repeat2 className="size-4" />}
+            label="Reschedule cards on change"
+            desc={`Tính lại due date khi đổi tham số (hiện ${view.rescheduleCardsOnChange ? "BẬT" : "tắt"} trong preset).`}
+          />
+        </div>
+      </SettingsPanel>
+    </>
+  );
+}
+
+function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
+      <span className="text-sm font-medium text-foreground">{label}</span>
+      <span className="text-sm font-semibold tabular-nums text-muted-foreground">{value}</span>
+    </div>
+  );
+}
+
+function ComingSoonRow({ icon, label, desc }: { icon: ReactNode; label: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 opacity-80">
+      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+            Sắp có
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+    </div>
   );
 }
 

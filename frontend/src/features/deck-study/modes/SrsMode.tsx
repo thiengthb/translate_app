@@ -399,8 +399,17 @@ export function SrsMode({ deckId, fullView, onToggleFullView, onDueCount, onCurr
       const next = advance({ ...session, learning, current: null }, Date.now());
       setSession(next);
       onDueCount?.(badgeTotal(next));
-    } catch {
-      toast.error("Failed to submit review.");
+    } catch (err) {
+      // 501 = the deck is set to an algorithm whose scheduler isn't implemented
+      // yet (FSRS). We keep the card on screen (no progress lost) and tell the
+      // user how to fix it, rather than showing a generic failure.
+      if ((err as { response?: { status?: number } })?.response?.status === 501) {
+        toast.error(
+          "Bộ thẻ này đang dùng FSRS — thuật toán chưa được hỗ trợ. Hãy mở cài đặt và chọn SM-2 để học.",
+        );
+      } else {
+        toast.error("Failed to submit review.");
+      }
     } finally {
       setSubmitting(false);
     }
