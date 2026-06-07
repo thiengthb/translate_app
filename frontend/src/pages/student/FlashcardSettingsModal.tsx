@@ -19,7 +19,6 @@ import {
   retentionLabel,
 } from "@/lib/srs-preview";
 import {
-  AlertTriangle,
   CalendarDays,
   ChevronDown,
   Cpu,
@@ -605,27 +604,28 @@ function TextField({
 }
 
 /* ──────────────────────────────────────────
-   FSRS (Free Spaced Repetition Scheduler) — FUTURE ENHANCEMENT (Beta).
+   FSRS (Free Spaced Repetition Scheduler).
 
-   The scheduler is a backend skeleton: studying an FSRS deck returns HTTP 501
-   and the UI honestly reports "not implemented yet" instead of faking intervals.
-   These panels make the architecture VISIBLE — desired retention is editable
-   per-deck; FSRS weights are read-only (managed by the optimizer); optimize /
-   simulator / reschedule are surfaced as "coming soon".
+   The scheduler is implemented (FSRS-5, the canonical 19-parameter model): an
+   FSRS deck schedules with real Difficulty/Stability/Retrievability. Desired
+   retention is editable per-deck; FSRS weights are read-only (managed by the
+   future optimizer); optimize / simulator / reschedule are surfaced as
+   "coming soon".
 ────────────────────────────────────────── */
 
 function FsrsBetaBanner({ version }: { version: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
-      <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-500" />
+    <div className="flex items-start gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-400/10 p-4">
+      <FlaskConical className="mt-0.5 size-5 shrink-0 text-emerald-500" />
       <div className="min-w-0 space-y-1">
-        <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
-          FSRS đang ở giai đoạn thử nghiệm (Beta){version && version !== "—" ? ` · ${version}` : ""}
+        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+          FSRS đang hoạt động (Beta){version && version !== "—" ? ` · ${version}` : ""}
         </p>
-        <p className="text-xs leading-relaxed text-amber-700/90 dark:text-amber-300/90">
-          Bộ lập lịch FSRS chưa được cài đặt đầy đủ. Hệ thống <b>không tạo lịch giả</b>: nếu bạn để bộ
-          thẻ này ở chế độ FSRS, màn hình học sẽ báo chưa hỗ trợ. Để học bình thường, hãy chọn một
-          thuật toán <b>SM-2</b>. Các tuỳ chọn dưới đây đã sẵn sàng cho khi FSRS hoàn thiện.
+        <p className="text-xs leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
+          Bộ thẻ này lập lịch bằng thuật toán <b>FSRS-5</b> thật (mô hình
+          Difficulty / Stability / Retrievability), điều khiển bởi <b>Desired Retention</b> bên dưới —
+          không dùng ease factor như SM-2. Các công cụ <b>optimize / mô phỏng / reschedule</b> sẽ được
+          bổ sung sau; tham số hiện dùng bộ mặc định.
         </p>
       </div>
     </div>
