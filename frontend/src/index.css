@@ -329,3 +329,18 @@
     display: none !important;
   }
 }
+
+/* Sweeping highlight used by the Lightswind ShineButton (triggered on hover
+   via the button's `group` + `group-hover:opacity-100`). */
+@keyframes shine {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
+}
+
+.animate-shine {
+  animation: shine 1.2s ease-in-out infinite;
+}

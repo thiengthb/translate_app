@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 
+import { ShineButton } from "@/components/lightswind/shine-button";
 import { GuestLayout } from "@/components/layout/GuestLayout";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useAuthModal } from "@/contexts/AuthModalContext";
@@ -71,7 +72,7 @@ export default function LandingPage() {
                     <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.1] drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
                         {t("landing.heroTitleA")}{" "}
                         {t("landing.heroTitleB")}{" "}
-                        <span className="bg-gradient-to-r from-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                        <span className="bg-gradient-to-r from-rose-300 to-pink-200 bg-clip-text text-transparent">
                             {t("landing.heroTitleHighlight")}
                         </span>
                     </h1>
@@ -92,13 +93,15 @@ export default function LandingPage() {
                             placeholder={t("auth.login.emailPlaceholder")}
                             className="flex-1 bg-transparent text-white placeholder:text-white/55 outline-none text-sm sm:text-base min-w-0"
                         />
-                        <button
+                        <ShineButton
                             type="submit"
-                            className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition-colors"
+                            size="md"
+                            className="shrink-0"
+                            bgColor="linear-gradient(325deg, #f43f5e 0%, #fb7185 55%, #f43f5e 90%)"
                         >
                             {t("landing.ctaStart")}
                             <ArrowRight size={15} />
-                        </button>
+                        </ShineButton>
                     </form>
 
                     <p className="mt-4 text-sm text-white/70">
@@ -106,7 +109,7 @@ export default function LandingPage() {
                         <button
                             type="button"
                             onClick={() => openLogin()}
-                            className="font-semibold text-sky-300 hover:text-sky-200 hover:underline"
+                            className="font-semibold text-rose-300 hover:text-rose-200 hover:underline"
                         >
                             {t("nav.login")}
                         </button>
