@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { srsAlgorithmConfigApi, ankiSrsSettingApi } from "@/api";
+import { srsAlgorithmConfigApi, ankiSrsSettingApi, ankiFsrsApi } from "@/api";
+import type { RescheduleResult } from "@/api";
 import type { SrsAlgorithmConfigDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -33,6 +34,8 @@ import {
   Save,
   Shield,
   SlidersHorizontal,
+  TrendingDown,
+  TrendingUp,
   Wand2,
   X,
 } from "lucide-react";
@@ -376,7 +379,7 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                       </div>
                     </SettingsPanel>
 
-                    {isFsrs && <FsrsPanels view={fsrsView} />}
+                    {isFsrs && <FsrsPanels view={fsrsView} deckId={deckId} />}
 
                     {!isFsrs && (
                     <>
@@ -624,15 +627,16 @@ function FsrsBetaBanner({ version }: { version: string }) {
         <p className="text-xs leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
           Bộ thẻ này lập lịch bằng thuật toán <b>FSRS-5</b> thật (mô hình
           Difficulty / Stability / Retrievability), điều khiển bởi <b>Desired Retention</b> bên dưới —
-          không dùng ease factor như SM-2. Các công cụ <b>optimize / mô phỏng / reschedule</b> sẽ được
-          bổ sung sau; tham số hiện dùng bộ mặc định.
+          không dùng ease factor như SM-2. Đã có công cụ <b>reschedule</b> để dựng lại lịch từ lịch sử
+          review (hữu ích khi chuyển từ SM-2); <b>optimize / mô phỏng</b> sẽ bổ sung sau. Tham số hiện
+          dùng bộ mặc định.
         </p>
       </div>
     </div>
   );
 }
 
-function FsrsPanels({ view }: { view: FsrsConfigView }) {
+function FsrsPanels({ view, deckId }: { view: FsrsConfigView; deckId: number }) {
   const paramText =
     view.parameters.length > 0
       ? view.parameters.map((value) => Number(value.toFixed(4))).join(", ")
@@ -678,11 +682,7 @@ function FsrsPanels({ view }: { view: FsrsConfigView }) {
             label="FSRS Simulator"
             desc="Mô phỏng workload theo desired retention & new cards/day."
           />
-          <ComingSoonRow
-            icon={<Repeat2 className="size-4" />}
-            label="Reschedule cards on change"
-            desc={`Tính lại due date khi đổi tham số (hiện ${view.rescheduleCardsOnChange ? "BẬT" : "tắt"} trong preset).`}
-          />
+          <RescheduleRow deckId={deckId} />
         </div>
       </SettingsPanel>
     </>
@@ -713,6 +713,130 @@ function ComingSoonRow({ icon, label, desc }: { icon: ReactNode; label: string; 
         </div>
         <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────
+   Reschedule: rebuild this deck's FSRS schedule from review-log history.
+
+   Two-step flow so nothing changes by accident: "Tính lại" runs a dry-run and
+   shows the summary (how many cards move earlier/later, how many are seeded
+   from history vs estimated); "Áp dụng" commits it. This is the migration path
+   for cards carried over from SM-2 — without it they'd collapse to new-card
+   intervals on their next review.
+────────────────────────────────────────── */
+function RescheduleRow({ deckId }: { deckId: number }) {
+  const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [preview, setPreview] = useState<RescheduleResult | null>(null);
+
+  const runPreview = async () => {
+    setLoading(true);
+    try {
+      const result = await ankiFsrsApi.reschedule(deckId, true);
+      setPreview(result);
+      if (result.rescheduled === 0) {
+        toast.info("Lịch hiện tại đã khớp với FSRS — không có thẻ nào cần đổi.");
+      }
+    } catch {
+      toast.error("Không tính lại được lịch (bộ thẻ có đang dùng FSRS không?).");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const apply = async () => {
+    setApplying(true);
+    try {
+      const result = await ankiFsrsApi.reschedule(deckId, false);
+      toast.success(`Đã tính lại lịch cho ${result.rescheduled} thẻ.`);
+      setPreview(null);
+    } catch {
+      toast.error("Áp dụng thất bại.");
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Repeat2 className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-semibold text-foreground">Tính lại lịch (Reschedule)</span>
+          <p className="text-xs text-muted-foreground">
+            Dựng lại Stability/Difficulty &amp; due date từ lịch sử review — dùng khi chuyển thẻ từ SM-2 sang FSRS.
+          </p>
+        </div>
+        {preview == null && (
+          <button
+            onClick={runPreview}
+            disabled={loading}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+            Xem trước
+          </button>
+        )}
+      </div>
+
+      {preview != null && (
+        <div className="mt-3 space-y-3 border-t border-border pt-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <PreviewStat label="Sẽ đổi" value={preview.rescheduled} />
+            <PreviewStat
+              label="Sớm hơn"
+              value={preview.dueEarlier}
+              icon={<TrendingDown className="size-3.5 text-amber-500" />}
+            />
+            <PreviewStat
+              label="Muộn hơn"
+              value={preview.dueLater}
+              icon={<TrendingUp className="size-3.5 text-emerald-500" />}
+            />
+            <PreviewStat label="Ước lượng" value={preview.estimated} />
+          </div>
+
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            <b>{preview.fromHistory}</b> thẻ dựng lại từ lịch sử review (chính xác),{" "}
+            <b>{preview.estimated}</b> thẻ ước lượng từ interval (chưa có log).{" "}
+            Interval trung bình: <b>{preview.avgIntervalBefore}d → {preview.avgIntervalAfter}d</b>.
+          </p>
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => setPreview(null)}
+              disabled={applying}
+              className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            >
+              Huỷ
+            </button>
+            <button
+              onClick={apply}
+              disabled={applying || preview.rescheduled === 0}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {applying ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              Áp dụng cho {preview.rescheduled} thẻ
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewStat({ label, value, icon }: { label: string; value: number; icon?: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 px-2.5 py-2">
+      <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="text-lg font-bold tabular-nums text-foreground">{value}</div>
     </div>
   );
 }
