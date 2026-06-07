@@ -11,6 +11,8 @@ import com.example.starter_project_2025.domain.library.flashcard.FlashcardReposi
 import com.example.starter_project_2025.domain.library.flashcard.FlashcardSide;
 import com.example.starter_project_2025.domain.library.flashcard.FlashcardSideContent;
 import com.example.starter_project_2025.domain.library.flashcard.SideType;
+import com.example.starter_project_2025.domain.library.srs.review_log.AnkiReviewLog;
+import com.example.starter_project_2025.domain.library.srs.review_log.AnkiReviewLogRepository;
 import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSetting;
 import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSettingRepository;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgress;
@@ -60,6 +62,7 @@ public class AnkiStudyController {
     FlashcardRepository flashcardRepository;
     AnkiSrsProgressRepository progressRepository;
     AnkiSrsSettingRepository settingRepository;
+    AnkiReviewLogRepository reviewLogRepository;
     UserRepository userRepository;
     SchedulerFactory schedulerFactory;
     ObjectMapper objectMapper;
@@ -191,6 +194,7 @@ public class AnkiStudyController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         Long userId = principal.getId();
+        LocalDateTime now = LocalDateTime.now();
 
         Flashcard flashcard = flashcardRepository.findById(req.getFlashcardId()).orElseThrow();
         Deck deck = deckRepository.findById(req.getDeckId()).orElseThrow();
@@ -216,8 +220,14 @@ public class AnkiStudyController {
                     return p;
                 });
 
+        // Snapshot the BEFORE state for the review log (the scheduler mutates
+        // `progress` in place). `lastReviewedBefore` is the prior review time,
+        // used to compute the real elapsed-days gap.
+        ReviewSnapshot before = ReviewSnapshot.of(progress);
+        LocalDateTime lastReviewedBefore = progress.getLastReviewedAt();
+
         try {
-            scheduler.review(progress, Rating.fromString(req.getRating()), schedulingConfig, LocalDateTime.now());
+            scheduler.review(progress, Rating.fromString(req.getRating()), schedulingConfig, now);
         } catch (UnsupportedOperationException notImplemented) {
             // A not-yet-implemented scheduler (e.g. FSRS) was selected. We do NOT
             // fabricate a result — report 501 so the client keeps the deck on SM-2.
@@ -225,7 +235,90 @@ public class AnkiStudyController {
         }
 
         progress = progressRepository.save(progress);
+        writeReviewLog(progress, deck, flashcard, setting, req.getRating(), now, lastReviewedBefore, before);
+
         return ResponseEntity.ok(buildCardDTO(flashcard, progress, schedulingConfig, scheduler));
+    }
+
+    /* ──────────────────────────────────────────
+       Review-log persistence.
+
+       Every applied review (SM-2 today, FSRS later) writes one immutable history
+       row: the rating, the before/after snapshot and the elapsed-days gap. This
+       is the raw data the future FSRS optimizer/simulator and the stats screens
+       read. FSRS-only columns (D/S/R) stay null for SM-2 reviews.
+    ────────────────────────────────────────── */
+    private void writeReviewLog(
+            AnkiSrsProgress progress,
+            Deck deck,
+            Flashcard flashcard,
+            AnkiSrsSetting setting,
+            String rating,
+            LocalDateTime now,
+            LocalDateTime lastReviewedBefore,
+            ReviewSnapshot before
+    ) {
+        int elapsedDays = lastReviewedBefore != null
+                ? (int) Math.max(0, ChronoUnit.DAYS.between(lastReviewedBefore, now))
+                : 0;
+
+        AnkiReviewLog log = AnkiReviewLog.builder()
+                .user(progress.getUser())
+                .progress(progress)
+                .flashcard(flashcard)
+                .deck(deck)
+                .algorithmConfig(setting != null ? setting.getAlgorithmConfig() : null)
+                .rating(Rating.fromString(rating).name())
+                .sourceType("ANKI_REVIEW")
+                .reviewedAt(now)
+                .elapsedDays(elapsedDays)
+                .algorithmType(progress.getAlgorithmType())
+                .oldState(before.state())
+                .newState(progress.getState())
+                .oldEaseFactor(before.easeFactor())
+                .newEaseFactor(progress.getEaseFactor())
+                .oldIntervalDays(before.intervalDays())
+                .newIntervalDays(progress.getIntervalDays())
+                .oldReviewCount(before.reviewCount())
+                .newReviewCount(progress.getReviewCount())
+                .oldLapses(before.lapses())
+                .newLapses(progress.getLapses())
+                .oldMemoryScore(before.memoryScore())
+                .newMemoryScore(progress.getMemoryScore())
+                .oldDifficulty(before.difficulty())
+                .newDifficulty(progress.getDifficulty())
+                .oldStability(before.stability())
+                .newStability(progress.getStability())
+                .oldRetrievability(before.retrievability())
+                .newRetrievability(progress.getRetrievability())
+                .oldScheduledDays(before.scheduledDays())
+                .newScheduledDays(progress.getScheduledDays())
+                .build();
+
+        reviewLogRepository.save(log);
+    }
+
+    /** Immutable copy of the mutable scheduling fields, captured before the
+     *  scheduler runs so the log can record the before→after transition. */
+    private record ReviewSnapshot(
+            String state,
+            Double easeFactor,
+            Integer intervalDays,
+            Integer reviewCount,
+            Integer lapses,
+            Double memoryScore,
+            Double difficulty,
+            Double stability,
+            Double retrievability,
+            Integer scheduledDays
+    ) {
+        static ReviewSnapshot of(AnkiSrsProgress p) {
+            return new ReviewSnapshot(
+                    p.getState(), p.getEaseFactor(), p.getIntervalDays(),
+                    p.getReviewCount(), p.getLapses(), p.getMemoryScore(),
+                    p.getDifficulty(), p.getStability(), p.getRetrievability(),
+                    p.getScheduledDays());
+        }
     }
 
     /* ── Helpers ── */

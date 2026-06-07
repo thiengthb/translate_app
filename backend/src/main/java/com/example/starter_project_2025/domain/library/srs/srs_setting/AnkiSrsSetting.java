@@ -74,4 +74,35 @@ public class AnkiSrsSetting extends BaseEntity {
     @Column(nullable = false)
     @FieldMeta(label = "Bury Related Items", type = "checkbox", order = 4, group = "Settings")
     Boolean buryRelatedItems = true;
+
+    // NOTE: these newer knobs are intentionally NULLABLE. The default active
+    // profile is MySQL with ddl-auto=update; adding a NOT NULL column without a
+    // DB default to a table that already has rows would fail on startup. They
+    // are always populated by AnkiSrsSettingController (firstNonNull → default),
+    // so a row written through the normal flow never actually carries null.
+
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Maximum Interval (days)", type = "number", order = 5, group = "Settings")
+    Integer maximumIntervalDays = 36500;
+
+    /** When the algorithm/parameters change, recompute due dates of existing
+     *  REVIEW cards. Default false (Anki's safe default). Consumed by the future
+     *  FSRS reschedule flow; SM-2 ignores it. */
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Reschedule Cards On Change", type = "checkbox", order = 6, group = "Settings")
+    Boolean rescheduleCardsOnChange = false;
+
+    /** Auto-suspend cards that lapse too often (a "leech"). Future feature. */
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Suspend Leeches", type = "checkbox", order = 7, group = "Settings")
+    Boolean suspendLeeches = false;
+
+    /** Lapse count at which a card is considered a leech. */
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Leech Threshold", type = "number", order = 8, group = "Settings")
+    Integer leechThreshold = 8;
 }

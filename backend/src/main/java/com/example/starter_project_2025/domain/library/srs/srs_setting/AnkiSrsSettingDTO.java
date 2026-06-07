@@ -29,4 +29,12 @@ public class AnkiSrsSettingDTO extends BaseDTO {
     Integer maxItemsPerDay;
 
     Boolean buryRelatedItems;
+
+    Integer maximumIntervalDays;
+
+    Boolean rescheduleCardsOnChange;
+
+    Boolean suspendLeeches;
+
+    Integer leechThreshold;
 }

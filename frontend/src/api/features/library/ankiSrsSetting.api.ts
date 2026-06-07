@@ -13,6 +13,10 @@ export interface AnkiSrsSettingsRequest {
   maxReviewsPerDay?: number;
   maxItemsPerDay?: number;
   buryRelatedItems?: boolean;
+  maximumIntervalDays?: number;
+  rescheduleCardsOnChange?: boolean;
+  suspendLeeches?: boolean;
+  leechThreshold?: number;
 }
 
 export const ankiSrsSettingApi = Object.assign({}, base, {
