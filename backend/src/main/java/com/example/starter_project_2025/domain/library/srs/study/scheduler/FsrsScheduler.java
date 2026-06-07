@@ -8,36 +8,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-/**
- * FSRS-5 scheduler (Free Spaced Repetition Scheduler).
- *
- * <p>This is a faithful port of the reference implementation
- * <a href="https://github.com/open-spaced-repetition/py-fsrs">py-fsrs</a> v4.1.2
- * (the FSRS-5, 19-parameter version). The formulas were not invented here — they
- * mirror {@code Scheduler.review_card} and its helpers verbatim, and are pinned
- * by {@code FsrsSchedulerTest} against values generated directly from py-fsrs.
- *
- * <p>FSRS models memory with three quantities instead of SM-2's ease factor:
- * <ul>
- *   <li><b>D</b> — difficulty (1–10), how hard the card is for this user.</li>
- *   <li><b>S</b> — stability (days), the time for recall probability to fall to
- *       the desired retention.</li>
- *   <li><b>R</b> — retrievability, the recall probability right now.</li>
- * </ul>
- * The next interval is the number of days for R to decay from 1.0 down to the
- * configured {@code desiredRetention}.
- *
- * <p><b>Differences from stock py-fsrs, on purpose:</b>
- * <ul>
- *   <li>Interval <i>fuzzing</i> is disabled, so {@link #preview} and
- *       {@link #review} always agree (deterministic backend, like the SM-2 path).</li>
- *   <li>The (re)learning-step machinery and step shapes are shared with SM-2 via
- *       {@link SchedulingConfig} (default {@code 1m 10m} / {@code 10m}).</li>
- * </ul>
- *
- * <p>State mapping: our {@code NEW} == py-fsrs Learning with no memory state yet;
- * {@code LEARNING}/{@code REVIEW}/{@code RELEARNING} map one-to-one.
- */
+/** FSRS-5 scheduler (Free Spaced Repetition Scheduler). */
 @Component
 public class FsrsScheduler implements SrsScheduler {
 

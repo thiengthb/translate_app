@@ -75,6 +75,12 @@ export interface AnkiStatsDTO {
   avgIntervalDays: number;
   totalReviews: number;
   totalLapses: number;
+  /** "SM2" or "FSRS" — picks ease vs stability/difficulty in the UI. */
+  algorithmType?: string;
+  avgStability: number;
+  avgDifficulty: number;
+  leechCards: number;
+  suspendedCards: number;
   futureReviews: AnkiDayCount[];
   intervalBuckets: AnkiBucketCount[];
   easeBuckets: AnkiBucketCount[];

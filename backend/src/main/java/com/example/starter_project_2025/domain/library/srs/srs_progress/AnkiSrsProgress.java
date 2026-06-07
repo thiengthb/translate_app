@@ -138,4 +138,30 @@ public class AnkiSrsProgress extends BaseEntity {
     /** FSRS: days elapsed between the previous two reviews. */
     @Column(name = "elapsed_days")
     Integer elapsedDays;
+
+    /* ──────────────────────────────────────────
+       Leech handling (Anki-style).
+
+       A "leech" is a card the user keeps forgetting (lapses ≥ the deck's
+       leech_threshold). It is auto-flagged on the lapse that crosses the
+       threshold, and — if the deck enables suspend-leeches — also suspended.
+       Suspended cards are hidden from the study queue until manually resumed.
+
+       NOTE: intentionally NULLABLE (no NOT NULL) — the default active profile is
+       MySQL with ddl-auto=update, and adding a NOT NULL column without a DB
+       default to a table that already has rows fails on startup. Null is read as
+       false everywhere (Boolean.TRUE.equals).
+    ────────────────────────────────────────── */
+
+    /** True once the card's lapses reach the deck's leech threshold. */
+    @Builder.Default
+    @Column(name = "is_leech")
+    @FieldMeta(label = "Leech", type = "checkbox", order = 7, group = "SRS")
+    Boolean isLeech = false;
+
+    /** Suspended cards are excluded from study until manually resumed. */
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Suspended", type = "checkbox", order = 8, group = "SRS")
+    Boolean suspended = false;
 }

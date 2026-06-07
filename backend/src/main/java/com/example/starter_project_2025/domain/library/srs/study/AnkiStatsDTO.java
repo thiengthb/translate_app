@@ -42,6 +42,16 @@ public class AnkiStatsDTO {
     int    totalReviews;   // sum of reviewCount across all cards
     int    totalLapses;
 
+    /* ── Algorithm + FSRS aggregates ── */
+    /** "SM2" or "FSRS" — lets the UI show ease (SM-2) or stability/difficulty (FSRS). */
+    String algorithmType;
+    double avgStability;   // FSRS: mean stability (days) over cards that have it
+    double avgDifficulty;  // FSRS: mean difficulty (1–10) over cards that have it
+
+    /* ── Leech / suspend ── */
+    int leechCards;        // cards flagged as leeches
+    int suspendedCards;    // cards currently suspended (hidden from study)
+
     /* ── Distributions ── */
     List<DayCount>    futureReviews;   // next 30 days, index 0 = today
     List<BucketCount> intervalBuckets;

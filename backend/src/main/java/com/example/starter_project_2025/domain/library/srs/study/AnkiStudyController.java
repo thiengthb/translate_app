@@ -140,6 +140,10 @@ public class AnkiStudyController {
 
             AnkiSrsProgress progress = progressMap.get(fc.getId());
 
+            // Suspended cards (auto-suspended leeches, or manual) are hidden from
+            // study entirely — not queued and not counted as due.
+            if (progress != null && Boolean.TRUE.equals(progress.getSuspended())) continue;
+
             boolean isNew = progress == null || "NEW".equals(progress.getState());
             boolean isDue = !isNew && isDue(progress, now);
 
@@ -234,10 +238,40 @@ public class AnkiStudyController {
             return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
         }
 
+        applyLeechDetection(progress, before, setting);
+
         progress = progressRepository.save(progress);
         writeReviewLog(progress, deck, flashcard, setting, req.getRating(), now, lastReviewedBefore, before);
 
         return ResponseEntity.ok(buildCardDTO(flashcard, progress, schedulingConfig, scheduler));
+    }
+
+    /* ──────────────────────────────────────────
+       Leech detection (Anki-style).
+
+       A leech is a card the user keeps forgetting. On the lapse that brings the
+       card's lapse count up to the deck's leech threshold we flag it; if the
+       deck has suspend-leeches enabled we also suspend it so it drops out of the
+       study queue until the user resumes it. Threshold/suspend come from the
+       deck's AnkiSrsSetting (default threshold 8, suspend off) — algorithm-agnostic,
+       so it works for both SM-2 and FSRS.
+    ────────────────────────────────────────── */
+    private void applyLeechDetection(AnkiSrsProgress progress, ReviewSnapshot before, AnkiSrsSetting setting) {
+        int threshold = setting != null && setting.getLeechThreshold() != null
+                ? setting.getLeechThreshold() : 8;
+        if (threshold <= 0) return;
+
+        boolean suspendLeeches = setting != null && Boolean.TRUE.equals(setting.getSuspendLeeches());
+        int oldLapses = before.lapses() != null ? before.lapses() : 0;
+        int newLapses = progress.getLapses() != null ? progress.getLapses() : 0;
+
+        // Only act on the review that actually added a lapse and reached the bar.
+        if (newLapses > oldLapses && newLapses >= threshold) {
+            progress.setIsLeech(true);
+            if (suspendLeeches) {
+                progress.setSuspended(true);
+            }
+        }
     }
 
     /* ──────────────────────────────────────────
@@ -410,6 +444,11 @@ public class AnkiStudyController {
         Map<Long, AnkiSrsProgress> progressMap = rows.stream()
                 .collect(Collectors.toMap(p -> p.getFlashcard().getId(), p -> p));
 
+        // Resolve the deck's scheduler so the UI can show ease (SM-2) or the
+        // FSRS memory metrics (stability/difficulty).
+        AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, deckId).orElse(null);
+        String algorithmType = SchedulingConfig.from(setting, objectMapper).algorithmType;
+
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
 
@@ -417,6 +456,8 @@ public class AnkiStudyController {
         int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
         double sumMemory = 0, sumEase = 0, sumInterval = 0;
         int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
+        double sumStability = 0, sumDifficulty = 0;
+        int stabilityCount = 0, difficultyCount = 0, leechCards = 0, suspendedCards = 0;
 
         int[] futureDue = new int[31];
         List<Integer> intervals = new ArrayList<>();
@@ -435,11 +476,18 @@ public class AnkiStudyController {
                 case "REVIEW"     -> review++;
             }
 
+            boolean suspended = Boolean.TRUE.equals(p.getSuspended());
+            if (suspended) suspendedCards++;
+            if (Boolean.TRUE.equals(p.getIsLeech())) leechCards++;
+            if (p.getStability() != null)  { sumStability  += p.getStability();  stabilityCount++; }
+            if (p.getDifficulty() != null) { sumDifficulty += p.getDifficulty(); difficultyCount++; }
+
             if (p.getLastReviewedAt() != null && today.equals(p.getLastReviewedAt().toLocalDate())) {
                 studiedToday++;
             }
 
-            if ("REVIEW".equals(p.getState()) && p.getNextReviewAt() != null) {
+            // Suspended cards are not "due" — keep them out of the due/future tallies.
+            if (!suspended && "REVIEW".equals(p.getState()) && p.getNextReviewAt() != null) {
                 LocalDateTime nextReviewAt = p.getNextReviewAt();
                 LocalDate due = nextReviewAt.toLocalDate();
                 long diff = ChronoUnit.DAYS.between(today, due);
@@ -469,10 +517,12 @@ public class AnkiStudyController {
             }
         }
 
-        int    total       = items.size();
-        double avgMem      = rows.size() > 0 ? Math.round(sumMemory   / rows.size() * 10.0) / 10.0 : 0;
-        double avgEase     = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
-        double avgInterval = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
+        int    total        = items.size();
+        double avgMem       = rows.size() > 0 ? Math.round(sumMemory   / rows.size() * 10.0) / 10.0 : 0;
+        double avgEase      = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
+        double avgInterval  = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
+        double avgStability = stabilityCount  > 0 ? Math.round(sumStability  / stabilityCount  * 10.0) / 10.0 : 0;
+        double avgDifficulty= difficultyCount > 0 ? Math.round(sumDifficulty / difficultyCount * 10.0) / 10.0 : 0;
 
         List<AnkiStatsDTO.DayCount> futureDueList = new ArrayList<>();
         for (int d = 0; d <= 30; d++) {
@@ -496,6 +546,11 @@ public class AnkiStudyController {
                 .avgIntervalDays(avgInterval)
                 .totalReviews(totalReviews)
                 .totalLapses(totalLapses)
+                .algorithmType(algorithmType)
+                .avgStability(avgStability)
+                .avgDifficulty(avgDifficulty)
+                .leechCards(leechCards)
+                .suspendedCards(suspendedCards)
                 .futureReviews(futureDueList)
                 .intervalBuckets(buildIntervalBuckets(intervals))
                 .easeBuckets(buildEaseBuckets(easeFactors))
