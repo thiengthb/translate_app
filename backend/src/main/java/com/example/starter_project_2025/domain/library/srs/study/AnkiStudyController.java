@@ -1,6 +1,5 @@
 package com.example.starter_project_2025.domain.library.srs.study;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.starter_project_2025.domain.library.deck.Deck;
 import com.example.starter_project_2025.domain.library.deck.DeckRepository;
@@ -16,6 +15,11 @@ import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSe
 import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSettingRepository;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgress;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgressRepository;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.PreviewResult;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.Rating;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.SchedulerFactory;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.SchedulingConfig;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.SrsScheduler;
 import com.example.starter_project_2025.security.UserPrincipal;
 import com.example.starter_project_2025.system.rbac.user.User;
 import com.example.starter_project_2025.system.rbac.user.UserRepository;
@@ -24,13 +28,13 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -43,7 +47,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/anki/study")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "AnkiStudy", description = "Anki SM2 study session APIs")
+@Tag(name = "AnkiStudy", description = "Anki SRS study session APIs (SM-2 today; FSRS is a future enhancement)")
 public class AnkiStudyController {
 
     /** Anki-style learn-ahead window (minutes): learning/relearning cards whose
@@ -57,12 +61,15 @@ public class AnkiStudyController {
     AnkiSrsProgressRepository progressRepository;
     AnkiSrsSettingRepository settingRepository;
     UserRepository userRepository;
+    SchedulerFactory schedulerFactory;
     ObjectMapper objectMapper;
 
     /* ──────────────────────────────────────────
        GET /api/anki/study/{deckId}
        Returns the study queue for a deck.
-       Includes NEW cards + DUE cards.
+       Includes NEW cards + DUE cards. Queue selection is algorithm-agnostic
+       (based on next_review_at + daily limits); only the per-button preview
+       labels are produced by the deck's scheduler.
     ────────────────────────────────────────── */
     @GetMapping("/{deckId}")
     @PreAuthorize("hasAuthority('ANKI_SRS_PROGRESS_READ')")
@@ -98,6 +105,7 @@ public class AnkiStudyController {
 
         AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, deckId).orElse(null);
         SchedulingConfig schedulingConfig = SchedulingConfig.from(setting, objectMapper);
+        SrsScheduler scheduler = schedulerFactory.resolve(schedulingConfig.algorithmType);
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         long learnedToday = progressList.stream()
@@ -157,7 +165,7 @@ public class AnkiStudyController {
                 }
             }
 
-            studyCards.add(buildCardDTO(fc, progress, schedulingConfig));
+            studyCards.add(buildCardDTO(fc, progress, schedulingConfig, scheduler));
         }
 
         return ResponseEntity.ok(AnkiStudyQueueDTO.builder()
@@ -173,7 +181,7 @@ public class AnkiStudyController {
 
     /* ──────────────────────────────────────────
        POST /api/anki/study/review
-       Applies SM2 and updates progress.
+       Resolves the deck's scheduler (SM-2 today; FSRS = future) and applies it.
     ────────────────────────────────────────── */
     @PostMapping("/review")
     @PreAuthorize("hasAuthority('ANKI_SRS_PROGRESS_CREATE')")
@@ -188,6 +196,7 @@ public class AnkiStudyController {
         Deck deck = deckRepository.findById(req.getDeckId()).orElseThrow();
         AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, req.getDeckId()).orElse(null);
         SchedulingConfig schedulingConfig = SchedulingConfig.from(setting, objectMapper);
+        SrsScheduler scheduler = schedulerFactory.resolve(schedulingConfig.algorithmType);
 
         AnkiSrsProgress progress = progressRepository
                 .findByUserIdAndDeckIdAndFlashcardId(userId, req.getDeckId(), req.getFlashcardId())
@@ -207,245 +216,22 @@ public class AnkiStudyController {
                     return p;
                 });
 
-        applyAnkiSm2(progress, req.getRating(), schedulingConfig);
+        try {
+            scheduler.review(progress, Rating.fromString(req.getRating()), schedulingConfig, LocalDateTime.now());
+        } catch (UnsupportedOperationException notImplemented) {
+            // A not-yet-implemented scheduler (e.g. FSRS) was selected. We do NOT
+            // fabricate a result — report 501 so the client keeps the deck on SM-2.
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
 
         progress = progressRepository.save(progress);
-        return ResponseEntity.ok(buildCardDTO(flashcard, progress, schedulingConfig));
-    }
-
-    /* ── SM2 algorithm ── */
-    private void applySmTwo(AnkiSrsProgress p, String rating) {
-        int quality = switch (rating.toUpperCase()) {
-            case "AGAIN" -> 1;
-            case "HARD"  -> 3;
-            case "EASY"  -> 5;
-            default      -> 4; // GOOD
-        };
-
-        LocalDateTime now = LocalDateTime.now();
-
-        if (p.getFirstLearnedAt() == null) {
-            p.setFirstLearnedAt(now);
-        }
-
-        String previousState = p.getState();
-
-        if (quality < 3) {
-            // Failed — reset repetition count and bump lapses
-            if ("REVIEW".equals(previousState)) {
-                p.setLapses(p.getLapses() + 1);
-            }
-            p.setReviewCount(0);
-            p.setIntervalDays(1);
-            p.setState("RELEARNING".equals(previousState) || "REVIEW".equals(previousState)
-                    ? "RELEARNING" : "LEARNING");
-            // Re-queue in ~1 minute so it reappears in the session
-            p.setNextReviewAt(now.plusMinutes(1));
-        } else {
-            int rep = p.getReviewCount();
-            int newInterval;
-            if (rep == 0) {
-                newInterval = 1;
-            } else if (rep == 1) {
-                newInterval = 6;
-            } else {
-                newInterval = (int) Math.round(p.getIntervalDays() * p.getEaseFactor());
-            }
-
-            // Easy bonus
-            if (quality == 5) {
-                newInterval = (int) Math.round(newInterval * 1.3);
-            }
-            newInterval = Math.max(1, newInterval);
-
-            double ef = p.getEaseFactor()
-                    + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-            if (ef < 1.3) ef = 1.3;
-
-            p.setIntervalDays(newInterval);
-            p.setEaseFactor(ef);
-            p.setReviewCount(rep + 1);
-            p.setState(newInterval <= 2 ? "LEARNING" : "REVIEW");
-            p.setNextReviewAt(now.plusDays(newInterval));
-        }
-
-        p.setLastRating(rating.toUpperCase());
-        p.setLastReviewedAt(now);
-
-        // Simple memory score: 0–100 based on ease factor relative to range [1.3, 3.5]
-        double memScore = Math.min(100.0, Math.max(0.0,
-                (p.getEaseFactor() - 1.3) / (3.5 - 1.3) * 100));
-        p.setMemoryScore(memScore);
+        return ResponseEntity.ok(buildCardDTO(flashcard, progress, schedulingConfig, scheduler));
     }
 
     /* ── Helpers ── */
-    private void applyAnkiSm2(AnkiSrsProgress progress, String rating, SchedulingConfig config) {
-        applyAnkiSm2(progress, rating, config, LocalDateTime.now());
-    }
 
-    private void applyAnkiSm2(
-            AnkiSrsProgress progress,
-            String rating,
-            SchedulingConfig config,
-            LocalDateTime now
-    ) {
-        String normalizedRating = normalizeRating(rating);
-        String state = progress.getState() != null ? progress.getState() : "NEW";
-
-        if (progress.getFirstLearnedAt() == null) {
-            progress.setFirstLearnedAt(now);
-        }
-
-        progress.setReviewCount(nvl(progress.getReviewCount()) + 1);
-
-        if ("REVIEW".equals(state)) {
-            applyReviewAnswer(progress, normalizedRating, config, now);
-        } else if ("RELEARNING".equals(state)) {
-            applyLearningAnswer(progress, normalizedRating, config, now, true);
-        } else {
-            applyLearningAnswer(progress, normalizedRating, config, now, false);
-        }
-
-        progress.setLastRating(normalizedRating);
-        progress.setLastReviewedAt(now);
-        progress.setMemoryScore(memoryScore(progress.getEaseFactor(), config));
-    }
-
-    private void applyLearningAnswer(
-            AnkiSrsProgress progress,
-            String rating,
-            SchedulingConfig config,
-            LocalDateTime now,
-            boolean relearning
-    ) {
-        List<Duration> steps = relearning ? config.relearningSteps : config.learningSteps;
-
-        if (steps.isEmpty()) {
-            graduate(progress, relearning ? progress.getIntervalDays() : config.graduatingIntervalDays, config, now);
-            return;
-        }
-
-        int currentStep = clamp(nvl(progress.getLearningStepIndex()), 0, steps.size() - 1);
-
-        switch (rating) {
-            case "AGAIN" -> {
-                progress.setState(relearning ? "RELEARNING" : "LEARNING");
-                progress.setLearningStepIndex(0);
-                progress.setNextReviewAt(now.plus(steps.get(0)));
-            }
-            case "HARD" -> {
-                Duration againDelay = steps.get(currentStep);
-                Duration goodDelay = currentStep + 1 < steps.size()
-                        ? steps.get(currentStep + 1)
-                        : Duration.ofDays(Math.max(1, relearning
-                                ? nvl(progress.getIntervalDays(), 1)
-                                : config.graduatingIntervalDays));
-                Duration hardDelay = average(againDelay, goodDelay);
-                progress.setState(relearning ? "RELEARNING" : "LEARNING");
-                progress.setLearningStepIndex(currentStep);
-                progress.setNextReviewAt(now.plus(hardDelay));
-            }
-            case "EASY" -> graduate(progress, relearning
-                    ? Math.max(nvl(progress.getIntervalDays(), 1), config.graduatingIntervalDays)
-                    : config.easyIntervalDays, config, now);
-            default -> {
-                if (currentStep + 1 >= steps.size()) {
-                    graduate(progress, relearning ? progress.getIntervalDays() : config.graduatingIntervalDays, config, now);
-                } else {
-                    int nextStep = currentStep + 1;
-                    progress.setState(relearning ? "RELEARNING" : "LEARNING");
-                    progress.setLearningStepIndex(nextStep);
-                    progress.setNextReviewAt(now.plus(steps.get(nextStep)));
-                }
-            }
-        }
-    }
-
-    private void applyReviewAnswer(
-            AnkiSrsProgress progress,
-            String rating,
-            SchedulingConfig config,
-            LocalDateTime now
-    ) {
-        int currentInterval = Math.max(1, nvl(progress.getIntervalDays(), 1));
-        int daysLate = progress.getNextReviewAt() != null && progress.getNextReviewAt().isBefore(now)
-                ? (int) Math.max(0, ChronoUnit.DAYS.between(progress.getNextReviewAt(), now))
-                : 0;
-        double ease = Math.max(config.minEase, nvl(progress.getEaseFactor(), config.startingEase));
-        double intervalModifier = config.intervalModifier * retentionModifier(config.targetRetention);
-
-        switch (rating) {
-            case "AGAIN" -> {
-                progress.setEaseFactor(Math.max(config.minEase, ease - 0.20));
-                progress.setLapses(nvl(progress.getLapses()) + 1);
-                progress.setLearningStepIndex(0);
-
-                int relearnInterval = config.newInterval <= 0
-                        ? 1
-                        : clampInterval((int) Math.round(currentInterval * config.newInterval), 1, config.maxIntervalDays);
-                progress.setIntervalDays(relearnInterval);
-
-                if (config.relearningSteps.isEmpty()) {
-                    progress.setState("REVIEW");
-                    progress.setNextReviewAt(now.plusDays(relearnInterval));
-                } else {
-                    progress.setState("RELEARNING");
-                    progress.setNextReviewAt(now.plus(config.relearningSteps.get(0)));
-                }
-            }
-            case "HARD" -> {
-                progress.setEaseFactor(Math.max(config.minEase, ease - 0.15));
-                int nextInterval = nextReviewInterval(
-                        currentInterval, daysLate, 0.25, config.hardInterval, intervalModifier, config
-                );
-                scheduleReview(progress, nextInterval, now);
-            }
-            case "EASY" -> {
-                progress.setEaseFactor(ease + 0.15);
-                int nextInterval = nextReviewInterval(
-                        currentInterval, daysLate, 1.0, ease * config.easyBonus, intervalModifier, config
-                );
-                scheduleReview(progress, nextInterval, now);
-            }
-            default -> {
-                progress.setEaseFactor(ease);
-                int nextInterval = nextReviewInterval(
-                        currentInterval, daysLate, 0.5, ease, intervalModifier, config
-                );
-                scheduleReview(progress, nextInterval, now);
-            }
-        }
-    }
-
-    private int nextReviewInterval(
-            int currentInterval,
-            int daysLate,
-            double lateMultiplier,
-            double answerMultiplier,
-            double intervalModifier,
-            SchedulingConfig config
-    ) {
-        double base = currentInterval + (daysLate * lateMultiplier);
-        int computed = (int) Math.round(base * answerMultiplier * intervalModifier);
-        return clampInterval(computed, currentInterval + 1, config.maxIntervalDays);
-    }
-
-    private void graduate(AnkiSrsProgress progress, Integer intervalDays, SchedulingConfig config, LocalDateTime now) {
-        int interval = clampInterval(nvl(intervalDays, config.graduatingIntervalDays), 1, config.maxIntervalDays);
-        progress.setState("REVIEW");
-        progress.setLearningStepIndex(0);
-        progress.setEaseFactor(Math.max(config.minEase, nvl(progress.getEaseFactor(), config.startingEase)));
-        progress.setIntervalDays(interval);
-        progress.setNextReviewAt(now.plusDays(interval));
-    }
-
-    private void scheduleReview(AnkiSrsProgress progress, int intervalDays, LocalDateTime now) {
-        progress.setState("REVIEW");
-        progress.setLearningStepIndex(0);
-        progress.setIntervalDays(intervalDays);
-        progress.setNextReviewAt(now.plusDays(intervalDays));
-    }
-
+    /** Queue-level due check (algorithm-agnostic). Learn-ahead is applied in the
+     *  queue builder, not here. */
     private boolean isDue(AnkiSrsProgress p, LocalDateTime now) {
         if ("LEARNING".equals(p.getState()) || "RELEARNING".equals(p.getState())) {
             return p.getNextReviewAt() == null || !p.getNextReviewAt().isAfter(now);
@@ -453,8 +239,8 @@ public class AnkiStudyController {
         return p.getNextReviewAt() != null && !p.getNextReviewAt().isAfter(now);
     }
 
-    private AnkiStudyCardDTO buildCardDTO(Flashcard fc, AnkiSrsProgress p, SchedulingConfig config) {
-        AnkiSrsProgress previewSource = previewSource(p, config);
+    private AnkiStudyCardDTO buildCardDTO(Flashcard fc, AnkiSrsProgress p, SchedulingConfig config, SrsScheduler scheduler) {
+        PreviewResult preview = scheduler.preview(p, config, LocalDateTime.now());
         return AnkiStudyCardDTO.builder()
                 .flashcardId(fc.getId())
                 .front(extractText(fc, SideType.FRONT))
@@ -472,91 +258,11 @@ public class AnkiStudyController {
                 .reviewCount(p != null ? p.getReviewCount() : 0)
                 .lapses(p != null ? p.getLapses() : 0)
                 .nextReviewAt(p != null ? p.getNextReviewAt() : null)
-                .againPreview(previewLabel(previewSource, "AGAIN", config))
-                .hardPreview(previewLabel(previewSource, "HARD", config))
-                .goodPreview(previewLabel(previewSource, "GOOD", config))
-                .easyPreview(previewLabel(previewSource, "EASY", config))
+                .againPreview(preview.getAgain())
+                .hardPreview(preview.getHard())
+                .goodPreview(preview.getGood())
+                .easyPreview(preview.getEasy())
                 .build();
-    }
-
-    /* ── All non-deleted contents of the given type on a specific side, ordered ── */
-    private AnkiSrsProgress previewSource(AnkiSrsProgress p, SchedulingConfig config) {
-        AnkiSrsProgress copy = new AnkiSrsProgress();
-        copy.setState(p != null ? p.getState() : "NEW");
-        copy.setEaseFactor(p != null ? p.getEaseFactor() : config.startingEase);
-        copy.setIntervalDays(p != null ? p.getIntervalDays() : 0);
-        copy.setReviewCount(p != null ? p.getReviewCount() : 0);
-        copy.setLapses(p != null ? p.getLapses() : 0);
-        copy.setLearningStepIndex(p != null ? p.getLearningStepIndex() : 0);
-        copy.setNextReviewAt(p != null ? p.getNextReviewAt() : null);
-        copy.setFirstLearnedAt(p != null ? p.getFirstLearnedAt() : null);
-        return copy;
-    }
-
-    private String previewLabel(AnkiSrsProgress source, String rating, SchedulingConfig config) {
-        AnkiSrsProgress copy = previewSource(source, config);
-        LocalDateTime now = LocalDateTime.now();
-        applyAnkiSm2(copy, rating, config, now);
-        LocalDateTime next = copy.getNextReviewAt();
-        if (next == null) return "-";
-
-        long minutes = Math.max(0, ChronoUnit.MINUTES.between(now, next));
-        if (minutes < 1) return "< 1m";
-        if (minutes < 60) return minutes + "m";
-
-        long hours = Math.max(1, ChronoUnit.HOURS.between(now, next));
-        if (hours < 24) return hours + "h";
-
-        long days = Math.max(1, ChronoUnit.DAYS.between(now.toLocalDate(), next.toLocalDate()));
-        if (days < 30) return days + "d";
-
-        long months = Math.max(1, Math.round(days / 30.0));
-        if (months < 24) return months + "mo";
-
-        return Math.round(days / 365.0) + "y";
-    }
-
-    private String normalizeRating(String rating) {
-        if (rating == null) return "GOOD";
-        return switch (rating.toUpperCase()) {
-            case "AGAIN", "HARD", "GOOD", "EASY" -> rating.toUpperCase();
-            default -> "GOOD";
-        };
-    }
-
-    private int nvl(Integer value) {
-        return value != null ? value : 0;
-    }
-
-    private int nvl(Integer value, int fallback) {
-        return value != null ? value : fallback;
-    }
-
-    private double nvl(Double value, double fallback) {
-        return value != null ? value : fallback;
-    }
-
-    private int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private int clampInterval(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private Duration average(Duration a, Duration b) {
-        return Duration.ofMillis((a.toMillis() + b.toMillis()) / 2);
-    }
-
-    private double retentionModifier(double targetRetention) {
-        double retention = Math.max(0.70, Math.min(0.98, targetRetention));
-        double modifier = Math.pow(0.90 / retention, 2);
-        return Math.max(0.50, Math.min(1.50, modifier));
-    }
-
-    private double memoryScore(Double easeFactor, SchedulingConfig config) {
-        double ease = nvl(easeFactor, config.startingEase);
-        return Math.min(100.0, Math.max(0.0, (ease - config.minEase) / (3.5 - config.minEase) * 100));
     }
 
     private List<String> extractMediaListFromSide(Flashcard fc, SideType sideType, ContentType type) {
@@ -591,108 +297,6 @@ public class AnkiStudyController {
         }
         return null;
     }
-
-    private static class SchedulingConfig {
-        List<Duration> learningSteps = List.of(Duration.ofMinutes(1), Duration.ofMinutes(10));
-        List<Duration> relearningSteps = List.of(Duration.ofMinutes(10));
-        int graduatingIntervalDays = 1;
-        int easyIntervalDays = 4;
-        int maxIntervalDays = 36500;
-        double startingEase = 2.5;
-        double minEase = 1.3;
-        double easyBonus = 1.3;
-        double hardInterval = 1.2;
-        double intervalModifier = 1.0;
-        double newInterval = 0.0;
-        double targetRetention = 0.9;
-
-        static SchedulingConfig from(AnkiSrsSetting setting, ObjectMapper objectMapper) {
-            SchedulingConfig config = new SchedulingConfig();
-            if (setting != null && setting.getTargetRetention() != null) {
-                config.targetRetention = setting.getTargetRetention();
-            }
-
-            String json = setting != null && setting.getAlgorithmConfig() != null
-                    ? setting.getAlgorithmConfig().getConfigJson()
-                    : null;
-            if (json == null || json.isBlank()) {
-                return config;
-            }
-
-            try {
-                JsonNode root = objectMapper.readTree(json);
-                config.learningSteps = readSteps(root, "learningSteps", config.learningSteps);
-                config.relearningSteps = readSteps(root, "relearningSteps", config.relearningSteps);
-                config.graduatingIntervalDays = readInt(root, "graduatingIntervalDays", config.graduatingIntervalDays, 1, 36500);
-                config.easyIntervalDays = readInt(root, "easyIntervalDays", config.easyIntervalDays, 1, 36500);
-                config.maxIntervalDays = readInt(root, "maxIntervalDays", config.maxIntervalDays, 1, 36500);
-                config.startingEase = readDouble(root, "startingEase", config.startingEase, 1.3, 5.0);
-                config.minEase = readDouble(root, "minEase", config.minEase, 1.3, 5.0);
-                config.easyBonus = readDouble(root, "easyBonus", config.easyBonus, 1.0, 5.0);
-                config.hardInterval = readDouble(root, "hardInterval", config.hardInterval, 1.0, 5.0);
-                config.intervalModifier = readDouble(root, "intervalModifier", config.intervalModifier, 0.1, 5.0);
-                config.newInterval = readDouble(root, "newInterval", config.newInterval, 0.0, 1.0);
-            } catch (Exception ignored) {
-                return config;
-            }
-
-            config.easyIntervalDays = Math.max(config.graduatingIntervalDays + 1, config.easyIntervalDays);
-            config.maxIntervalDays = Math.max(config.easyIntervalDays, config.maxIntervalDays);
-            return config;
-        }
-
-        private static List<Duration> readSteps(JsonNode root, String field, List<Duration> fallback) {
-            JsonNode node = root.get(field);
-            if (node == null || node.isNull()) return fallback;
-
-            List<Duration> result = new ArrayList<>();
-            if (node.isArray()) {
-                node.forEach(item -> {
-                    Duration parsed = parseStep(item.asText());
-                    if (parsed != null) result.add(parsed);
-                });
-            } else {
-                for (String token : node.asText("").split("\\s+")) {
-                    Duration parsed = parseStep(token);
-                    if (parsed != null) result.add(parsed);
-                }
-            }
-            return result.isEmpty() ? fallback : result;
-        }
-
-        private static Duration parseStep(String raw) {
-            if (raw == null || raw.isBlank()) return null;
-            String token = raw.trim().toLowerCase();
-            try {
-                if (token.endsWith("m")) {
-                    return Duration.ofMinutes(Long.parseLong(token.substring(0, token.length() - 1)));
-                }
-                if (token.endsWith("h")) {
-                    return Duration.ofHours(Long.parseLong(token.substring(0, token.length() - 1)));
-                }
-                if (token.endsWith("d")) {
-                    return Duration.ofDays(Long.parseLong(token.substring(0, token.length() - 1)));
-                }
-                return Duration.ofMinutes(Long.parseLong(token));
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-
-        private static int readInt(JsonNode root, String field, int fallback, int min, int max) {
-            JsonNode node = root.get(field);
-            if (node == null || !node.isNumber()) return fallback;
-            int value = node.asInt(fallback);
-            return Math.max(min, Math.min(max, value));
-        }
-
-        private static double readDouble(JsonNode root, String field, double fallback, double min, double max) {
-            JsonNode node = root.get(field);
-            if (node == null || !node.isNumber()) return fallback;
-            double value = node.asDouble(fallback);
-            return Math.max(min, Math.min(max, value));
-        }
-    }   // end SchedulingConfig
 
     /* ──────────────────────────────────────────
        GET /api/anki/study/{deckId}/stats

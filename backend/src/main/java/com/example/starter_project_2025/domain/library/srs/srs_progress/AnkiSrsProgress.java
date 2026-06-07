@@ -104,4 +104,38 @@ public class AnkiSrsProgress extends BaseEntity {
 
     @Column
     LocalDateTime nextReviewAt;
+
+    /* ──────────────────────────────────────────
+       Scheduler discriminator + FSRS memory-state fields (FUTURE ENHANCEMENT).
+
+       SM-2 (current) uses `easeFactor` + `intervalDays`.
+       FSRS (future)  will use difficulty / stability / retrievability driven by
+       a desired-retention target. These columns are nullable so existing SM-2
+       rows are completely unaffected; only FSRS-scheduled cards populate them.
+    ────────────────────────────────────────── */
+
+    /** Which algorithm last scheduled this card: "SM2" (default) or "FSRS". */
+    @Builder.Default
+    @Column(name = "algorithm_type", nullable = false, length = 20)
+    String algorithmType = "SM2";
+
+    /** FSRS: inherent difficulty of the card for this user. */
+    @Column
+    Double difficulty;
+
+    /** FSRS: memory stability — days for recall probability to fall to ~90%. */
+    @Column
+    Double stability;
+
+    /** FSRS: retrievability — recall probability at the last computation. */
+    @Column
+    Double retrievability;
+
+    /** FSRS: interval the card was scheduled for, in days. */
+    @Column(name = "scheduled_days")
+    Integer scheduledDays;
+
+    /** FSRS: days elapsed between the previous two reviews. */
+    @Column(name = "elapsed_days")
+    Integer elapsedDays;
 }
