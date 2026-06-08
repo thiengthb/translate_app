@@ -32,6 +32,7 @@ import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
+import ImportDeckPage from "@/pages/student/ImportDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
 import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
@@ -81,6 +82,7 @@ export const routes: RouteConfig[] = [
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/decks/import", component: ImportDeckPage, requiredPermission: "DECK_CREATE" },
   // Card-template management is the base-CRUD ProTable (entityConfig at
   // pages/management/library/card-template/index.tsx, auto-registered via
   // buildEntityRoutes + the @ResourceMenu module). Create / Edit route to the

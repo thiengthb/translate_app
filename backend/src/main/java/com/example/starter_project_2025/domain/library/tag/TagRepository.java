@@ -3,10 +3,14 @@ package com.example.starter_project_2025.domain.library.tag;
 import com.example.starter_project_2025.base.crud.domain.BaseCrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface TagRepository extends BaseCrudRepository<Tag, Long> {
 
     boolean existsByNameAndUserId(String name, Long userId);
 
     boolean existsByNameAndUserIdAndIdNot(String name, Long userId, Long id);
+
+    Optional<Tag> findByNameAndUserId(String name, Long userId);
 }

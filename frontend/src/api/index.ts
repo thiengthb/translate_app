@@ -20,6 +20,7 @@ export * from "./features/words/wordType.api";
 export * from "./features/dictionary.api";
 export * from "./features/library/folder.api";
 export * from "./features/library/deck.api";
+export * from "./features/library/deckImport.api";
 export * from "./features/library/tag.api";
 export * from "./features/library/flashcard.api";
 export * from "./features/library/flashcardTemplate.api";

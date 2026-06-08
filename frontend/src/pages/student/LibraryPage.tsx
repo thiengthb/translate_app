@@ -11,7 +11,7 @@ import { DataPagination } from "@/components/common/DataPagination";
 import { cn } from "@/lib/utils";
 import {
   BookOpen, Check, Layers, LayoutGrid, List,
-  MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, Trash2, X,
+  MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Tag, Trash2, UploadCloud, X,
 } from "lucide-react";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { COLOR_PRESETS } from "@/lib/color-presets";
@@ -369,6 +369,13 @@ export default function LibraryPage() {
               </button>
             )}
           </div>
+
+          <ActionButton
+            onClick={() => navigate("/decks/import")}
+            tooltip="Import deck"
+            variant="outline"
+            icon={<UploadCloud size={16} />}
+          />
 
           {/* Create — icon-only, like ProTable */}
           <ActionButton
