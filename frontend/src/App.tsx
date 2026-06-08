@@ -5,10 +5,12 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
+import { AuthModalProvider } from "./contexts/AuthModalContext";
 import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
+import { useThemePreference } from "./hooks/useThemePreference";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
 import LandingPage from "./pages/landing/LandingPage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
@@ -146,19 +148,49 @@ function AppRoutes() {
     );
 }
 
+/**
+ * Sonner toaster styled to match the Lightswind Alert look: a neutral card
+ * surface with a colored border / text / icon per type, instead of sonner's
+ * saturated `richColors` fills. `info` borrows the app's `--primary` so
+ * toasts track the chosen color preset, and `theme` follows the app's
+ * resolved light/dark so the surface flips with the rest of the UI.
+ */
+function AppToaster() {
+    const { resolvedTheme } = useThemePreference();
+    return (
+        <Toaster
+            theme={resolvedTheme}
+            duration={1500}
+            position="top-right"
+            toastOptions={{
+                classNames: {
+                    toast: "rounded-lg border p-4 shadow-lg",
+                    title: "font-medium tracking-tight",
+                    description: "text-sm opacity-90",
+                    success:
+                        "!border-green-500/50 !text-green-700 dark:!text-green-500 [&_[data-icon]>svg]:!text-green-500",
+                    error:
+                        "!border-gray-400 dark:!border-gray-700/50 !text-red-500 [&_[data-icon]>svg]:!text-red-500",
+                    warning:
+                        "!border-yellow-500/50 !text-yellow-700 dark:!text-yellow-500 [&_[data-icon]>svg]:!text-yellow-500",
+                    info:
+                        "!border-primary/50 !text-blue-700 dark:!text-primary [&_[data-icon]>svg]:!text-primary",
+                },
+            }}
+        />
+    );
+}
+
 function App() {
     return (
         <ErrorBoundary>
             <BrowserRouter>
-                <Toaster
-                    duration={1500}
-                    position="top-right"
-                    richColors
-                    toastOptions={{ className: "p-4" }}
-                />
+                <AppToaster />
                 <I18nProvider>
                     <RoleSwitchProvider>
-                        <AppRoutes />
+                        <AuthModalProvider>
+                            <AppRoutes />
+                        </AuthModalProvider>
                     </RoleSwitchProvider>
                 </I18nProvider>
             </BrowserRouter>

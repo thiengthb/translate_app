@@ -236,6 +236,81 @@ export interface WordAudio {
   source: string; // "forvo"
 }
 
+// ── Grammar (expression) ───────────────────────────────────────────────
+export interface GrammarDTO extends BaseDTO {
+  slug?: string;
+  form?: string;
+  levelId?: number;
+  /** JLPT code (e.g. "N4") of levelId — read-only, for display. */
+  levelCode?: string;
+  titleGloss?: string;
+  textbookSources?: string[];
+  notes?: string;
+}
+
+export interface GrammarFilter extends BaseFilter {
+  levelId?: number;
+}
+
+// ── GrammarSubUse ──────────────────────────────────────────────────────
+export interface CommonMistake {
+  pattern?: string;
+  hint?: string;
+}
+
+export interface GrammarSubUseDTO extends BaseDTO {
+  name?: string;
+  levelId?: number;
+  /** JLPT code (e.g. "N4") of levelId — read-only, for display. */
+  levelCode?: string;
+  nuanceDescription?: string;
+  detectorKey?: string;
+  commonMistakes?: CommonMistake[];
+}
+
+export interface GrammarSubUseFilter extends BaseFilter {
+  levelId?: number;
+}
+
+// ── GrammarMarker ──────────────────────────────────────────────────────
+export interface GrammarMarkerDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  markerPattern?: string;
+  register?: string;
+  frequencyRank?: number;
+  detectorSubkey?: string;
+}
+
+export interface GrammarMarkerFilter extends BaseFilter {
+  subUseId?: number;
+}
+
+// ── ReferenceSentence ──────────────────────────────────────────────────
+export interface ReferenceSentenceDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  l1Text?: string;
+  l2Text?: string;
+}
+
+export interface ReferenceSentenceFilter extends BaseFilter {
+  subUseId?: number;
+}
+
+// ── ScenarioStub ───────────────────────────────────────────────────────
+export interface ScenarioStubDTO extends BaseDTO {
+  subUseId?: number;
+  subUseName?: string;
+  situationContext?: string;
+  register?: string;
+  l1PromptTemplate?: string;
+}
+
+export interface ScenarioStubFilter extends BaseFilter {
+  subUseId?: number;
+}
+
 // ── Notebook (sổ tay từ vựng/kanji lưu trên server, per-user) ──────────
 export interface NotebookWordEntry {
   entryId: number;

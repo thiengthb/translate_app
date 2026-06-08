@@ -1,9 +1,8 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
+import { LoginRouteRedirect, RegisterRouteRedirect } from "@/components/auth/AuthRouteRedirect";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
-import { Login } from "@/pages/auth/Login";
-import RegisterPage from "@/pages/auth/RegisterPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
@@ -20,6 +19,11 @@ import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
+import ReviewPage from "@/pages/production/ReviewPage";
+import GrammarDashboardPage from "@/pages/grammar/GrammarDashboardPage";
+import GrammarSessionPage from "@/pages/grammar/GrammarSessionPage";
+import GrammarLevelPage from "@/pages/grammar/GrammarLevelPage";
+import GrammarDetailPage from "@/pages/grammar/GrammarDetailPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
@@ -45,6 +49,7 @@ import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
 import QuizResultPage from "@/pages/assessment/QuizResultPage";
 import ClassroomListPage from "@/pages/classroom/ClassroomListPage";
 import ClassroomDetailPage from "@/pages/classroom/ClassroomDetailPage";
+import KanjiRadicalGamePage from "@/pages/games/kanji-radical/KanjiRadicalGamePage";
 import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
 import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
@@ -110,6 +115,13 @@ export const routes: RouteConfig[] = [
   // ── Classroom ──
   { path: "/classrooms", component: ClassroomListPage, isModuleDriven: true },
   { path: "/classrooms/:classroomId", component: ClassroomDetailPage, requiredPermission: "CLASSROOM_READ" },
+
+  // ── Games ──
+  // Static (always available to any authenticated user). The board is
+  // fully client-side today; radical/prompt data is a placeholder that
+  // can be swapped for a backend feed later without touching the route.
+  { path: "/kanji-radical", component: KanjiRadicalGamePage },
+
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
   // dashboard is the feature's own landing, reached from the sidebar menu
@@ -135,13 +147,22 @@ export const routes: RouteConfig[] = [
   // and skips the module-driven AutoCrudPage for the same URL.
   { path: "/users", component: UsersPage, requiredPermission: "USER_READ" },
   { path: "/users/:userId", component: PublicProfilePage },
-  { path: "/analyze", component: AnalyzePage },
-  { path: "/production", component: ProductionPage },
+  { path: "/translator", component: AnalyzePage },
+  { path: "/sentence_practice", component: ProductionPage },
+  { path: "/production/review", component: ReviewPage, requiredPermission: "SCENARIO_STUB_UPDATE" },
+
+  // ── Grammar Learning (SRS) ──
+  // /grammar is the learner home (DB-driven menu via @ResourceMenu on
+  // GrammarDashboardController). The rest are reached by navigation.
+  { path: "/grammar", component: GrammarDashboardPage, isModuleDriven: true },
+  { path: "/grammar/learn", component: GrammarSessionPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
+  { path: "/grammar/levels/:level", component: GrammarLevelPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
+  { path: "/grammar/detail/:subUseId", component: GrammarDetailPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
-  { path: "/login", component: Login, isPublic: true },
+  { path: "/login", component: LoginRouteRedirect, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
-  { path: "/register", component: RegisterPage, isPublic: true },
+  { path: "/register", component: RegisterRouteRedirect, isPublic: true },
   { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},

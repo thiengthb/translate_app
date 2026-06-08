@@ -5,9 +5,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface WordRepository extends BaseCrudRepository<Word, Long> {
 
+    boolean existsByWordAndIsDeletedFalse(String word);
+
+    /** Active words for a JLPT level, looked up by the level's code (e.g. "N5"). */
+    @Query("select w from Word w where w.isDeleted = false and w.level.code = :code")
+    List<Word> findByLevelCode(@Param("code") String code);
     /**
      * Dùng cho import: phát hiện từ đã tồn tại (tránh nhập trùng).
      * Khoá trùng = (word + reading). Reading null được so khớp với reading null.
