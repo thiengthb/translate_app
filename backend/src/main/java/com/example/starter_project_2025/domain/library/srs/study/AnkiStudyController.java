@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/anki/study")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "AnkiStudy", description = "Anki SRS study session APIs (SM-2 today; FSRS is a future enhancement)")
+@Tag(name = "AnkiStudy", description = "Anki SRS study session APIs (SM-2 and FSRS-5)")
 public class AnkiStudyController {
 
     /** Anki-style learn-ahead window (minutes): learning/relearning cards whose
@@ -188,7 +188,7 @@ public class AnkiStudyController {
 
     /* ──────────────────────────────────────────
        POST /api/anki/study/review
-       Resolves the deck's scheduler (SM-2 today; FSRS = future) and applies it.
+       Resolves the deck's scheduler (SM-2 or FSRS) and applies it.
     ────────────────────────────────────────── */
     @PostMapping("/review")
     @PreAuthorize("hasAuthority('ANKI_SRS_PROGRESS_CREATE')")
@@ -277,10 +277,10 @@ public class AnkiStudyController {
     /* ──────────────────────────────────────────
        Review-log persistence.
 
-       Every applied review (SM-2 today, FSRS later) writes one immutable history
-       row: the rating, the before/after snapshot and the elapsed-days gap. This
-       is the raw data the future FSRS optimizer/simulator and the stats screens
-       read. FSRS-only columns (D/S/R) stay null for SM-2 reviews.
+       Every applied review writes one immutable history row: the rating, the
+       before/after snapshot and the elapsed-days gap. This is the raw data the
+       FSRS reschedule engine and the stats screens read. FSRS-only columns
+       (D/S/R) stay null for SM-2 reviews.
     ────────────────────────────────────────── */
     private void writeReviewLog(
             AnkiSrsProgress progress,

@@ -12,7 +12,7 @@ import java.util.List;
  * Resolved scheduling configuration for one deck/user, built from
  * {@link AnkiSrsSetting} and its linked {@code SrsAlgorithmConfig.configJson}.
  *
- * <p>It carries BOTH the SM-2 knobs (active today) and the FSRS knobs (future).
+ * <p>It carries both the SM-2 knobs and the FSRS knobs.
  * Fields are intentionally {@code public}: this is a short-lived, per-request
  * value object read directly by the schedulers — no getters/boilerplate needed.
  *
@@ -38,7 +38,7 @@ public class SchedulingConfig {
     public double newInterval = 0.0;
     public double targetRetention = 0.9;
 
-    /* ── FSRS knobs (FUTURE — parsed and carried, not yet applied) ── */
+    /* ── FSRS knobs ── */
     /** Target recall probability when a card becomes due (FSRS). Mirrors
      *  {@code targetRetention} unless the preset overrides it. */
     public double desiredRetention = 0.9;
@@ -94,7 +94,7 @@ public class SchedulingConfig {
             config.intervalModifier = readDouble(root, "intervalModifier", config.intervalModifier, 0.1, 5.0);
             config.newInterval = readDouble(root, "newInterval", config.newInterval, 0.0, 1.0);
 
-            // ── FSRS knobs (future) ──
+            // ── FSRS knobs ──
             config.maxIntervalDays = readInt(root, "maximumIntervalDays", config.maxIntervalDays, 1, 36500);
             config.desiredRetention = readDouble(root, "desiredRetention", config.desiredRetention, 0.70, 0.98);
             config.rescheduleCardsOnChange = root.hasNonNull("rescheduleCardsOnChange")

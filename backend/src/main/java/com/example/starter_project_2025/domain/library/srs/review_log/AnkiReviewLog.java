@@ -59,7 +59,7 @@ public class AnkiReviewLog extends BaseEntity {
     Flashcard flashcard;
 
     /** Deck the card belongs to — denormalised so logs can be queried per-deck
-     *  (e.g. the future FSRS optimizer reads one deck's history at a time). */
+     *  (the FSRS reschedule engine reads one deck's history at a time). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deck_id")
     Deck deck;
@@ -135,7 +135,7 @@ public class AnkiReviewLog extends BaseEntity {
        Every review records which algorithm produced it plus a before/after
        snapshot of the FSRS memory state. For SM-2 reviews the FSRS columns stay
        null (SM-2 doesn't track D/S/R). These columns are the raw history the
-       future FSRS optimizer consumes.
+       FSRS reschedule engine replays.
     ────────────────────────────────────────── */
 
     /** "SM2" or "FSRS" — the algorithm that scheduled this review. */

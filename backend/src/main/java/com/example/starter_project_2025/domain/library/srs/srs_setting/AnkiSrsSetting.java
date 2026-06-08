@@ -87,14 +87,14 @@ public class AnkiSrsSetting extends BaseEntity {
     Integer maximumIntervalDays = 36500;
 
     /** When the algorithm/parameters change, recompute due dates of existing
-     *  REVIEW cards. Default false (Anki's safe default). Consumed by the future
-     *  FSRS reschedule flow; SM-2 ignores it. */
+     *  REVIEW cards. Default false (Anki's safe default). Read by the FSRS
+     *  reschedule flow; SM-2 ignores it. */
     @Builder.Default
     @Column
     @FieldMeta(label = "Reschedule Cards On Change", type = "checkbox", order = 6, group = "Settings")
     Boolean rescheduleCardsOnChange = false;
 
-    /** Auto-suspend cards that lapse too often (a "leech"). Future feature. */
+    /** Auto-suspend cards that lapse too often (a "leech"). */
     @Builder.Default
     @Column
     @FieldMeta(label = "Suspend Leeches", type = "checkbox", order = 7, group = "Settings")

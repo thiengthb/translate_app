@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
  *
  * <p>Implementations:
  * <ul>
- *   <li>{@code Sm2Scheduler} — the current Anki-like SM-2 (fully implemented).</li>
- *   <li>{@code FsrsScheduler} — FSRS (future enhancement; skeleton only).</li>
+ *   <li>{@code Sm2Scheduler} — Anki-like SM-2.</li>
+ *   <li>{@code FsrsScheduler} — FSRS-5 (19-parameter model).</li>
  * </ul>
  *
  * <p>{@code review} mutates the given {@link AnkiSrsProgress} (state, interval,

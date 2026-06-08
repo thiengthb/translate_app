@@ -106,12 +106,12 @@ public class AnkiSrsProgress extends BaseEntity {
     LocalDateTime nextReviewAt;
 
     /* ──────────────────────────────────────────
-       Scheduler discriminator + FSRS memory-state fields (FUTURE ENHANCEMENT).
+       Scheduler discriminator + FSRS memory-state fields.
 
-       SM-2 (current) uses `easeFactor` + `intervalDays`.
-       FSRS (future)  will use difficulty / stability / retrievability driven by
-       a desired-retention target. These columns are nullable so existing SM-2
-       rows are completely unaffected; only FSRS-scheduled cards populate them.
+       SM-2 uses `easeFactor` + `intervalDays`.
+       FSRS uses difficulty / stability / retrievability driven by a
+       desired-retention target. These columns are nullable so existing SM-2
+       rows are unaffected; only FSRS-scheduled cards populate them.
     ────────────────────────────────────────── */
 
     /** Which algorithm last scheduled this card: "SM2" (default) or "FSRS". */

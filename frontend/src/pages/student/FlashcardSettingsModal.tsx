@@ -61,6 +61,30 @@ function visibleAlgorithms(list: SrsAlgorithmConfigDTO[], userId: number) {
   });
 }
 
+type SchedulerChoice = "SM2" | "FSRS";
+
+function algorithmTypeOf(item?: SrsAlgorithmConfigDTO | null) {
+  return (item?.algorithmType ?? "SM2").toUpperCase();
+}
+
+function findSm2Algorithm(list: SrsAlgorithmConfigDTO[], userId: number, deckId: number) {
+  const deckCode = `USER_SM2_${userId}_${deckId}`;
+  return (
+    list.find((item) => item.code === deckCode) ??
+    list.find((item) => item.code === "SM2_DEFAULT") ??
+    list.find((item) => algorithmTypeOf(item) === "SM2") ??
+    null
+  );
+}
+
+function findFsrsAlgorithm(list: SrsAlgorithmConfigDTO[]) {
+  return (
+    list.find((item) => item.code === "FSRS_DEFAULT") ??
+    list.find((item) => algorithmTypeOf(item) === "FSRS") ??
+    null
+  );
+}
+
 export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: FlashcardSettingsModalProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -73,10 +97,8 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
     [algorithms, draft.algorithmConfigId],
   );
 
-  // FSRS is a future enhancement: the deck-level modal can SELECT an FSRS preset
-  // and tune its desired retention + daily limits, but the FSRS weights live in
-  // the preset (read-only here) and scheduling itself is not implemented yet.
   const isFsrs = isFsrsAlgorithm(selectedAlgorithm);
+  const selectedScheduler: SchedulerChoice = isFsrs ? "FSRS" : "SM2";
   const fsrsView = useMemo<FsrsConfigView>(
     () => parseFsrsConfig(selectedAlgorithm?.configJson),
     [selectedAlgorithm],
@@ -138,12 +160,26 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
     setDraft((prev) => ({ ...prev, ...patch }));
   };
 
-  const handleAlgorithmChange = (algorithmConfigId: number) => {
-    const algorithm = algorithms.find((item) => item.id === algorithmConfigId) ?? null;
+  const handleSchedulerChange = (scheduler: SchedulerChoice) => {
+    const userId = getCurrentUserId();
+    const algorithm =
+      scheduler === "FSRS"
+        ? findFsrsAlgorithm(algorithms)
+        : userId
+          ? findSm2Algorithm(algorithms, userId, deckId)
+          : algorithms.find((item) => algorithmTypeOf(item) === "SM2") ?? null;
+
+    if (scheduler === "FSRS" && !algorithm) {
+      toast.error("FSRS-5 preset is not available.");
+      return;
+    }
+
+    const nextFsrsView = scheduler === "FSRS" ? parseFsrsConfig(algorithm?.configJson) : null;
     setDraft((prev) => ({
       ...prev,
       ...parseAlgorithmConfig(algorithm?.configJson),
-      algorithmConfigId,
+      algorithmConfigId: algorithm?.id ?? 0,
+      ...(nextFsrsView ? { targetRetention: nextFsrsView.desiredRetention } : {}),
     }));
   };
 
@@ -245,17 +281,13 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                   <div className="flex flex-1 items-center gap-2 lg:justify-end">
                     <div className="relative flex-1 lg:max-w-md">
                       <select
-                        value={String(draft.algorithmConfigId)}
-                        onChange={(event) => handleAlgorithmChange(Number(event.target.value))}
+                        value={selectedScheduler}
+                        onChange={(event) => handleSchedulerChange(event.target.value as SchedulerChoice)}
                         disabled={loading || saving}
                         className="h-10 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-sm text-foreground outline-none transition-shadow focus:ring-1 focus:ring-ring disabled:opacity-50"
                       >
-                        <option value="0">Built-in Anki SM2</option>
-                        {algorithms.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name ?? item.code ?? "Algorithm preset"}
-                          </option>
-                        ))}
+                        <option value="SM2">SM-2</option>
+                        <option value="FSRS">FSRS-5</option>
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     </div>
@@ -609,11 +641,10 @@ function TextField({
 /* ──────────────────────────────────────────
    FSRS (Free Spaced Repetition Scheduler).
 
-   The scheduler is implemented (FSRS-5, the canonical 19-parameter model): an
-   FSRS deck schedules with real Difficulty/Stability/Retrievability. Desired
-   retention is editable per-deck; FSRS weights are read-only (managed by the
-   future optimizer); optimize / simulator / reschedule are surfaced as
-   "coming soon".
+   FSRS-5 (canonical 19-parameter model): schedules with real
+   Difficulty/Stability/Retrievability. Desired retention is editable per-deck;
+   FSRS weights are read-only (optimize/simulator are surfaced as "coming soon";
+   reschedule is available).
 ────────────────────────────────────────── */
 
 function FsrsBetaBanner({ version }: { version: string }) {

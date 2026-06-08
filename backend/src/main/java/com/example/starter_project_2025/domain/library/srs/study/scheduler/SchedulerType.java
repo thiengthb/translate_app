@@ -2,8 +2,8 @@ package com.example.starter_project_2025.domain.library.srs.study.scheduler;
 
 /**
  * Which scheduling algorithm a deck/preset uses.
- * SM2  = current, fully implemented (Anki-like SM-2).
- * FSRS = future enhancement (skeleton only for now).
+ * SM2  = Anki-like SM-2.
+ * FSRS = FSRS-5 (19-parameter model, fully implemented).
  */
 public enum SchedulerType {
     SM2, FSRS;
