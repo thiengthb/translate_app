@@ -624,7 +624,7 @@ function QueueStatsBar({
   return (
     <div
       className="mx-auto flex w-fit items-center gap-3 text-xs font-normal text-muted-foreground/60"
-      title={`State counts: ${totalNew} new, ${totalLearning} learning, ${totalReview} review. Due now: ${totalDue}`}
+      title={`Today's workload: ${totalNew} new, ${totalLearning} learning, ${totalDue} due today. Total review cards: ${totalReview}`}
     >
       <StatChip label="New" value={liveNew} />
       <span className="text-muted-foreground/25">·</span>

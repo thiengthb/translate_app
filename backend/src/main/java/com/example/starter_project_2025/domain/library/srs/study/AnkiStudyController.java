@@ -56,6 +56,8 @@ public class AnkiStudyController {
      *  next step is due within this window are queued so the client can keep
      *  studying them in time order rather than idling on a countdown. */
     private static final int LEARN_AHEAD_MINUTES = 20;
+    private static final int DEFAULT_NEW_CARDS_PER_DAY = 20;
+    private static final int DEFAULT_REVIEWS_PER_DAY = 100;
 
     DeckRepository deckRepository;
     DeckItemRepository deckItemRepository;
@@ -120,10 +122,8 @@ public class AnkiStudyController {
                 .filter(p -> today.equals(p.getLastReviewedAt().toLocalDate()))
                 .filter(p -> p.getFirstLearnedAt() == null || !today.equals(p.getFirstLearnedAt().toLocalDate()))
                 .count();
-        int newLimit = setting != null && setting.getMaxItemsPerDay() != null
-                ? Math.max(0, setting.getMaxItemsPerDay() - (int) learnedToday) : Integer.MAX_VALUE;
-        int dueLimit = setting != null && setting.getMaxReviewsPerDay() != null
-                ? Math.max(0, setting.getMaxReviewsPerDay() - (int) reviewedToday) : Integer.MAX_VALUE;
+        int newLimit = Math.max(0, maxNewCardsPerDay(setting) - (int) learnedToday);
+        int dueLimit = Math.max(0, maxReviewsPerDay(setting) - (int) reviewedToday);
         int queuedNew = 0;
         int queuedDue = 0;
 
@@ -178,7 +178,7 @@ public class AnkiStudyController {
         return ResponseEntity.ok(AnkiStudyQueueDTO.builder()
                 .deckTitle(deck.getTitle())
                 .cards(studyCards)
-                .totalNew(totalNew)
+                .totalNew(queuedNew)
                 .totalLearning(totalLearning)
                 .totalReview(totalReview)
                 .dueReviewCards(dueReviewCards)
@@ -366,6 +366,18 @@ public class AnkiStudyController {
         return p.getNextReviewAt() != null && !p.getNextReviewAt().isAfter(now);
     }
 
+    private int maxNewCardsPerDay(AnkiSrsSetting setting) {
+        return setting != null && setting.getMaxItemsPerDay() != null
+                ? Math.max(0, setting.getMaxItemsPerDay())
+                : DEFAULT_NEW_CARDS_PER_DAY;
+    }
+
+    private int maxReviewsPerDay(AnkiSrsSetting setting) {
+        return setting != null && setting.getMaxReviewsPerDay() != null
+                ? Math.max(0, setting.getMaxReviewsPerDay())
+                : DEFAULT_REVIEWS_PER_DAY;
+    }
+
     private AnkiStudyCardDTO buildCardDTO(Flashcard fc, AnkiSrsProgress p, SchedulingConfig config, SrsScheduler scheduler) {
         PreviewResult preview = scheduler.preview(p, config, LocalDateTime.now());
         return AnkiStudyCardDTO.builder()
@@ -452,7 +464,13 @@ public class AnkiStudyController {
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
 
-        int newC = 0, learning = 0, relearning = 0, review = 0;
+        long learnedToday = rows.stream()
+                .filter(p -> p.getFirstLearnedAt() != null)
+                .filter(p -> today.equals(p.getFirstLearnedAt().toLocalDate()))
+                .count();
+        int newLimit = Math.max(0, maxNewCardsPerDay(setting) - (int) learnedToday);
+
+        int availableNew = 0, learning = 0, relearning = 0, review = 0;
         int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
         double sumMemory = 0, sumEase = 0, sumInterval = 0;
         int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
@@ -466,7 +484,7 @@ public class AnkiStudyController {
         for (DeckItem item : items) {
             AnkiSrsProgress p = progressMap.get(item.getFlashcard().getId());
             if (p == null || "NEW".equals(p.getState())) {
-                newC++;
+                if (availableNew < newLimit) availableNew++;
                 continue;
             }
 
@@ -533,7 +551,7 @@ public class AnkiStudyController {
                 .deckId(deck.getId())
                 .deckTitle(deck.getTitle())
                 .totalCards(total)
-                .newCards(newC)
+                .newCards(availableNew)
                 .learningCards(learning)
                 .relearningCards(relearning)
                 .reviewCards(review)
