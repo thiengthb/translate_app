@@ -1,3 +1,4 @@
+import axiosInstance from "@/api/axios";
 import { createBaseApiService } from "@/api/base-service.api";
 import type {
   KanjiDetailDTO, KanjiDetailFilter,
@@ -12,6 +13,7 @@ import type {
   KanjiReadingSetDTO, KanjiReadingSetFilter,
   KanjiReadingPassageDTO, KanjiReadingPassageFilter,
   KanjiReadingProgressDTO, KanjiReadingProgressFilter,
+  KanjiVocabWordPage, KanjiVocabReadingGroup,
 } from "@/types/features/kanji_study";
 
 // Kanji data extensions
@@ -33,3 +35,23 @@ export const kanjiWritingAttemptApi = createBaseApiService<KanjiWritingAttemptDT
 export const kanjiReadingSetApi = createBaseApiService<KanjiReadingSetDTO, KanjiReadingSetFilter>({ path: "/kanji-reading-sets" });
 export const kanjiReadingPassageApi = createBaseApiService<KanjiReadingPassageDTO, KanjiReadingPassageFilter>({ path: "/kanji-reading-passages" });
 export const kanjiReadingProgressApi = createBaseApiService<KanjiReadingProgressDTO, KanjiReadingProgressFilter>({ path: "/kanji-reading-progress" });
+
+// Vocabulary linked to a kanji — powers the kanji detail page's word sections.
+export const kanjiVocabularyApi = {
+  // Từ vựng chứa kanji (phân trang, tần suất cao trước).
+  words: async (character: string, page = 0, size = 20): Promise<KanjiVocabWordPage> => {
+    const response = await axiosInstance.get<KanjiVocabWordPage>(
+      `/kanji-details/${encodeURIComponent(character)}/words`,
+      { params: { page, size } },
+    );
+    return response.data;
+  },
+  // Ví dụ phát âm — từ vựng nhóm theo âm đọc (on/kun) của kanji.
+  readingExamples: async (character: string, samples = 8): Promise<KanjiVocabReadingGroup[]> => {
+    const response = await axiosInstance.get<KanjiVocabReadingGroup[]>(
+      `/kanji-details/${encodeURIComponent(character)}/reading-examples`,
+      { params: { samples } },
+    );
+    return response.data;
+  },
+};

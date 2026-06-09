@@ -8,6 +8,7 @@ import { KanjiStrokeAnimator } from "./components/KanjiStrokeAnimator";
 import { KanjiChietTu } from "./components/KanjiChietTu";
 import { KanjiDeckStrip } from "./components/KanjiDeckStrip";
 import { KanjiVariantLinks } from "./components/KanjiVariantLinks";
+import { KanjiVocabularySections } from "./components/KanjiVocabularySections";
 import { parseKvg, hasDecomposition } from "./components/kanjiVg";
 
 /**
@@ -149,6 +150,9 @@ export default function KanjiDetailPage() {
                 </div>
               </Section>
             )}
+
+            {/* ── Vocabulary-driven sections (examples / recommended / full list) ── */}
+            {kanji.character && <KanjiVocabularySections character={kanji.character} />}
           </div>
         )}
       </div>

@@ -1,5 +1,34 @@
 import type { BaseDTO, BaseFilter } from "@/types/common/base";
 
+// ── Kanji vocabulary (words linked to a kanji) ───────────────────────────
+export interface KanjiVocabWord {
+  id: number;
+  word: string;
+  reading?: string;
+  wordType?: string;
+  frequency?: number;
+  meaningText?: string;
+  levelCode?: string;
+  levelName?: string;
+}
+
+export interface KanjiVocabWordPage {
+  items: KanjiVocabWord[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+/** Pronunciation group ("Ví dụ phát âm") — words that use one reading of the kanji. */
+export interface KanjiVocabReadingGroup {
+  /** Display form of the reading, e.g. "サン" / "み"; absent for the OTHER bucket. */
+  reading?: string;
+  readingType: "ON" | "KUN" | "OTHER";
+  totalCount: number;
+  words: KanjiVocabWord[];
+}
+
 // ── Kanji Detail (the self-contained kanji master record) ────────────────
 export interface KanjiDetailDTO extends BaseDTO {
   character?: string;
