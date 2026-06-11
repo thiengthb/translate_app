@@ -224,13 +224,13 @@ export default function ImportDeckPage() {
     <MainLayout
       parentCrumb={{ href: "/library", title: "Library" }}
       breadcrumbIcon={<UploadCloud className="size-4" />}
-      pageDescription="Import deck flashcards from CSV, TSV or TXT."
+      pageDescription="Import deck flashcards from CSV, TSV, TXT or Excel."
     >
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <h1 className="text-xl font-semibold tracking-normal text-foreground">Import deck</h1>
-            <TooltipWrapper content="Preview the file, map each column, then create flashcards in a deck. CSV, TSV and TXT are supported.">
+            <TooltipWrapper content="Preview the file, map each column, then create flashcards in a deck. CSV, TSV, TXT, XLSX and XLS are supported.">
               <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 <Info className="size-3.5" />
               </span>
@@ -277,14 +277,14 @@ export default function ImportDeckPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.tsv,.txt"
+                  accept=".csv,.tsv,.txt,.xlsx,.xls"
                   className="hidden"
                   onChange={(event) => handleFile(event.target.files?.[0])}
                 />
                 <FileText className={cn("size-8 shrink-0 text-primary", !file && "mb-2")} />
                 <div className={cn(file && "min-w-0")}>
                   <p className="truncate text-sm font-medium text-foreground">{file ? file.name : "Drop a file or choose one"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">CSV, TSV and TXT files are supported.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">CSV, TSV, TXT and Excel files are supported.</p>
                 </div>
               </label>
 

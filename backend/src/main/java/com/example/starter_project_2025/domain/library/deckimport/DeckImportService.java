@@ -42,6 +42,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -72,7 +81,7 @@ public class DeckImportService {
     private static final int DEFAULT_PREVIEW_ROWS = 10;
     private static final int MAX_PREVIEW_ROWS = 100;
     private static final int MAX_SAMPLE_VALUES = 3;
-    private static final Set<String> SUPPORTED_EXTENSIONS = Set.of(".csv", ".tsv", ".txt");
+    private static final Set<String> SUPPORTED_EXTENSIONS = Set.of(".csv", ".tsv", ".txt", ".xlsx", ".xls");
     private static final String DEFAULT_TAG_COLOR = "#0ea5e9";
 
     DeckRepository deckRepository;
@@ -102,12 +111,17 @@ public class DeckImportService {
         }
         String fileName = Objects.requireNonNullElse(file.getOriginalFilename(), "import.csv");
         if (!isSupported(fileName)) {
-            throw new BadRequestException("Only .csv, .tsv and .txt files are supported");
+            throw new BadRequestException("Only .csv, .tsv, .txt, .xlsx and .xls files are supported");
         }
 
         try {
-            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
-            content = stripBom(content);
+            byte[] bytes = file.getBytes();
+            if (isSpreadsheet(fileName)) {
+                List<String[]> rawRows = readSpreadsheetRows(new ByteArrayInputStream(bytes));
+                return previewTabularRows(rawRows, fileName, "Excel", headerOverride, previewPage, previewRows, userId);
+            }
+
+            String content = decodeText(bytes);
 
             Optional<ParsedUpload> structuredText = parseStructuredTextUpload(content, fileName, userId);
             if (structuredText.isPresent()) {
@@ -117,47 +131,66 @@ public class DeckImportService {
                 return buildPreviewResponse(token, upload, normalizePreviewPage(previewPage), normalizePreviewRows(previewRows));
             }
 
+            Optional<ParsedUpload> linePairs = parseLinePairTextUpload(content, fileName, userId);
+            if (linePairs.isPresent()) {
+                String token = UUID.randomUUID().toString();
+                ParsedUpload upload = linePairs.get();
+                previewCache.put(token, upload);
+                return buildPreviewResponse(token, upload, normalizePreviewPage(previewPage), normalizePreviewRows(previewRows));
+            }
+
             char delimiter = delimiterOption == null || delimiterOption == DelimiterOption.AUTO
                     ? detectDelimiter(content)
                     : delimiterFor(delimiterOption, fileName);
 
             List<String[]> rawRows = readDelimitedRows(content, delimiter);
-            rawRows = rawRows.stream()
-                    .filter(row -> !isBlankRow(row))
-                    .limit(MAX_ROWS + 1L)
-                    .collect(Collectors.toCollection(ArrayList::new));
-            if (rawRows.size() > MAX_ROWS) {
-                throw new BadRequestException("Import is limited to " + MAX_ROWS + " rows");
-            }
-            if (rawRows.isEmpty()) {
-                throw new BadRequestException("File has no rows to import");
-            }
-
-            boolean hasHeader = headerOverride != null ? headerOverride : looksLikeHeader(rawRows.get(0));
-            String[] header = hasHeader ? rawRows.get(0) : syntheticHeader(maxColumns(rawRows));
-            int startIndex = hasHeader ? 1 : 0;
-            int columnCount = Math.max(header.length, maxColumns(rawRows));
-            List<String> labels = buildLabels(header, columnCount);
-            Map<String, ImportTargetField> mapping = suggestMapping(labels, rawRows, startIndex);
-
-            List<ParsedRow> parsedRows = new ArrayList<>();
-            for (int i = startIndex; i < rawRows.size(); i++) {
-                parsedRows.add(new ParsedRow(i + 1, valuesFor(rawRows.get(i), columnCount)));
-            }
-            if (parsedRows.isEmpty()) {
-                throw new BadRequestException("File has a header but no importable rows");
-            }
-
-            String token = UUID.randomUUID().toString();
-            ParsedUpload upload = new ParsedUpload(userId, fileName, delimiter, hasHeader, labels, parsedRows, mapping);
-            previewCache.put(token, upload);
-
-            return buildPreviewResponse(token, upload, normalizePreviewPage(previewPage), normalizePreviewRows(previewRows));
+            return previewTabularRows(rawRows, fileName, printableDelimiter(delimiter), headerOverride, previewPage, previewRows, userId);
         } catch (BadRequestException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new BadRequestException("Could not parse import file: " + ex.getMessage());
         }
+    }
+
+    private PreviewResponse previewTabularRows(
+            List<String[]> rawRows,
+            String fileName,
+            String delimiterLabel,
+            Boolean headerOverride,
+            Integer previewPage,
+            Integer previewRows,
+            Long userId
+    ) {
+        rawRows = rawRows.stream()
+                .filter(row -> !isBlankRow(row))
+                .limit(MAX_ROWS + 1L)
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (rawRows.size() > MAX_ROWS) {
+            throw new BadRequestException("Import is limited to " + MAX_ROWS + " rows");
+        }
+        if (rawRows.isEmpty()) {
+            throw new BadRequestException("File has no rows to import");
+        }
+
+        boolean hasHeader = headerOverride != null ? headerOverride : looksLikeHeader(rawRows);
+        String[] header = hasHeader ? rawRows.get(0) : syntheticHeader(maxColumns(rawRows));
+        int startIndex = hasHeader ? 1 : 0;
+        int columnCount = Math.max(header.length, maxColumns(rawRows));
+        List<String> labels = buildLabels(header, columnCount);
+        Map<String, ImportTargetField> mapping = suggestMapping(labels, rawRows, startIndex);
+
+        List<ParsedRow> parsedRows = new ArrayList<>();
+        for (int i = startIndex; i < rawRows.size(); i++) {
+            parsedRows.add(new ParsedRow(i + 1, valuesFor(rawRows.get(i), columnCount)));
+        }
+        if (parsedRows.isEmpty()) {
+            throw new BadRequestException("File has a header but no importable rows");
+        }
+
+        String token = UUID.randomUUID().toString();
+        ParsedUpload upload = new ParsedUpload(userId, fileName, delimiterLabel, hasHeader, labels, parsedRows, mapping);
+        previewCache.put(token, upload);
+        return buildPreviewResponse(token, upload, normalizePreviewPage(previewPage), normalizePreviewRows(previewRows));
     }
 
     public ImportResultResponse confirm(ConfirmRequest request, Long userId) {
@@ -321,7 +354,7 @@ public class DeckImportService {
         return PreviewResponse.builder()
                 .token(token)
                 .fileName(upload.fileName())
-                .delimiter(printableDelimiter(upload.delimiter()))
+                .delimiter(upload.delimiter())
                 .headerDetected(upload.headerDetected())
                 .totalRows(upload.rows().size())
                 .previewPage(safePage)
@@ -417,15 +450,15 @@ public class DeckImportService {
             values.computeIfAbsent(target, ignored -> new ArrayList<>()).add(value);
         }
         CardPayload payload = new CardPayload(
-                first(values, ImportTargetField.FRONT),
-                first(values, ImportTargetField.BACK),
-                first(values, ImportTargetField.READING),
-                first(values, ImportTargetField.ROMAJI),
-                first(values, ImportTargetField.ONYOMI),
-                first(values, ImportTargetField.KUNYOMI),
-                first(values, ImportTargetField.EXAMPLE),
-                first(values, ImportTargetField.EXAMPLE_TRANSLATION),
-                first(values, ImportTargetField.NOTE),
+                joined(values, ImportTargetField.FRONT),
+                joined(values, ImportTargetField.BACK),
+                joined(values, ImportTargetField.READING),
+                joined(values, ImportTargetField.ROMAJI),
+                joined(values, ImportTargetField.ONYOMI),
+                joined(values, ImportTargetField.KUNYOMI),
+                joined(values, ImportTargetField.EXAMPLE),
+                joined(values, ImportTargetField.EXAMPLE_TRANSLATION),
+                joined(values, ImportTargetField.NOTE),
                 splitTags(first(values, ImportTargetField.TAGS))
         );
         if (isBlank(payload.back())) {
@@ -459,7 +492,13 @@ public class DeckImportService {
 
             if (isNumberedEntry(line)) {
                 if (current != null) cards.add(current);
-                current = new TextCard(cleanNumberedFront(line), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                String front = cleanNumberedFront(line);
+                current = new TextCard(front, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                String[] inlinePair = splitPlainTextPair(front);
+                if (inlinePair != null) {
+                    current = new TextCard(inlinePair[0], new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                    current.translations().add(inlinePair[1]);
+                }
                 continue;
             }
 
@@ -508,7 +547,64 @@ public class DeckImportService {
             rows.add(new ParsedRow(i + 1, values));
         }
 
-        return Optional.of(new ParsedUpload(userId, fileName, '\n', false, labels, rows, mapping));
+        return Optional.of(new ParsedUpload(userId, fileName, "Structured text", false, labels, rows, mapping));
+    }
+
+    private Optional<ParsedUpload> parseLinePairTextUpload(String content, String fileName, Long userId) {
+        String lowerName = fileName != null ? fileName.toLowerCase(Locale.ROOT) : "";
+        if (!lowerName.endsWith(".txt")) return Optional.empty();
+
+        List<ParsedRow> rows = new ArrayList<>();
+        int lineNumber = 0;
+        for (String rawLine : content.split("\\R")) {
+            lineNumber++;
+            String line = trimToNull(rawLine);
+            if (line == null || line.startsWith("#")) continue;
+
+            String[] pair = splitPlainTextPair(line);
+            if (pair == null) continue;
+
+            Map<String, String> values = new LinkedHashMap<>();
+            values.put(columnKey(0), pair[0]);
+            values.put(columnKey(1), pair[1]);
+            rows.add(new ParsedRow(lineNumber, values));
+        }
+
+        if (rows.size() < 2) return Optional.empty();
+
+        List<String> labels = List.of("Front", "Back");
+        Map<String, ImportTargetField> mapping = new LinkedHashMap<>();
+        mapping.put(columnKey(0), ImportTargetField.FRONT);
+        mapping.put(columnKey(1), ImportTargetField.BACK);
+        return Optional.of(new ParsedUpload(userId, fileName, "Text pairs", false, labels, rows, mapping));
+    }
+
+    private String[] splitPlainTextPair(String line) {
+        line = cleanPairCandidate(line);
+        String[] separators = new String[]{"\t", " :: ", "::", " = ", " - ", " – ", " — ", ":", "："};
+        for (String separator : separators) {
+            int index = line.indexOf(separator);
+            if (index <= 0 || index >= line.length() - separator.length()) continue;
+
+            String left = trimToNull(line.substring(0, index));
+            String right = trimToNull(line.substring(index + separator.length()));
+            if (left == null || right == null || isGenericLabel(left)) continue;
+            return new String[]{left, right};
+        }
+        return null;
+    }
+
+    private String cleanPairCandidate(String line) {
+        String cleaned = isNumberedEntry(line) ? cleanNumberedFront(line) : line;
+        return cleaned.replaceFirst("^\\s*[-*•]\\s+", "").trim();
+    }
+
+    private boolean isGenericLabel(String value) {
+        String normalized = normalizeLabel(value);
+        return matches(normalized,
+                "front", "back", "term", "word", "answer", "meaning", "translation",
+                "dich", "nghia", "example", "vi du", "note", "ghi chu",
+                "on", "kun", "onyomi", "kunyomi", "reading", "例", "例文");
     }
 
     private boolean looksLikeStructuredText(String content) {
@@ -684,6 +780,9 @@ public class DeckImportService {
         Set<ImportTargetField> alreadyUsed = new HashSet<>();
         for (int i = 0; i < labels.size(); i++) {
             ImportTargetField suggested = suggestField(labels.get(i));
+            if (suggested == ImportTargetField.IGNORE || isSyntheticColumnLabel(labels.get(i), i)) {
+                suggested = suggestFieldFromSamples(sampleColumnValues(rows, startIndex, i, 8));
+            }
             if (suggested != ImportTargetField.IGNORE && suggested != ImportTargetField.TAGS && alreadyUsed.contains(suggested)) {
                 suggested = ImportTargetField.IGNORE;
             }
@@ -702,33 +801,37 @@ public class DeckImportService {
         return mapping;
     }
 
+    private boolean isSyntheticColumnLabel(String label, int index) {
+        return normalizeLabel(label).equals(normalizeLabel("Column " + (index + 1)));
+    }
+
     private ImportTargetField suggestField(String label) {
         String normalized = normalizeLabel(label);
-        if (matches(normalized, "front", "term", "word", "expression", "japanese", "kanji", "question")) {
+        if (matches(normalized, "front", "term", "word", "vocab", "vocabulary", "expression", "japanese", "kanji", "question", "cau hoi")) {
             return ImportTargetField.FRONT;
         }
-        if (matches(normalized, "back", "meaning", "definition", "answer", "vietnamese", "translation", "nghia")) {
+        if (matches(normalized, "back", "meaning", "definition", "answer", "vietnamese", "translation", "nghia", "dich", "dich nghia", "tieng viet")) {
             return ImportTargetField.BACK;
         }
-        if (matches(normalized, "reading", "kana", "furigana", "hiragana")) {
+        if (matches(normalized, "reading", "kana", "furigana", "hiragana", "yomikata", "pronunciation", "phien am")) {
             return ImportTargetField.READING;
         }
         if (matches(normalized, "romaji", "romanji")) {
             return ImportTargetField.ROMAJI;
         }
-        if (matches(normalized, "onyomi", "on", "on reading")) {
+        if (matches(normalized, "onyomi", "on", "on reading", "on yomi")) {
             return ImportTargetField.ONYOMI;
         }
-        if (matches(normalized, "kunyomi", "kun", "kun reading")) {
+        if (matches(normalized, "kunyomi", "kun", "kun reading", "kun yomi")) {
             return ImportTargetField.KUNYOMI;
         }
-        if (matches(normalized, "example", "sentence", "example sentence")) {
+        if (matches(normalized, "example", "sentence", "example sentence", "vi du", "cau vi du", "例文")) {
             return ImportTargetField.EXAMPLE;
         }
-        if (matches(normalized, "example translation", "sentence translation")) {
+        if (matches(normalized, "example translation", "sentence translation", "dich cau", "dich vi du")) {
             return ImportTargetField.EXAMPLE_TRANSLATION;
         }
-        if (matches(normalized, "note", "notes", "hint", "memo")) {
+        if (matches(normalized, "note", "notes", "hint", "memo", "ghi chu")) {
             return ImportTargetField.NOTE;
         }
         if (matches(normalized, "tag", "tags", "label", "labels")) {
@@ -737,12 +840,98 @@ public class DeckImportService {
         return ImportTargetField.IGNORE;
     }
 
-    private boolean looksLikeHeader(String[] firstRow) {
+    private ImportTargetField suggestFieldFromSamples(List<String> samples) {
+        if (samples == null || samples.isEmpty()) return ImportTargetField.IGNORE;
+
+        int japanese = 0;
+        int latinOnly = 0;
+        int noteLike = 0;
+        int tagLike = 0;
+        for (String sample : samples) {
+            String normalized = normalizeLabel(sample);
+            if (containsJapanese(sample)) japanese++;
+            if (containsLatin(sample) && !containsJapanese(sample)) latinOnly++;
+            if (looksLikeNote(sample, normalized)) noteLike++;
+            if (looksLikeTags(sample)) tagLike++;
+        }
+
+        if (noteLike >= Math.max(1, samples.size() / 2)) return ImportTargetField.NOTE;
+        if (tagLike >= Math.max(2, samples.size() / 2)) return ImportTargetField.TAGS;
+        if (japanese > 0 && japanese >= latinOnly) return ImportTargetField.FRONT;
+        if (latinOnly > 0) return ImportTargetField.BACK;
+        return ImportTargetField.IGNORE;
+    }
+
+    private List<String> sampleColumnValues(List<String[]> rows, int startIndex, int columnIndex, int limit) {
+        List<String> samples = new ArrayList<>();
+        if (rows == null) return samples;
+        for (int i = Math.max(0, startIndex); i < rows.size() && samples.size() < limit; i++) {
+            String[] row = rows.get(i);
+            if (row == null || columnIndex >= row.length) continue;
+            String value = trimToNull(row[columnIndex]);
+            if (value != null) samples.add(value);
+        }
+        return samples;
+    }
+
+    private boolean looksLikeNote(String sample, String normalized) {
+        if (isBlank(sample)) return false;
+        return normalized.contains(" on:")
+                || normalized.startsWith("on:")
+                || normalized.contains(" kun:")
+                || normalized.startsWith("kun:")
+                || normalized.contains("note")
+                || normalized.contains("memo")
+                || normalized.contains("例文")
+                || normalized.contains("example")
+                || sample.contains("ON:")
+                || sample.contains("KUN:");
+    }
+
+    private boolean looksLikeTags(String sample) {
+        if (isBlank(sample)) return false;
+        String trimmed = sample.trim();
+        if (trimmed.length() > 80) return false;
+        return (trimmed.contains(";") || trimmed.contains("|"))
+                && !containsJapanese(trimmed)
+                && trimmed.split("[;|]").length >= 2;
+    }
+
+    private boolean containsJapanese(String value) {
+        return value != null && value.matches(".*[\\p{InHiragana}\\p{InKatakana}\\p{InCJKUnifiedIdeographs}].*");
+    }
+
+    private boolean containsLatin(String value) {
+        return value != null && value.matches(".*\\p{IsLatin}.*");
+    }
+
+    private boolean looksLikeHeader(List<String[]> rows) {
+        if (rows == null || rows.isEmpty()) return false;
+        String[] firstRow = rows.get(0);
         int hits = 0;
         for (String value : firstRow) {
             if (suggestField(value) != ImportTargetField.IGNORE) hits++;
         }
-        return hits > 0;
+        if (hits == 0) return false;
+
+        int firstRowColumns = firstRow != null ? firstRow.length : 0;
+        List<String> firstValues = firstRow == null ? List.of() : Arrays.stream(firstRow)
+                .map(this::trimToNull)
+                .filter(Objects::nonNull)
+                .toList();
+        boolean allHeaderWords = !firstValues.isEmpty()
+                && firstValues.stream().allMatch(value -> suggestField(value) != ImportTargetField.IGNORE);
+        if (allHeaderWords) return true;
+
+        int comparableRows = 0;
+        int sameColumnRows = 0;
+        for (int i = 1; i < rows.size() && comparableRows < 5; i++) {
+            String[] row = rows.get(i);
+            if (isBlankRow(row)) continue;
+            comparableRows++;
+            if (row.length == firstRowColumns) sameColumnRows++;
+        }
+        return hits >= 2 && sameColumnRows >= Math.max(1, comparableRows / 2);
     }
 
     private char detectDelimiter(String content) throws Exception {
@@ -795,9 +984,57 @@ public class DeckImportService {
         }
     }
 
+    private List<String[]> readSpreadsheetRows(InputStream inputStream) throws Exception {
+        List<String[]> rows = new ArrayList<>();
+        try (Workbook workbook = WorkbookFactory.create(inputStream)) {
+            Sheet sheet = firstReadableSheet(workbook);
+            if (sheet == null) return rows;
+
+            DataFormatter formatter = new DataFormatter(Locale.ROOT);
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            for (int rowIndex = sheet.getFirstRowNum(); rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null || row.getLastCellNum() <= 0) {
+                    rows.add(new String[0]);
+                    continue;
+                }
+
+                int cellCount = row.getLastCellNum();
+                String[] values = new String[cellCount];
+                for (int cellIndex = 0; cellIndex < cellCount; cellIndex++) {
+                    values[cellIndex] = formattedCellValue(row, cellIndex, formatter, evaluator);
+                }
+                rows.add(values);
+            }
+        }
+        return rows;
+    }
+
+    private Sheet firstReadableSheet(Workbook workbook) {
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            Sheet sheet = workbook.getSheetAt(i);
+            if (sheet != null && sheet.getPhysicalNumberOfRows() > 0) return sheet;
+        }
+        return null;
+    }
+
+    private String formattedCellValue(Row row, int cellIndex, DataFormatter formatter, FormulaEvaluator evaluator) {
+        if (row.getCell(cellIndex) == null) return "";
+        try {
+            return trimToEmpty(formatter.formatCellValue(row.getCell(cellIndex), evaluator));
+        } catch (Exception ignored) {
+            return trimToEmpty(formatter.formatCellValue(row.getCell(cellIndex)));
+        }
+    }
+
     private boolean isSupported(String fileName) {
         String lower = fileName.toLowerCase(Locale.ROOT);
         return SUPPORTED_EXTENSIONS.stream().anyMatch(lower::endsWith);
+    }
+
+    private boolean isSpreadsheet(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".xlsx") || lower.endsWith(".xls");
     }
 
     private String[] syntheticHeader(int columnCount) {
@@ -894,6 +1131,12 @@ public class DeckImportService {
         return fieldValues.get(0);
     }
 
+    private String joined(EnumMap<ImportTargetField, List<String>> values, ImportTargetField field) {
+        List<String> fieldValues = values.get(field);
+        if (fieldValues == null || fieldValues.isEmpty()) return null;
+        return joinNonBlank(fieldValues);
+    }
+
     private Map<String, Object> asObjectMap(Map<String, String> values) {
         Map<String, Object> result = new LinkedHashMap<>();
         values.forEach(result::put);
@@ -922,10 +1165,31 @@ public class DeckImportService {
         return value.startsWith("\uFEFF") ? value.substring(1) : value;
     }
 
+    private String decodeText(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) return "";
+        if (bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB
+                && (bytes[2] & 0xFF) == 0xBF) {
+            return new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
+        }
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFE && (bytes[1] & 0xFF) == 0xFF) {
+            return new String(bytes, 2, bytes.length - 2, StandardCharsets.UTF_16BE);
+        }
+        if (bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xFE) {
+            return new String(bytes, 2, bytes.length - 2, StandardCharsets.UTF_16LE);
+        }
+        return stripBom(new String(bytes, Charset.forName("UTF-8")));
+    }
+
     private String trimToNull(String value) {
         if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String trimToEmpty(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private boolean isBlank(String value) {
@@ -935,7 +1199,7 @@ public class DeckImportService {
     private record ParsedUpload(
             Long userId,
             String fileName,
-            char delimiter,
+            String delimiter,
             boolean headerDetected,
             List<String> labels,
             List<ParsedRow> rows,
