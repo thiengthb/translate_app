@@ -41,6 +41,7 @@ import {
     Info,
     Key,
     KeyRound,
+    Keyboard,
     Laptop,
     Layers,
     Link,
@@ -199,6 +200,7 @@ export const iconMap = {
     video: Video,
     play: Play,
     pause: Pause,
+    keyboard: Keyboard,
     music: Music,
     mic: Mic,
 

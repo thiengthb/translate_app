@@ -42,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -241,7 +242,7 @@ public class AnkiStudyController {
         applyLeechDetection(progress, before, setting);
 
         progress = progressRepository.save(progress);
-        writeReviewLog(progress, deck, flashcard, setting, req.getRating(), now, lastReviewedBefore, before);
+        writeReviewLog(progress, deck, flashcard, setting, req, now, lastReviewedBefore, before);
 
         return ResponseEntity.ok(buildCardDTO(flashcard, progress, schedulingConfig, scheduler));
     }
@@ -287,7 +288,7 @@ public class AnkiStudyController {
             Deck deck,
             Flashcard flashcard,
             AnkiSrsSetting setting,
-            String rating,
+            AnkiReviewRequest req,
             LocalDateTime now,
             LocalDateTime lastReviewedBefore,
             ReviewSnapshot before
@@ -302,8 +303,10 @@ public class AnkiStudyController {
                 .flashcard(flashcard)
                 .deck(deck)
                 .algorithmConfig(setting != null ? setting.getAlgorithmConfig() : null)
-                .rating(Rating.fromString(rating).name())
-                .sourceType("ANKI_REVIEW")
+                .rating(Rating.fromString(req.getRating()).name())
+                .sourceType(normalizeSourceType(req.getSourceType()))
+                .score(req.getScore())
+                .timeTakenMs(req.getTimeTakenMs())
                 .reviewedAt(now)
                 .elapsedDays(elapsedDays)
                 .algorithmType(progress.getAlgorithmType())
@@ -330,6 +333,16 @@ public class AnkiStudyController {
                 .build();
 
         reviewLogRepository.save(log);
+    }
+
+    private String normalizeSourceType(String sourceType) {
+        if (sourceType == null || sourceType.isBlank()) {
+            return "ANKI_REVIEW";
+        }
+        String normalized = sourceType.trim()
+                .toUpperCase(Locale.ROOT)
+                .replaceAll("[^A-Z0-9_-]", "_");
+        return normalized.length() > 50 ? normalized.substring(0, 50) : normalized;
     }
 
     /** Immutable copy of the mutable scheduling fields, captured before the

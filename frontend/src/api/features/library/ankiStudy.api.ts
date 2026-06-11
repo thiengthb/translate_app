@@ -43,6 +43,9 @@ export interface AnkiReviewRequest {
   deckId: number;
   flashcardId: number;
   rating: AnkiRating;
+  score?: number;
+  timeTakenMs?: number;
+  sourceType?: string;
 }
 
 /* ─────────────────────────────────────────

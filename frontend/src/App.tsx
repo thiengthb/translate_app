@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { useSelector } from "react-redux";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -14,12 +15,12 @@ import { useThemePreference } from "./hooks/useThemePreference";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
 import LandingPage from "./pages/landing/LandingPage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
-import { routes } from "./router/component-registry";
+import { routes, type RouteComponent } from "./router/component-registry";
 import type { RootState } from "./store/store";
 import { getHomePathByRole } from "./utils/rbac.utils";
 
 // Stable across renders — `routes` is a module-level constant.
-const componentRegistry: Record<string, React.ComponentType> = Object.fromEntries(
+const componentRegistry: Record<string, RouteComponent> = Object.fromEntries(
     routes.filter((r) => r.isModuleDriven).map((r) => [r.path, r.component]),
 );
 const staticRoutes = routes.filter((r) => !r.isModuleDriven);
@@ -32,6 +33,20 @@ const staticRoutes = routes.filter((r) => !r.isModuleDriven);
  * (such paths have no entry in `componentRegistry` by design).
  */
 const staticRoutePaths = new Set(staticRoutes.map((r) => r.path));
+
+function RouteContent({ Component }: { Component: RouteComponent }) {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex min-h-[240px] flex-1 items-center justify-center text-sm text-muted-foreground">
+                    Loading...
+                </div>
+            }
+        >
+            <Component />
+        </Suspense>
+    );
+}
 
 function AppRoutes() {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -70,7 +85,7 @@ function AppRoutes() {
                         <Route
                             key={`public-${m.id}`}
                             path={m.url!}
-                            element={<Component />}
+                            element={<RouteContent Component={Component} />}
                         />
                     );
                 })}
@@ -103,7 +118,7 @@ function AppRoutes() {
                     // Translation); MetadataDrivenCrudPage builds the
                     // table at runtime from `/api/meta/entities/<Name>`.
                     const element = Component ? (
-                        <Component />
+                        <RouteContent Component={Component} />
                     ) : (
                         <MetadataDrivenCrudPage url={m.url} />
                     );
@@ -127,7 +142,7 @@ function AppRoutes() {
                 const Component = route.component;
 
                 if (route.isPublic) {
-                    return <Route key={index} path={route.path} element={<Component />} />;
+                    return <Route key={index} path={route.path} element={<RouteContent Component={Component} />} />;
                 }
 
                 return (
@@ -136,7 +151,7 @@ function AppRoutes() {
                         path={route.path}
                         element={
                             <ProtectedRoute requiredPermission={route.requiredPermission}>
-                                <Component />
+                                <RouteContent Component={Component} />
                             </ProtectedRoute>
                         }
                     />

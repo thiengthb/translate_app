@@ -59,12 +59,18 @@ import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
-import type { ComponentType } from "react";
+import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { buildEntityRoutes } from "./build-router";
+
+const KanaSharkPage = lazy(() => import("@/pages/student/learning/KanaSharkPage"));
+
+export type RouteComponent =
+  | ComponentType<Record<string, never>>
+  | LazyExoticComponent<ComponentType<Record<string, never>>>;
 
 export interface RouteConfig {
   path: string;
-  component: ComponentType<any>;
+  component: RouteComponent;
   requiredPermission?: string;
   isPublic?: boolean;
   isModuleDriven?: boolean;
@@ -99,6 +105,7 @@ export const routes: RouteConfig[] = [
   { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId/srs-preview", component: FlashcardSchedulePreviewPage, requiredPermission: "DECK_READ" },
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
+  { path: "/student/learning/kana-shark", component: KanaSharkPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
 
   // ── Assessment ──
   { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
