@@ -19,6 +19,7 @@ interface PixiTypingSceneProps {
 
 interface SceneLayers {
   background: Container;
+  player: Container;
   enemy: Container;
   effect: Container;
 }
@@ -42,9 +43,30 @@ interface ParticleObject {
   maxLife: number;
 }
 
+interface ProjectileObject {
+  graphic: Graphics;
+  x0: number;
+  y0: number;
+  tx: number;
+  ty: number;
+  progress: number;
+  enemyId: string;
+}
+
+interface DiverObject {
+  container: Container;
+  gun: Container;
+  baseX: number;
+  baseY: number;
+  bob: number;
+  recoil: number;
+}
+
 const BASE_WIDTH = 860;
 const BASE_HEIGHT = 420;
-const PLAYER_EDGE = 72;
+const PLAYER_EDGE = 96;
+const MUZZLE_OFFSET_X = 66;
+const MUZZLE_OFFSET_Y = 2;
 
 export function PixiTypingScene({
   enemies,
@@ -58,7 +80,11 @@ export function PixiTypingScene({
   const pixiRef = useRef<PixiModule | null>(null);
   const layersRef = useRef<SceneLayers | null>(null);
   const enemyObjectsRef = useRef<Map<string, SceneEnemyObject>>(new Map());
+  // Ids of sharks already hit — frozen and waiting for their harpoon to land.
+  const dyingIdsRef = useRef<Set<string>>(new Set());
   const particlesRef = useRef<ParticleObject[]>([]);
+  const projectilesRef = useRef<ProjectileObject[]>([]);
+  const diverRef = useRef<DiverObject | null>(null);
   const statusRef = useRef(status);
   const onEnemyMissedRef = useRef(onEnemyMissed);
   const sizeRef = useRef({ width: BASE_WIDTH, height: BASE_HEIGHT });
@@ -73,6 +99,21 @@ export function PixiTypingScene({
       ticker.start();
     } else {
       ticker.stop();
+    }
+
+    // When a round ends, clear in-flight shots + frozen "dying" sharks so the
+    // finished/idle screen isn't littered with leftover combat objects.
+    if (status !== "playing" && status !== "paused") {
+      projectilesRef.current.forEach((projectile) => projectile.graphic.destroy());
+      projectilesRef.current = [];
+      dyingIdsRef.current.forEach((id) => {
+        const enemy = enemyObjectsRef.current.get(id);
+        if (enemy) {
+          enemy.container.destroy({ children: true });
+          enemyObjectsRef.current.delete(id);
+        }
+      });
+      dyingIdsRef.current.clear();
     }
   }, [sceneFailed, status]);
 
@@ -91,6 +132,9 @@ export function PixiTypingScene({
     let resizeObserver: ResizeObserver | null = null;
     let visibilityHandler: (() => void) | null = null;
     let tickerCallback: ((ticker: Ticker) => void) | null = null;
+    // Stable Set instance for this scene; captured so cleanup doesn't read a
+    // possibly-stale ref.
+    const dyingIds = dyingIdsRef.current;
 
     async function initScene() {
       try {
@@ -127,18 +171,25 @@ export function PixiTypingScene({
 
         const layers: SceneLayers = {
           background: new PIXI.Container(),
+          player: new PIXI.Container(),
           enemy: new PIXI.Container(),
           effect: new PIXI.Container(),
         };
-        app.stage.addChild(layers.background, layers.enemy, layers.effect);
+        app.stage.addChild(layers.background, layers.player, layers.enemy, layers.effect);
         layersRef.current = layers;
         drawBackground(PIXI, layers.background, initialSize.width, initialSize.height, performanceMode);
+
+        const diver = createDiver(PIXI);
+        layers.player.addChild(diver.container);
+        diverRef.current = diver;
+        placeDiver(diver, initialSize.height);
 
         const resize = () => {
           const nextSize = readMountSize(mount);
           sizeRef.current = nextSize;
           app.renderer.resize(nextSize.width, nextSize.height);
           drawBackground(PIXI, layers.background, nextSize.width, nextSize.height, performanceMode);
+          if (diverRef.current) placeDiver(diverRef.current, nextSize.height);
           enemyObjectsRef.current.forEach((enemy) => {
             enemy.y = laneY(enemy.lane, nextSize.height);
             enemy.container.y = enemy.y;
@@ -150,10 +201,24 @@ export function PixiTypingScene({
 
         tickerCallback = (ticker) => {
           if (statusRef.current !== "playing") return;
-          updateEnemies(ticker.deltaTime, enemyObjectsRef.current, sizeRef.current.width, (enemyId) =>
+          const delta = ticker.deltaTime;
+          updateEnemies(delta, enemyObjectsRef.current, dyingIdsRef.current, (enemyId) =>
             onEnemyMissedRef.current(enemyId),
           );
-          updateParticles(ticker.deltaTime, particlesRef.current);
+          if (diverRef.current) updateDiver(delta, diverRef.current);
+          if (pixiRef.current && layersRef.current) {
+            updateProjectiles(
+              delta,
+              projectilesRef.current,
+              particlesRef.current,
+              enemyObjectsRef.current,
+              dyingIdsRef.current,
+              layersRef.current.effect,
+              pixiRef.current,
+              performanceMode,
+            );
+          }
+          updateParticles(delta, particlesRef.current);
         };
         app.ticker.add(tickerCallback);
 
@@ -185,7 +250,9 @@ export function PixiTypingScene({
         app.ticker.remove(tickerCallback);
       }
       app?.ticker.stop();
-      destroyAllObjects(enemyObjectsRef.current, particlesRef.current);
+      destroyAllObjects(enemyObjectsRef.current, particlesRef.current, projectilesRef.current);
+      dyingIds.clear();
+      diverRef.current = null;
       app?.destroy(true, { children: true });
       appRef.current = null;
       pixiRef.current = null;
@@ -216,9 +283,31 @@ export function PixiTypingScene({
 
     for (const [id, enemy] of enemyObjectsRef.current) {
       if (nextIds.has(id)) continue;
-      createBurst(PIXI, layers.effect, particlesRef.current, enemy.x, enemy.y, particleBudget(performanceMode));
-      enemy.container.destroy({ children: true });
-      enemyObjectsRef.current.delete(id);
+      // Already mid-explosion (harpoon in flight) — let the projectile finish it.
+      if (dyingIdsRef.current.has(id)) continue;
+
+      // Killed by correct typing → fire a harpoon from the diver, then the shark
+      // pops when it lands. Anything else (missed, or the round ended) is removed
+      // instantly with a small burst.
+      const killed = statusRef.current === "playing" && !enemy.missed && diverRef.current != null;
+      if (killed && diverRef.current) {
+        dyingIdsRef.current.add(id);
+        fireShot(
+          PIXI,
+          layers.effect,
+          projectilesRef.current,
+          particlesRef.current,
+          diverRef.current,
+          enemy.x,
+          enemy.y,
+          id,
+          performanceMode,
+        );
+      } else {
+        createBurst(PIXI, layers.effect, particlesRef.current, enemy.x, enemy.y, particleBudget(performanceMode));
+        enemy.container.destroy({ children: true });
+        enemyObjectsRef.current.delete(id);
+      }
     }
   }, [enemies, performanceMode, sceneFailed]);
 
@@ -248,10 +337,12 @@ function readMountSize(mount: HTMLDivElement) {
 function updateEnemies(
   delta: number,
   enemies: Map<string, SceneEnemyObject>,
-  width: number,
+  dying: Set<string>,
   onMissed: (enemyId: string) => void,
 ) {
   enemies.forEach((enemy, id) => {
+    if (dying.has(id)) return;
+
     enemy.x -= enemy.speed * delta * 2.1;
     enemy.container.x = enemy.x;
     enemy.container.rotation = Math.sin((enemy.x + enemy.y) / 48) * 0.025;
@@ -260,10 +351,46 @@ function updateEnemies(
       enemy.missed = true;
       onMissed(id);
     }
-
-    const dangerZone = width * 0.32;
-    enemy.warning.visible = enemy.warning.visible || enemy.x < dangerZone;
   });
+}
+
+function updateDiver(delta: number, diver: DiverObject) {
+  diver.bob += delta * 0.06;
+  diver.recoil = Math.max(0, diver.recoil - delta * 0.08);
+  diver.container.x = diver.baseX - diver.recoil * 7;
+  diver.container.y = diver.baseY + Math.sin(diver.bob) * 5;
+  diver.gun.rotation = -diver.recoil * 0.3;
+}
+
+function updateProjectiles(
+  delta: number,
+  projectiles: ProjectileObject[],
+  particles: ParticleObject[],
+  enemies: Map<string, SceneEnemyObject>,
+  dying: Set<string>,
+  effectLayer: Container,
+  PIXI: PixiModule,
+  performanceMode: KanaSharkPerformanceMode,
+) {
+  for (let index = projectiles.length - 1; index >= 0; index--) {
+    const projectile = projectiles[index];
+    projectile.progress += delta / 9;
+    const t = Math.min(1, projectile.progress);
+    projectile.graphic.x = projectile.x0 + (projectile.tx - projectile.x0) * t;
+    projectile.graphic.y = projectile.y0 + (projectile.ty - projectile.y0) * t;
+
+    if (t >= 1) {
+      createBurst(PIXI, effectLayer, particles, projectile.tx, projectile.ty, particleBudget(performanceMode));
+      const enemy = enemies.get(projectile.enemyId);
+      if (enemy) {
+        enemy.container.destroy({ children: true });
+        enemies.delete(projectile.enemyId);
+      }
+      dying.delete(projectile.enemyId);
+      projectile.graphic.destroy();
+      projectiles.splice(index, 1);
+    }
+  }
 }
 
 function updateParticles(delta: number, particles: ParticleObject[]) {
@@ -307,9 +434,9 @@ function drawBackground(
   }
   layer.addChild(lane);
 
+  // Soft glow column marking the diver's lane.
   const playerZone = new PIXI.Graphics();
-  playerZone.roundRect(20, 42, PLAYER_EDGE, height - 84, 28).fill({ color: 0x0e7490, alpha: 0.22 });
-  playerZone.roundRect(32, height / 2 - 36, 48, 72, 18).stroke({ color: 0x7dd3fc, width: 2, alpha: 0.55 });
+  playerZone.roundRect(8, 42, PLAYER_EDGE - 4, height - 84, 28).fill({ color: 0x0e7490, alpha: 0.16 });
   layer.addChild(playerZone);
 
   if (performanceMode === "performance") return;
@@ -322,6 +449,81 @@ function drawBackground(
     bubbles.circle(x, y, radius).stroke({ color: 0xbae6fd, width: 1, alpha: 0.18 });
   }
   layer.addChild(bubbles);
+}
+
+/** A scuba diver facing the incoming sharks, holding a harpoon emitter. */
+function createDiver(PIXI: PixiModule): DiverObject {
+  const container = new PIXI.Container();
+
+  const glow = new PIXI.Graphics();
+  glow.ellipse(2, 0, 50, 60).fill({ color: 0x0e7490, alpha: 0.18 });
+  container.addChild(glow);
+
+  // Oxygen tank on the back
+  const tank = new PIXI.Graphics();
+  tank.roundRect(-30, -18, 13, 38, 6).fill(0x334155).stroke({ color: 0x64748b, width: 1 });
+  container.addChild(tank);
+
+  // Body / wetsuit + tail fin
+  const body = new PIXI.Graphics();
+  body.poly([-18, 18, -38, 34, -14, 28]).fill(0x0e7490);
+  body.roundRect(-20, -22, 40, 46, 16).fill(0x115e75).stroke({ color: 0x22d3ee, width: 2, alpha: 0.7 });
+  container.addChild(body);
+
+  // Head + diving mask
+  const head = new PIXI.Graphics();
+  head.circle(7, -27, 13).fill(0x0f3d4a).stroke({ color: 0x22d3ee, width: 2, alpha: 0.6 });
+  head.roundRect(2, -33, 17, 11, 5).fill({ color: 0x7dd3fc, alpha: 0.9 });
+  container.addChild(head);
+
+  // Arm + harpoon gun (animated on shoot)
+  const gun = new PIXI.Container();
+  const gunBody = new PIXI.Graphics();
+  gunBody.roundRect(0, -3.5, 46, 7, 3).fill(0x1e293b).stroke({ color: 0x38bdf8, width: 1, alpha: 0.6 });
+  gunBody.poly([46, -2.5, 60, 0, 46, 2.5]).fill(0x67e8f9);
+  gunBody.circle(6, 0, 5).fill(0x0ea5e9);
+  gun.addChild(gunBody);
+  gun.x = 8;
+  gun.y = 2;
+  container.addChild(gun);
+
+  return { container, gun, baseX: 0, baseY: 0, bob: 0, recoil: 0 };
+}
+
+function placeDiver(diver: DiverObject, height: number) {
+  diver.baseX = 60;
+  diver.baseY = height / 2;
+  diver.container.x = diver.baseX;
+  diver.container.y = diver.baseY;
+}
+
+function fireShot(
+  PIXI: PixiModule,
+  effectLayer: Container,
+  projectiles: ProjectileObject[],
+  particles: ParticleObject[],
+  diver: DiverObject,
+  tx: number,
+  ty: number,
+  enemyId: string,
+  performanceMode: KanaSharkPerformanceMode,
+) {
+  diver.recoil = 1;
+  const mx = diver.container.x + MUZZLE_OFFSET_X;
+  const my = diver.container.y + MUZZLE_OFFSET_Y;
+
+  // Muzzle flash
+  createBurst(PIXI, effectLayer, particles, mx, my, performanceMode === "performance" ? 3 : 5);
+
+  const bolt = new PIXI.Graphics();
+  bolt.roundRect(-11, -2.5, 22, 5, 2.5).fill(0x67e8f9);
+  bolt.circle(11, 0, 3.5).fill(0xecfeff);
+  bolt.rotation = Math.atan2(ty - my, tx - mx);
+  bolt.x = mx;
+  bolt.y = my;
+  effectLayer.addChild(bolt);
+
+  projectiles.push({ graphic: bolt, x0: mx, y0: my, tx, ty, progress: 0, enemyId });
 }
 
 function createEnemyObject(
@@ -427,9 +629,15 @@ function clearLayer(layer: Container) {
   children.forEach((child) => child.destroy());
 }
 
-function destroyAllObjects(enemies: Map<string, SceneEnemyObject>, particles: ParticleObject[]) {
+function destroyAllObjects(
+  enemies: Map<string, SceneEnemyObject>,
+  particles: ParticleObject[],
+  projectiles: ProjectileObject[],
+) {
   enemies.forEach((enemy) => enemy.container.destroy({ children: true }));
   enemies.clear();
   particles.forEach((particle) => particle.graphic.destroy());
   particles.length = 0;
+  projectiles.forEach((projectile) => projectile.graphic.destroy());
+  projectiles.length = 0;
 }
