@@ -9,7 +9,9 @@ import { KanjiChietTu } from "./components/KanjiChietTu";
 import { KanjiDeckStrip } from "./components/KanjiDeckStrip";
 import { KanjiVariantLinks } from "./components/KanjiVariantLinks";
 import { KanjiVocabularySections } from "./components/KanjiVocabularySections";
+import { KanjiSentenceSection } from "./components/KanjiSentenceSection";
 import { parseKvg, hasDecomposition } from "./components/kanjiVg";
+import { recordViewedItem } from "./lib/kanjiSearchHistory";
 
 /**
  * Detail view of a single kanji (the Kanji-Study master record): character,
@@ -36,6 +38,14 @@ export default function KanjiDetailPage() {
       try {
         const k = await kanjiDetailApi.getById(id).catch(() => null);
         if (!cancelled) setKanji(k);
+        if (k?.id != null && k.character) {
+          recordViewedItem({
+            type: "kanji",
+            id: k.id,
+            label: k.character,
+            sub: k.meaning ?? undefined,
+          });
+        }
 
         const readingRes = await kanjiReadingApi.getPage(
           { page: 0, size: 50 },
@@ -153,6 +163,9 @@ export default function KanjiDetailPage() {
 
             {/* ── Vocabulary-driven sections (examples / recommended / full list) ── */}
             {kanji.character && <KanjiVocabularySections character={kanji.character} />}
+
+            {/* ── Example sentences ("Câu") ── */}
+            {kanji.character && <KanjiSentenceSection character={kanji.character} />}
           </div>
         )}
       </div>

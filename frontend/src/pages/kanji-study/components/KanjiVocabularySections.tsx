@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Volume2, Sparkles, Library, Loader2 } from "lucide-react";
 import { kanjiVocabularyApi } from "@/api/features/kanji_study";
 import type { KanjiVocabWord, KanjiVocabReadingGroup } from "@/types/features/kanji_study";
@@ -155,8 +156,13 @@ function ReadingBadge({ group }: { group: KanjiVocabReadingGroup }) {
 }
 
 function WordRow({ word, compact = false }: { word: KanjiVocabWord; compact?: boolean }) {
+  const navigate = useNavigate();
   return (
-    <div className="flex items-baseline gap-2 min-w-0">
+    <button
+      type="button"
+      onClick={() => navigate(`/kanji-study/word/${word.id}`)}
+      className="flex items-baseline gap-2 min-w-0 w-full text-left rounded-md hover:bg-muted/60 transition-colors -mx-1 px-1"
+    >
       <div className="min-w-0">
         <span className="font-medium text-foreground">{word.word}</span>
         {word.reading && (
@@ -173,7 +179,7 @@ function WordRow({ word, compact = false }: { word: KanjiVocabWord; compact?: bo
           {word.levelCode}
         </span>
       )}
-    </div>
+    </button>
   );
 }
 

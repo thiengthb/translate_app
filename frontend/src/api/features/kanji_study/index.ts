@@ -1,5 +1,6 @@
 import axiosInstance from "@/api/axios";
 import { createBaseApiService } from "@/api/base-service.api";
+import type { PageResponse } from "@/types/common/pageable";
 import type {
   KanjiDetailDTO, KanjiDetailFilter,
   KanjiReadingDTO, KanjiReadingFilter,
@@ -14,6 +15,8 @@ import type {
   KanjiReadingPassageDTO, KanjiReadingPassageFilter,
   KanjiReadingProgressDTO, KanjiReadingProgressFilter,
   KanjiVocabWordPage, KanjiVocabReadingGroup,
+  KanjiSentencePage, KanjiWordDetail,
+  KanjiDeckGroupOpResult, KanjiDeckPasteResult, KanjiDeckRemoveResult,
 } from "@/types/features/kanji_study";
 
 // Kanji data extensions
@@ -25,6 +28,40 @@ export const kanjiRadicalApi = createBaseApiService<KanjiRadicalDTO, KanjiRadica
 export const kanjiDeckApi = createBaseApiService<KanjiDeckDTO, KanjiDeckFilter>({ path: "/kanji-decks" });
 export const kanjiDeckItemApi = createBaseApiService<KanjiDeckItemDTO, KanjiDeckItemFilter>({ path: "/kanji-deck-items" });
 
+// Deck organize — split/merge study groups + clipboard paste/remove.
+export const kanjiDeckOrganizeApi = {
+  splitGroup: async (
+    deckId: number | string,
+    body: { groupIndex?: number | null; size: number; repeat?: boolean },
+  ): Promise<KanjiDeckGroupOpResult> => {
+    const response = await axiosInstance.post<KanjiDeckGroupOpResult>(
+      `/kanji-decks/${deckId}/groups/split`, body,
+    );
+    return response.data;
+  },
+  mergeGroups: async (
+    deckId: number | string,
+    groupIndexes?: number[],
+  ): Promise<KanjiDeckGroupOpResult> => {
+    const response = await axiosInstance.post<KanjiDeckGroupOpResult>(
+      `/kanji-decks/${deckId}/groups/merge`, { groupIndexes: groupIndexes ?? [] },
+    );
+    return response.data;
+  },
+  pasteKanji: async (deckId: number | string, kanjiIds: number[]): Promise<KanjiDeckPasteResult> => {
+    const response = await axiosInstance.post<KanjiDeckPasteResult>(
+      `/kanji-decks/${deckId}/items/paste`, { kanjiIds },
+    );
+    return response.data;
+  },
+  removeKanji: async (deckId: number | string, kanjiIds: number[]): Promise<KanjiDeckRemoveResult> => {
+    const response = await axiosInstance.post<KanjiDeckRemoveResult>(
+      `/kanji-decks/${deckId}/items/remove`, { kanjiIds },
+    );
+    return response.data;
+  },
+};
+
 // Study runtime
 export const kanjiStudySessionApi = createBaseApiService<KanjiStudySessionDTO, KanjiStudySessionFilter>({ path: "/kanji-study-sessions" });
 export const kanjiSessionItemApi = createBaseApiService<KanjiSessionItemDTO, KanjiSessionItemFilter>({ path: "/kanji-session-items" });
@@ -35,6 +72,37 @@ export const kanjiWritingAttemptApi = createBaseApiService<KanjiWritingAttemptDT
 export const kanjiReadingSetApi = createBaseApiService<KanjiReadingSetDTO, KanjiReadingSetFilter>({ path: "/kanji-reading-sets" });
 export const kanjiReadingPassageApi = createBaseApiService<KanjiReadingPassageDTO, KanjiReadingPassageFilter>({ path: "/kanji-reading-passages" });
 export const kanjiReadingProgressApi = createBaseApiService<KanjiReadingProgressDTO, KanjiReadingProgressFilter>({ path: "/kanji-reading-progress" });
+
+// Chiết tự — Hán tự chứa một thành phần (element/original trong cây KanjiVG).
+export const kanjiComponentApi = {
+  kanjiByComponent: async (component: string, page = 0, size = 24): Promise<PageResponse<KanjiDetailDTO>> => {
+    const response = await axiosInstance.get<PageResponse<KanjiDetailDTO>>(
+      `/kanji-details/by-component/${encodeURIComponent(component)}`,
+      { params: { page, size } },
+    );
+    return response.data;
+  },
+};
+
+// Từ vựng (Kanji Study): tìm kiếm + trang chi tiết từ + câu ví dụ chứa từ.
+export const kanjiWordApi = {
+  search: async (q: string, page = 0, size = 20): Promise<KanjiVocabWordPage> => {
+    const response = await axiosInstance.get<KanjiVocabWordPage>("/kanji-words/search", {
+      params: { q, page, size },
+    });
+    return response.data;
+  },
+  detail: async (id: number | string): Promise<KanjiWordDetail> => {
+    const response = await axiosInstance.get<KanjiWordDetail>(`/kanji-words/${id}`);
+    return response.data;
+  },
+  sentences: async (id: number | string, page = 0, size = 20): Promise<KanjiSentencePage> => {
+    const response = await axiosInstance.get<KanjiSentencePage>(`/kanji-words/${id}/sentences`, {
+      params: { page, size },
+    });
+    return response.data;
+  },
+};
 
 // Vocabulary linked to a kanji — powers the kanji detail page's word sections.
 export const kanjiVocabularyApi = {
@@ -51,6 +119,14 @@ export const kanjiVocabularyApi = {
     const response = await axiosInstance.get<KanjiVocabReadingGroup[]>(
       `/kanji-details/${encodeURIComponent(character)}/reading-examples`,
       { params: { samples } },
+    );
+    return response.data;
+  },
+  // Câu ví dụ chứa kanji (furigana + bản dịch, câu ngắn trước).
+  sentences: async (character: string, page = 0, size = 20): Promise<KanjiSentencePage> => {
+    const response = await axiosInstance.get<KanjiSentencePage>(
+      `/kanji-details/${encodeURIComponent(character)}/sentences`,
+      { params: { page, size } },
     );
     return response.data;
   },

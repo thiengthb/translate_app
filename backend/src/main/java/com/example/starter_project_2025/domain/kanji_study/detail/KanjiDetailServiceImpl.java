@@ -53,6 +53,13 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<KanjiDetailDTO> findByComponent(String component, Pageable pageable) {
+        return kanjiDetailRepository.findByComponent(component, pageable)
+                .map(kanjiDetailMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public KanjiDetailDTO getById(Long id) {
         return kanjiDetailRepository.findById(id)
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
@@ -150,12 +157,42 @@ public class KanjiDetailServiceImpl implements KanjiDetailService {
     private Specification<KanjiDetail> searchSpec(String keyword) {
         if (keyword == null || keyword.isBlank()) return null;
         String like = "%" + keyword.toLowerCase() + "%";
+        // Kana-folded variants so a hiragana query matches katakana on'yomi and vice versa.
+        String likeHira = "%" + kataToHira(keyword.trim()) + "%";
+        String likeKata = "%" + hiraToKata(keyword.trim()) + "%";
         return (root, query, cb) -> {
             Predicate ch = cb.like(cb.lower(root.get("character")), like);
             Predicate meaning = cb.like(cb.lower(root.get("meaning").as(String.class)), like);
             Predicate form = cb.like(cb.lower(root.get("formExplanation").as(String.class)), like);
-            return cb.or(ch, meaning, form);
+            Predicate onyomi = cb.like(root.get("onyomi").as(String.class), likeKata);
+            Predicate kunyomi = cb.like(root.get("kunyomi").as(String.class), likeHira);
+
+            // Hán-Việt match via kanji_readings (e.g. "vị" → 位).
+            var sq = query.subquery(Long.class);
+            var r = sq.from(com.example.starter_project_2025.domain.kanji_study.reading.KanjiReading.class);
+            sq.select(cb.literal(1L)).where(
+                    cb.equal(r.get("kanji"), root),
+                    cb.equal(r.get("readingType"), "HAN_VIET"),
+                    cb.equal(r.get("isDeleted"), false),
+                    cb.like(cb.lower(r.get("value")), like));
+            Predicate hanViet = cb.exists(sq);
+
+            return cb.or(ch, meaning, form, onyomi, kunyomi, hanViet);
         };
+    }
+
+    /** Fold katakana to hiragana (e.g. カン → かん). */
+    private static String kataToHira(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (char c : s.toCharArray()) sb.append(c >= 0x30A1 && c <= 0x30F6 ? (char) (c - 0x60) : c);
+        return sb.toString();
+    }
+
+    /** Fold hiragana to katakana (e.g. かん → カン). */
+    private static String hiraToKata(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        for (char c : s.toCharArray()) sb.append(c >= 0x3041 && c <= 0x3096 ? (char) (c + 0x60) : c);
+        return sb.toString();
     }
 
     private static void addError(Map<String, List<String>> errors, String field, String msg) {

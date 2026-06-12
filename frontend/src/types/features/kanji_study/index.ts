@@ -20,6 +20,31 @@ export interface KanjiVocabWordPage {
   totalPages: number;
 }
 
+/** One kanji of a word's "Chữ Hán (N)" breakdown on the word detail page. */
+export interface KanjiInWord {
+  /** kanji_details id; absent when the character isn't in the study set. */
+  id?: number;
+  character: string;
+  jlptLevel?: string;
+  onyomi?: string;
+  kunyomi?: string;
+  meaning?: string;
+  hanViet?: string;
+}
+
+/** Full payload of the word detail page: the word + all meanings + kanji breakdown. */
+export interface KanjiWordDetail {
+  id: number;
+  word: string;
+  reading?: string;
+  wordType?: string;
+  frequency?: number;
+  levelCode?: string;
+  levelName?: string;
+  meanings: string[];
+  kanji: KanjiInWord[];
+}
+
 /** Pronunciation group ("Ví dụ phát âm") — words that use one reading of the kanji. */
 export interface KanjiVocabReadingGroup {
   /** Display form of the reading, e.g. "サン" / "み"; absent for the OTHER bucket. */
@@ -27,6 +52,30 @@ export interface KanjiVocabReadingGroup {
   readingType: "ON" | "KUN" | "OTHER";
   totalCount: number;
   words: KanjiVocabWord[];
+}
+
+// ── Kanji example sentences ("Câu") ──────────────────────────────────────
+/** One furigana ruby segment: text `t`, optional reading `r` (kanji runs only). */
+export interface FuriganaSegment {
+  t: string;
+  r?: string;
+}
+
+export interface KanjiSentenceItem {
+  id: number;
+  japanese: string;
+  segments: FuriganaSegment[];
+  translationEn?: string;
+  translationVi?: string;
+  source?: string;
+}
+
+export interface KanjiSentencePage {
+  items: KanjiSentenceItem[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 // ── Kanji Detail (the self-contained kanji master record) ────────────────
@@ -105,6 +154,26 @@ export interface KanjiDeckItemDTO extends BaseDTO {
   deckId?: number;
   kanjiId?: number;
   orderIndex?: number;
+  groupIndex?: number;
+}
+
+// ── Deck organize (split/merge groups, clipboard paste/remove) ───────────
+export interface KanjiDeckGroupOpResult {
+  groups: number;
+  totalKanji: number;
+}
+
+export interface KanjiDeckPasteResult {
+  added: number;
+  skipped: number;
+  groups: number;
+  totalKanji: number;
+}
+
+export interface KanjiDeckRemoveResult {
+  removed: number;
+  groups: number;
+  totalKanji: number;
 }
 
 export interface KanjiDeckItemFilter extends BaseFilter {

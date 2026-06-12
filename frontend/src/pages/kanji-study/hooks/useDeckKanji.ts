@@ -64,7 +64,11 @@ export function useDeckItems(deckId?: string | null) {
         { deckId: Number(deckId) } as never
       );
       const list = (res.content ?? (res as any).items ?? []) as KanjiDeckItemDTO[];
-      list.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+      list.sort(
+        (a, b) =>
+          (a.groupIndex ?? 0) - (b.groupIndex ?? 0) ||
+          (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+      );
       return list;
     },
   });
@@ -73,6 +77,8 @@ export function useDeckItems(deckId?: string | null) {
 export interface DeckKanji {
   /** deck_item id (stable key). */
   itemId?: number;
+  /** Study-batch group inside the deck (Nhóm 1 = 0…). */
+  groupIndex: number;
   kanji: KanjiDetailDTO;
 }
 
@@ -91,7 +97,7 @@ export function useDeckKanji(deckId?: string | null) {
     const out: DeckKanji[] = [];
     for (const it of itemsQuery.data ?? []) {
       const k = it.kanjiId != null ? map.get(it.kanjiId) : undefined;
-      if (k) out.push({ itemId: it.id, kanji: k });
+      if (k) out.push({ itemId: it.id, groupIndex: it.groupIndex ?? 0, kanji: k });
     }
     return out;
   }, [itemsQuery.data, allQuery.data]);

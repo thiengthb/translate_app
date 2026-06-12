@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { KvgNode } from "./kanjiVg";
+import { KanjiComponentDialog } from "./KanjiComponentDialog";
 
 /**
  * "Chiết tự" — the recursive component breakdown of a kanji, drawn as a
@@ -7,7 +9,8 @@ import type { KvgNode } from "./kanjiVg";
  *
  * Connectors are pure CSS (org-chart style) so the tree stays responsive and
  * needs no measuring. The root character is highlighted in rose; leaf
- * components are muted circles.
+ * components are muted circles. Clicking any node opens the component popup
+ * (copy / search kanji containing it / its radical / its own kanji page).
  */
 
 const POSITION_VI: Record<string, string> = {
@@ -20,7 +23,15 @@ const POSITION_VI: Record<string, string> = {
   "kamae": "bao ngoài",
 };
 
-function Node({ node, depth }: { node: KvgNode; depth: number }) {
+function Node({
+  node,
+  depth,
+  onSelect,
+}: {
+  node: KvgNode;
+  depth: number;
+  onSelect: (node: KvgNode) => void;
+}) {
   const kids = node.children ?? [];
   const isRoot = depth === 0;
   const size = isRoot ? "h-16 w-16 text-3xl" : "h-12 w-12 text-2xl";
@@ -35,10 +46,13 @@ function Node({ node, depth }: { node: KvgNode; depth: number }) {
   return (
     <li>
       <div className="kvg-node-wrap">
-        <span
+        <button
+          type="button"
+          onClick={() => onSelect(node)}
           title={titleParts.join(" · ") || undefined}
           className={[
-            "grid place-items-center rounded-full font-serif shrink-0 select-none border transition-colors",
+            "grid place-items-center rounded-full font-serif shrink-0 select-none border transition-colors cursor-pointer",
+            "hover:ring-2 hover:ring-rose-400/60",
             size,
             isRoot
               ? "bg-rose-500 text-white border-rose-500 shadow-sm"
@@ -48,12 +62,12 @@ function Node({ node, depth }: { node: KvgNode; depth: number }) {
           ].join(" ")}
         >
           {node.element}
-        </span>
+        </button>
       </div>
       {kids.length > 0 && (
         <ul>
           {kids.map((k, i) => (
-            <Node key={i} node={k} depth={depth + 1} />
+            <Node key={i} node={k} depth={depth + 1} onSelect={onSelect} />
           ))}
         </ul>
       )}
@@ -62,9 +76,12 @@ function Node({ node, depth }: { node: KvgNode; depth: number }) {
 }
 
 export function KanjiChietTu({ tree }: { tree: KvgNode | null }) {
+  const [selected, setSelected] = useState<KvgNode | null>(null);
+
   if (!tree || !tree.children || tree.children.length === 0) return null;
 
   return (
+    <>
     <div className="kvg-tree overflow-x-auto py-2">
       {/* Scoped org-chart connector styles (rendered once at the tree root). */}
       <style>{`
@@ -89,8 +106,20 @@ export function KanjiChietTu({ tree }: { tree: KvgNode | null }) {
         .kvg-node-wrap { display:flex; justify-content:center; }
       `}</style>
       <ul>
-        <Node node={tree} depth={0} />
+        <Node node={tree} depth={0} onSelect={setSelected} />
       </ul>
     </div>
+
+    {/* Rendered OUTSIDE .kvg-tree — its scoped ul/li styles would otherwise
+        leak into the dialog's list and force rows into a horizontal flex. */}
+    {selected && (
+      <KanjiComponentDialog
+        element={selected.element}
+        original={selected.original}
+        currentCharacter={tree.element}
+        onClose={() => setSelected(null)}
+      />
+    )}
+    </>
   );
 }

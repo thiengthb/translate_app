@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Layers, Search, Sparkles } from "lucide-react";
+import { BookOpen, Layers, Plus, Search, Sparkles } from "lucide-react";
 import { kanjiDeckApi } from "@/api/features/kanji_study";
 import type { KanjiDeckDTO } from "@/types";
+import { logger } from "@/lib/logger";
 import { KanjiLayout } from "./components/KanjiLayout";
+import { useKanjiClipboard } from "./lib/kanjiClipboard";
 import { cn } from "@/lib/utils";
 
 const GRADIENTS = [
@@ -29,6 +31,9 @@ export default function KanjiDeckListPage() {
   const [decks, setDecks] = useState<KanjiDeckDTO[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const clipboard = useKanjiClipboard();
 
   useEffect(() => {
     setIsLoading(true);
@@ -37,7 +42,7 @@ export default function KanjiDeckListPage() {
       .then((r) => setDecks(r.content ?? (r as any).items ?? []))
       .catch(() => setDecks([]))
       .finally(() => setIsLoading(false));
-  }, [search]);
+  }, [search, reloadKey]);
 
   const { systemDecks, myDecks } = useMemo(() => {
     return {
@@ -94,10 +99,15 @@ export default function KanjiDeckListPage() {
           />
         </div>
 
+        {clipboard && clipboard.items.length > 0 && (
+          <div className="mb-6 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20 px-4 py-2.5 text-sm text-teal-800 dark:text-teal-200">
+            Clipboard có <b>{clipboard.items.length}</b> kanji — mở một deck của bạn (hoặc tạo
+            deck mới) rồi bấm "Dán vào deck này".
+          </div>
+        )}
+
         {isLoading ? (
           <p className="text-gray-400">Đang tải...</p>
-        ) : decks.length === 0 ? (
-          <p className="text-gray-400">Chưa có deck nào.</p>
         ) : (
           <div className="space-y-8">
             {systemDecks.length > 0 && (
@@ -108,17 +118,107 @@ export default function KanjiDeckListPage() {
                 </div>
               </section>
             )}
-            {myDecks.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Deck của tôi</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {myDecks.map(renderDeck)}
-                </div>
-              </section>
-            )}
+            <section>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Deck của tôi</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {myDecks.map(renderDeck)}
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-400 hover:border-violet-400 hover:text-violet-500 transition flex flex-col items-center justify-center gap-2 min-h-[176px]"
+                >
+                  <Plus size={28} />
+                  <span className="font-semibold text-sm">Tạo deck mới</span>
+                </button>
+              </div>
+            </section>
           </div>
         )}
       </div>
+
+      {showCreate && (
+        <CreateDeckDialog
+          onClose={() => setShowCreate(false)}
+          onCreated={(deck) => {
+            setShowCreate(false);
+            setReloadKey((k) => k + 1);
+            if (deck.id) navigate(`/kanji-study/deck/${deck.id}`);
+          }}
+        />
+      )}
     </KanjiLayout>
+  );
+}
+
+/** Minimal create-own-deck dialog: title + description. */
+function CreateDeckDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (deck: KanjiDeckDTO) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!title.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const deck = await kanjiDeckApi.create({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        isActive: true,
+      } as KanjiDeckDTO);
+      onCreated(deck);
+    } catch (e) {
+      logger.error("create deck failed", e);
+      setError("Không tạo được deck. Vui lòng thử lại.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-800 shadow-xl p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tạo deck mới</h3>
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder="Tên deck"
+          className="mt-4 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Mô tả (tùy chọn)"
+          rows={2}
+          className="mt-3 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-400"
+        />
+        {error && <p className="mt-2 text-sm text-rose-500">{error}</p>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            HỦY
+          </button>
+          <button
+            disabled={!title.trim() || busy}
+            onClick={submit}
+            className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50"
+          >
+            {busy ? "Đang tạo..." : "Tạo deck"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

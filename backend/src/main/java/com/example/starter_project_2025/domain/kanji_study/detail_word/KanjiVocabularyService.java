@@ -64,6 +64,144 @@ public class KanjiVocabularyService {
                 .build();
     }
 
+    // ── Read: word search ("Tìm kiếm" → Từ vựng tab) ────────────────────
+
+    /**
+     * Full-text word search over the Japanese text, the kana reading (katakana
+     * folded so a カタカナ query matches a hiragana reading and vice versa) and
+     * the meanings in any language ("hell" / "địa ngục" both work).
+     *
+     * <p>Relevance-ranked so "heaven" surfaces 天国 before words that merely
+     * contain the letters: exact word/reading (0) → exact meaning (1) →
+     * word/reading prefix (2) → meaning starting at a word boundary (3) →
+     * substring anywhere (4); ties broken by frequency (most frequent first).</p>
+     */
+    public KanjiWordPage searchWords(String query, int page, int size) {
+        String q = query == null ? "" : query.trim();
+        if (q.isEmpty()) {
+            return KanjiWordPage.builder()
+                    .items(List.of()).page(0).size(size).totalItems(0).totalPages(0).build();
+        }
+        String qKana = kataToHira(q);
+        String qLower = q.toLowerCase();
+        String like = "%" + q + "%";
+        String likeKana = "%" + qKana + "%";
+        String likeLower = "%" + qLower + "%";
+
+        String where = """
+                FROM Word w
+                WHERE w.isDeleted = false AND w.isActive = true
+                  AND (w.word LIKE :like
+                       OR w.reading LIKE :like
+                       OR w.reading LIKE :likeKana
+                       OR EXISTS (SELECT 1 FROM Meaning m WHERE m.word = w
+                                  AND LOWER(m.name) LIKE :likeLower))
+                """;
+
+        long total = em.createQuery("SELECT COUNT(w) " + where, Long.class)
+                .setParameter("like", like)
+                .setParameter("likeKana", likeKana)
+                .setParameter("likeLower", likeLower)
+                .getSingleResult();
+
+        // Relevance is computed in the SELECT so the database can page by it.
+        List<Object[]> rows = em.createQuery("""
+                        SELECT w,
+                          CASE
+                            WHEN w.word = :q OR w.reading = :q OR w.reading = :qKana THEN 0
+                            WHEN EXISTS (SELECT 1 FROM Meaning me WHERE me.word = w
+                                         AND LOWER(me.name) = :qLower) THEN 1
+                            WHEN w.word LIKE :prefix OR w.reading LIKE :prefix
+                                 OR w.reading LIKE :prefixKana THEN 2
+                            WHEN EXISTS (SELECT 1 FROM Meaning mb WHERE mb.word = w
+                                         AND (LOWER(mb.name) LIKE :prefixLower
+                                              OR LOWER(mb.name) LIKE :boundaryLower)) THEN 3
+                            ELSE 4
+                          END AS relevance
+                        """ + where + " ORDER BY relevance ASC, w.frequency ASC NULLS LAST, w.id ASC",
+                        Object[].class)
+                .setParameter("q", q)
+                .setParameter("qKana", qKana)
+                .setParameter("qLower", qLower)
+                .setParameter("prefix", q + "%")
+                .setParameter("prefixKana", qKana + "%")
+                .setParameter("prefixLower", qLower + "%")
+                .setParameter("boundaryLower", "% " + qLower + "%")
+                .setParameter("like", like)
+                .setParameter("likeKana", likeKana)
+                .setParameter("likeLower", likeLower)
+                .setFirstResult(page * size)
+                .setMaxResults(size)
+                .getResultList();
+
+        return KanjiWordPage.builder()
+                .items(rows.stream().map(r -> toVocabWord((Word) r[0], qLower)).toList())
+                .page(page)
+                .size(size)
+                .totalItems(total)
+                .totalPages((int) Math.ceil(total / (double) size))
+                .build();
+    }
+
+    // ── Read: word detail (word + meanings + kanji breakdown) ──────────
+
+    public KanjiWordDetail wordDetail(Long id) {
+        Word w = wordRepository.findById(id)
+                .filter(x -> !Boolean.TRUE.equals(x.getIsDeleted()))
+                .orElseThrow(() -> new com.example.starter_project_2025.exception.ResourceNotFoundException(
+                        "Word not found"));
+
+        // All meaning texts, Vietnamese first (same preference as primaryMeaningText).
+        List<String> meanings = new ArrayList<>();
+        if (w.getMeanings() != null) {
+            w.getMeanings().stream().filter(KanjiVocabularyService::isVietnamese)
+                    .map(Meaning::getName).filter(s -> s != null && !s.isBlank()).forEach(meanings::add);
+            w.getMeanings().stream().filter(m -> !isVietnamese(m))
+                    .map(Meaning::getName).filter(s -> s != null && !s.isBlank()).forEach(meanings::add);
+        }
+
+        List<KanjiInWord> kanjiList = new ArrayList<>();
+        for (String ch : extractKanji(w.getWord())) {
+            KanjiDetail k = kanjiDetailRepository.findByCharacter(ch)
+                    .filter(x -> !Boolean.TRUE.equals(x.getIsDeleted()))
+                    .orElse(null);
+            kanjiList.add(KanjiInWord.builder()
+                    .id(k != null ? k.getId() : null)
+                    .character(ch)
+                    .jlptLevel(k != null ? k.getJlptLevel() : null)
+                    .onyomi(k != null ? k.getOnyomi() : null)
+                    .kunyomi(k != null ? k.getKunyomi() : null)
+                    .meaning(k != null ? k.getMeaning() : null)
+                    .hanViet(k != null ? hanVietOf(k.getId()) : null)
+                    .build());
+        }
+
+        return KanjiWordDetail.builder()
+                .id(w.getId())
+                .word(w.getWord())
+                .reading(w.getReading())
+                .wordType(w.getWordType())
+                .frequency(w.getFrequency())
+                .levelCode(w.getLevel() != null ? w.getLevel().getCode() : null)
+                .levelName(w.getLevel() != null ? w.getLevel().getName() : null)
+                .meanings(meanings)
+                .kanji(kanjiList)
+                .build();
+    }
+
+    /** Hán-Việt readings of a kanji joined with ", " (priority order), or null. */
+    private String hanVietOf(Long kanjiId) {
+        List<String> values = em.createQuery("""
+                        SELECT r.value FROM KanjiReading r
+                        WHERE r.kanji.id = :kanjiId AND r.readingType = 'HAN_VIET'
+                          AND r.isDeleted = false
+                        ORDER BY r.priority ASC
+                        """, String.class)
+                .setParameter("kanjiId", kanjiId)
+                .getResultList();
+        return values.isEmpty() ? null : String.join(", ", values);
+    }
+
     // ── Read: "Ví dụ phát âm" (grouped by reading) ──────────────────────
 
     public List<KanjiReadingGroup> readingExamples(String character, int maxWords, int samplesPerReading) {
@@ -202,6 +340,24 @@ public class KanjiVocabularyService {
     }
 
     // ── Mapping ─────────────────────────────────────────────────────────
+
+    /**
+     * Search-result mapping: when the query matched a meaning (e.g. an English
+     * or Vietnamese term), display that meaning instead of the default
+     * Vietnamese-first one, so the hit is visible in the result row.
+     */
+    private KanjiVocabWord toVocabWord(Word w, String queryLower) {
+        KanjiVocabWord v = toVocabWord(w);
+        if (w.getMeanings() != null && queryLower != null && !queryLower.isBlank()
+                && (v.getMeaningText() == null || !v.getMeaningText().toLowerCase().contains(queryLower))) {
+            w.getMeanings().stream()
+                    .map(Meaning::getName)
+                    .filter(n -> n != null && n.toLowerCase().contains(queryLower))
+                    .findFirst()
+                    .ifPresent(v::setMeaningText);
+        }
+        return v;
+    }
 
     private KanjiVocabWord toVocabWord(Word w) {
         return KanjiVocabWord.builder()
