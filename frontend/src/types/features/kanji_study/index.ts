@@ -84,6 +84,7 @@ export interface KanjiDetailDTO extends BaseDTO {
   onyomi?: string;
   kunyomi?: string;
   meaning?: string;
+  meaningVi?: string;
   jlptLevel?: string;
   radicalId?: number;
   strokeCount?: number;
@@ -198,6 +199,45 @@ export interface KanjiStudySessionFilter extends BaseFilter {
   userId?: number;
   deckId?: number;
   mode?: string;
+}
+
+// ── Quiz submit + study stats (Trắc nghiệm) ──────────────────────────────
+export interface KanjiQuizSubmitItem {
+  kanjiId: number;
+  correct: boolean;
+}
+
+export interface KanjiQuizSubmitRequest {
+  deckId?: number;
+  groupIndex?: number | null;
+  mode?: string;
+  startedAt?: string;
+  items: KanjiQuizSubmitItem[];
+}
+
+export interface KanjiQuizSubmitResult {
+  sessionId: number;
+  correct: number;
+  total: number;
+  accuracy: number;
+}
+
+export interface KanjiStudyStats {
+  lastStudiedAt?: string | null;
+  quizCount: number;
+  accuracy: number;
+}
+
+export interface KanjiRecentSession {
+  sessionId: number;
+  deckId?: number | null;
+  deckTitle?: string | null;
+  groupIndex?: number | null;
+  mode: string;
+  totalItems: number;
+  correctItems: number;
+  accuracy: number;
+  endedAt?: string | null;
 }
 
 // ── Kanji Session Item ───────────────────────────────────────────────────

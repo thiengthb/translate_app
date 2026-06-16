@@ -54,6 +54,8 @@ import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
 import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiFlashcardPage from "@/pages/kanji-study/KanjiFlashcardPage";
+import KanjiQuizPage from "@/pages/kanji-study/KanjiQuizPage";
 import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiRadicalDetailPage from "@/pages/kanji-study/KanjiRadicalDetailPage";
@@ -132,6 +134,8 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study", component: KanjiHomePage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/decks", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId/flashcard", component: KanjiFlashcardPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId/quiz", component: KanjiQuizPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
   { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
   { path: "/kanji-study/radical/:id", component: KanjiRadicalDetailPage, requiredPermission: "KANJI_RADICAL_READ" },

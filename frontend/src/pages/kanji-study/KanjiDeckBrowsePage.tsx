@@ -8,16 +8,23 @@ import {
   ClipboardPaste,
   Combine,
   Copy,
+  GraduationCap,
   Scissors,
   Square,
+  Trash2,
   X,
 } from "lucide-react";
 import { kanjiDeckApi, kanjiDeckOrganizeApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO } from "@/types";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiGroupSplitDialog } from "./components/KanjiGroupSplitDialog";
+import {
+  KanjiStudyOptionsDialog,
+  type KanjiStudyMode,
+} from "./components/KanjiStudyOptionsDialog";
 import { useDeckKanji, type DeckKanji } from "./hooks/useDeckKanji";
 import {
   clearKanjiClipboard,
@@ -54,6 +61,13 @@ export default function KanjiDeckBrowsePage() {
   const [splitTarget, setSplitTarget] = useState<number | "deck" | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [confirmDeleteDeck, setConfirmDeleteDeck] = useState(false);
+  // The group the user tapped "HỌC" on → opens the study-mode picker.
+  const [studyTarget, setStudyTarget] = useState<{ groupIndex: number; label: string } | null>(null);
+
+  // System decks are shared/built-in: read-only (no remove-kanji, no delete).
+  const editable = deck != null && !deck.isSystem;
 
   const groups = useMemo(() => {
     const byIndex = new Map<number, DeckKanji[]>();
@@ -167,6 +181,45 @@ export default function KanjiDeckBrowsePage() {
         : `Đã dán ${result.added} kanji vào deck.`;
     });
 
+  /* ── remove / delete (user decks only) ─────────────────────── */
+
+  const removeSelection = () =>
+    run(async () => {
+      setConfirmRemove(false);
+      if (!deckId || selected.size === 0) return null;
+      const ids = [...selected];
+      const result = await kanjiDeckOrganizeApi.removeKanji(deckId, ids);
+      setSelected(new Set());
+      return `Đã xóa ${result.removed} Hán tự khỏi deck.`;
+    });
+
+  const deleteDeck = async () => {
+    if (!deckId || busy) return;
+    setBusy(true);
+    try {
+      await kanjiDeckApi.delete(deckId);
+      navigate("/kanji-study/decks");
+    } catch (e: any) {
+      logger.error("delete deck failed", e);
+      setConfirmDeleteDeck(false);
+      setBusy(false);
+      const data = e?.response?.data;
+      setMessage(data?.message || "Không xóa được deck. Vui lòng thử lại.");
+    }
+  };
+
+  /* ── study (HỌC) ───────────────────────────────────────────── */
+
+  const startStudy = (mode: KanjiStudyMode) => {
+    if (!studyTarget || !deckId) return;
+    setStudyTarget(null);
+    if (mode === "flashcard") {
+      navigate(`/kanji-study/deck/${deckId}/flashcard?group=${studyTarget.groupIndex}`);
+    } else if (mode === "quiz") {
+      navigate(`/kanji-study/deck/${deckId}/quiz?group=${studyTarget.groupIndex}`);
+    }
+  };
+
   /* ── group ops ─────────────────────────────────────────────── */
 
   const confirmSplit = (size: number, repeat: boolean) =>
@@ -230,32 +283,45 @@ export default function KanjiDeckBrowsePage() {
             </p>
           </div>
 
-          {kanji.length > 0 && (
+          {(kanji.length > 0 || editable) && (
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() =>
-                  setSelected(allSelected ? new Set() : new Set(allIds))
-                }
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400"
-                title={allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
-              >
-                {allSelected ? <CheckSquare size={15} /> : <Square size={15} />}
-                {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
-              </button>
-              <button
-                onClick={() => setSplitTarget("deck")}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400 disabled:opacity-50"
-              >
-                <Scissors size={15} /> Chia bộ...
-              </button>
-              {groups.length > 1 && (
+              {kanji.length > 0 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setSelected(allSelected ? new Set() : new Set(allIds))
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400"
+                    title={allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                  >
+                    {allSelected ? <CheckSquare size={15} /> : <Square size={15} />}
+                    {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
+                  </button>
+                  <button
+                    onClick={() => setSplitTarget("deck")}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400 disabled:opacity-50"
+                  >
+                    <Scissors size={15} /> Chia bộ...
+                  </button>
+                  {groups.length > 1 && (
+                    <button
+                      onClick={mergeAll}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400 disabled:opacity-50"
+                    >
+                      <Combine size={15} /> Gộp tất cả
+                    </button>
+                  )}
+                </>
+              )}
+              {editable && (
                 <button
-                  onClick={mergeAll}
+                  onClick={() => setConfirmDeleteDeck(true)}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 hover:border-violet-400 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-800 text-sm text-rose-600 dark:text-rose-400 hover:border-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 disabled:opacity-50"
                 >
-                  <Combine size={15} /> Gộp tất cả
+                  <Trash2 size={15} /> Xóa deck
                 </button>
               )}
             </div>
@@ -378,6 +444,15 @@ export default function KanjiDeckBrowsePage() {
                         </button>
                       )}
                     </div>
+                    <button
+                      onClick={() =>
+                        setStudyTarget({ groupIndex, label: `Nhóm ${position + 1}` })
+                      }
+                      className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-600"
+                      title={`Học nhóm ${position + 1}`}
+                    >
+                      <GraduationCap size={15} /> HỌC
+                    </button>
                   </header>
 
                   {!isCollapsed && (
@@ -423,6 +498,16 @@ export default function KanjiDeckBrowsePage() {
           >
             <Scissors size={15} /> Cắt
           </button>
+          {editable && (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-sm font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 disabled:opacity-50"
+              title="Xóa các Hán tự đã chọn khỏi deck"
+            >
+              <Trash2 size={15} /> Xóa khỏi deck
+            </button>
+          )}
           <button
             onClick={() => setSelected(new Set())}
             className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -444,6 +529,34 @@ export default function KanjiDeckBrowsePage() {
           wholeDeck={splitTarget === "deck"}
           onConfirm={confirmSplit}
           onClose={() => setSplitTarget(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmRemove}
+        title="Xóa Hán tự khỏi deck"
+        description={`Xóa ${selected.size} Hán tự đã chọn khỏi deck "${deck?.title ?? ""}"? Hành động này chỉ gỡ chúng khỏi deck của bạn, không xóa dữ liệu Hán tự.`}
+        confirmLabel="Xóa khỏi deck"
+        loading={busy}
+        onConfirm={removeSelection}
+        onCancel={() => setConfirmRemove(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteDeck}
+        title="Xóa deck"
+        description={`Xóa deck "${deck?.title ?? ""}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa deck"
+        loading={busy}
+        onConfirm={deleteDeck}
+        onCancel={() => setConfirmDeleteDeck(false)}
+      />
+
+      {studyTarget && (
+        <KanjiStudyOptionsDialog
+          title={`${deck?.title ?? "Deck"} - ${studyTarget.label}`}
+          onSelect={startStudy}
+          onClose={() => setStudyTarget(null)}
         />
       )}
     </KanjiLayout>

@@ -1,5 +1,6 @@
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiActionCards } from "./components/KanjiActionCards";
+import { KanjiRecentSessions } from "./components/KanjiRecentSessions";
 import { KanjiLevelProgress } from "./components/KanjiLevelProgress";
 import { KanjiForecastChart } from "./components/KanjiForecastChart";
 import { KanjiActivityChart } from "./components/KanjiActivityChart";
@@ -25,6 +26,8 @@ export default function KanjiHomePage() {
         ) : (
           <>
             <KanjiActionCards decks={d.decks} featuredDeck={d.featuredDeck} dueCount={d.dueCount} />
+
+            <KanjiRecentSessions />
 
             <KanjiLevelProgress
               levels={d.levels}

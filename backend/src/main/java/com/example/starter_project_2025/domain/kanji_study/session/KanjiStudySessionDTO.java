@@ -30,4 +30,8 @@ public class KanjiStudySessionDTO extends BaseDTO {
     Integer totalItems;
 
     Integer completedItems;
+
+    Integer correctItems;
+
+    Integer groupIndex;
 }

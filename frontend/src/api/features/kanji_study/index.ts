@@ -17,10 +17,22 @@ import type {
   KanjiVocabWordPage, KanjiVocabReadingGroup,
   KanjiSentencePage, KanjiWordDetail,
   KanjiDeckGroupOpResult, KanjiDeckPasteResult, KanjiDeckRemoveResult,
+  KanjiQuizSubmitRequest, KanjiQuizSubmitResult, KanjiStudyStats, KanjiRecentSession,
 } from "@/types/features/kanji_study";
 
 // Kanji data extensions
 export const kanjiDetailApi = createBaseApiService<KanjiDetailDTO, KanjiDetailFilter>({ path: "/kanji-details" });
+
+// Relevance-ranked kanji search ("CHỮ HÁN" tab): meaning (whole-word), on/kun
+// reading, romaji ("jigoku" → じごく) and Hán-Việt — ranked, not raw LIKE.
+export const kanjiSearchApi = {
+  searchKanji: async (q: string, page = 0, size = 20): Promise<PageResponse<KanjiDetailDTO>> => {
+    const response = await axiosInstance.get<PageResponse<KanjiDetailDTO>>("/kanji-details/search", {
+      params: { q, page, size },
+    });
+    return response.data;
+  },
+};
 export const kanjiReadingApi = createBaseApiService<KanjiReadingDTO, KanjiReadingFilter>({ path: "/kanji-readings" });
 export const kanjiRadicalApi = createBaseApiService<KanjiRadicalDTO, KanjiRadicalFilter>({ path: "/kanji-radicals" });
 
@@ -64,6 +76,31 @@ export const kanjiDeckOrganizeApi = {
 
 // Study runtime
 export const kanjiStudySessionApi = createBaseApiService<KanjiStudySessionDTO, KanjiStudySessionFilter>({ path: "/kanji-study-sessions" });
+
+// Save a finished session + per deck/group stats (Trắc nghiệm "save option").
+export const kanjiStudyApi = {
+  submit: async (payload: KanjiQuizSubmitRequest): Promise<KanjiQuizSubmitResult> => {
+    const response = await axiosInstance.post<KanjiQuizSubmitResult>(
+      "/kanji-study-sessions/submit", payload,
+    );
+    return response.data;
+  },
+  stats: async (deckId?: number, groupIndex?: number | null): Promise<KanjiStudyStats> => {
+    const response = await axiosInstance.get<KanjiStudyStats>("/kanji-study-sessions/stats", {
+      params: {
+        deckId,
+        groupIndex: groupIndex ?? undefined,
+      },
+    });
+    return response.data;
+  },
+  recent: async (limit = 6): Promise<KanjiRecentSession[]> => {
+    const response = await axiosInstance.get<KanjiRecentSession[]>("/kanji-study-sessions/recent", {
+      params: { limit },
+    });
+    return response.data;
+  },
+};
 export const kanjiSessionItemApi = createBaseApiService<KanjiSessionItemDTO, KanjiSessionItemFilter>({ path: "/kanji-session-items" });
 export const kanjiProgressApi = createBaseApiService<KanjiProgressDTO, KanjiProgressFilter>({ path: "/kanji-progress" });
 export const kanjiWritingAttemptApi = createBaseApiService<KanjiWritingAttemptDTO, KanjiWritingAttemptFilter>({ path: "/kanji-writing-attempts" });

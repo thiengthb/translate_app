@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, GitFork, PenLine } from "lucide-react";
+import { ArrowLeft, GitFork, Maximize2, PenLine } from "lucide-react";
 import { kanjiDetailApi, kanjiReadingApi, kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiReadingDTO, KanjiRadicalDTO } from "@/types";
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiStrokeAnimator } from "./components/KanjiStrokeAnimator";
-import { KanjiChietTu } from "./components/KanjiChietTu";
+import { KanjiChietTu, KanjiChietTuModal } from "./components/KanjiChietTu";
 import { KanjiDeckStrip } from "./components/KanjiDeckStrip";
 import { KanjiVariantLinks } from "./components/KanjiVariantLinks";
 import { KanjiVocabularySections } from "./components/KanjiVocabularySections";
@@ -28,6 +28,7 @@ export default function KanjiDetailPage() {
   const [readings, setReadings] = useState<KanjiReadingDTO[]>([]);
   const [radical, setRadical] = useState<KanjiRadicalDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [zoomChietTu, setZoomChietTu] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -141,9 +142,19 @@ export default function KanjiDetailPage() {
               </Section>
 
               {hasDecomposition(kvg?.tree ?? null) && (
-                <Section icon={<GitFork size={16} className="text-rose-500" />} title="Chiết tự">
-                  <KanjiChietTu tree={kvg?.tree ?? null} />
-                </Section>
+                <section className="rounded-2xl border border-border bg-card p-4">
+                  <button
+                    type="button"
+                    onClick={() => setZoomChietTu(true)}
+                    title="Bấm để phóng to chiết tự"
+                    className="w-full flex items-center gap-2 text-sm font-semibold text-foreground mb-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  >
+                    <GitFork size={16} className="text-rose-500" />
+                    Chiết tự
+                    <Maximize2 size={14} className="ml-auto text-muted-foreground" />
+                  </button>
+                  <KanjiChietTu tree={kvg?.tree ?? null} maxHeight={340} />
+                </section>
               )}
             </div>
 
@@ -169,6 +180,10 @@ export default function KanjiDetailPage() {
           </div>
         )}
       </div>
+
+      {zoomChietTu && kvg?.tree && (
+        <KanjiChietTuModal tree={kvg.tree} onClose={() => setZoomChietTu(false)} />
+      )}
     </KanjiLayout>
   );
 }

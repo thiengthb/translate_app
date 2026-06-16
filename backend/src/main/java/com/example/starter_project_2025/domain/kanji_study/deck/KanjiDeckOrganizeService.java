@@ -179,6 +179,9 @@ public class KanjiDeckOrganizeService {
 
     public RemoveResult removeItems(Long deckId, KanjiIdsRequest request) {
         KanjiDeck deck = loadEditableDeck(deckId);
+        if (Boolean.TRUE.equals(deck.getIsSystem())) {
+            throw validation("deckId", "Không thể xóa Hán tự khỏi deck hệ thống");
+        }
         Set<Long> kanjiIds = new HashSet<>(requireKanjiIds(request));
 
         List<List<KanjiDeckItem>> groups = loadGroups(deckId);

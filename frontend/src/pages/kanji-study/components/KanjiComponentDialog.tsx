@@ -5,6 +5,7 @@ import { Copy, Grid, Languages, Search, X } from "lucide-react";
 import { kanjiDetailApi, kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiRadicalDTO } from "@/types";
 import { KanjiByComponentList } from "./KanjiByComponentList";
+import { KanjiStrokeAnimator } from "./KanjiStrokeAnimator";
 
 /**
  * Popup shown when a node of the "chiết tự" tree is clicked (mirrors the
@@ -97,7 +98,25 @@ export function KanjiComponentDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {view === "menu" ? (
-          <div className="py-1">
+          <div className="max-h-[85vh] overflow-y-auto">
+            {/* Enlarged + animated view of the clicked component. The animator
+                uses the kanji's stroke data when available, else fetches the
+                KanjiVG SVG by character (works for most radicals too). */}
+            <div className="flex flex-col items-center gap-1.5 px-4 pt-5 pb-4 border-b border-border/60">
+              <KanjiStrokeAnimator
+                key={element}
+                character={element}
+                strokeData={kanji?.strokeData}
+                viewBox={kanji?.svgViewbox}
+              />
+              <div className="text-center">
+                <div className="font-serif text-2xl leading-none text-foreground">{element}</div>
+                {kanji?.meaning && (
+                  <div className="mt-1 text-xs text-muted-foreground">{kanji.meaning}</div>
+                )}
+              </div>
+            </div>
+            <div className="py-1">
             <MenuItem
               icon={<Copy size={17} />}
               label="Sao chép vào khay nhớ tạm"
@@ -125,6 +144,7 @@ export function KanjiComponentDialog({
                 onClick={() => go(`/kanji-study/kanji/${kanji.id}`)}
               />
             )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col max-h-[80vh]">

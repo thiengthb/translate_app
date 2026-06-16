@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, Loader2, Search, X } from "lucide-react";
-import { kanjiDetailApi, kanjiWordApi } from "@/api/features/kanji_study";
+import { kanjiSearchApi, kanjiWordApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiVocabWord } from "@/types";
 import { KanjiLayout } from "./components/KanjiLayout";
 import {
@@ -328,8 +328,8 @@ function KanjiResults({ query, onOpen }: { query: string; onOpen: (path: string)
     setLoading(true);
     setItems([]);
     setPage(0);
-    kanjiDetailApi
-      .getPage({ page: 0, size: PAGE_SIZE }, query)
+    kanjiSearchApi
+      .searchKanji(query, 0, PAGE_SIZE)
       .then((res) => {
         if (cancelled) return;
         setItems((res.content ?? (res as any).items ?? []) as KanjiDetailDTO[]);
@@ -345,7 +345,7 @@ function KanjiResults({ query, onOpen }: { query: string; onOpen: (path: string)
 
   const loadMore = async () => {
     const next = page + 1;
-    const res = await kanjiDetailApi.getPage({ page: next, size: PAGE_SIZE }, query);
+    const res = await kanjiSearchApi.searchKanji(query, next, PAGE_SIZE);
     setItems((prev) => [...prev, ...((res.content ?? (res as any).items ?? []) as KanjiDetailDTO[])]);
     setPage(next);
   };

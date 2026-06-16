@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Layers, Plus, Search, Sparkles } from "lucide-react";
+import { BookOpen, Layers, Plus, Search, Sparkles, Trash2 } from "lucide-react";
 import { kanjiDeckApi } from "@/api/features/kanji_study";
 import type { KanjiDeckDTO } from "@/types";
 import { logger } from "@/lib/logger";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import { KanjiLayout } from "./components/KanjiLayout";
 import { useKanjiClipboard } from "./lib/kanjiClipboard";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,23 @@ export default function KanjiDeckListPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<KanjiDeckDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const clipboard = useKanjiClipboard();
+
+  const handleDelete = async () => {
+    if (!deleteTarget?.id || deleting) return;
+    setDeleting(true);
+    try {
+      await kanjiDeckApi.delete(String(deleteTarget.id));
+      setDeleteTarget(null);
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      logger.error("delete deck failed", e);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -52,10 +69,13 @@ export default function KanjiDeckListPage() {
   }, [decks]);
 
   const renderDeck = (deck: KanjiDeckDTO) => (
-    <button
+    <div
       key={deck.id}
+      role="button"
+      tabIndex={0}
       onClick={() => navigate(`/kanji-study/deck/${deck.id}`)}
-      className="group text-left rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
+      onKeyDown={(e) => e.key === "Enter" && navigate(`/kanji-study/deck/${deck.id}`)}
+      className="group relative text-left rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
     >
       <div className={cn("h-24 bg-gradient-to-br relative", gradientFor(deck.id))}>
         <BookOpen className="absolute right-3 bottom-3 text-white/80" size={28} />
@@ -63,6 +83,19 @@ export default function KanjiDeckListPage() {
           <span className="absolute left-3 top-3 text-xs font-semibold bg-white/25 text-white px-2 py-0.5 rounded-full">
             {deck.jlptLevel}
           </span>
+        )}
+        {/* Only the user's own decks can be deleted (system decks are read-only). */}
+        {!deck.isSystem && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(deck);
+            }}
+            title="Xóa deck"
+            className="absolute right-2 top-2 grid place-items-center h-8 w-8 rounded-full bg-black/20 text-white opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition"
+          >
+            <Trash2 size={16} />
+          </button>
         )}
       </div>
       <div className="p-4">
@@ -77,7 +110,7 @@ export default function KanjiDeckListPage() {
           <span>{deck.totalKanji ?? 0} kanji</span>
         </div>
       </div>
-    </button>
+    </div>
   );
 
   return (
@@ -145,6 +178,16 @@ export default function KanjiDeckListPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteTarget != null}
+        title="Xóa deck"
+        description={`Xóa deck "${deleteTarget?.title ?? ""}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa deck"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </KanjiLayout>
   );
 }

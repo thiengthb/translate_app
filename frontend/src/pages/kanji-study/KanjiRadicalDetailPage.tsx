@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Grid, Languages } from "lucide-react";
+import { ArrowLeft, Grid, Languages, PenLine } from "lucide-react";
 import { kanjiDetailApi, kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiRadicalDTO } from "@/types";
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiByComponentList } from "./components/KanjiByComponentList";
+import { KanjiStrokeAnimator } from "./components/KanjiStrokeAnimator";
 
 /**
  * Detail view of a single bộ thủ (radical): character, Hán-Việt name, meaning,
@@ -101,6 +102,20 @@ export default function KanjiRadicalDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* ── Stroke order animation ── */}
+            {radical.character && (
+              <section className="rounded-2xl border border-border bg-card p-4">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+                  <PenLine size={16} className="text-teal-500" /> Thứ tự nét
+                </h2>
+                <KanjiStrokeAnimator
+                  character={radical.character}
+                  strokeData={selfKanji?.strokeData}
+                  viewBox={selfKanji?.svgViewbox}
+                />
+              </section>
+            )}
 
             {/* ── Kanji containing this radical as a component ── */}
             {radical.character && (

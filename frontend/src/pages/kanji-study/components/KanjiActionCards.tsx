@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BrushIcon, ListChecks, BookOpenText, Zap, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { BrushIcon, ChevronRight, GraduationCap, ListChecks, Zap } from "lucide-react";
 import type { KanjiDeckDTO } from "@/types";
+import { useDeckItems } from "../hooks/useDeckKanji";
+import { KanjiStudyOptionsDialog, type KanjiStudyMode } from "./KanjiStudyOptionsDialog";
 
 interface Props {
   decks: KanjiDeckDTO[];
@@ -18,19 +19,54 @@ interface Props {
 export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
   const navigate = useNavigate();
   const [deckId, setDeckId] = useState<number | undefined>(featuredDeck?.id);
+  const [showStudy, setShowStudy] = useState(false);
+  const [groupIndex, setGroupIndex] = useState<number | null>(null);
 
   const selectedDeck = useMemo(
     () => decks.find((d) => d.id === deckId) ?? featuredDeck,
     [decks, deckId, featuredDeck]
   );
 
-  const goDeck = (mode: string) => {
-    if (!selectedDeck?.id) return;
-    navigate(`/kanji-study/deck/${selectedDeck.id}?mode=${mode}`);
+  // Study is batch-based: derive the deck's groups (Nhóm) so the user picks one.
+  const { data: deckItems } = useDeckItems(selectedDeck?.id != null ? String(selectedDeck.id) : undefined);
+  const groups = useMemo(() => {
+    const order: number[] = [];
+    const count = new Map<number, number>();
+    for (const it of deckItems ?? []) {
+      const g = it.groupIndex ?? 0;
+      if (!order.includes(g)) order.push(g);
+      count.set(g, (count.get(g) ?? 0) + 1);
+    }
+    return order.map((g, pos) => ({ groupIndex: g, pos, count: count.get(g) ?? 0 }));
+  }, [deckItems]);
+
+  // Default to the first group; keep the choice if it still exists after a switch.
+  useEffect(() => {
+    if (groups.length === 0) {
+      setGroupIndex(null);
+      return;
+    }
+    setGroupIndex((prev) =>
+      prev != null && groups.some((g) => g.groupIndex === prev) ? prev : groups[0].groupIndex
+    );
+  }, [groups]);
+
+  const selectedGroup = groups.find((g) => g.groupIndex === groupIndex);
+  const groupLabel = selectedGroup ? `Nhóm ${selectedGroup.pos + 1}` : null;
+
+  const startStudy = (mode: KanjiStudyMode) => {
+    setShowStudy(false);
+    if (!selectedDeck?.id || groupIndex == null) return;
+    if (mode === "flashcard") {
+      navigate(`/kanji-study/deck/${selectedDeck.id}/flashcard?group=${groupIndex}`);
+    } else if (mode === "quiz") {
+      navigate(`/kanji-study/deck/${selectedDeck.id}/quiz?group=${groupIndex}`);
+    }
   };
   const goReview = (mode: string) => navigate(`/kanji-study/review?mode=${mode}`);
 
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* ── Left: study by deck ───────────────────────────────────────── */}
       <div className="rounded-2xl border border-border bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/30 dark:to-card p-5 flex flex-col">
@@ -58,11 +94,28 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
           {selectedDeck ? `${selectedDeck.totalKanji ?? 0} Hán tự` : "Thêm deck trong Content → Decks"}
         </p>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <MethodButton icon={BrushIcon} label="Viết" disabled={!selectedDeck} onClick={() => goDeck("writing")} />
-          <MethodButton icon={ListChecks} label="Trắc nghiệm" disabled={!selectedDeck} onClick={() => goDeck("quiz")} />
-          <MethodButton icon={BookOpenText} label="Đọc" disabled={!selectedDeck} onClick={() => goDeck("reading")} />
-        </div>
+        {groups.length > 0 && (
+          <select
+            value={groupIndex ?? ""}
+            onChange={(e) => setGroupIndex(e.target.value !== "" ? Number(e.target.value) : null)}
+            className="mt-4 w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-rose-400"
+            aria-label="Chọn nhóm để học"
+          >
+            {groups.map((g) => (
+              <option key={g.groupIndex} value={g.groupIndex}>
+                Nhóm {g.pos + 1} · {g.count} Hán tự
+              </option>
+            ))}
+          </select>
+        )}
+
+        <button
+          onClick={() => setShowStudy(true)}
+          disabled={!selectedDeck || groupIndex == null}
+          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 text-white font-semibold py-3 text-sm hover:bg-rose-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <GraduationCap size={18} /> Học
+        </button>
 
         <button
           onClick={() => selectedDeck?.id && navigate(`/kanji-study/deck/${selectedDeck.id}`)}
@@ -106,32 +159,14 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
         </div>
       </div>
     </div>
-  );
-}
 
-function MethodButton({
-  icon: Icon,
-  label,
-  onClick,
-  disabled,
-}: {
-  icon: typeof BrushIcon;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "flex flex-col items-center gap-1 rounded-xl border border-border bg-background py-3 text-xs font-medium text-foreground",
-        "hover:border-rose-400 hover:text-rose-500 transition-colors",
-        "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-foreground"
-      )}
-    >
-      <Icon size={18} />
-      {label}
-    </button>
+    {showStudy && selectedDeck && (
+      <KanjiStudyOptionsDialog
+        title={`${selectedDeck.title ?? "Deck"}${groupLabel ? ` - ${groupLabel}` : ""}`}
+        onSelect={startStudy}
+        onClose={() => setShowStudy(false)}
+      />
+    )}
+    </>
   );
 }

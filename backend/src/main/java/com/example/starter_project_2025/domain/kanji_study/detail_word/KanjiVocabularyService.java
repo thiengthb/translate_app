@@ -83,9 +83,15 @@ public class KanjiVocabularyService {
                     .items(List.of()).page(0).size(size).totalItems(0).totalPages(0).build();
         }
         String qKana = kataToHira(q);
+        // Romaji typed on a Latin keyboard ("jigoku" → じごく); falls back to the
+        // kana form so the extra reading predicate is a harmless no-op otherwise.
+        String qRomaji = com.example.starter_project_2025.domain.kanji_study.search.RomajiKana.isRomaji(q)
+                ? com.example.starter_project_2025.domain.kanji_study.search.RomajiKana.toHiragana(q)
+                : qKana;
         String qLower = q.toLowerCase();
         String like = "%" + q + "%";
         String likeKana = "%" + qKana + "%";
+        String likeRomaji = "%" + qRomaji + "%";
         String likeLower = "%" + qLower + "%";
 
         String where = """
@@ -94,6 +100,7 @@ public class KanjiVocabularyService {
                   AND (w.word LIKE :like
                        OR w.reading LIKE :like
                        OR w.reading LIKE :likeKana
+                       OR w.reading LIKE :likeRomaji
                        OR EXISTS (SELECT 1 FROM Meaning m WHERE m.word = w
                                   AND LOWER(m.name) LIKE :likeLower))
                 """;
@@ -101,6 +108,7 @@ public class KanjiVocabularyService {
         long total = em.createQuery("SELECT COUNT(w) " + where, Long.class)
                 .setParameter("like", like)
                 .setParameter("likeKana", likeKana)
+                .setParameter("likeRomaji", likeRomaji)
                 .setParameter("likeLower", likeLower)
                 .getSingleResult();
 
@@ -108,11 +116,12 @@ public class KanjiVocabularyService {
         List<Object[]> rows = em.createQuery("""
                         SELECT w,
                           CASE
-                            WHEN w.word = :q OR w.reading = :q OR w.reading = :qKana THEN 0
+                            WHEN w.word = :q OR w.reading = :q OR w.reading = :qKana
+                                 OR w.reading = :qRomaji THEN 0
                             WHEN EXISTS (SELECT 1 FROM Meaning me WHERE me.word = w
                                          AND LOWER(me.name) = :qLower) THEN 1
                             WHEN w.word LIKE :prefix OR w.reading LIKE :prefix
-                                 OR w.reading LIKE :prefixKana THEN 2
+                                 OR w.reading LIKE :prefixKana OR w.reading LIKE :prefixRomaji THEN 2
                             WHEN EXISTS (SELECT 1 FROM Meaning mb WHERE mb.word = w
                                          AND (LOWER(mb.name) LIKE :prefixLower
                                               OR LOWER(mb.name) LIKE :boundaryLower)) THEN 3
@@ -122,13 +131,16 @@ public class KanjiVocabularyService {
                         Object[].class)
                 .setParameter("q", q)
                 .setParameter("qKana", qKana)
+                .setParameter("qRomaji", qRomaji)
                 .setParameter("qLower", qLower)
                 .setParameter("prefix", q + "%")
                 .setParameter("prefixKana", qKana + "%")
+                .setParameter("prefixRomaji", qRomaji + "%")
                 .setParameter("prefixLower", qLower + "%")
                 .setParameter("boundaryLower", "% " + qLower + "%")
                 .setParameter("like", like)
                 .setParameter("likeKana", likeKana)
+                .setParameter("likeRomaji", likeRomaji)
                 .setParameter("likeLower", likeLower)
                 .setFirstResult(page * size)
                 .setMaxResults(size)
