@@ -59,6 +59,15 @@ public class QuizAttemptController {
         return ResponseEntity.ok(attemptService.getAttempt(principal.getId(), attemptId));
     }
 
+    @GetMapping("/{attemptId}/review")
+    @PreAuthorize("hasAuthority('QUIZ_ATTEMPT_READ')")
+    public ResponseEntity<QuizAttemptDTO> review(
+            @PathVariable Long attemptId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(attemptService.getAttemptForReview(principal.getId(), attemptId));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('QUIZ_ATTEMPT_READ')")
     public ResponseEntity<List<QuizAttemptDTO>> myAttempts(

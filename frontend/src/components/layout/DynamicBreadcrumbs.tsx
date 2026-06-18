@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, FileText, Home } from "lucide-react";
 
 import {
     Breadcrumb,
@@ -36,6 +36,7 @@ type Props = {
 };
 
 function formatPath(path: string) {
+    if (/^\d+$/.test(path)) return "Details";
     return path
         .replace(/-/g, " ")
         .replace(/_/g, " ")
@@ -174,7 +175,8 @@ export default function DynamicBreadcrumbs({
                     const description = isLast
                         ? pageDescription ??
                           activeModule?.description ??
-                          PAGE_DESCRIPTIONS[href]
+                          PAGE_DESCRIPTIONS[href] ??
+                          `Current page: ${full}.`
                         : undefined;
                     const hasDescription =
                         !!description && description.trim().length > 0;
@@ -197,7 +199,12 @@ export default function DynamicBreadcrumbs({
                                             className="size-[18px] text-primary shrink-0"
                                             aria-hidden
                                         />
-                                    ) : null}
+                                    ) : (
+                                        <FileText
+                                            className="size-[18px] text-primary shrink-0"
+                                            aria-hidden
+                                        />
+                                    )}
                                     {(() => {
                                         // Only wrap in a tooltip when the title
                                         // is actually truncated; only attach the

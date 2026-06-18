@@ -1,15 +1,24 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { ankiSrsSettingApi, srsAlgorithmConfigApi } from "@/api";
-import type { AnkiSrsSettingDTO, SrsAlgorithmConfigDTO } from "@/types";
+import { srsAlgorithmConfigApi, ankiSrsSettingApi } from "@/api";
+import type { SrsAlgorithmConfigDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
-  Brain,
+  type SettingsDraft,
+  DEFAULT_DRAFT,
+  parseAlgorithmConfig,
+  normalizeSetting,
+  normalizeDraft,
+  toAlgorithmConfigJson,
+  retentionLabel,
+} from "@/lib/srs-preview";
+import {
   CalendarDays,
-  Check,
   ChevronDown,
-  Clock3,
+  Eye,
   Gauge,
   GraduationCap,
   HelpCircle,
@@ -32,220 +41,6 @@ interface FlashcardSettingsModalProps {
   deckTitle?: string;
 }
 
-interface AlgorithmDraft {
-  learningSteps: string;
-  relearningSteps: string;
-  graduatingIntervalDays: number;
-  easyIntervalDays: number;
-  maxIntervalDays: number;
-  startingEase: number;
-  minEase: number;
-  easyBonus: number;
-  hardInterval: number;
-  intervalModifier: number;
-  newInterval: number;
-}
-
-interface SettingsDraft extends AlgorithmDraft {
-  algorithmConfigId: number;
-  targetRetention: number;
-  maxReviewsPerDay: number;
-  maxItemsPerDay: number;
-  buryRelatedItems: boolean;
-}
-
-const DEFAULT_ALGORITHM: AlgorithmDraft = {
-  learningSteps: "1m 10m",
-  relearningSteps: "10m",
-  graduatingIntervalDays: 1,
-  easyIntervalDays: 4,
-  maxIntervalDays: 36500,
-  startingEase: 2.5,
-  minEase: 1.3,
-  easyBonus: 1.3,
-  hardInterval: 1.2,
-  intervalModifier: 1,
-  newInterval: 0,
-};
-
-const DEFAULT_DRAFT: SettingsDraft = {
-  algorithmConfigId: 0,
-  targetRetention: 0.9,
-  maxReviewsPerDay: 100,
-  maxItemsPerDay: 20,
-  buryRelatedItems: true,
-  ...DEFAULT_ALGORITHM,
-};
-
-const STEP_PATTERN = /^\d+(m|h|d)?$/i;
-
-function clamp(value: number, min: number, max: number, fallback: number) {
-  if (!Number.isFinite(value)) return fallback;
-  return Math.max(min, Math.min(max, value));
-}
-
-function sanitizeSteps(value: string, fallback: string) {
-  const tokens = value
-    .replace(/,/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim().toLowerCase())
-    .filter(Boolean)
-    .filter((token) => STEP_PATTERN.test(token));
-
-  return tokens.length > 0 ? tokens.join(" ") : fallback;
-}
-
-function readNumber(value: unknown, fallback: number) {
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function readSteps(value: unknown, fallback: string) {
-  if (Array.isArray(value)) return sanitizeSteps(value.join(" "), fallback);
-  if (typeof value === "string") return sanitizeSteps(value, fallback);
-  return fallback;
-}
-
-function parseAlgorithmConfig(configJson?: string | null): AlgorithmDraft {
-  if (!configJson?.trim()) return DEFAULT_ALGORITHM;
-
-  try {
-    const parsed = JSON.parse(configJson) as Record<string, unknown>;
-    return {
-      learningSteps: readSteps(parsed.learningSteps, DEFAULT_ALGORITHM.learningSteps),
-      relearningSteps: readSteps(parsed.relearningSteps, DEFAULT_ALGORITHM.relearningSteps),
-      graduatingIntervalDays: clamp(
-        readNumber(parsed.graduatingIntervalDays, DEFAULT_ALGORITHM.graduatingIntervalDays),
-        1,
-        36500,
-        DEFAULT_ALGORITHM.graduatingIntervalDays,
-      ),
-      easyIntervalDays: clamp(
-        readNumber(parsed.easyIntervalDays, DEFAULT_ALGORITHM.easyIntervalDays),
-        1,
-        36500,
-        DEFAULT_ALGORITHM.easyIntervalDays,
-      ),
-      maxIntervalDays: clamp(
-        readNumber(parsed.maxIntervalDays, DEFAULT_ALGORITHM.maxIntervalDays),
-        1,
-        36500,
-        DEFAULT_ALGORITHM.maxIntervalDays,
-      ),
-      startingEase: clamp(
-        readNumber(parsed.startingEase, DEFAULT_ALGORITHM.startingEase),
-        1.3,
-        5,
-        DEFAULT_ALGORITHM.startingEase,
-      ),
-      minEase: clamp(
-        readNumber(parsed.minEase, DEFAULT_ALGORITHM.minEase),
-        1.3,
-        5,
-        DEFAULT_ALGORITHM.minEase,
-      ),
-      easyBonus: clamp(
-        readNumber(parsed.easyBonus, DEFAULT_ALGORITHM.easyBonus),
-        1,
-        5,
-        DEFAULT_ALGORITHM.easyBonus,
-      ),
-      hardInterval: clamp(
-        readNumber(parsed.hardInterval, DEFAULT_ALGORITHM.hardInterval),
-        1,
-        5,
-        DEFAULT_ALGORITHM.hardInterval,
-      ),
-      intervalModifier: clamp(
-        readNumber(parsed.intervalModifier, DEFAULT_ALGORITHM.intervalModifier),
-        0.1,
-        5,
-        DEFAULT_ALGORITHM.intervalModifier,
-      ),
-      newInterval: clamp(
-        readNumber(parsed.newInterval, DEFAULT_ALGORITHM.newInterval),
-        0,
-        1,
-        DEFAULT_ALGORITHM.newInterval,
-      ),
-    };
-  } catch {
-    return DEFAULT_ALGORITHM;
-  }
-}
-
-function normalizeSetting(
-  setting: AnkiSrsSettingDTO | null,
-  algorithm?: SrsAlgorithmConfigDTO | null,
-): SettingsDraft {
-  return {
-    ...DEFAULT_DRAFT,
-    ...parseAlgorithmConfig(algorithm?.configJson),
-    algorithmConfigId: setting?.algorithmConfigId ?? algorithm?.id ?? 0,
-    targetRetention: setting?.targetRetention ?? DEFAULT_DRAFT.targetRetention,
-    maxReviewsPerDay: setting?.maxReviewsPerDay ?? DEFAULT_DRAFT.maxReviewsPerDay,
-    maxItemsPerDay: setting?.maxItemsPerDay ?? DEFAULT_DRAFT.maxItemsPerDay,
-    buryRelatedItems: setting?.buryRelatedItems ?? DEFAULT_DRAFT.buryRelatedItems,
-  };
-}
-
-function normalizeDraft(draft: SettingsDraft): SettingsDraft {
-  const graduatingIntervalDays = Math.round(
-    clamp(draft.graduatingIntervalDays, 1, 36500, DEFAULT_ALGORITHM.graduatingIntervalDays),
-  );
-  const easyIntervalDays = Math.max(
-    graduatingIntervalDays + 1,
-    Math.round(clamp(draft.easyIntervalDays, 1, 36500, DEFAULT_ALGORITHM.easyIntervalDays)),
-  );
-  const maxIntervalDays = Math.max(
-    easyIntervalDays,
-    Math.round(clamp(draft.maxIntervalDays, 1, 36500, DEFAULT_ALGORITHM.maxIntervalDays)),
-  );
-  const minEase = clamp(draft.minEase, 1.3, 5, DEFAULT_ALGORITHM.minEase);
-
-  return {
-    ...draft,
-    learningSteps: sanitizeSteps(draft.learningSteps, DEFAULT_ALGORITHM.learningSteps),
-    relearningSteps: sanitizeSteps(draft.relearningSteps, DEFAULT_ALGORITHM.relearningSteps),
-    graduatingIntervalDays,
-    easyIntervalDays,
-    maxIntervalDays,
-    startingEase: clamp(draft.startingEase, minEase, 5, DEFAULT_ALGORITHM.startingEase),
-    minEase,
-    easyBonus: clamp(draft.easyBonus, 1, 5, DEFAULT_ALGORITHM.easyBonus),
-    hardInterval: clamp(draft.hardInterval, 1, 5, DEFAULT_ALGORITHM.hardInterval),
-    intervalModifier: clamp(draft.intervalModifier, 0.1, 5, DEFAULT_ALGORITHM.intervalModifier),
-    newInterval: clamp(draft.newInterval, 0, 1, DEFAULT_ALGORITHM.newInterval),
-    targetRetention: clamp(draft.targetRetention, 0.7, 0.98, DEFAULT_DRAFT.targetRetention),
-    maxReviewsPerDay: Math.round(clamp(draft.maxReviewsPerDay, 0, 99999, DEFAULT_DRAFT.maxReviewsPerDay)),
-    maxItemsPerDay: Math.round(clamp(draft.maxItemsPerDay, 0, 9999, DEFAULT_DRAFT.maxItemsPerDay)),
-  };
-}
-
-function toAlgorithmConfigJson(draft: SettingsDraft) {
-  const normalized = normalizeDraft(draft);
-  return JSON.stringify({
-    scheduler: "ANKI_SM2",
-    learningSteps: normalized.learningSteps,
-    relearningSteps: normalized.relearningSteps,
-    graduatingIntervalDays: normalized.graduatingIntervalDays,
-    easyIntervalDays: normalized.easyIntervalDays,
-    maxIntervalDays: normalized.maxIntervalDays,
-    startingEase: Number(normalized.startingEase.toFixed(2)),
-    minEase: Number(normalized.minEase.toFixed(2)),
-    easyBonus: Number(normalized.easyBonus.toFixed(2)),
-    hardInterval: Number(normalized.hardInterval.toFixed(2)),
-    intervalModifier: Number(normalized.intervalModifier.toFixed(2)),
-    newInterval: Number(normalized.newInterval.toFixed(2)),
-  });
-}
-
-function retentionLabel(value: number) {
-  if (value >= 0.94) return "Conservative";
-  if (value <= 0.82) return "Fast";
-  return "Balanced";
-}
-
 function visibleAlgorithms(list: SrsAlgorithmConfigDTO[], userId: number) {
   const userPrefix = `USER_SM2_${userId}`;
   return list.filter((item) => {
@@ -257,16 +52,8 @@ function visibleAlgorithms(list: SrsAlgorithmConfigDTO[], userId: number) {
   });
 }
 
-function firstStep(steps: string) {
-  return sanitizeSteps(steps, DEFAULT_ALGORITHM.learningSteps).split(" ")[0] ?? "1m";
-}
-
-function secondStepOrGraduate(steps: string, graduateDays: number) {
-  const tokens = sanitizeSteps(steps, DEFAULT_ALGORITHM.learningSteps).split(" ");
-  return tokens[1] ?? `${graduateDays}d`;
-}
-
 export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: FlashcardSettingsModalProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [algorithms, setAlgorithms] = useState<SrsAlgorithmConfigDTO[]>([]);
@@ -278,6 +65,13 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
   );
 
   const sanitizedDraft = useMemo(() => normalizeDraft(draft), [draft]);
+
+  // Open the standalone preview page, carrying the (unsaved) current settings.
+  const openPreview = () => {
+    navigate(`/deck/${deckId}/srs-preview`, {
+      state: { draft: sanitizedDraft, deckTitle, algorithm: selectedAlgorithm },
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -443,6 +237,26 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                     </div>
 
                     <button
+                      onClick={resetDefaults}
+                      disabled={loading || saving}
+                      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      title="Restore default settings"
+                    >
+                      <RotateCcw className="size-4" />
+                      <span className="hidden sm:inline">Reset</span>
+                    </button>
+
+                    <button
+                      onClick={openPreview}
+                      disabled={loading}
+                      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                      title="See how the schedule & numbers work"
+                    >
+                      <Eye className="size-4" />
+                      <span className="hidden sm:inline">Preview</span>
+                    </button>
+
+                    <button
                       onClick={handleSave}
                       disabled={loading || saving}
                       className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
@@ -463,7 +277,7 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto bg-muted/25 p-4 sm:p-5">
+              <ScrollHintContainer className="flex-1 bg-muted/25" viewportClassName="p-4 sm:p-5">
                 {loading ? (
                   <div className="flex h-80 items-center justify-center">
                     <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -489,11 +303,13 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         max={99999}
                         onChange={(value) => patchDraft({ maxReviewsPerDay: value })}
                       />
+                      {/* Hidden for now — "Bury related cards" isn't used yet.
                       <ToggleRow
                         label="Bury related cards"
                         checked={draft.buryRelatedItems}
                         onChange={(checked) => patchDraft({ buryRelatedItems: checked })}
                       />
+                      */}
                     </SettingsPanel>
 
                     <SettingsPanel
@@ -638,53 +454,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         onChange={(value) => patchDraft({ newInterval: value })}
                       />
                     </SettingsPanel>
-
-                    <SettingsPanel
-                      title="Preview"
-                      icon={<Brain className="size-5" />}
-                      help="Current values after validation."
-                    >
-                      <div className="grid grid-cols-2 gap-2">
-                        <MetricTile label="Again" value={firstStep(sanitizedDraft.learningSteps)} />
-                        <MetricTile
-                          label="Hard"
-                          value={secondStepOrGraduate(
-                            sanitizedDraft.learningSteps,
-                            sanitizedDraft.graduatingIntervalDays,
-                          )}
-                        />
-                        <MetricTile label="Good" value={sanitizedDraft.graduatingIntervalDays + "d"} />
-                        <MetricTile label="Easy" value={sanitizedDraft.easyIntervalDays + "d"} />
-                      </div>
-
-                      <div className="mt-4 rounded-xl border border-border bg-background/60 px-4 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-foreground">
-                              {selectedAlgorithm?.name ?? "Built-in Anki SM2"}
-                            </p>
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                              {selectedAlgorithm?.code ?? "SM2_DEFAULT"} /{" "}
-                              {selectedAlgorithm?.algorithmType ?? "SM2"}
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-semibold text-green-600">
-                            Active
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={resetDefaults}
-                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      >
-                        <RotateCcw className="size-3.5" />
-                        Restore defaults
-                      </button>
-                    </SettingsPanel>
                   </div>
                 )}
-              </div>
+              </ScrollHintContainer>
             </motion.div>
           </motion.div>
         </>
@@ -795,48 +567,3 @@ function TextField({
   );
 }
 
-function ToggleRow({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className={cn(
-          "relative h-7 w-12 rounded-full border transition-colors",
-          checked ? "border-primary bg-primary" : "border-border bg-muted",
-        )}
-        aria-pressed={checked}
-      >
-        <motion.span
-          layout
-          className="absolute top-0.5 flex size-6 items-center justify-center rounded-full bg-white text-primary shadow-sm"
-          animate={{ left: checked ? 20 : 2 }}
-          transition={{ type: "spring", stiffness: 420, damping: 28 }}
-        >
-          {checked && <Check className="size-3.5" />}
-        </motion.span>
-      </button>
-    </div>
-  );
-}
-
-function MetricTile({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-border bg-background/70 px-4 py-3">
-      <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase text-muted-foreground">
-        <Clock3 className="size-3" />
-        {label}
-      </div>
-      <p className="truncate text-xl font-bold tabular-nums text-foreground">{value}</p>
-    </div>
-  );
-}
