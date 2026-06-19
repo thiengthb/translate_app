@@ -9,4 +9,7 @@ import java.util.List;
 public interface GrammarMarkerRepository extends BaseCrudRepository<GrammarMarker, Long> {
 
     List<GrammarMarker> findBySubUseId(Long subUseId);
+
+    /** Markers of every OTHER sub-use (rows with a null sub-use are excluded by {@code <>}). */
+    List<GrammarMarker> findBySubUseIdNot(Long subUseId);
 }
