@@ -175,6 +175,8 @@ public class KanjiStudySessionServiceImpl implements KanjiStudySessionService {
         copy.setEndedAt(src.getEndedAt());
         copy.setTotalItems(src.getTotalItems());
         copy.setCompletedItems(src.getCompletedItems());
+        copy.setCorrectItems(src.getCorrectItems());
+        copy.setGroupIndex(src.getGroupIndex());
         copy.setIsActive(src.getIsActive());
         copy.setIsDeleted(src.getIsDeleted());
         copy.setVersion(src.getVersion());

@@ -117,6 +117,16 @@ public class KanjiDeckServiceImpl implements KanjiDeckService {
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
                 .orElseThrow(() -> new ResourceNotFoundException("Kanji deck not found"));
 
+        // System decks are shared/built-in — never deletable. User decks are only
+        // deletable by their owner.
+        if (Boolean.TRUE.equals(entity.getIsSystem())) {
+            throw deckError("Không thể xóa deck hệ thống");
+        }
+        Long ownerId = entity.getUser() != null ? entity.getUser().getId() : null;
+        if (ownerId == null || !ownerId.equals(currentUserId())) {
+            throw deckError("Bạn không có quyền xóa deck này");
+        }
+
         entity.setIsDeleted(true);
         KanjiDeck saved = kanjiDeckRepository.save(entity);
 
@@ -143,6 +153,18 @@ public class KanjiDeckServiceImpl implements KanjiDeckService {
                     addError(errors, "userId", "User not found");
                     return new BusinessValidationException(errors);
                 });
+    }
+
+    private Long currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal up) return up.getId();
+        return null;
+    }
+
+    private static BusinessValidationException deckError(String message) {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+        errors.put("deckId", List.of(message));
+        return new BusinessValidationException(errors);
     }
 
     private Specification<KanjiDeck> notDeleted() {

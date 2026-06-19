@@ -9,6 +9,7 @@ import {
   Monitor,
   Moon,
   ScrollText,
+  Search,
   Settings,
   Sun,
   type LucideIcon,
@@ -106,6 +107,21 @@ export function KanjiStudyHeader() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <TooltipWrapper content="Tìm kiếm">
+            <Link
+              to="/kanji-study/search"
+              aria-label="Tìm kiếm"
+              className={cn(
+                "inline-flex items-center justify-center h-8 w-8 rounded-lg transition-colors",
+                location.pathname === "/kanji-study/search"
+                  ? "text-rose-500 bg-rose-500/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Search size={17} />
+            </Link>
+          </TooltipWrapper>
 
           <DropdownMenu>
             <TooltipWrapper content="Cài đặt giao diện">

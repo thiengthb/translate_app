@@ -19,6 +19,14 @@ backend/scripts/_kanji_data/
 backend/src/main/resources/seed/kanji-study-seed.json
 backend/scripts/seed/*.sql
 
+# Vocabulary import CSV generated from JMdict (~20MB). Regenerate via gen-vocab-seed.mjs.
+backend/scripts/seed/words-jmdict.csv
+
+# Full example-sentence corpus generated from Tatoeba (~4.7MB, ~38k sentences).
+# The small sample kanji-sentences-seed.json IS committed; regenerate the full
+# corpus via gen-sentence-seed.mjs (see README-sentence-seed.md).
+backend/src/main/resources/seed/kanji-sentences-seed.full.json
+
 # Kanji study diagrams — local design artifacts, regenerate via gen-kanji-diagrams.mjs.
 backend/scripts/gen-kanji-diagrams.mjs
 docs/kanji-study/

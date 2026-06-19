@@ -7,6 +7,8 @@ public interface KanjiDetailService {
 
     Page<KanjiDetailDTO> getAll(Pageable pageable, String search, KanjiDetailFilter filter);
 
+    Page<KanjiDetailDTO> findByComponent(String component, Pageable pageable);
+
     KanjiDetailDTO getById(Long id);
 
     KanjiDetailDTO create(KanjiDetailDTO request);

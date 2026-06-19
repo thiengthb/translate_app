@@ -23,6 +23,8 @@ public class KanjiDetailDTO extends BaseDTO {
 
     String meaning;
 
+    String meaningVi;
+
     String jlptLevel;
 
     Long radicalId;

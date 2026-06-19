@@ -124,13 +124,60 @@ public class SudachiTokenizer implements AutoCloseable {
             }
         }
 
-        // 3. Nothing found — give actionable error.
+        // 3. Downloaded zip cached by the Maven build (.sudachi-cache survives
+        //    'mvn clean'; IntelliJ's Rebuild never re-runs the antrun unzip into
+        //    target/classes, so this is the normal path after clean + IDE rebuild).
+        Path cached = extractFromCache();
+        if (cached != null) {
+            return cached;
+        }
+
+        // 4. Nothing found — give actionable error.
         throw new IllegalStateException(
                 "Sudachi Core dictionary not found!\n"
                 + "Hãy chạy lệnh sau để tải từ điển (chỉ cần 1 lần, ~70 MB):\n"
                 + "  ./mvnw generate-resources\n"
                 + "Hoặc set SUDACHI_DICT_PATH=/duong/dan/toi/system_core.dic trong .env"
         );
+    }
+
+    /**
+     * Looks for the dictionary zip the Maven build cached in {@code .sudachi-cache/}
+     * (checked from both the backend module and the repo root, since the IDE may
+     * launch with either as the working directory) and extracts
+     * {@code system_core.dic} next to it once. Subsequent boots reuse the
+     * extracted file directly.
+     */
+    private Path extractFromCache() {
+        for (String base : new String[]{".sudachi-cache", "backend/.sudachi-cache"}) {
+            Path dir = Paths.get(base);
+            Path dic = dir.resolve("system_core.dic");
+            if (Files.isRegularFile(dic)) {
+                log.info("Sudachi: using dict previously extracted to cache: {}", dic.toAbsolutePath());
+                return dic;
+            }
+            Path zip = dir.resolve("sudachi-dictionary-core.zip");
+            if (!Files.isRegularFile(zip)) {
+                continue;
+            }
+            try (java.util.zip.ZipFile zf = new java.util.zip.ZipFile(zip.toFile())) {
+                java.util.zip.ZipEntry entry = zf.stream()
+                        .filter(e -> !e.isDirectory() && e.getName().endsWith("system_core.dic"))
+                        .findFirst()
+                        .orElse(null);
+                if (entry == null) {
+                    continue;
+                }
+                log.info("Sudachi: extracting dict from cached zip {} (one-time)...", zip.toAbsolutePath());
+                try (InputStream in = zf.getInputStream(entry)) {
+                    Files.copy(in, dic, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return dic;
+            } catch (IOException ex) {
+                log.warn("Sudachi: failed to extract dict from {}: {}", zip, ex.getMessage());
+            }
+        }
+        return null;
     }
 
     /**
