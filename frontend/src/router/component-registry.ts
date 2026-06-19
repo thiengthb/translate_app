@@ -28,6 +28,7 @@ import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
+import WordDetailPage from "@/pages/dictionary/WordDetailPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
@@ -82,6 +83,7 @@ export const routes: RouteConfig[] = [
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
   { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
+  { path: "/words/:wordId", component: WordDetailPage, requiredPermission: "WORD_READ" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
   { path: "/library", component: LibraryPage, isModuleDriven: true },

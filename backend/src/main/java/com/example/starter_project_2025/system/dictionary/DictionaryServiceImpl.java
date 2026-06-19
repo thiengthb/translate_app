@@ -1,5 +1,8 @@
 package com.example.starter_project_2025.system.dictionary;
 
+import com.example.starter_project_2025.exception.ResourceNotFoundException;
+import com.example.starter_project_2025.system.analyze.SudachiToken;
+import com.example.starter_project_2025.system.analyze.SudachiTokenizer;
 import com.example.starter_project_2025.system.words.example.Example;
 import com.example.starter_project_2025.system.words.kanji.Kanji;
 import com.example.starter_project_2025.system.words.kanji.KanjiRepository;
@@ -26,13 +29,65 @@ public class DictionaryServiceImpl implements DictionaryService {
     DictionarySearchRepository searchRepository;
     KanjiRepository            kanjiRepository;
     WordKanjiRepository        wordKanjiRepository;
+    SudachiTokenizer           tokenizer;
 
     @Override
     public List<WordSearchResult> search(String query, int limit) {
         String q    = query.trim();
         String kana = RomajiConverter.isRomaji(q) ? RomajiConverter.toHiragana(q) : q;
-        return searchRepository.search(q, kana, PageRequest.of(0, limit))
-                               .stream().map(this::toWordResult).toList();
+        List<Word> words = searchRepository.search(q, kana, PageRequest.of(0, limit));
+
+        // Deinflection fallback: tra trực tiếp không ra → có thể user gõ dạng đã
+        // chia (食べました, 行かなかった, 高くない…). Dùng Sudachi đưa về base form
+        // (原形) rồi tra lại. Chỉ chạy khi rỗng để khỏi tốn cost ở case thường.
+        if (words.isEmpty()) {
+            words = searchByDeinflection(q, limit);
+        }
+
+        return words.stream().map(this::toWordResult).toList();
+    }
+
+    /**
+     * Coi {@code q} là một (cụm) từ đang chia thể: tokenize bằng Sudachi, gom
+     * base form của các động từ (動詞) / tính từ (形容詞), rồi tra lại từng base
+     * form và gộp kết quả (dedup theo id, giữ thứ tự xuất hiện).
+     * Bỏ qua input không chứa chữ Nhật (romaji / nghĩa) để tránh tokenize vô ích.
+     */
+    private List<Word> searchByDeinflection(String q, int limit) {
+        if (!containsJapanese(q)) {
+            return List.of();
+        }
+
+        List<String> baseForms = new ArrayList<>();
+        for (SudachiToken t : tokenizer.tokenize(q)) {
+            String pos  = t.getPartOfSpeechLevel1();
+            String base = t.getBaseForm();
+            boolean inflectable = "動詞".equals(pos) || "形容詞".equals(pos);
+            if (inflectable && base != null && !base.isBlank()
+                    && !"*".equals(base) && !base.equals(q) && !baseForms.contains(base)) {
+                baseForms.add(base);
+            }
+        }
+        if (baseForms.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashMap<Long, Word> merged = new LinkedHashMap<>();
+        for (String base : baseForms) {
+            for (Word w : searchRepository.search(base, base, PageRequest.of(0, limit))) {
+                merged.putIfAbsent(w.getId(), w);
+            }
+            if (merged.size() >= limit) break;
+        }
+        return new ArrayList<>(merged.values());
+    }
+
+    @Override
+    public WordSearchResult getById(Long id) {
+        return searchRepository.findById(id)
+                .filter(w -> Boolean.FALSE.equals(w.getIsDeleted()))
+                .map(this::toWordResult)
+                .orElseThrow(() -> new ResourceNotFoundException("Word", "id", id));
     }
 
     @Override
@@ -154,6 +209,19 @@ public class DictionaryServiceImpl implements DictionaryService {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
+
+    /** True nếu chuỗi có ít nhất một ký tự hiragana / katakana / kanji. */
+    private static boolean containsJapanese(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            Character.UnicodeBlock block = Character.UnicodeBlock.of(s.charAt(i));
+            if (Character.UnicodeBlock.HIRAGANA.equals(block)
+                    || Character.UnicodeBlock.KATAKANA.equals(block)
+                    || Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(block)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private static Set<String> extractKanjiChars(String s) {
         Set<String> result = new LinkedHashSet<>();

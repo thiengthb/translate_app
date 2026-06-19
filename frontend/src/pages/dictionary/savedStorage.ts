@@ -4,15 +4,14 @@
 // nguồn cho lần migrate một-lần (dữ liệu lưu từ trước khi có backend).
 //
 // - loadSavedWords/loadSavedKanjis: đọc cache (đồng bộ, cho initial state).
-// - fetchNotebook: lấy bản chuẩn từ server (lần đầu sẽ merge cache cũ lên
-//   server qua /sync), cập nhật lại cache.
-// - toggleSavedWord/toggleSavedKanji: optimistic — cập nhật cache ngay, gọi
-//   API nền; lỗi mạng thì giữ thay đổi local (lần fetch sau sẽ chỉnh lại).
+// - fetchNotebook: lấy bản chuẩn từ server — aggregate "đã lưu ở bất kỳ sổ tay
+//   nào" (lần đầu sẽ merge cache cũ lên server qua /sync), cập nhật lại cache.
+// - markWordSaved/markKanjiSaved: CHỈ cập nhật cache (NotebookPicker tự gọi API
+//   per-notebook) để icon bookmark + preview phản ánh trạng thái đã-lưu.
 import { notebookApi } from "@/api/features/dictionary.api";
 import type {
     WordSearchResult, DictionaryKanjiDetail, NotebookResponse,
 } from "@/types";
-import { logger } from "@/lib/logger";
 
 export const SAVED_WORDS_KEY  = "dict_saved_words";
 export const SAVED_KANJIS_KEY = "dict_saved_kanjis";
@@ -80,32 +79,25 @@ async function doFetchNotebook(): Promise<NotebookData> {
     return { words, kanjis, raw };
 }
 
-// ── Toggle (optimistic) ───────────────────────────────────────────────
-export function toggleSavedWord(word: WordSearchResult): WordSearchResult[] {
-    const saved = loadSavedWords();
-    const exists = saved.some((w) => w.id === word.id);
-    const next   = exists ? saved.filter((w) => w.id !== word.id) : [word, ...saved];
+// ── Cập nhật cache "đã lưu ở ≥1 sổ tay" (dùng với NotebookPicker) ──────
+// Picker tự gọi API per-notebook; các hàm này CHỈ cập nhật cache localStorage
+// để icon bookmark + preview Sổ tay phản ánh trạng thái đã-lưu-ở-bất-kỳ-đâu.
+export function markWordSaved(word: WordSearchResult, saved: boolean): WordSearchResult[] {
+    const cur = loadSavedWords();
+    const next = saved
+        ? (cur.some((w) => w.id === word.id) ? cur : [word, ...cur])
+        : cur.filter((w) => w.id !== word.id);
     writeCache(next, loadSavedKanjis());
-    void (exists ? notebookApi.removeWord(word.id) : notebookApi.saveWord(word.id))
-        .catch((e) => logger.warn("notebook: sync word thất bại, giữ thay đổi local", e));
     return next;
 }
 
-export function toggleSavedKanji(kanji: DictionaryKanjiDetail): DictionaryKanjiDetail[] {
-    const saved = loadSavedKanjis();
-    const exists = saved.some((k) => k.character === kanji.character);
-    const next   = exists ? saved.filter((k) => k.character !== kanji.character) : [kanji, ...saved];
+export function markKanjiSaved(kanji: DictionaryKanjiDetail, saved: boolean): DictionaryKanjiDetail[] {
+    const cur = loadSavedKanjis();
+    const next = saved
+        ? (cur.some((k) => k.character === kanji.character) ? cur : [kanji, ...cur])
+        : cur.filter((k) => k.character !== kanji.character);
     writeCache(loadSavedWords(), next);
-    void (exists ? notebookApi.removeKanji(kanji.character) : notebookApi.saveKanji(kanji.character))
-        .catch((e) => logger.warn("notebook: sync kanji thất bại, giữ thay đổi local", e));
     return next;
-}
-
-export function clearAllSaved() {
-    localStorage.removeItem(SAVED_WORDS_KEY);
-    localStorage.removeItem(SAVED_KANJIS_KEY);
-    void notebookApi.clearAll()
-        .catch((e) => logger.warn("notebook: xóa tất cả trên server thất bại", e));
 }
 
 // ── Ghi chú cá nhân ───────────────────────────────────────────────────

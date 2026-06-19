@@ -2,7 +2,7 @@ import axiosInstance from "../axios";
 import type {
     WordSearchResult, WordSuggestion, DictionaryKanjiDetail, FeaturedResult,
     TatoebaExample, WordAudio, DictionaryBrowsePage,
-    NotebookResponse, NotebookWordEntry, NotebookKanjiEntry,
+    NotebookResponse, NotebookWordEntry, NotebookKanjiEntry, NotebookSummary,
 } from "@/types";
 
 export const dictionaryApi = {
@@ -10,6 +10,12 @@ export const dictionaryApi = {
         const response = await axiosInstance.get<WordSearchResult[]>("/dictionary/search", {
             params: { q: q.trim(), limit },
         });
+        return response.data;
+    },
+
+    // Chi tiết một từ (kèm nghĩa đa ngôn ngữ, hán tự và ví dụ) — dùng cho WordDetailPage.
+    getWord: async (id: number): Promise<WordSearchResult> => {
+        const response = await axiosInstance.get<WordSearchResult>(`/dictionary/words/${id}`);
         return response.data;
     },
 
@@ -107,10 +113,69 @@ export const notebookApi = {
     },
 
     // Merge các mục localStorage (lưu trước khi có backend / lưu lúc offline)
-    // vào sổ tay server. Idempotent — trả về sổ tay đầy đủ sau merge.
+    // vào sổ tay mặc định trên server. Idempotent — trả về sổ tay đầy đủ sau merge.
     sync: async (wordIds: number[], kanjiChars: string[]): Promise<NotebookResponse> => {
         const response = await axiosInstance.post<NotebookResponse>(
             "/dictionary/notebook/sync", { wordIds, kanjiChars });
+        return response.data;
+    },
+};
+
+// ── Đa sổ tay (Mazii-style: tạo nhiều sổ tay, chọn sổ tay khi lưu) ──────
+export const notebooksApi = {
+    list: async (): Promise<NotebookSummary[]> => {
+        const response = await axiosInstance.get<NotebookSummary[]>("/dictionary/notebooks");
+        return response.data;
+    },
+
+    create: async (name: string, color?: string): Promise<NotebookSummary> => {
+        const response = await axiosInstance.post<NotebookSummary>("/dictionary/notebooks", { name, color });
+        return response.data;
+    },
+
+    update: async (id: number, name: string, color?: string): Promise<NotebookSummary> => {
+        const response = await axiosInstance.put<NotebookSummary>(`/dictionary/notebooks/${id}`, { name, color });
+        return response.data;
+    },
+
+    remove: async (id: number): Promise<void> => {
+        await axiosInstance.delete(`/dictionary/notebooks/${id}`);
+    },
+
+    entries: async (id: number): Promise<NotebookResponse> => {
+        const response = await axiosInstance.get<NotebookResponse>(`/dictionary/notebooks/${id}/entries`);
+        return response.data;
+    },
+
+    addWord: async (notebookId: number, wordId: number): Promise<NotebookWordEntry> => {
+        const response = await axiosInstance.post<NotebookWordEntry>(
+            `/dictionary/notebooks/${notebookId}/words/${wordId}`);
+        return response.data;
+    },
+
+    removeWord: async (notebookId: number, wordId: number): Promise<void> => {
+        await axiosInstance.delete(`/dictionary/notebooks/${notebookId}/words/${wordId}`);
+    },
+
+    addKanji: async (notebookId: number, character: string): Promise<NotebookKanjiEntry> => {
+        const response = await axiosInstance.post<NotebookKanjiEntry>(
+            `/dictionary/notebooks/${notebookId}/kanjis/${encodeURIComponent(character)}`);
+        return response.data;
+    },
+
+    removeKanji: async (notebookId: number, character: string): Promise<void> => {
+        await axiosInstance.delete(`/dictionary/notebooks/${notebookId}/kanjis/${encodeURIComponent(character)}`);
+    },
+
+    // Id các sổ tay đang chứa từ/kanji — dùng để tích sẵn checkbox trong picker.
+    wordMembership: async (wordId: number): Promise<number[]> => {
+        const response = await axiosInstance.get<number[]>(`/dictionary/notebooks/membership/word/${wordId}`);
+        return response.data;
+    },
+
+    kanjiMembership: async (character: string): Promise<number[]> => {
+        const response = await axiosInstance.get<number[]>(
+            `/dictionary/notebooks/membership/kanji/${encodeURIComponent(character)}`);
         return response.data;
     },
 };
