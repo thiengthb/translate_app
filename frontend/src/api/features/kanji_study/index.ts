@@ -85,11 +85,12 @@ export const kanjiStudyApi = {
     );
     return response.data;
   },
-  stats: async (deckId?: number, groupIndex?: number | null): Promise<KanjiStudyStats> => {
+  stats: async (deckId?: number, groupIndex?: number | null, mode?: string): Promise<KanjiStudyStats> => {
     const response = await axiosInstance.get<KanjiStudyStats>("/kanji-study-sessions/stats", {
       params: {
         deckId,
         groupIndex: groupIndex ?? undefined,
+        mode: mode ?? undefined,
       },
     });
     return response.data;

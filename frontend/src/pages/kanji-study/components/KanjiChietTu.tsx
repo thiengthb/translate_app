@@ -122,7 +122,8 @@ export function KanjiChietTu({
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [boxHeight, setBoxHeight] = useState<number | undefined>(undefined);
+  // Scaled box of the tree; the card is sized to it and it's centered as a unit.
+  const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   // Fit the tree to BOTH the card width and the height budget (uniform scale).
   useLayoutEffect(() => {
@@ -136,9 +137,13 @@ export function KanjiChietTu({
       const naturalH = content.scrollHeight;
       const avail = container.clientWidth;
       if (!naturalW || !naturalH || !avail) return;
+      // Scale to fit the card width and aim for the height budget — but a very
+      // deep tree that bottoms out at MIN_SCALE must NOT be capped at maxHeight,
+      // or its lower branches get clipped. Size the card to the scaled tree so
+      // the whole thing always shows (it just grows a little past maxHeight).
       const s = Math.max(MIN_SCALE, Math.min(1, avail / naturalW, maxHeight / naturalH));
       setScale(s);
-      setBoxHeight(Math.min(naturalH * s, maxHeight));
+      setBox({ w: Math.ceil(naturalW * s), h: Math.ceil(naturalH * s) });
     };
 
     measure();
@@ -155,27 +160,38 @@ export function KanjiChietTu({
       <div
         ref={containerRef}
         className={`kvg-tree ${fit ? "overflow-hidden" : ""} py-2`}
-        style={fit ? { height: boxHeight } : undefined}
+        style={fit ? { height: box.h || undefined } : undefined}
       >
         <style>{KVG_CSS}</style>
-        <div
-          ref={contentRef}
-          className="kvg-scale"
-          style={
-            fit
-              ? {
-                  width: "max-content",
-                  margin: "0 auto",
-                  transform: `scale(${scale})`,
-                  transformOrigin: "top center",
-                }
-              : { width: "max-content" }
-          }
-        >
-          <ul>
-            <Node node={tree} depth={0} onSelect={setSelected} />
-          </ul>
-        </div>
+        {fit ? (
+          /* A centered wrapper reserving the SCALED size, with the tree scaled
+             from its top-left to fill it — so the whole tree is centered as one
+             block instead of margin:auto collapsing on an overflowing width. */
+          <div style={{ width: box.w || undefined, height: box.h || undefined, margin: "0 auto", position: "relative" }}>
+            <div
+              ref={contentRef}
+              className="kvg-scale"
+              style={{
+                width: "max-content",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <ul>
+                <Node node={tree} depth={0} onSelect={setSelected} />
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <div ref={contentRef} className="kvg-scale" style={{ width: "max-content" }}>
+            <ul>
+              <Node node={tree} depth={0} onSelect={setSelected} />
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Rendered OUTSIDE .kvg-tree — its scoped ul/li styles would otherwise

@@ -56,6 +56,7 @@ import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
 import KanjiFlashcardPage from "@/pages/kanji-study/KanjiFlashcardPage";
 import KanjiQuizPage from "@/pages/kanji-study/KanjiQuizPage";
+import KanjiWritingPage from "@/pages/kanji-study/KanjiWritingPage";
 import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiRadicalDetailPage from "@/pages/kanji-study/KanjiRadicalDetailPage";
@@ -63,6 +64,7 @@ import KanjiWordDetailPage from "@/pages/kanji-study/KanjiWordDetailPage";
 import KanjiSearchPage from "@/pages/kanji-study/KanjiSearchPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
+import KanjiSessionsPage from "@/pages/kanji-study/KanjiSessionsPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -136,6 +138,7 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId/flashcard", component: KanjiFlashcardPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId/quiz", component: KanjiQuizPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId/writing", component: KanjiWritingPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
   { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
   { path: "/kanji-study/radical/:id", component: KanjiRadicalDetailPage, requiredPermission: "KANJI_RADICAL_READ" },
@@ -143,6 +146,7 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/search", component: KanjiSearchPage, requiredPermission: "KANJI_DETAIL_READ" },
   { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
+  { path: "/kanji-study/sessions", component: KanjiSessionsPage, requiredPermission: "KANJI_DECK_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },

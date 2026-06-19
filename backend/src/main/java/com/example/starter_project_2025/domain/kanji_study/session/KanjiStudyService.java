@@ -129,27 +129,59 @@ public class KanjiStudyService {
             p.setNextReviewAt(now.plusDays(1));
         }
         p.setLastStudiedAt(now);
-        p.setStatus(p.getCorrectCount() >= 5 && p.getWrongCount() == 0 ? "KNOWN" : "LEARNING");
+        // Proficiency ladder (mirrors the FE "Tiến độ Hán tự" levels). The top
+        // level — MASTERED ("Thành thạo") — is reserved for the Challenges
+        // feature: ordinary study never grants it, and never demotes a kanji
+        // that has already reached it.
+        if (!"MASTERED".equalsIgnoreCase(p.getStatus())) {
+            p.setStatus(proficiencyFor(p.getCorrectCount(), p.getWrongCount()));
+        }
 
         if (isNew) em.persist(p);
+    }
+
+    /**
+     * Map cumulative correct/wrong counts onto the four study-reachable
+     * proficiency levels (net = correct − wrong). The fifth level,
+     * {@code MASTERED} ("Thành thạo"), is awarded only by the Challenges
+     * feature, never here.
+     *
+     * <ul>
+     *   <li>{@code NEW}        — "Chưa biết": net ≤ 0 (seen but still missing it)</li>
+     *   <li>{@code KNOWN}      — "Đã biết":   net 1–2</li>
+     *   <li>{@code FAMILIAR}   — "Đã quen":   net 3–5</li>
+     *   <li>{@code PROFICIENT} — "Biết rõ":   net ≥ 6</li>
+     * </ul>
+     */
+    private static String proficiencyFor(int correctCount, int wrongCount) {
+        int net = correctCount - wrongCount;
+        if (net <= 0) return "NEW";
+        if (net <= 2) return "KNOWN";
+        if (net <= 5) return "FAMILIAR";
+        return "PROFICIENT";
     }
 
     /* ── stats (setup header) ────────────────────────────────────── */
 
     @Transactional(readOnly = true)
-    public StatsResult stats(Long deckId, Integer groupIndex) {
+    public StatsResult stats(Long deckId, Integer groupIndex, String mode) {
         Long userId = currentUserId();
         if (userId == null) return new StatsResult(null, 0, 0);
 
+        // Default to QUIZ so the existing Trắc nghiệm header keeps working; the
+        // writing setup screen passes mode=WRITING for its own "Viết" count.
+        String modeFilter = mode != null && !mode.isBlank() ? mode : "QUIZ";
+
         StringBuilder where = new StringBuilder(
-                "WHERE s.user.id = :u AND s.isDeleted = false AND s.mode = 'QUIZ'");
+                "WHERE s.user.id = :u AND s.isDeleted = false AND s.mode = :mode");
         if (deckId != null) where.append(" AND s.deck.id = :deckId");
         if (groupIndex != null) where.append(" AND s.groupIndex = :groupIndex");
 
         var query = em.createQuery(
                 "SELECT COUNT(s), MAX(s.endedAt), COALESCE(SUM(s.correctItems), 0), COALESCE(SUM(s.totalItems), 0) "
                         + "FROM KanjiStudySession s " + where, Object[].class)
-                .setParameter("u", userId);
+                .setParameter("u", userId)
+                .setParameter("mode", modeFilter);
         if (deckId != null) query.setParameter("deckId", deckId);
         if (groupIndex != null) query.setParameter("groupIndex", groupIndex);
 

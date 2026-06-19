@@ -217,6 +217,8 @@ export default function KanjiDeckBrowsePage() {
       navigate(`/kanji-study/deck/${deckId}/flashcard?group=${studyTarget.groupIndex}`);
     } else if (mode === "quiz") {
       navigate(`/kanji-study/deck/${deckId}/quiz?group=${studyTarget.groupIndex}`);
+    } else if (mode === "writing") {
+      navigate(`/kanji-study/deck/${deckId}/writing?group=${studyTarget.groupIndex}`);
     }
   };
 
@@ -555,6 +557,8 @@ export default function KanjiDeckBrowsePage() {
       {studyTarget && (
         <KanjiStudyOptionsDialog
           title={`${deck?.title ?? "Deck"} - ${studyTarget.label}`}
+          deckId={deckId}
+          groupIndex={studyTarget.groupIndex}
           onSelect={startStudy}
           onClose={() => setStudyTarget(null)}
         />

@@ -35,11 +35,12 @@ public class KanjiStudyController {
 
     @GetMapping("/stats")
     @PreAuthorize("hasAuthority('KANJI_STUDY_SESSION_READ')")
-    @Operation(summary = "Thống kê theo deck/nhóm: lần học cuối, số lần trắc nghiệm, độ chính xác")
+    @Operation(summary = "Thống kê theo deck/nhóm/chế độ: lần học cuối, số phiên, độ chính xác")
     public ResponseEntity<StatsResult> stats(
             @RequestParam(required = false) Long deckId,
-            @RequestParam(required = false) Integer groupIndex) {
-        return ResponseEntity.ok(kanjiStudyService.stats(deckId, groupIndex));
+            @RequestParam(required = false) Integer groupIndex,
+            @RequestParam(required = false) String mode) {
+        return ResponseEntity.ok(kanjiStudyService.stats(deckId, groupIndex, mode));
     }
 
     @GetMapping("/recent")

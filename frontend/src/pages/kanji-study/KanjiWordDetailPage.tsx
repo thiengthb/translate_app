@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Languages, Loader2, MessageSquareText } from "lucide-react";
 import { kanjiWordApi } from "@/api/features/kanji_study";
 import type {
@@ -21,6 +21,18 @@ const SENTENCE_PAGE_SIZE = 10;
 export default function KanjiWordDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // "Focus" mode: opened from inside an exercise (Học) — hide the top nav, only
+  // a way back to the exact question being studied.
+  const focus = searchParams.get("focus") === "1";
+  const fromMode = searchParams.get("from"); // "quiz" | "writing"
+  const deckParam = searchParams.get("deck");
+  const groupParam = searchParams.get("group");
+  const returnUrl =
+    deckParam && fromMode
+      ? `/kanji-study/deck/${deckParam}/${fromMode}?${groupParam ? `group=${groupParam}&` : ""}resume=1`
+      : null;
 
   const [word, setWord] = useState<KanjiWordDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,13 +61,17 @@ export default function KanjiWordDetailPage() {
   }, [id]);
 
   return (
-    <KanjiLayout>
+    <KanjiLayout hideNav={focus}>
       <div className="max-w-3xl mx-auto pb-10">
         <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+          onClick={() => (focus && returnUrl ? navigate(returnUrl) : navigate(-1))}
+          className={
+            focus
+              ? "mb-4 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:border-rose-400"
+              : "inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+          }
         >
-          <ArrowLeft size={16} /> Quay lại
+          <ArrowLeft size={16} /> {focus ? "Quay lại câu hỏi" : "Quay lại"}
         </button>
 
         {isLoading ? (

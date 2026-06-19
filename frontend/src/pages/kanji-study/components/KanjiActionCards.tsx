@@ -61,6 +61,8 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
       navigate(`/kanji-study/deck/${selectedDeck.id}/flashcard?group=${groupIndex}`);
     } else if (mode === "quiz") {
       navigate(`/kanji-study/deck/${selectedDeck.id}/quiz?group=${groupIndex}`);
+    } else if (mode === "writing") {
+      navigate(`/kanji-study/deck/${selectedDeck.id}/writing?group=${groupIndex}`);
     }
   };
   const goReview = (mode: string) => navigate(`/kanji-study/review?mode=${mode}`);
@@ -163,6 +165,8 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
     {showStudy && selectedDeck && (
       <KanjiStudyOptionsDialog
         title={`${selectedDeck.title ?? "Deck"}${groupLabel ? ` - ${groupLabel}` : ""}`}
+        deckId={selectedDeck.id}
+        groupIndex={groupIndex}
         onSelect={startStudy}
         onClose={() => setShowStudy(false)}
       />

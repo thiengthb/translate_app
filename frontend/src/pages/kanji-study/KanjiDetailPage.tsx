@@ -24,6 +24,16 @@ export default function KanjiDetailPage() {
   const [searchParams] = useSearchParams();
   const deckId = searchParams.get("deck");
 
+  // "Focus" mode: opened from inside an exercise (Học). The whole top nav is
+  // hidden and the only way out is back to the exact question being studied.
+  const focus = searchParams.get("focus") === "1";
+  const fromMode = searchParams.get("from"); // "quiz" | "writing"
+  const groupParam = searchParams.get("group");
+  const returnUrl =
+    deckId && fromMode
+      ? `/kanji-study/deck/${deckId}/${fromMode}?${groupParam ? `group=${groupParam}&` : ""}resume=1`
+      : null;
+
   const [kanji, setKanji] = useState<KanjiDetailDTO | null>(null);
   const [readings, setReadings] = useState<KanjiReadingDTO[]>([]);
   const [radical, setRadical] = useState<KanjiRadicalDTO | null>(null);
@@ -88,16 +98,28 @@ export default function KanjiDetailPage() {
     );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout hideNav={focus}>
       <div className="max-w-3xl mx-auto pb-10">
-        {deckId && <KanjiDeckStrip deckId={deckId} currentId={id ? Number(id) : undefined} />}
+        {focus ? (
+          /* In-exercise: the only way out is back to the question. */
+          <button
+            onClick={() => (returnUrl ? navigate(returnUrl) : navigate(-1))}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:border-rose-400"
+          >
+            <ArrowLeft size={16} /> Quay lại câu hỏi
+          </button>
+        ) : (
+          <>
+            {deckId && <KanjiDeckStrip deckId={deckId} currentId={id ? Number(id) : undefined} />}
 
-        <button
-          onClick={() => (deckId ? navigate(`/kanji-study/deck/${deckId}`) : navigate(-1))}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ArrowLeft size={16} /> {deckId ? "Tất cả Hán tự" : "Quay lại"}
-        </button>
+            <button
+              onClick={() => (deckId ? navigate(`/kanji-study/deck/${deckId}`) : navigate(-1))}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+            >
+              <ArrowLeft size={16} /> {deckId ? "Tất cả Hán tự" : "Quay lại"}
+            </button>
+          </>
+        )}
 
         {isLoading ? (
           <p className="text-muted-foreground">Đang tải...</p>

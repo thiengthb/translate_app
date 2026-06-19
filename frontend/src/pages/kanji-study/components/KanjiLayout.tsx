@@ -15,13 +15,15 @@ import { KanjiStudyHeader } from "./KanjiStudyHeader";
  * Color-preset + typography hooks are still applied so the theme is correct
  * even when the user deep-links straight into a kanji page.
  */
-export function KanjiLayout({ children }: { children: ReactNode }) {
+export function KanjiLayout({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
   useColorPreset();
   useTypography();
 
   return (
     <div className="min-h-svh bg-background flex flex-col">
-      <KanjiStudyHeader />
+      {/* `hideNav` is the in-exercise "focus" mode: no header so the only way
+          out is the page's own "back to question" control. */}
+      {!hideNav && <KanjiStudyHeader />}
       <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
         {children}
       </main>
