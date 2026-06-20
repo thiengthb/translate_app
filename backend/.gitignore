@@ -2,6 +2,8 @@ HELP.md
 target/
 # Sudachi dictionary cache (downloaded during build, ~70 MB, not committed)
 .sudachi-cache/
+# JLPT grammar dataset cache (downloaded during build, not committed)
+.grammar-data-cache/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

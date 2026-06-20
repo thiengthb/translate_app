@@ -62,8 +62,48 @@ public final class GrammarDashboardDTOs {
         LocalDateTime nextReviewAt;
         // Dictionary content (read from the production GrammarSubUse)
         String nuanceDescription;
+        String aboutDetail;        // rich About (contexts + comparisons), AI-cached; null = use gloss
         String structurePattern;
         String exampleJp;
         String exampleVi;
+        String exampleNote;
+        String exampleJpHighlight;  // grammar span inside exampleJp (null = no highlight)
+        // Parent expression (dictionary entry grouping the ①② usages)
+        Long grammarId;
+        String grammarForm;        // surface form shown as the entry title, e.g. ～うちに
+        String titleGloss;
+        List<String> textbookSources;
+        String grammarNotes;       // "Chú ý" caveats of the whole expression
+        Integer orderNo;           // this usage's position within the expression (①=1)
+        List<SiblingUse> siblings; // all usages of the expression, in ①② order
+        List<ExampleSentence> sentences;
+        List<Mistake> commonMistakes;
+    }
+
+    /** A sibling usage (①②…) of the same parent expression — powers the usage switcher. */
+    @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class SiblingUse {
+        Long subUseId;
+        Integer orderNo;
+        String name;
+    }
+
+    /** One reference sentence shown in the Examples section. */
+    @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class ExampleSentence {
+        Long id;
+        String jp;
+        String vi;
+        String highlight;          // grammar span inside jp (null = no highlight)
+    }
+
+    /** One common-mistake entry (wrong pattern + how to fix it). */
+    @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class Mistake {
+        String pattern;
+        String hint;
     }
 }

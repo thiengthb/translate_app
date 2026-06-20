@@ -17,8 +17,9 @@ import java.util.List;
  * module. The duplication is the price of full isolation.</p>
  *
  * <p>Ratings are the deterministic binary/quaternary signals
- * {@code AGAIN / HARD / GOOD / EASY} produced mechanically (e.g. by a cloze
- * fill-in check), never by an LLM. This keeps {@code nextReviewAt} trustworthy.</p>
+ * {@link Rating#AGAIN} / {@link Rating#HARD} / {@link Rating#GOOD} /
+ * {@link Rating#EASY} produced mechanically (e.g. by a cloze fill-in check),
+ * never by an LLM. This keeps {@code nextReviewAt} trustworthy.</p>
  */
 @Service
 public class GrammarScheduler {
@@ -26,14 +27,13 @@ public class GrammarScheduler {
     private final SchedulingConfig config = new SchedulingConfig();
 
     /** Apply a rating to the progress, mutating its SRS state in place (uses now). */
-    public void applyRating(GrammarProgress progress, String rating) {
+    public void applyRating(GrammarProgress progress, Rating rating) {
         applyRating(progress, rating, LocalDateTime.now());
     }
 
     /** Apply a rating at an explicit instant (testable). */
-    public void applyRating(GrammarProgress progress, String rating, LocalDateTime now) {
-        String normalizedRating = normalizeRating(rating);
-        String state = progress.getState() != null ? progress.getState() : "NEW";
+    public void applyRating(GrammarProgress progress, Rating rating, LocalDateTime now) {
+        SrsState state = SrsState.from(progress.getState());
 
         if (progress.getFirstLearnedAt() == null) {
             progress.setFirstLearnedAt(now);
@@ -41,29 +41,28 @@ public class GrammarScheduler {
 
         progress.setReviewCount(nvl(progress.getReviewCount()) + 1);
 
-        if ("REVIEW".equals(state)) {
-            applyReviewAnswer(progress, normalizedRating, now);
-        } else if ("RELEARNING".equals(state)) {
-            applyLearningAnswer(progress, normalizedRating, now, true);
-        } else {
-            applyLearningAnswer(progress, normalizedRating, now, false);
+        switch (state) {
+            case REVIEW -> applyReviewAnswer(progress, rating, now);
+            case RELEARNING -> applyLearningAnswer(progress, rating, now, true);
+            default -> applyLearningAnswer(progress, rating, now, false); // NEW / LEARNING
         }
 
-        progress.setLastRating(normalizedRating);
+        progress.setLastRating(rating.name());
         progress.setLastReviewedAt(now);
         progress.setMemoryScore(memoryScore(progress.getEaseFactor()));
     }
 
     /** Whether the progress is currently due for review. */
     public boolean isDue(GrammarProgress p, LocalDateTime now) {
-        if ("LEARNING".equals(p.getState()) || "RELEARNING".equals(p.getState())) {
+        SrsState state = SrsState.from(p.getState());
+        if (state == SrsState.LEARNING || state == SrsState.RELEARNING) {
             return p.getNextReviewAt() == null || !p.getNextReviewAt().isAfter(now);
         }
         return p.getNextReviewAt() != null && !p.getNextReviewAt().isAfter(now);
     }
 
     /** Human-readable preview of when the card would next be due for the given rating. */
-    public String previewLabel(GrammarProgress source, String rating) {
+    public String previewLabel(GrammarProgress source, Rating rating) {
         GrammarProgress copy = copyOf(source);
         LocalDateTime now = LocalDateTime.now();
         applyRating(copy, rating, now);
@@ -88,9 +87,10 @@ public class GrammarScheduler {
 
     /* ── Learning / relearning steps ── */
     private void applyLearningAnswer(
-            GrammarProgress progress, String rating, LocalDateTime now, boolean relearning
+            GrammarProgress progress, Rating rating, LocalDateTime now, boolean relearning
     ) {
         List<Duration> steps = relearning ? config.relearningSteps : config.learningSteps;
+        String learningState = (relearning ? SrsState.RELEARNING : SrsState.LEARNING).name();
 
         if (steps.isEmpty()) {
             graduate(progress, relearning ? progress.getIntervalDays() : config.graduatingIntervalDays, now);
@@ -100,12 +100,12 @@ public class GrammarScheduler {
         int currentStep = clamp(nvl(progress.getLearningStepIndex()), 0, steps.size() - 1);
 
         switch (rating) {
-            case "AGAIN" -> {
-                progress.setState(relearning ? "RELEARNING" : "LEARNING");
+            case AGAIN -> {
+                progress.setState(learningState);
                 progress.setLearningStepIndex(0);
                 progress.setNextReviewAt(now.plus(steps.get(0)));
             }
-            case "HARD" -> {
+            case HARD -> {
                 Duration againDelay = steps.get(currentStep);
                 Duration goodDelay = currentStep + 1 < steps.size()
                         ? steps.get(currentStep + 1)
@@ -113,19 +113,19 @@ public class GrammarScheduler {
                                 ? nvl(progress.getIntervalDays(), 1)
                                 : config.graduatingIntervalDays));
                 Duration hardDelay = average(againDelay, goodDelay);
-                progress.setState(relearning ? "RELEARNING" : "LEARNING");
+                progress.setState(learningState);
                 progress.setLearningStepIndex(currentStep);
                 progress.setNextReviewAt(now.plus(hardDelay));
             }
-            case "EASY" -> graduate(progress, relearning
+            case EASY -> graduate(progress, relearning
                     ? Math.max(nvl(progress.getIntervalDays(), 1), config.graduatingIntervalDays)
                     : config.easyIntervalDays, now);
-            default -> {
+            default -> { // GOOD
                 if (currentStep + 1 >= steps.size()) {
                     graduate(progress, relearning ? progress.getIntervalDays() : config.graduatingIntervalDays, now);
                 } else {
                     int nextStep = currentStep + 1;
-                    progress.setState(relearning ? "RELEARNING" : "LEARNING");
+                    progress.setState(learningState);
                     progress.setLearningStepIndex(nextStep);
                     progress.setNextReviewAt(now.plus(steps.get(nextStep)));
                 }
@@ -134,7 +134,7 @@ public class GrammarScheduler {
     }
 
     /* ── Review answers ── */
-    private void applyReviewAnswer(GrammarProgress progress, String rating, LocalDateTime now) {
+    private void applyReviewAnswer(GrammarProgress progress, Rating rating, LocalDateTime now) {
         int currentInterval = Math.max(1, nvl(progress.getIntervalDays(), 1));
         int daysLate = progress.getNextReviewAt() != null && progress.getNextReviewAt().isBefore(now)
                 ? (int) Math.max(0, ChronoUnit.DAYS.between(progress.getNextReviewAt(), now))
@@ -143,7 +143,7 @@ public class GrammarScheduler {
         double intervalModifier = config.intervalModifier * retentionModifier(config.targetRetention);
 
         switch (rating) {
-            case "AGAIN" -> {
+            case AGAIN -> {
                 progress.setEaseFactor(Math.max(config.minEase, ease - 0.20));
                 progress.setLapses(nvl(progress.getLapses()) + 1);
                 progress.setLearningStepIndex(0);
@@ -154,28 +154,28 @@ public class GrammarScheduler {
                 progress.setIntervalDays(relearnInterval);
 
                 if (config.relearningSteps.isEmpty()) {
-                    progress.setState("REVIEW");
+                    progress.setState(SrsState.REVIEW.name());
                     progress.setNextReviewAt(now.plusDays(relearnInterval));
                 } else {
-                    progress.setState("RELEARNING");
+                    progress.setState(SrsState.RELEARNING.name());
                     progress.setNextReviewAt(now.plus(config.relearningSteps.get(0)));
                 }
             }
-            case "HARD" -> {
+            case HARD -> {
                 progress.setEaseFactor(Math.max(config.minEase, ease - 0.15));
                 int nextInterval = nextReviewInterval(
                         currentInterval, daysLate, 0.25, config.hardInterval, intervalModifier
                 );
                 scheduleReview(progress, nextInterval, now);
             }
-            case "EASY" -> {
+            case EASY -> {
                 progress.setEaseFactor(ease + 0.15);
                 int nextInterval = nextReviewInterval(
                         currentInterval, daysLate, 1.0, ease * config.easyBonus, intervalModifier
                 );
                 scheduleReview(progress, nextInterval, now);
             }
-            default -> {
+            default -> { // GOOD
                 progress.setEaseFactor(ease);
                 int nextInterval = nextReviewInterval(
                         currentInterval, daysLate, 0.5, ease, intervalModifier
@@ -196,7 +196,7 @@ public class GrammarScheduler {
 
     private void graduate(GrammarProgress progress, Integer intervalDays, LocalDateTime now) {
         int interval = clampInterval(nvl(intervalDays, config.graduatingIntervalDays), 1, config.maxIntervalDays);
-        progress.setState("REVIEW");
+        progress.setState(SrsState.REVIEW.name());
         progress.setLearningStepIndex(0);
         progress.setEaseFactor(Math.max(config.minEase, nvl(progress.getEaseFactor(), config.startingEase)));
         progress.setIntervalDays(interval);
@@ -204,7 +204,7 @@ public class GrammarScheduler {
     }
 
     private void scheduleReview(GrammarProgress progress, int intervalDays, LocalDateTime now) {
-        progress.setState("REVIEW");
+        progress.setState(SrsState.REVIEW.name());
         progress.setLearningStepIndex(0);
         progress.setIntervalDays(intervalDays);
         progress.setNextReviewAt(now.plusDays(intervalDays));
@@ -212,7 +212,7 @@ public class GrammarScheduler {
 
     private GrammarProgress copyOf(GrammarProgress p) {
         GrammarProgress copy = new GrammarProgress();
-        copy.setState(p != null ? p.getState() : "NEW");
+        copy.setState(p != null && p.getState() != null ? p.getState() : SrsState.NEW.name());
         copy.setEaseFactor(p != null ? p.getEaseFactor() : config.startingEase);
         copy.setIntervalDays(p != null ? p.getIntervalDays() : 0);
         copy.setReviewCount(p != null ? p.getReviewCount() : 0);
@@ -224,14 +224,6 @@ public class GrammarScheduler {
     }
 
     /* ── Helpers ── */
-    private String normalizeRating(String rating) {
-        if (rating == null) return "GOOD";
-        return switch (rating.toUpperCase()) {
-            case "AGAIN", "HARD", "GOOD", "EASY" -> rating.toUpperCase();
-            default -> "GOOD";
-        };
-    }
-
     private int nvl(Integer value) { return value != null ? value : 0; }
     private int nvl(Integer value, int fallback) { return value != null ? value : fallback; }
     private double nvl(Double value, double fallback) { return value != null ? value : fallback; }

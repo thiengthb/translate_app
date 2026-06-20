@@ -61,8 +61,13 @@ public class GeminiClient {
      * prompt + hint words + register + a model Japanese answer that uses the target grammar.
      * Returns {@code null} when no API key is set or the call fails, so the caller falls back
      * to the curated/seeded pool exactly as it did when generation was offline.
+     *
+     * <p>The model answer is ANCHORED to the point's canonical structure + example so every
+     * generated exercise stays consistent with what the learner studied on the detail screen
+     * (same pattern, same register, comparable difficulty) instead of drifting freely.
      */
-    public ComposedExercise compose(String grammarName, String jlptLevel, String nuance, List<String> words) {
+    public ComposedExercise compose(String grammarName, String jlptLevel, String nuance,
+                                    String structure, String canonicalExample, List<String> words) {
         String wordList = (words == null || words.isEmpty())
                 ? "(none — choose natural common words yourself)"
                 : String.join(", ", words);
@@ -71,6 +76,8 @@ public class GeminiClient {
                 You write SHORT Japanese sentence-composition exercises for a Vietnamese learner.
                 Target grammar point: %s (JLPT %s).
                 Nuance / usage: %s
+                Required structure pattern: %s
+                Canonical example to match in style & difficulty: %s
                 Vocabulary the learner is studying (use 1-2 if they fit naturally, ignore the rest): %s
 
                 Produce exactly ONE exercise:
@@ -79,14 +86,20 @@ public class GeminiClient {
                 - "words": 1-3 Japanese hint words (kanji/kana).
                 - "register": "polite" or "casual".
                 - "l2Reference": the model answer in natural Japanese that CLEARLY uses the target grammar
-                  point above and matches the situation and register.
+                  point above, FOLLOWS the required structure pattern, and matches the canonical example's
+                  style, length and difficulty. Keep it close to JLPT %s level — no rarer vocab/kanji.
 
                 Reply with ONLY this JSON, no other text:
                 {"situation":"<một câu tiếng Việt>","words":["<từ>"],"register":"polite","l2Reference":"<câu tiếng Nhật>"}
-                """.formatted(safe(grammarName), safe(jlptLevel), safe(nuance), wordList);
+                """.formatted(safe(grammarName), safe(jlptLevel), safe(nuance),
+                              blankOr(structure, "(không có — bám theo nuance)"),
+                              blankOr(canonicalExample, "(không có)"),
+                              wordList, safe(jlptLevel));
 
         try {
-            String response = generate(prompt, 0.9, 500);
+            // Lower temperature than before (was 0.9): we want consistent, on-pattern
+            // exercises anchored to the canonical example, not maximal novelty.
+            String response = generate(prompt, 0.5, 500);
             if (response == null) return null;
 
             String json = extractJson(response.trim());
@@ -102,6 +115,67 @@ public class GeminiClient {
 
         } catch (Exception e) {
             log.warn("Gemini compose failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Write the rich "About" section of one grammar dictionary entry for a Vietnamese
+     * learner, as STRUCTURED JSON: usage-context bullets + comparisons with commonly-
+     * confused near-equivalent grammar (each with its own JP/VI example). For genuinely
+     * simple points the comparisons array is empty. Returns the validated JSON string,
+     * or {@code null} on no API key / failure so the caller keeps the short seeded gloss.
+     */
+    public String explainGrammar(String name, String jlptLevel, String gloss,
+                                 String structure, String examples) {
+        String prompt = """
+                Bạn là giáo viên tiếng Nhật viết mục "Giải thích" cho từ điển ngữ pháp JLPT
+                dành cho người Việt. Hãy viết phần giải thích TIẾNG VIỆT cho điểm ngữ pháp sau.
+
+                Điểm ngữ pháp: %s (JLPT %s)
+                Nghĩa ngắn: %s
+                Cấu trúc: %s
+                Ví dụ có sẵn: %s
+
+                Trả về DUY NHẤT một JSON theo đúng schema sau, không có text nào khác:
+                {
+                  "context": [
+                    {"point": "<một sắc thái/ngữ cảnh sử dụng — tối đa ~25 từ>",
+                     "exampleJp": "<câu tiếng Nhật NGẮN (tối đa ~10 từ) minh họa đúng sắc thái này>",
+                     "exampleVi": "<nghĩa tiếng Việt ngắn gọn>"}
+                  ],
+                  "comparisons": [
+                    {"vs": "<mẫu ngữ pháp gần nghĩa, vd ～たがる>",
+                     "point": "<khác nhau ở đâu, khi nào dùng mẫu nào — 1-2 câu tiếng Việt>",
+                     "exampleJp": "<1 câu tiếng Nhật ngắn minh họa mẫu đó>",
+                     "exampleVi": "<nghĩa tiếng Việt của câu trên>"}
+                  ]
+                }
+
+                Yêu cầu nội dung:
+                - "context": 2-4 mục về NGỮ CẢNH SỬ DỤNG — dùng trong tình huống nào, sắc thái gì
+                  (chủ quan/khách quan, trang trọng/suồng sã, văn nói/văn viết), hạn chế quan trọng.
+                  MỖI mục PHẢI có ví dụ riêng minh họa đúng sắc thái đó, càng ngắn càng tốt.
+                - "comparisons": 1-3 mẫu gần nghĩa mà người học HAY NHẦM với mẫu này.
+                - NGOẠI LỆ: nếu mẫu này thực sự đơn giản, nghĩa hẹp, KHÔNG có mẫu nào dễ nhầm thì
+                  "comparisons" để mảng rỗng [] và "context" chỉ 1-2 mục. Đừng bịa so sánh thừa.
+                - Không dùng markdown trong mọi chuỗi.
+                """.formatted(safe(name), safe(jlptLevel), safe(gloss), safe(structure), safe(examples));
+
+        try {
+            String response = generate(prompt, 0.4, 1800);
+            if (response == null) return null;
+
+            String json = extractJson(response.trim());
+            JsonNode node = mapper.readTree(json);
+            JsonNode context = node.path("context");
+            if (!context.isArray() || context.isEmpty() || !context.get(0).hasNonNull("point")) {
+                log.warn("Gemini explain returned unexpected shape, discarding");
+                return null;
+            }
+            return mapper.writeValueAsString(node);   // normalized, guaranteed-parseable JSON
+        } catch (Exception e) {
+            log.warn("Gemini explain failed: {}", e.getMessage());
             return null;
         }
     }
@@ -279,6 +353,10 @@ public class GeminiClient {
 
     private String safe(String s) {
         return s == null ? "" : s;
+    }
+
+    private String blankOr(String s, String fallback) {
+        return (s == null || s.isBlank()) ? fallback : s;
     }
 
     private static boolean isBlank(String s) {

@@ -34,7 +34,9 @@ interface GuestActionsRowProps {
  * one canonical "me / settings" entry. Guests keep them inline since
  * they have no avatar yet.
  */
-export function GuestActionsRow({}: GuestActionsRowProps) {
+// NOTE: `isAuthPage` (hide auth buttons on /login etc.) is accepted for API
+// compatibility but not yet wired up — see GuestActionsRowProps.
+export function GuestActionsRow(_props: GuestActionsRowProps) {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const { activeRole } = usePermissions();
     const { data: streak } = useMyStreak(isAuthenticated);

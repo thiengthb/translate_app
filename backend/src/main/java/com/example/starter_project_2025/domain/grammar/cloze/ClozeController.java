@@ -24,8 +24,10 @@ public class ClozeController {
     @GetMapping("/{subUseId}")
     @PreAuthorize("hasAuthority('GRAMMAR_PROGRESS_READ')")
     @Operation(summary = "Get a cloze question (reference sentence with the grammar masked)")
-    public ResponseEntity<ClozeQuestion> question(@PathVariable Long subUseId) {
-        return ResponseEntity.ok(clozeService.question(subUseId));
+    public ResponseEntity<ClozeQuestion> question(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long subUseId) {
+        return ResponseEntity.ok(clozeService.question(principal.getId(), subUseId));
     }
 
     @PostMapping("/review")

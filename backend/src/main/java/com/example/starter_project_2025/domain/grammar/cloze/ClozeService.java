@@ -4,6 +4,8 @@ import com.example.starter_project_2025.domain.grammar.cloze.ClozeDTOs.*;
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgress;
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgressRepository;
 import com.example.starter_project_2025.domain.grammar.scheduler.GrammarScheduler;
+import com.example.starter_project_2025.domain.grammar.scheduler.Rating;
+import com.example.starter_project_2025.domain.grammar.support.GrammarSpanLocator;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarker;
 import com.example.starter_project_2025.domain.production.grammar.GrammarMarkerRepository;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
@@ -18,8 +20,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Bunpro-style cloze: blank out the grammar span in a reference sentence and grade
@@ -40,20 +42,29 @@ public class ClozeService {
 
     ReferenceSentenceRepository referenceRepository;
     GrammarMarkerRepository markerRepository;
+    GrammarSpanLocator spanLocator;
     GrammarProgressRepository progressRepository;
     GrammarScheduler scheduler;
     UserRepository userRepository;
 
     // ── Build a cloze question ──
     @Transactional(readOnly = true)
-    public ClozeQuestion question(Long subUseId) {
+    public ClozeQuestion question(Long userId, Long subUseId) {
         List<ReferenceSentence> refs = referenceRepository.findApprovedBySubUseId(subUseId);
         if (refs.isEmpty()) refs = referenceRepository.findBySubUseId(subUseId);
         if (refs.isEmpty()) {
             return ClozeQuestion.builder().subUseId(subUseId).hasCloze(false).build();
         }
 
-        ReferenceSentence ref = refs.get(ThreadLocalRandom.current().nextInt(refs.size()));
+        // Rotate through the sentence pool deterministically by how many times the learner
+        // has reviewed this point — so they cycle through ALL sentences instead of hitting
+        // the same one twice in a row (the old random pick). Stable id order makes the
+        // rotation reproducible.
+        refs = refs.stream().sorted(Comparator.comparing(ReferenceSentence::getId)).toList();
+        int reviewCount = progressRepository.findByUserIdAndSubUseId(userId, subUseId)
+                .map(p -> p.getReviewCount() == null ? 0 : p.getReviewCount())
+                .orElse(0);
+        ReferenceSentence ref = refs.get(Math.floorMod(reviewCount, refs.size()));
         GrammarSubUse su = ref.getSubUse();
         String span = locateSpan(ref.getL2Text(), markerCores(subUseId));
 
@@ -91,13 +102,15 @@ public class ClozeService {
 
         String span = locateSpan(ref.getL2Text(), markerCores(subUseId));
         String na = normalize(answer);
-        int attempt = attemptNo != null ? attemptNo : 1;
+        // attemptNo is client-supplied — clamp so a 0/negative value can't keep a
+        // near-miss inside the forgiveness window forever and dodge the SRS penalty.
+        int attempt = Math.max(1, attemptNo != null ? attemptNo : 1);
 
         Classification cls = classify(na, span, subUseId);
 
         switch (cls) {
             case CORRECT:
-                return applyAndBuild(userId, su, "GOOD", "CORRECT",
+                return applyAndBuild(userId, su, Rating.GOOD, "CORRECT",
                         "Chính xác!", ref, span, false);
 
             case NEAR_MISS:
@@ -109,17 +122,17 @@ public class ClozeService {
                             .message("Gần đúng — hãy dùng đúng mẫu ngữ pháp đang ôn cho câu này.")
                             .build();
                 }
-                return applyAndBuild(userId, su, "AGAIN", "WRONG",
+                return applyAndBuild(userId, su, Rating.AGAIN, "WRONG",
                         "Chưa đúng mẫu cần dùng. Đáp án đúng được hiển thị bên dưới.",
                         ref, span, true);
 
             default: // WRONG
-                return applyAndBuild(userId, su, "AGAIN", "WRONG",
+                return applyAndBuild(userId, su, Rating.AGAIN, "WRONG",
                         "Chưa đúng. Đáp án đúng được hiển thị bên dưới.", ref, span, true);
         }
     }
 
-    private ClozeResult applyAndBuild(Long userId, GrammarSubUse su, String rating, String status,
+    private ClozeResult applyAndBuild(Long userId, GrammarSubUse su, Rating rating, String status,
                                       String message, ReferenceSentence ref, String span, boolean penalized) {
         GrammarProgress progress = progressRepository
                 .findByUserIdAndSubUseId(userId, su.getId())
@@ -138,12 +151,12 @@ public class ClozeService {
                 .message(message)
                 .correctAnswer(span)
                 .fullSentence(ref.getL2Text())
-                .ratingApplied(rating)
+                .ratingApplied(rating.name())
                 .state(progress.getState())
                 .intervalDays(progress.getIntervalDays())
                 .nextReviewAt(progress.getNextReviewAt())
-                .goodPreview(scheduler.previewLabel(progress, "GOOD"))
-                .againPreview(scheduler.previewLabel(progress, "AGAIN"))
+                .goodPreview(scheduler.previewLabel(progress, Rating.GOOD))
+                .againPreview(scheduler.previewLabel(progress, Rating.AGAIN))
                 .build();
     }
 
@@ -171,32 +184,23 @@ public class ClozeService {
         }
 
         // Near-miss 2: a valid grammar marker, but belonging to a DIFFERENT sub-use
-        // (learner picked a plausible-but-wrong pattern for this sentence).
-        for (GrammarMarker m : markerRepository.findAll()) {
-            if (m.getSubUse() == null || subUseId.equals(m.getSubUse().getId())) continue;
-            if (na.equals(normalize(m.getMarkerPattern()))) return Classification.NEAR_MISS;
+        // (learner picked a plausible-but-wrong pattern for this sentence). Query only
+        // the other sub-uses' markers instead of scanning the whole marker table.
+        for (GrammarMarker m : markerRepository.findBySubUseIdNot(subUseId)) {
+            String pattern = m.getMarkerPattern();
+            if (pattern != null && na.equals(normalize(pattern))) return Classification.NEAR_MISS;
         }
 
         return Classification.WRONG;
     }
 
-    // ── Span location ──
+    // ── Span location (shared logic lives in GrammarSpanLocator) ──
     private List<String> markerCores(Long subUseId) {
-        return markerRepository.findBySubUseId(subUseId).stream()
-                .map(GrammarMarker::getMarkerPattern)
-                .map(this::stripTilde)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        return spanLocator.markerCores(subUseId);
     }
 
-    /** Longest marker core that occurs (exactly, else as longest common substring) in the sentence. */
     private String locateSpan(String sentence, List<String> cores) {
-        String best = "";
-        for (String core : cores) {
-            String found = sentence.contains(core) ? core : longestCommonSubstring(core, sentence);
-            if (found.length() >= 2 && found.length() > best.length()) best = found;
-        }
-        return best;
+        return spanLocator.locateSpan(sentence, cores);
     }
 
     private String mask(String sentence, String span) {
@@ -206,11 +210,6 @@ public class ClozeService {
     }
 
     // ── Text helpers ──
-    private String stripTilde(String s) {
-        if (s == null) return "";
-        return s.replace("～", "").replace("~", "").replaceAll("\\s", "").trim();
-    }
-
     /** Normalize for comparison: drop the tilde, whitespace and JP punctuation. */
     private String normalize(String s) {
         if (s == null) return "";
@@ -236,17 +235,6 @@ public class ClozeService {
     }
 
     private String longestCommonSubstring(String a, String b) {
-        if (a.isEmpty() || b.isEmpty()) return "";
-        int[][] dp = new int[a.length() + 1][b.length() + 1];
-        int maxLen = 0, end = 0;
-        for (int i = 1; i <= a.length(); i++) {
-            for (int j = 1; j <= b.length(); j++) {
-                if (a.charAt(i - 1) == b.charAt(j - 1)) {
-                    dp[i][j] = dp[i - 1][j - 1] + 1;
-                    if (dp[i][j] > maxLen) { maxLen = dp[i][j]; end = i; }
-                }
-            }
-        }
-        return a.substring(end - maxLen, end);
+        return GrammarSpanLocator.longestCommonSubstring(a, b);
     }
 }

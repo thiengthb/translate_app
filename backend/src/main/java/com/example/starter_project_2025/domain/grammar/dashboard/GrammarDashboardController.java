@@ -6,6 +6,8 @@ import com.example.starter_project_2025.domain.grammar.goal.GrammarGoalDTOs.Goal
 import com.example.starter_project_2025.domain.grammar.goal.GrammarGoalService;
 import com.example.starter_project_2025.init.annotation.ResourceMenu;
 import com.example.starter_project_2025.security.UserPrincipal;
+import com.example.starter_project_2025.system.analyze.FuriganaService;
+import com.example.starter_project_2025.system.analyze.FuriganaService.RubySegment;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +42,10 @@ public class GrammarDashboardController {
 
     private final GrammarDashboardService dashboardService;
     private final GrammarGoalService goalService;
+    private final FuriganaService furiganaService;
+
+    /** Batch furigana request: each input string becomes one list of ruby segments. */
+    public record FuriganaRequest(List<String> texts) {}
 
     @GetMapping("/goal")
     @PreAuthorize("hasAuthority('GRAMMAR_PROGRESS_READ')")
@@ -73,6 +79,14 @@ public class GrammarDashboardController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String level) {
         return ResponseEntity.ok(dashboardService.level(principal.getId(), level));
+    }
+
+    @PostMapping("/furigana")
+    @PreAuthorize("hasAuthority('GRAMMAR_PROGRESS_READ')")
+    @Operation(summary = "Annotate Japanese sentences with furigana (ruby) segments, batched")
+    public ResponseEntity<List<List<RubySegment>>> furigana(@RequestBody FuriganaRequest req) {
+        List<String> texts = req.texts() == null ? List.of() : req.texts();
+        return ResponseEntity.ok(texts.stream().limit(100).map(furiganaService::annotate).toList());
     }
 
     @GetMapping("/detail/{subUseId}")

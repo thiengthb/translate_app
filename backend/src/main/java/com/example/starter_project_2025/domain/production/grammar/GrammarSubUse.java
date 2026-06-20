@@ -73,6 +73,14 @@ public class GrammarSubUse extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     String exampleNote;
 
+    /**
+     * Rich "About" write-up for the detail screen: usage contexts + comparison with
+     * near-equivalent grammar. AI-generated once on first view and cached here;
+     * blank for simple points where the short {@link #nuanceDescription} is enough.
+     */
+    @Column(columnDefinition = "TEXT")
+    String aboutDetail;
+
     /** Convenience JLPT code (e.g. {@code "N4"}) derived from {@link #level}. */
     @Transient
     public String getJlptLevel() {

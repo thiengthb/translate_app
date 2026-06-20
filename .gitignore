@@ -18,3 +18,6 @@ backend/scripts/_kanji_data/
 # Auto-fetched by Maven (download-maven-plugin) on first build; never commit
 # (the .dic exceeds GitHub's 100MB file limit). See pom.xml + SudachiTokenizer.java.
 backend/.sudachi-cache/
+# JLPT grammar dataset: downloaded at build (download-maven-plugin), copied onto
+# the classpath at seed/. Never committed — content is © 日本語NET. See pom.xml.
+backend/.grammar-data-cache/

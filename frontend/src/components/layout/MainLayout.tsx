@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useSelector } from "react-redux";
+import { ArrowLeft } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { KeyboardShortcutsDialog } from "@/components/common/KeyboardShortcutsDialog";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { GuestLayout } from "@/components/layout/GuestLayout";
@@ -28,6 +30,11 @@ interface MainLayoutProps {
     pageDescription?: string;
     /** Custom icon shown to the left of the last breadcrumb title. */
     breadcrumbIcon?: ReactNode;
+    /** Distraction-free mode: hide the sidebar + top bar, keep only a back button,
+     *  and center the content. Use for focused flows like an active learning session. */
+    focus?: boolean;
+    /** Back handler for focus mode (falls back to browser history). */
+    onBack?: () => void;
 }
 
 /**
@@ -55,7 +62,7 @@ interface MainLayoutProps {
  * Layout markup lives in the dedicated sub-components — keep this file
  * easy to skim.
  */
-export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon }: MainLayoutProps) {
+export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack }: MainLayoutProps) {
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -83,16 +90,22 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
     return (
         <>
             {isAuthenticated ? (
-                <AppShell
-                    pathName={pathName}
-                    headerExtra={headerExtra}
-                    parentCrumb={parentCrumb}
-                    ignorePaths={ignorePaths}
-                    pageDescription={pageDescription}
-                    breadcrumbIcon={breadcrumbIcon}
-                >
-                    {children}
-                </AppShell>
+                focus ? (
+                    <FocusShell title={pathName ? Object.values(pathName).at(-1) : undefined} onBack={onBack}>
+                        {children}
+                    </FocusShell>
+                ) : (
+                    <AppShell
+                        pathName={pathName}
+                        headerExtra={headerExtra}
+                        parentCrumb={parentCrumb}
+                        ignorePaths={ignorePaths}
+                        pageDescription={pageDescription}
+                        breadcrumbIcon={breadcrumbIcon}
+                    >
+                        {children}
+                    </AppShell>
+                )
             ) : (
                 <GuestLayout>
                     {/* Mobile-first padding: tighter on small screens so the
@@ -109,6 +122,45 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
                 onOpenChange={shortcuts.setOpen}
             />
         </>
+    );
+}
+
+// ─── Focus shell (distraction-free: back button + centered content) ──────────
+function FocusShell({
+    children,
+    title,
+    onBack,
+}: {
+    children: ReactNode;
+    title?: string;
+    onBack?: () => void;
+}) {
+    return (
+        <div className="flex h-svh max-h-[calc(100svh-16px)] flex-col overflow-hidden min-w-0 max-w-full">
+            <header className="flex h-12 shrink-0 items-center gap-2 px-3 sm:px-4">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={onBack ?? (() => window.history.back())}
+                    aria-label="Quay về"
+                >
+                    <ArrowLeft size={18} />
+                </Button>
+                {title && (
+                    <span className="text-sm font-medium text-muted-foreground truncate">
+                        {title}
+                    </span>
+                )}
+            </header>
+            {/* min-h-full keeps content vertically centered when it fits, and scrolls
+                without clipping the top when it doesn't. */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="min-h-full flex flex-col items-center justify-center px-4 py-6">
+                    {children}
+                </div>
+            </div>
+        </div>
     );
 }
 
