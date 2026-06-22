@@ -27,8 +27,8 @@ const CONTENT_ITEMS = [
 
 /**
  * In-page top nav for the Kanji study area — modelled on Bunpro's header.
- * Replaces the GENGO sidebar while inside this feature: brand + home on the
- * left, the Content dropdown and a "back to Gengo" exit on the right.
+ * Replaces the Hanabun sidebar while inside this feature: brand + home on the
+ * left, the Content dropdown and a "back to Hanabun" exit on the right.
  */
 export function KanjiStudyHeader() {
   const location = useLocation();
@@ -95,14 +95,14 @@ export function KanjiStudyHeader() {
 
           <span className="mx-1 h-5 w-px bg-border" aria-hidden />
 
-          <TooltipWrapper content="Quay lại Gengo">
+          <TooltipWrapper content="Quay lại Hanabun">
             <button
               onClick={() => navigate(exitTo)}
-              aria-label="Quay lại Gengo"
+              aria-label="Quay lại Hanabun"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <DoorOpen size={16} />
-              <span className="hidden sm:inline">Gengo</span>
+              <span className="hidden sm:inline">Hanabun</span>
             </button>
           </TooltipWrapper>
         </nav>

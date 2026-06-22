@@ -32,7 +32,7 @@ export function SidebarSearch({ value, onChange, actions }: SidebarSearchProps) 
             <div className="relative flex-1 min-w-0">
                 <Search
                     size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#FF8FAB] pointer-events-none"
                 />
                 <Input
                     ref={inputRef}
@@ -46,7 +46,7 @@ export function SidebarSearch({ value, onChange, actions }: SidebarSearchProps) 
                         }
                     }}
                     placeholder="Tìm trong menu…"
-                    className="h-8 pl-8 pr-7 text-xs bg-sidebar-accent/40 border-transparent focus-visible:border-input"
+                    className="h-9 rounded-full pl-9 pr-7 text-xs bg-[#FFF0F4] border border-[#FBEAF0] placeholder:text-[#B9AEB2] focus-visible:border-[#FF8FAB] focus-visible:ring-[#FFC2D4]/50"
                 />
                 {value && (
                     <button

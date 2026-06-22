@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <rect x="1.5" y="1.5" width="45" height="45" rx="13" fill="#FFF0F4" stroke="#FFC2D4" stroke-width="1.5"/>
+  <g transform="translate(0 1)">
+    <g>
+      <path transform="rotate(0 24 24)" d="M24 23 C16 19 16.5 9 21 4.5 C22.2 6 22.6 6 24 5 C25.4 6 25.8 6 27 4.5 C31.5 9 32 19 24 23 Z" fill="#FF8FAB" stroke="#FF6B9D" stroke-width="1.1" stroke-linejoin="round"/>
+      <path transform="rotate(72 24 24)" d="M24 23 C16 19 16.5 9 21 4.5 C22.2 6 22.6 6 24 5 C25.4 6 25.8 6 27 4.5 C31.5 9 32 19 24 23 Z" fill="#FF8FAB" stroke="#FF6B9D" stroke-width="1.1" stroke-linejoin="round"/>
+      <path transform="rotate(144 24 24)" d="M24 23 C16 19 16.5 9 21 4.5 C22.2 6 22.6 6 24 5 C25.4 6 25.8 6 27 4.5 C31.5 9 32 19 24 23 Z" fill="#FF8FAB" stroke="#FF6B9D" stroke-width="1.1" stroke-linejoin="round"/>
+      <path transform="rotate(216 24 24)" d="M24 23 C16 19 16.5 9 21 4.5 C22.2 6 22.6 6 24 5 C25.4 6 25.8 6 27 4.5 C31.5 9 32 19 24 23 Z" fill="#FF8FAB" stroke="#FF6B9D" stroke-width="1.1" stroke-linejoin="round"/>
+      <path transform="rotate(288 24 24)" d="M24 23 C16 19 16.5 9 21 4.5 C22.2 6 22.6 6 24 5 C25.4 6 25.8 6 27 4.5 C31.5 9 32 19 24 23 Z" fill="#FF8FAB" stroke="#FF6B9D" stroke-width="1.1" stroke-linejoin="round"/>
+    </g>
+    <circle cx="24" cy="24" r="4.4" fill="#FFC95C"/>
+  </g>
+</svg>

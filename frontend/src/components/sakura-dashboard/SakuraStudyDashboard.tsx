@@ -2,7 +2,7 @@
 // Sakura Study Dashboard
 // Drop into: src/components/sakura-dashboard/SakuraStudyDashboard.tsx
 //
-// Stack: React + TS + Tailwind v4 + shadcn/ui + lucide-react  (matches GENGO)
+// Stack: React + TS + Tailwind v4 + shadcn/ui + lucide-react  (matches Hanabun)
 // Palette: FIXED sakura candy palette (does NOT follow the app color-preset).
 //          Structural intent is kept readable via the `sakura` token map below.
 // Font:    headings use the `font-display` utility — see README step 2 to wire
@@ -224,7 +224,7 @@ function MissionIllustration({
   if (url) {
     return (
       <div className="my-[6px] flex h-[74px] items-center justify-center">
-        <img src={url} alt="" className="h-full object-contain" />
+        <img src={url} alt="" className="h-full max-w-full object-contain" />
       </div>
     );
   }
@@ -608,6 +608,99 @@ export function SakuraStudyDashboard({
 
       {/* RIGHT panel */}
       <div className="flex w-[420px] flex-none flex-col gap-[26px]">
+        <RecordCalendar calendar={calendar} />
+        <AchievementChart achievement={achievement} />
+
+        <div>
+          <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">data</h3>
+          <div className="flex items-stretch gap-4">
+            <DataDonut pct={stats.donutPct} />
+            <div className="flex flex-1 flex-col gap-4">
+              <StatCard value={stats.ranking} label="Ranking" iconColor={sakura.pink} />
+              <StatCard value={stats.progressPct} suffix="%" label="Progress" iconColor={sakura.honey} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── In-shell content ─────────────────────────────────────────────────────────
+// The same Sakura design WITHOUT its own sidebar / full-screen wrapper, so it
+// can be dropped inside the app shell (MainLayout). Used by the /dashboard page.
+export function SakuraDashboardContent({
+  user,
+  heroIllustrationUrl,
+  missions,
+  calendar,
+  achievement,
+  stats,
+}: Pick<
+  SakuraDashboardProps,
+  "user" | "heroIllustrationUrl" | "missions" | "calendar" | "achievement" | "stats"
+>) {
+  return (
+    <div className="flex flex-col items-start gap-7 font-[Quicksand,sans-serif] text-[#3A2E33] xl:flex-row">
+      {/* LEFT: greeting + hero + missions, in a white candy shell */}
+      <div className="min-w-0 flex-1 rounded-[32px] bg-white px-6 pb-8 pt-7 shadow-[0_18px_50px_rgba(255,143,171,0.16)] sm:px-9">
+        <h1 className="font-display m-0 mb-6 text-[26px] font-bold text-[#3A2E33]">
+          Hi! {user.name}, welcome
+        </h1>
+
+        {/* Hero */}
+        <div
+          className="relative flex flex-col items-center gap-6 overflow-hidden rounded-[24px] border border-[#FBEAF0] px-6 py-6 shadow-[0_8px_24px_rgba(255,143,171,0.10)] sm:flex-row sm:px-9"
+          style={{ background: "linear-gradient(120deg,#FFF0F4 0%,#FFFFFF 60%)" }}
+        >
+          <div className="absolute left-[64px] top-[120px] text-[20px] leading-none text-[#FFC95C]">✦</div>
+          <div className="absolute right-20 top-[30px] h-2 w-[34px] -rotate-[25deg] rounded-full bg-[#FFE0E8]" />
+
+          <div className="flex w-full max-w-[200px] flex-none items-end justify-center sm:w-[200px]">
+            {heroIllustrationUrl ? (
+              <img src={heroIllustrationUrl} alt="" className="h-[170px] w-[170px] max-w-full object-contain" />
+            ) : (
+              <div className="flex h-[170px] w-[170px] items-center justify-center rounded-[20px] bg-[#FFF0F4] text-[13px] text-[#FF8FAB]">
+                illustration
+              </div>
+            )}
+          </div>
+
+          <div className="relative z-10 min-w-0 flex-1">
+            <h2 className="font-display m-0 mb-[10px] text-[28px] font-semibold uppercase leading-[1.15] tracking-[0.5px] text-[#3A2E33] sm:text-[34px]">
+              This is your{" "}
+              <span className="font-display align-[-4px] text-[44px] font-extrabold text-[#FF8FAB] sm:text-[54px]">
+                {user.studyDay}
+              </span>{" "}
+              day of study
+            </h2>
+            <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Go and study</p>
+          </div>
+        </div>
+
+        {/* Mission header */}
+        <div className="my-[18px] mt-[30px] flex items-center justify-between">
+          <div className="flex items-center gap-[10px]">
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#FFE5EC] text-[#FF6B9D]">
+              <CheckSquare className="h-[19px] w-[19px]" />
+            </span>
+            <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
+          </div>
+          <button className="flex text-[#B9AEB2] hover:text-[#FF8FAB]" title="Calendar">
+            <CalendarDays className="h-[22px] w-[22px]" />
+          </button>
+        </div>
+
+        {/* Mission cards */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {missions.map((m) => (
+            <MissionCard key={m.id} mission={m} />
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT panel */}
+      <div className="flex w-full flex-none flex-col gap-[26px] xl:w-[420px]">
         <RecordCalendar calendar={calendar} />
         <AchievementChart achievement={achievement} />
 

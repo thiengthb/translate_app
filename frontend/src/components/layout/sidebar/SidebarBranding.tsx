@@ -1,6 +1,7 @@
-import { Box, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { HanabunMark } from "@/components/branding/HanabunLogo";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { Button } from "@/components/ui/button";
 import { SidebarHeader, useSidebar } from "@/components/ui/sidebar";
@@ -17,14 +18,14 @@ interface SidebarBrandingProps {
  * Sidebar header: clickable logo (→ home) + app title, with the
  * collapse / expand toggle sitting right beside it.
  *
- *   Expanded:   [Logo] GENGO ................ [⟨]
+ *   Expanded:   [Logo] Hanabun .............. [⟨]
  *   Collapsed:  [Logo]
  *               [⟩]
  *
  * Clicking the logo navigates to the role's home page (it no longer
  * toggles the sidebar — that's the dedicated chevron button's job).
  */
-export function SidebarBranding({ title = "GENGO" }: SidebarBrandingProps) {
+export function SidebarBranding({ title = "Hanabun" }: SidebarBrandingProps) {
     const { toggleSidebar, state } = useSidebar();
     const navigate = useNavigate();
     const { activeRole } = usePermissions();
@@ -52,11 +53,11 @@ export function SidebarBranding({ title = "GENGO" }: SidebarBrandingProps) {
                 >
                     {/* 32×32 to match the nav items so every icon lines up on
                         the same vertical centerline when collapsed. */}
-                    <div className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-primary/30 bg-primary/10 text-primary shrink-0">
-                        <Box className="h-4 w-4" />
+                    <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px] border border-[#FFC2D4] bg-[#FFF0F4] p-0.5 shrink-0">
+                        <HanabunMark />
                     </div>
                     {!isCollapsed && (
-                        <span className="text-lg font-bold text-primary truncate">
+                        <span className="font-display text-lg font-bold text-[#FF6B9D] truncate">
                             {title}
                         </span>
                     )}

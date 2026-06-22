@@ -48,7 +48,7 @@ public class TotpService {
     private final QrGenerator qrGenerator = new ZxingPngQrGenerator();
     private final SecureRandom secureRandom = new SecureRandom();
 
-    @Value("${app.totp.issuer:RBAC System}")
+    @Value("${app.totp.issuer:Hanabun}")
     private String issuer;
 
     /** Generate a fresh Base32 secret to give the user during 2FA setup. */

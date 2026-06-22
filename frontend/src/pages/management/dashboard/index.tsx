@@ -1,106 +1,37 @@
-import { KeyRound, ListChevronsUpDown, Menu, Users } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { dashboardApi, type DashboardStats } from "../../../api/features/dashboard.api";
-import { MainLayout } from "../../../components/layout/MainLayout";
-import { usePermissions } from "@/hooks/usePermissions";
-import { logger } from "@/lib/logger";
+import { useSelector } from "react-redux";
 
-export const Dashboard: React.FC = () => {
-    const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const { effectivePermissions } = usePermissions();
+import { MainLayout } from "@/components/layout/MainLayout";
+import { SakuraDashboardContent } from "@/components/sakura-dashboard/SakuraStudyDashboard";
+import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboard.types";
+import type { RootState } from "@/store/store";
 
-    useEffect(() => {
-        loadStats();
-    }, []);
+/**
+ * Home dashboard.
+ *
+ * Renders the Sakura study-dashboard design INSIDE the app shell (the sidebar
+ * + top bar come from MainLayout). The greeting uses the logged-in user's
+ * name; the hero / missions / calendar / charts use sample data for now —
+ * swap `defaultSakuraData` for real study data once the endpoints exist.
+ */
+export function Dashboard() {
+    const { firstName, lastName, email } = useSelector(
+        (s: RootState) => s.auth,
+    );
 
-    const loadStats = async () => {
-        try {
-            const data = await dashboardApi.getStats();
-            setStats(data);
-        } catch (error) {
-            logger.error("Error loading dashboard stats:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const name =
+        [firstName, lastName].filter(Boolean).join(" ").trim() ||
+        email?.split("@")[0] ||
+        defaultSakuraData.user.name;
 
     return (
-        <MainLayout>
-            <div className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-                <div className="bg-card rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                            <p className="text-3xl font-bold text-foreground mt-2">
-                                {isLoading ? "..." : stats?.totalUsers || 0}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeUsers || 0} active</p>
-                        </div>
-                        <div className="text-4xl">
-                            <Users />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Total Roles</p>
-                            <p className="text-3xl font-bold text-foreground mt-2">
-                                {isLoading ? "..." : stats?.totalRoles || 0}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeRoles || 0} active</p>
-                        </div>
-                        <div className="text-4xl">
-                            <KeyRound />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Total Menus</p>
-                            <p className="text-3xl font-bold text-foreground mt-2">
-                                {isLoading ? "..." : stats?.totalMenus || 0}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">{stats?.activeMenus || 0} active</p>
-                        </div>
-                        <div className="text-4xl">
-                            <Menu />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-card rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Menu Items</p>
-                            <p className="text-3xl font-bold text-foreground mt-2">
-                                {isLoading ? "..." : stats?.totalMenuItems || 0}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">Navigation items</p>
-                        </div>
-                        <div className="text-4xl">
-                            <ListChevronsUpDown />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-8 bg-card rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Your Permissions</h3>
-                <div className="flex flex-wrap gap-2">
-                    {effectivePermissions.map((permission) => (
-                        <span key={permission} className="px-3 py-1 bg-primary/15 text-primary text-sm rounded-full">
-                            {permission}
-                        </span>
-                    ))}
-                </div>
-            </div>
-            </div>
+        <MainLayout pathName={{ "/dashboard": "Dashboard" }}>
+            <SakuraDashboardContent
+                user={{ ...defaultSakuraData.user, name }}
+                missions={defaultSakuraData.missions}
+                calendar={defaultSakuraData.calendar}
+                achievement={defaultSakuraData.achievement}
+                stats={defaultSakuraData.stats}
+            />
         </MainLayout>
     );
-};
+}

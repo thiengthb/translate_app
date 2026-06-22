@@ -5,9 +5,9 @@ import { KanjiStudyHeader } from "./KanjiStudyHeader";
 /**
  * Dedicated shell for the Kanji-study area.
  *
- * Unlike the shared `MainLayout`, this deliberately renders **no** GENGO
+ * Unlike the shared `MainLayout`, this deliberately renders **no** Hanabun
  * sidebar — the feature has its own in-page nav (`KanjiStudyHeader`) and a
- * "back to Gengo" exit button. Routes here are already gated by
+ * "back to Hanabun" exit button. Routes here are already gated by
  * `ProtectedRoute`, so no auth gate is needed at this level.
  *
  * Theming is the fixed light-only Sakura palette set in index.css `:root`;

@@ -1,7 +1,6 @@
 import DynamicBreadcrumbs from "@/components/layout/DynamicBreadcrumbs";
 import HeaderRight from "@/components/layout/HeaderRight";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface MainLayoutTopBarProps {
     pathName?: Record<string, string>;
@@ -43,11 +42,6 @@ export function MainLayoutTopBar({
 }: MainLayoutTopBarProps) {
     return (
         <header className="flex h-14 shrink-0 items-center gap-2 px-3 sm:px-4 lg:px-6 min-w-0">
-            <SidebarTrigger className="md:hidden -ml-1 size-8" />
-            <Separator
-                orientation="vertical"
-                className="md:hidden !h-6"
-            />
             <div className="min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <DynamicBreadcrumbs
                     pathTitles={pathName}

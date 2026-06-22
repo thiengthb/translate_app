@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useSelector } from "react-redux";
 import { ArrowLeft } from "lucide-react";
 
@@ -214,7 +214,10 @@ function AppShell({
     breadcrumbIcon,
 }: AppShellProps) {
     return (
-        <SidebarProvider defaultOpen={readPersistedSidebarOpen()}>
+        <SidebarProvider
+            defaultOpen={readPersistedSidebarOpen()}
+            style={{ "--sidebar-width": "96px" } as CSSProperties}
+        >
             <SidebarMenu />
             <SidebarInset className="flex h-svh max-h-[calc(100svh-16px)] flex-col overflow-hidden min-w-0 max-w-full">
                 <MainLayoutTopBar

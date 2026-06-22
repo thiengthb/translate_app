@@ -1,7 +1,7 @@
-import { Box } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+import { HanabunMark } from "@/components/branding/HanabunLogo";
 import { usePermissions } from "@/hooks/usePermissions";
 import { getHomePathByRole } from "@/utils/rbac.utils";
 import type { RootState } from "@/store/store";
@@ -18,14 +18,13 @@ export function GuestLogo() {
 
     return (
         <Link to={homeTo} className="flex items-center gap-2.5 shrink-0 group/logo">
-            {/* Mirrors the admin "change role" pill style — soft primary
-                tint + primary-tinted border, so the logo box reads as the
-                same visual family as other rounded chips in the bar. */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-primary/30 bg-primary/10 text-primary transition-colors group-hover/logo:bg-primary/15">
-                <Box className="h-[18px] w-[18px]" />
+            {/* Candy sakura mark in a soft pink chip, matching the rest of
+                the Hanabun shell. */}
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-[12px] border border-[#FFC2D4] bg-[#FFF0F4] p-0.5 transition-colors group-hover/logo:bg-[#FFE5EC]">
+                <HanabunMark />
             </div>
-            <span className="text-base font-semibold text-foreground hidden sm:inline-block">
-                Gengo
+            <span className="font-display text-base font-bold text-[#FF6B9D] hidden sm:inline-block">
+                Hanabun
             </span>
         </Link>
     );

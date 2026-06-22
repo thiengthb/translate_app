@@ -119,7 +119,7 @@ export default function LandingPage() {
                 {/* ── Legal / brand band (Mercury-style frosted strip) ── */}
                 <div className="absolute inset-x-0 bottom-5 z-10 px-4">
                     <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-black/35 px-5 py-3 text-center text-xs text-white/75 backdrop-blur-md">
-                        Gengo · {t("landing.heroBadge")}
+                        Hanabun · {t("landing.heroBadge")}
                     </div>
                 </div>
             </section>
