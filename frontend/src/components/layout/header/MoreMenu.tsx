@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import ToggleTheme from "@/components/ToggleTheme";
 import { HeaderActionButton } from "./HeaderActionButton";
 import type { RootState } from "@/store/store";
 
@@ -85,7 +84,6 @@ export function MoreMenu({ streakCount }: MoreMenuProps) {
                         </DropdownMenuLabel>
                         <div className="px-1 pb-1 flex items-center gap-1">
                             <LanguageSwitcher />
-                            <ToggleTheme className="!h-8 !w-8" />
                         </div>
                     </>
                 )}

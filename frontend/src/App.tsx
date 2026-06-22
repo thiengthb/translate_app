@@ -10,7 +10,6 @@ import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
-import { useThemePreference } from "./hooks/useThemePreference";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
 import LandingPage from "./pages/landing/LandingPage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
@@ -152,14 +151,13 @@ function AppRoutes() {
  * Sonner toaster styled to match the Lightswind Alert look: a neutral card
  * surface with a colored border / text / icon per type, instead of sonner's
  * saturated `richColors` fills. `info` borrows the app's `--primary` so
- * toasts track the chosen color preset, and `theme` follows the app's
- * resolved light/dark so the surface flips with the rest of the UI.
+ * toasts track the Sakura accent. The app is light-only now, so the
+ * toaster theme is fixed to "light".
  */
 function AppToaster() {
-    const { resolvedTheme } = useThemePreference();
     return (
         <Toaster
-            theme={resolvedTheme}
+            theme="light"
             duration={1500}
             position="top-right"
             toastOptions={{

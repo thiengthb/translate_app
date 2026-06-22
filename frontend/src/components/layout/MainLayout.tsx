@@ -10,11 +10,9 @@ import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-import { useColorPreset } from "@/hooks/useColorPreset";
 import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
 import { useAutoCheckIn } from "@/hooks/useStreak";
-import { useTypography } from "@/hooks/useTypography";
 import type { RootState } from "@/store/store";
 
 interface MainLayoutProps {
@@ -78,14 +76,6 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
     //   - ⌘/Ctrl+⇧+L → log out (no-op for guests)
     const shortcuts = useKeyboardShortcutsDialog();
     useLogoutShortcut();
-
-    // Apply the chosen color preset's CSS variables to `<html>` so the
-    // palette swap from /settings takes effect immediately on every
-    // page. Mounted here (not inside the settings page) so the preset
-    // also applies before the user ever visits settings.
-    useColorPreset();
-    // Same idea for typography — `--font-sans` + `--app-font-size`.
-    useTypography();
 
     return (
         <>

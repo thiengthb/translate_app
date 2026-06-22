@@ -58,6 +58,7 @@ import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
+import SakuraDashboardPage from "@/pages/sakura/SakuraDashboardPage";
 import type { ComponentType } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -121,6 +122,11 @@ export const routes: RouteConfig[] = [
   // fully client-side today; radical/prompt data is a placeholder that
   // can be swapped for a backend feed later without touching the route.
   { path: "/kanji-radical", component: KanjiRadicalGamePage },
+
+  // ── Sakura Study Dashboard (design handoff) ──
+  // Standalone full-screen design surface with its own sidebar — rendered
+  // outside MainLayout. Fixed sakura palette, independent of color presets.
+  { path: "/sakura-dashboard", component: SakuraDashboardPage },
 
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji

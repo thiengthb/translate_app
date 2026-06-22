@@ -1,9 +1,7 @@
 import { useSelector } from "react-redux";
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { CoolThemeToggle } from "@/components/lightswind/cool-theme-toggle";
 import NotificationCenter from "@/components/notification/NotificationCenter";
-import ToggleTheme from "@/components/ToggleTheme";
 import { StreakBadge } from "@/components/streak/StreakBadge";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +12,6 @@ import { UserDropdownMenu } from "@/components/layout/UserDropdownMenu";
 
 import { useRoleSwitch } from "@/contexts/RoleSwitchContext";
 import { useMyStreak } from "@/hooks/useStreak";
-import { useThemePreference } from "@/hooks/useThemePreference";
 import type { RootState } from "@/store/store";
 
 /**
@@ -47,15 +44,12 @@ export default function HeaderRight() {
     );
     const { isPreviewMode } = useRoleSwitch();
     const { data: streak } = useMyStreak(isAuthenticated);
-    const { isDark, setThemePreference } = useThemePreference();
-    const toggleTheme = () => setThemePreference(isDark ? "light" : "dark");
 
     // Unauthenticated → minimal chrome. Used by GuestLayout's auth pages.
     if (!role) {
         return (
             <div className="flex items-center gap-1">
                 <LanguageSwitcher />
-                <ToggleTheme />
             </div>
         );
     }
@@ -82,13 +76,6 @@ export default function HeaderRight() {
             <div className="hidden md:flex items-center gap-0.5">
                 <StreakBadge />
             </div>
-
-            {/* Light/dark switch — sits between streak and the inbox */}
-            <CoolThemeToggle
-                isDark={isDark}
-                onToggle={toggleTheme}
-                size="md"
-            />
 
             {/* Always-visible inbox */}
             <NotificationCenter />

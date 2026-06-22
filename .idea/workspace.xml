@@ -4,13 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(toaster): implement custom AppToaster component with theme support">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization">
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/sakura-dashboard.types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/sakura/SakuraDashboardPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/en.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/en.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/ja.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/ja.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/vi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/vi.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/settings/SettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/settings/SettingsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +95,7 @@
     <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="dev" />
+        <entry key="$PROJECT_DIR$" value="Test-by-ân" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -100,7 +109,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
+    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -159,7 +168,7 @@
     &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Test-by-ân&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Test-theme-by-Akira&quot;,
     &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
@@ -175,7 +184,7 @@
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.2.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\Admin\\OneDrive\\Documents\\FPT_University\\SWD\\frontend\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -226,7 +235,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
       </set>
     </attachedChunks>
   </component>
@@ -286,7 +296,10 @@
       <workItem from="1780635363057" duration="4543000" />
       <workItem from="1780670399027" duration="6634000" />
       <workItem from="1780724509029" duration="2344000" />
-      <workItem from="1780858834601" duration="4896000" />
+      <workItem from="1780858834601" duration="5804000" />
+      <workItem from="1781059575916" duration="658000" />
+      <workItem from="1781071257608" duration="1201000" />
+      <workItem from="1782110583422" duration="7429000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -600,7 +613,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780863561238</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="feat(landing): update landing page content and add ShineButton component">
+      <option name="closed" value="true" />
+      <created>1780864489533</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1780864489534</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -638,7 +659,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/feature/assessment" />
+                        <option value="origin/Test-by-ân" />
                       </list>
                     </value>
                   </entry>
@@ -651,9 +672,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="perf(grammar): replace runtime regex loop with Aho-Corasick + compiled-Pattern index&#10;&#10;- Add org.ahocorasick:ahocorasick 0.6.3 to pom.xml&#10;- Rewrite GrammarSpotterService: lazy-built GrammarIndex caches an&#10;  Aho-Corasick trie (plain-string markers, O(n) scan) plus pre-compiled&#10;  java.util.regex.Pattern entries (regex markers); double-checked locking&#10;  keeps the index thread-safe. Add invalidateIndex() called by seeder.&#10;- Remove spotGrammar() from OllamaClient — grammar detection is now&#10;  fully deterministic and offline; no Ollama at scan runtime.&#10;- TranslationAnalysisService: grammar = dictionary only (spotter.spot()).&#10;- GrammarDictionarySeeder: call grammarSpotter.invalidateIndex() after&#10;  each seed run so the fresh patterns are picked up immediately.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
-    <MESSAGE value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
-    <MESSAGE value="feat(grammar): update grading logic and thresholds for improved accuracy" />
     <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
     <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
     <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
@@ -676,7 +694,10 @@
     <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage" />
     <MESSAGE value="feat(toaster): implement custom AppToaster component with theme support" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(toaster): implement custom AppToaster component with theme support" />
+    <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
+    <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and related types" />
+    <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
