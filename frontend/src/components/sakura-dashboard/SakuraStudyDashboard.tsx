@@ -17,14 +17,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Home,
   ListChecks,
   Medal,
-  Power,
   RotateCcw,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SakuraSidebarContent } from "./SakuraSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -113,39 +111,6 @@ const accentMap: Record<
 };
 
 // ── Small building blocks ─────────────────────────────────────────────────────
-function SideButton({
-  label,
-  active,
-  onClick,
-  children,
-}: {
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      title={label}
-      onClick={onClick}
-      className={cn(
-        "flex h-[54px] w-[54px] items-center justify-center rounded-[20px] transition-colors",
-        active ? "text-white" : "text-[#B9AEB2] hover:text-[#FF8FAB]",
-      )}
-      style={
-        active
-          ? {
-              background: `linear-gradient(145deg, ${sakura.pink}, ${sakura.pinkDeep})`,
-              boxShadow: "0 8px 18px rgba(255,143,171,0.5)",
-            }
-          : undefined
-      }
-    >
-      {children}
-    </button>
-  );
-}
-
 function MissionCard({ mission }: { mission: Mission }) {
   const a = accentMap[mission.accent];
   const pct = Math.round((mission.done / mission.total) * 100);
@@ -478,8 +443,6 @@ export function SakuraStudyDashboard({
   achievement,
   stats,
   onReturn,
-  onNavigate,
-  onPower,
   className,
 }: SakuraDashboardProps) {
   return (
@@ -492,28 +455,9 @@ export function SakuraStudyDashboard({
     >
       {/* LEFT shell: sidebar + main */}
       <div className="flex min-w-[780px] max-w-[1180px] flex-1 overflow-hidden rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
-        {/* Sidebar */}
-        <aside className="flex w-24 flex-none flex-col items-center gap-[30px] border-r border-[#FBEAF0] py-7 pb-6">
-          <div className="rounded-full border-2 border-[#FFC2D4] bg-[#FFF0F4] p-1">
-            <Avatar className="h-12 w-12">
-              {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
-              <AvatarFallback className="bg-[#FFE5EC] text-[#FF6B9D]">
-                {user.name.slice(0, 1).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          <nav className="mt-1 flex flex-col items-center gap-[26px]">
-            <SideButton label="Home" active onClick={() => onNavigate?.("home")}>
-              <Home className="h-6 w-6" />
-            </SideButton>
-          </nav>
-
-          <div className="mt-auto flex flex-col items-center gap-[26px]">
-            <SideButton label="Power" onClick={onPower}>
-              <Power className="h-[22px] w-[22px]" />
-            </SideButton>
-          </div>
+        {/* Sidebar — shared candy rail (role-aware: admin gets full nav) */}
+        <aside className="flex w-24 flex-none border-r border-[#FBEAF0]">
+          <SakuraSidebarContent />
         </aside>
 
         {/* Main */}

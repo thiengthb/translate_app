@@ -4,23 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing): update landing page content and add ShineButton component">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/twofactor/TotpService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/auth/twofactor/TotpService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/templates/email/reset_password_email.html" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/templates/email/reset_password_email.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestLogo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/guest/GuestLogo.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarBranding.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarBranding.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSearch.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSearch.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/sakura-dashboard.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/sakura-dashboard.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -630,7 +618,23 @@
       <option name="project" value="LOCAL" />
       <updated>1782125198747</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="feat(branding): update branding to Hanabun and integrate new logo components">
+      <option name="closed" value="true" />
+      <created>1782138930623</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1782138930623</updated>
+    </task>
+    <task id="LOCAL-00043" summary="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality">
+      <option name="closed" value="true" />
+      <created>1782139372944</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1782139372944</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -681,8 +685,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
-    <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
     <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
     <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
     <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
@@ -706,7 +708,9 @@
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and related types" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
     <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(landing): update landing page content and add ShineButton component" />
+    <MESSAGE value="feat(branding): update branding to Hanabun and integrate new logo components" />
+    <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

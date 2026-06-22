@@ -62,9 +62,6 @@ export interface SakuraDashboardProps {
   achievement: Achievement;
   stats: { ranking: number; progressPct: number; donutPct: number };
   onReturn?: () => void;
-  onNavigate?: (key: "home" | "lessons" | "settings" | "library") => void;
-  /** Power button in the sidebar footer (e.g. log out). */
-  onPower?: () => void;
   className?: string;
 }
 
@@ -74,7 +71,7 @@ export interface SakuraDashboardProps {
 
 export const defaultSakuraData: Omit<
   SakuraDashboardProps,
-  "onReturn" | "onNavigate" | "className"
+  "onReturn" | "className"
 > = {
   user: { name: "Heer", studyDay: 1 },
   missions: [
