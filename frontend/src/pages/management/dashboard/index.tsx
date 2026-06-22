@@ -1,19 +1,20 @@
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-import { MainLayout } from "@/components/layout/MainLayout";
-import { SakuraDashboardContent } from "@/components/sakura-dashboard/SakuraStudyDashboard";
+import { SakuraStudyDashboard } from "@/components/sakura-dashboard/SakuraStudyDashboard";
 import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboard.types";
+import { useLogout } from "@/hooks/useLogout";
 import type { RootState } from "@/store/store";
 
 /**
- * Home dashboard.
- *
- * Renders the Sakura study-dashboard design INSIDE the app shell (the sidebar
- * + top bar come from MainLayout). The greeting uses the logged-in user's
- * name; the hero / missions / calendar / charts use sample data for now —
- * swap `defaultSakuraData` for real study data once the endpoints exist.
+ * Home dashboard — renders the full-screen Sakura study dashboard design
+ * (its own candy sidebar, no app top bar). The greeting uses the logged-in
+ * user's name; the rest is sample data (`defaultSakuraData`) until real
+ * study endpoints are wired. Identical surface to `/sakura-dashboard`.
  */
 export function Dashboard() {
+    const navigate = useNavigate();
+    const logout = useLogout();
     const { firstName, lastName, email } = useSelector(
         (s: RootState) => s.auth,
     );
@@ -24,14 +25,14 @@ export function Dashboard() {
         defaultSakuraData.user.name;
 
     return (
-        <MainLayout pathName={{ "/dashboard": "Dashboard" }}>
-            <SakuraDashboardContent
-                user={{ ...defaultSakuraData.user, name }}
-                missions={defaultSakuraData.missions}
-                calendar={defaultSakuraData.calendar}
-                achievement={defaultSakuraData.achievement}
-                stats={defaultSakuraData.stats}
-            />
-        </MainLayout>
+        <SakuraStudyDashboard
+            {...defaultSakuraData}
+            user={{ ...defaultSakuraData.user, name }}
+            onReturn={() => navigate(-1)}
+            onNavigate={(key) => {
+                if (key === "home") navigate("/dashboard");
+            }}
+            onPower={() => void logout()}
+        />
     );
 }

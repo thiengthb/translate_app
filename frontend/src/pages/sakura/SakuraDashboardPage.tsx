@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { SakuraStudyDashboard } from "@/components/sakura-dashboard/SakuraStudyDashboard";
 import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboard.types";
+import { useLogout } from "@/hooks/useLogout";
 
 /**
  * Standalone host for the Sakura Study Dashboard design.
@@ -13,12 +14,14 @@ import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboar
  */
 export default function SakuraDashboardPage() {
   const navigate = useNavigate();
+  const logout = useLogout();
 
   return (
     <SakuraStudyDashboard
       {...defaultSakuraData}
       onReturn={() => navigate(-1)}
       onNavigate={(key) => navigate(`/${key}`)}
+      onPower={() => void logout()}
     />
   );
 }

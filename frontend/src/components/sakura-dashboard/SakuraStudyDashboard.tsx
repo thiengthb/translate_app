@@ -12,7 +12,6 @@
 import * as React from "react";
 
 import {
-  BookOpen,
   CalendarDays,
   CheckSquare,
   ChevronDown,
@@ -20,12 +19,9 @@ import {
   ChevronRight,
   Home,
   ListChecks,
-  Maximize,
   Medal,
-  PlayCircle,
   Power,
   RotateCcw,
-  Settings,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -483,6 +479,7 @@ export function SakuraStudyDashboard({
   stats,
   onReturn,
   onNavigate,
+  onPower,
   className,
 }: SakuraDashboardProps) {
   return (
@@ -510,22 +507,10 @@ export function SakuraStudyDashboard({
             <SideButton label="Home" active onClick={() => onNavigate?.("home")}>
               <Home className="h-6 w-6" />
             </SideButton>
-            <SideButton label="Lessons" onClick={() => onNavigate?.("lessons")}>
-              <PlayCircle className="h-6 w-6" />
-            </SideButton>
-            <SideButton label="Settings" onClick={() => onNavigate?.("settings")}>
-              <Settings className="h-6 w-6" />
-            </SideButton>
-            <SideButton label="Library" onClick={() => onNavigate?.("library")}>
-              <BookOpen className="h-6 w-6" />
-            </SideButton>
           </nav>
 
           <div className="mt-auto flex flex-col items-center gap-[26px]">
-            <SideButton label="Fullscreen">
-              <Maximize className="h-[22px] w-[22px]" />
-            </SideButton>
-            <SideButton label="Power">
+            <SideButton label="Power" onClick={onPower}>
               <Power className="h-[22px] w-[22px]" />
             </SideButton>
           </div>

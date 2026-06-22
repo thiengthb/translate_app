@@ -63,6 +63,8 @@ export interface SakuraDashboardProps {
   stats: { ranking: number; progressPct: number; donutPct: number };
   onReturn?: () => void;
   onNavigate?: (key: "home" | "lessons" | "settings" | "library") => void;
+  /** Power button in the sidebar footer (e.g. log out). */
+  onPower?: () => void;
   className?: string;
 }
 
