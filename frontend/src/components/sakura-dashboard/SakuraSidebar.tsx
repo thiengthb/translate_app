@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
-import { Home, Power, Repeat } from "lucide-react";
+import { Home, LayoutGrid, Power, Repeat, type LucideIcon } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -67,6 +68,138 @@ function RailButton({
     );
 }
 
+type CatalogModule = { url: string; title: string; icon: LucideIcon };
+type CatalogGroup = { id: string; name: string; modules: CatalogModule[] };
+
+/**
+ * The "Danh mục" rail button. Hovering (or focusing) it opens a candy panel
+ * listing every module grouped by its function group — click an item to
+ * navigate. Keeps the rail tidy: one button instead of a long icon stack.
+ */
+function CatalogFlyout({ groups }: { groups: CatalogGroup[] }) {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [open, setOpen] = useState(false);
+    const [coords, setCoords] = useState<{ left: number; top: number } | null>(
+        null,
+    );
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const closeTimer = useRef<number | null>(null);
+
+    const isActive = (url: string) =>
+        location.pathname === url || location.pathname.startsWith(`${url}/`);
+    const anyActive = groups.some((g) => g.modules.some((m) => isActive(m.url)));
+
+    const cancelClose = () => {
+        if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+    // Anchor the portal panel to the button's current screen position.
+    const openNow = () => {
+        cancelClose();
+        const r = btnRef.current?.getBoundingClientRect();
+        if (r) setCoords({ left: r.right + 10, top: r.top });
+        setOpen(true);
+    };
+    // Small grace period so moving the cursor across the gap into the panel
+    // doesn't snap it shut.
+    const closeSoon = () => {
+        cancelClose();
+        closeTimer.current = window.setTimeout(() => setOpen(false), 140);
+    };
+
+    return (
+        <>
+            <button
+                ref={btnRef}
+                type="button"
+                aria-label="Danh mục"
+                aria-haspopup="true"
+                aria-expanded={open}
+                onClick={() => (open ? setOpen(false) : openNow())}
+                onMouseEnter={openNow}
+                onMouseLeave={closeSoon}
+                onFocus={openNow}
+                onBlur={closeSoon}
+                onKeyDown={(e) => {
+                    if (e.key === "Escape") setOpen(false);
+                }}
+                className={cn(
+                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-colors cursor-pointer",
+                    anyActive || open
+                        ? "text-white"
+                        : "text-[#B9AEB2] hover:text-[#FF8FAB]",
+                )}
+                style={
+                    anyActive || open
+                        ? {
+                              background: `linear-gradient(145deg, ${PINK}, ${PINK_DEEP})`,
+                              boxShadow: "0 8px 18px rgba(255,143,171,0.5)",
+                          }
+                        : undefined
+                }
+            >
+                <LayoutGrid className="h-[22px] w-[22px]" />
+            </button>
+
+            {open &&
+                coords &&
+                createPortal(
+                    <div
+                        style={{
+                            position: "fixed",
+                            left: coords.left,
+                            top: coords.top,
+                            maxHeight: `calc(100vh - ${coords.top}px - 16px)`,
+                        }}
+                        className="z-[60] w-64 overflow-y-auto rounded-2xl border border-[#FBEAF0] bg-white p-3 shadow-[0_18px_50px_rgba(255,143,171,0.22)]"
+                        onMouseEnter={openNow}
+                        onMouseLeave={closeSoon}
+                    >
+                        <div className="px-2 pb-2">
+                            <span className="font-display text-[14px] font-bold text-[#3A2E33]">
+                                Danh mục
+                            </span>{" "}
+                            <span className="text-[11px] text-[#9A8E92]">
+                                (tạm thời chưa phân chia)
+                            </span>
+                        </div>
+                        {groups.map((g) => (
+                            <div key={g.id} className="mb-2 last:mb-0">
+                                <div className="px-2 pb-0.5 pt-1 text-[10px] font-bold uppercase tracking-wide text-[#FF6B9D]">
+                                    {g.name}
+                                </div>
+                                {g.modules.map((m) => {
+                                    const Icon = m.icon;
+                                    const active = isActive(m.url);
+                                    return (
+                                        <button
+                                            key={m.url}
+                                            type="button"
+                                            onClick={() => {
+                                                navigate(m.url);
+                                                setOpen(false);
+                                            }}
+                                            className={cn(
+                                                "flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-[13px] transition-colors cursor-pointer",
+                                                active
+                                                    ? "bg-[#FFE5EC] font-semibold text-[#FF6B9D]"
+                                                    : "text-[#3A2E33] hover:bg-[#FFF0F4] hover:text-[#FF6B9D]",
+                                            )}
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0 text-[#FF8FAB]" />
+                                            <span className="truncate">{m.title}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ))}
+                    </div>,
+                    document.body,
+                )}
+        </>
+    );
+}
+
 /**
  * The Sakura candy sidebar rail — a single, role-aware component shared by the
  * dashboard's `<aside>` and the app shell (MainLayout). Renders the inner
@@ -108,19 +241,27 @@ export function SakuraSidebarContent() {
         return iconMap[key];
     };
 
-    // Admin sees the full module nav (deduped, minus the home/dashboard entry
-    // already covered by the Home button). Other roles get the basic rail.
-    const modules = (() => {
-        if (!isAdmin) return [] as { url: string; title: string; icon?: string }[];
+    // Admin gets the full module nav, grouped by function group and tucked
+    // behind the "Danh mục" button. Other roles get the basic rail.
+    const catalogGroups: CatalogGroup[] = (() => {
+        if (!isAdmin) return [];
         const seen = new Set<string>();
-        const out: { url: string; title: string; icon?: string }[] = [];
+        const out: CatalogGroup[] = [];
         for (const g of moduleGroups) {
+            const mods: CatalogModule[] = [];
             for (const m of g.modules ?? []) {
                 const url = m.url ?? "";
                 if (!url || url === "/dashboard" || url === home) continue;
                 if (seen.has(url)) continue;
                 seen.add(url);
-                out.push({ url, title: m.title ?? url, icon: m.icon });
+                mods.push({ url, title: m.title ?? url, icon: resolveIcon(m.icon) });
+            }
+            if (mods.length > 0) {
+                out.push({
+                    id: String(g.id ?? g.name ?? "group"),
+                    name: g.name ?? "Khác",
+                    modules: mods,
+                });
             }
         }
         return out;
@@ -148,8 +289,8 @@ export function SakuraSidebarContent() {
                 </Avatar>
             </button>
 
-            {/* Primary nav — Home always; admin also gets every module */}
-            <nav className="scrollbar-hidden flex min-h-0 w-full flex-1 flex-col items-center gap-[18px] overflow-y-auto">
+            {/* Primary nav — Home always; admin also gets the "Danh mục" flyout */}
+            <nav className="flex w-full flex-1 flex-col items-center gap-[18px]">
                 <RailButton
                     label="Trang chủ"
                     active={isHome}
@@ -158,22 +299,9 @@ export function SakuraSidebarContent() {
                     <Home className="h-6 w-6" />
                 </RailButton>
 
-                {modules.map((m) => {
-                    const Icon = resolveIcon(m.icon);
-                    const active =
-                        location.pathname === m.url ||
-                        location.pathname.startsWith(`${m.url}/`);
-                    return (
-                        <RailButton
-                            key={m.url}
-                            label={m.title}
-                            active={active}
-                            onClick={() => navigate(m.url)}
-                        >
-                            <Icon className="h-5 w-5" />
-                        </RailButton>
-                    );
-                })}
+                {catalogGroups.length > 0 && (
+                    <CatalogFlyout groups={catalogGroups} />
+                )}
             </nav>
 
             {/* Footer */}

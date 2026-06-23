@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 
 import { SakuraStudyDashboard } from "@/components/sakura-dashboard/SakuraStudyDashboard";
 import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboard.types";
-import { useLogout } from "@/hooks/useLogout";
 import type { RootState } from "@/store/store";
 
 /**
@@ -14,7 +13,6 @@ import type { RootState } from "@/store/store";
  */
 export function Dashboard() {
     const navigate = useNavigate();
-    const logout = useLogout();
     const { firstName, lastName, email } = useSelector(
         (s: RootState) => s.auth,
     );
@@ -29,10 +27,6 @@ export function Dashboard() {
             {...defaultSakuraData}
             user={{ ...defaultSakuraData.user, name }}
             onReturn={() => navigate(-1)}
-            onNavigate={(key) => {
-                if (key === "home") navigate("/dashboard");
-            }}
-            onPower={() => void logout()}
         />
     );
 }
