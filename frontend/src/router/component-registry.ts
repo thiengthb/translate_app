@@ -13,7 +13,6 @@ import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
-import StreakPage from "@/pages/streak/StreakPage";
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
@@ -142,7 +141,6 @@ export const routes: RouteConfig[] = [
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },
-  { path: "/streak", component: StreakPage },
   { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },

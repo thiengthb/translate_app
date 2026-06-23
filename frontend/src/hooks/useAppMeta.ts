@@ -28,7 +28,6 @@ const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Personal pages
     ["/profile", "Hồ sơ"],
     ["/settings", "Cài đặt"],
-    ["/streak", "Chuỗi học tập"],
     ["/leaderboard", "Bảng xếp hạng"],
     ["/notifications", "Thông báo"],
     ["/audit-logs", "Audit log"],

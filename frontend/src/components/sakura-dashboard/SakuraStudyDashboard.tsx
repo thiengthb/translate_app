@@ -12,25 +12,27 @@
 import * as React from "react";
 
 import {
+  CalendarCheck,
   CalendarDays,
   CheckSquare,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Flame,
   ListChecks,
   Medal,
   RotateCcw,
+  Trophy,
 } from "lucide-react";
 
 import { SakuraSidebarContent } from "./SakuraSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAutoCheckIn, useMyStreak, useStreakCalendar } from "@/hooks/useStreak";
 
 import type {
   Achievement,
-  CalendarMonth,
-  DayState,
   Mission,
   MissionAccent,
   SakuraDashboardProps,
@@ -221,7 +223,37 @@ function MissionIllustration({
   );
 }
 
-function dayStyle(state: DayState): React.CSSProperties {
+// ── Record (streak) calendar — live ───────────────────────────────────────────
+// Self-contained streak widget: month grid of check-in days plus the headline
+// streak stats. Reads the real `/streak` API (current / longest / total active
+// days + per-month active dates) and triggers the once-per-day auto check-in so
+// landing on the dashboard counts toward today's streak.
+
+const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** Local YYYY-MM-DD key (matches the backend's activeDates day keys). */
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+/** Monday-first grid of the given month; leading/trailing blanks are null. */
+function monthGrid(year: number, month: number): (Date | null)[] {
+  const first = new Date(year, month - 1, 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const lead = (first.getDay() + 6) % 7; // 0=Mon … 6=Sun
+  const cells: (Date | null)[] = Array(lead).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month - 1, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+function dayCellStyle(opts: {
+  active: boolean;
+  today: boolean;
+  future: boolean;
+}): React.CSSProperties {
   const base: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
@@ -232,30 +264,74 @@ function dayStyle(state: DayState): React.CSSProperties {
     fontSize: 13.5,
     fontWeight: 600,
   };
-  switch (state) {
-    case "selected":
-      return { ...base, background: sakura.pink, color: "#fff", boxShadow: "0 4px 10px rgba(255,143,171,0.45)" };
-    case "active":
-      return { ...base, background: sakura.pinkSoft, color: sakura.ink };
-    case "today":
-      return { ...base, border: `2px solid ${sakura.pink}`, color: sakura.pinkDeep };
-    case "muted":
-      return { ...base, color: "#D9CDD1", fontWeight: 500 };
-    default:
-      return { ...base, color: sakura.ink };
-  }
+  if (opts.today && opts.active)
+    return { ...base, background: sakura.pinkDeep, color: "#fff", boxShadow: "0 4px 10px rgba(255,107,157,0.5)" };
+  if (opts.today)
+    return { ...base, border: `2px solid ${sakura.pink}`, color: sakura.pinkDeep };
+  if (opts.active)
+    return { ...base, background: sakura.pinkSoft, color: sakura.ink };
+  if (opts.future) return { ...base, color: "#D9CDD1", fontWeight: 500 };
+  return { ...base, color: sakura.ink };
 }
 
-function RecordCalendar({
-  calendar,
-  onPrev,
-  onNext,
+function StreakStat({
+  icon,
+  value,
+  label,
+  color,
 }: {
-  calendar: CalendarMonth;
-  onPrev?: () => void;
-  onNext?: () => void;
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  color: string;
 }) {
-  const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return (
+    <div className="flex flex-1 flex-col items-center gap-1 rounded-[16px] bg-[#FFF7F9] px-2 py-3">
+      <span style={{ color }} className="flex items-center gap-1">
+        {icon}
+      </span>
+      <span className="font-display text-[22px] font-bold leading-none text-[#3A2E33]">
+        {value}
+      </span>
+      <span className="text-center text-[11px] font-medium leading-tight text-[#9A8E92]">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function RecordCalendar() {
+  useAutoCheckIn();
+  const today = React.useMemo(() => new Date(), []);
+  const [year, setYear] = React.useState(today.getFullYear());
+  const [month, setMonth] = React.useState(today.getMonth() + 1); // 1-12
+
+  const { data: streak } = useMyStreak();
+  const { data: calendarData } = useStreakCalendar(year, month);
+  const activeSet = React.useMemo(
+    () => new Set(calendarData?.activeDates ?? []),
+    [calendarData],
+  );
+  const cells = React.useMemo(() => monthGrid(year, month), [year, month]);
+  const todayKey = dayKey(today);
+
+  const isCurrentMonth =
+    year === today.getFullYear() && month === today.getMonth() + 1;
+
+  const prevMonth = () => {
+    if (month === 1) {
+      setMonth(12);
+      setYear((y) => y - 1);
+    } else setMonth((m) => m - 1);
+  };
+  const nextMonth = () => {
+    if (isCurrentMonth) return; // never browse into the future
+    if (month === 12) {
+      setMonth(1);
+      setYear((y) => y + 1);
+    } else setMonth((m) => m + 1);
+  };
+
   return (
     <div className="relative mt-[18px]">
       {/* string + washi tape */}
@@ -276,28 +352,100 @@ function RecordCalendar({
       />
 
       <Card className="rounded-[24px] border-0 bg-white p-0 px-6 py-[22px] pb-6 shadow-[0_12px_30px_rgba(255,143,171,0.14)]">
-        <div className="mb-[18px] flex items-center justify-between">
-          <h3 className="font-display m-0 text-[20px] font-bold">Record</h3>
+        <div className="mb-[16px] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="font-display m-0 text-[20px] font-bold">Record</h3>
+            {streak?.checkedInToday && (
+              <span className="rounded-full bg-[#FFE5EC] px-2 py-0.5 text-[11px] font-semibold text-[#FF6B9D]">
+                ✓ hôm nay
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-[14px] text-[14px] font-semibold text-[#3A2E33]">
-            <ChevronLeft onClick={onPrev} className="h-[18px] w-[18px] cursor-pointer text-[#B9AEB2]" />
-            <span>
-              {calendar.monthLabel}&nbsp;&nbsp;{calendar.year}
+            <button
+              type="button"
+              onClick={prevMonth}
+              aria-label="Tháng trước"
+              className="cursor-pointer text-[#B9AEB2] transition-colors hover:text-[#FF8FAB]"
+            >
+              <ChevronLeft className="h-[18px] w-[18px]" />
+            </button>
+            <span className="min-w-[64px] text-center tabular-nums">
+              {month}&nbsp;&nbsp;{year}
             </span>
-            <ChevronRight onClick={onNext} className="h-[18px] w-[18px] cursor-pointer text-[#B9AEB2]" />
+            <button
+              type="button"
+              onClick={nextMonth}
+              disabled={isCurrentMonth}
+              aria-label="Tháng sau"
+              className="cursor-pointer text-[#B9AEB2] transition-colors hover:text-[#FF8FAB] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronRight className="h-[18px] w-[18px]" />
+            </button>
           </div>
         </div>
 
+        {/* Streak headline stats */}
+        <div className="mb-[18px] flex items-stretch gap-2">
+          <StreakStat
+            icon={<Flame className="h-[18px] w-[18px]" />}
+            value={streak?.currentStreak ?? 0}
+            label="Chuỗi hiện tại"
+            color={sakura.pinkDeep}
+          />
+          <StreakStat
+            icon={<Trophy className="h-[18px] w-[18px]" />}
+            value={streak?.longestStreak ?? 0}
+            label="Chuỗi dài nhất"
+            color={sakura.honeyDeep}
+          />
+          <StreakStat
+            icon={<CalendarCheck className="h-[18px] w-[18px]" />}
+            value={streak?.totalActiveDays ?? 0}
+            label="Tổng ngày học"
+            color={sakura.mintDeep}
+          />
+        </div>
+
         <div className="grid grid-cols-7 gap-x-[4px] gap-y-[6px] text-center">
-          {dows.map((d) => (
+          {DOW_LABELS.map((d) => (
             <div key={d} className="pb-[4px] text-[12px] font-semibold text-[#B9AEB2]">
               {d}
             </div>
           ))}
-          {calendar.days.map((d, i) => (
-            <div key={i} className="flex h-9 items-center justify-center">
-              <span style={dayStyle(d.state)}>{d.label}</span>
-            </div>
-          ))}
+          {cells.map((cell, i) => {
+            if (!cell) return <div key={i} className="h-9" />;
+            const key = dayKey(cell);
+            const active = activeSet.has(key);
+            const isToday = key === todayKey;
+            const future = cell > today && !isToday;
+            return (
+              <div key={i} className="flex h-9 items-center justify-center">
+                <span
+                  style={dayCellStyle({ active, today: isToday, future })}
+                  title={
+                    active
+                      ? `${cell.getDate()}/${month} — đã học`
+                      : `${cell.getDate()}/${month}`
+                  }
+                >
+                  {cell.getDate()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* legend */}
+        <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-[#9A8E92]">
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-full" style={{ background: sakura.pinkSoft }} />
+            Đã học
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-full border-2" style={{ borderColor: sakura.pink }} />
+            Hôm nay
+          </span>
         </div>
       </Card>
     </div>
@@ -439,7 +587,6 @@ export function SakuraStudyDashboard({
   user,
   heroIllustrationUrl,
   missions,
-  calendar,
   achievement,
   stats,
   onReturn,
@@ -537,7 +684,7 @@ export function SakuraStudyDashboard({
 
       {/* RIGHT panel */}
       <div className="flex w-[420px] flex-none flex-col gap-[26px]">
-        <RecordCalendar calendar={calendar} />
+        <RecordCalendar />
         <AchievementChart achievement={achievement} />
 
         <div>
@@ -562,12 +709,11 @@ export function SakuraDashboardContent({
   user,
   heroIllustrationUrl,
   missions,
-  calendar,
   achievement,
   stats,
 }: Pick<
   SakuraDashboardProps,
-  "user" | "heroIllustrationUrl" | "missions" | "calendar" | "achievement" | "stats"
+  "user" | "heroIllustrationUrl" | "missions" | "achievement" | "stats"
 >) {
   return (
     <div className="flex flex-col items-start gap-7 font-[Quicksand,sans-serif] text-[#3A2E33] xl:flex-row">
@@ -630,7 +776,7 @@ export function SakuraDashboardContent({
 
       {/* RIGHT panel */}
       <div className="flex w-full flex-none flex-col gap-[26px] xl:w-[420px]">
-        <RecordCalendar calendar={calendar} />
+        <RecordCalendar />
         <AchievementChart achievement={achievement} />
 
         <div>

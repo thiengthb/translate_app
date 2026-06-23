@@ -6,9 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/sakura/SakuraDashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/sakura/SakuraDashboardPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/MoreMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/streak/StreakBadge.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/streak/StreakBadge.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/streak/StreakPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakCalendar.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/streak/components/StreakStats.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -288,7 +294,7 @@
       <workItem from="1781059575916" duration="658000" />
       <workItem from="1781071257608" duration="1201000" />
       <workItem from="1782110583422" duration="10546000" />
-      <workItem from="1782180940648" duration="5307000" />
+      <workItem from="1782180940648" duration="7742000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -634,7 +640,23 @@
       <option name="project" value="LOCAL" />
       <updated>1782139372944</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality">
+      <option name="closed" value="true" />
+      <created>1782195263770</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1782195263770</updated>
+    </task>
+    <task id="LOCAL-00045" summary="feat(role-management): refactor role permissions and add utility methods for permission handling">
+      <option name="closed" value="true" />
+      <created>1782199676501</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1782199676501</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -685,8 +707,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
-    <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
     <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
     <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
     <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
@@ -710,7 +730,9 @@
     <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
     <MESSAGE value="feat(branding): update branding to Hanabun and integrate new logo components" />
     <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
+    <MESSAGE value="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality" />
+    <MESSAGE value="feat(role-management): refactor role permissions and add utility methods for permission handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(role-management): refactor role permissions and add utility methods for permission handling" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
