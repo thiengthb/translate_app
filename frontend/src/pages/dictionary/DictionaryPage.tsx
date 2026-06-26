@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
-    Pen, Loader2, Volume2, Bookmark, BookmarkCheck, X, Star, GitBranch,
+    Pen, Loader2, Volume2, Bookmark, X, Star, GitBranch,
     Sparkles, AlertCircle, Languages, Layers, BookMarked, StickyNote,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -22,11 +22,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { HandwritingInput } from "./HandwritingInput";
 import { VoiceInput } from "./VoiceInput";
+import { ConjugationTable } from "./ConjugationTable";
+import { NotebookPicker } from "./NotebookPicker";
+import { InteractiveSentence } from "./InteractiveSentence";
 import { KanjiStrokeOrder } from "./KanjiStrokeOrder";
 import { KanjiBreakdown } from "./KanjiBreakdown";
 import { JLPT, JLPT_LEVELS, REP_LABELS, WORD_TYPE_LABELS } from "./dictionaryConstants";
 import {
-    loadSavedWords, loadSavedKanjis, toggleSavedWord, toggleSavedKanji,
+    loadSavedWords, loadSavedKanjis, markWordSaved, markKanjiSaved,
     fetchNotebook,
 } from "./savedStorage";
 
@@ -226,8 +229,8 @@ export default function DictionaryPage() {
     const savedWordIds    = useMemo(() => new Set(savedWords.map((w) => w.id)),         [savedWords]);
     const savedKanjiChars = useMemo(() => new Set(savedKanjis.map((k) => k.character)), [savedKanjis]);
 
-    const handleToggleSaveWord  = (word: WordSearchResult)    => setSavedWords(toggleSavedWord(word));
-    const handleToggleSaveKanji = (kanji: DictionaryKanjiDetail) => setSavedKanjis(toggleSavedKanji(kanji));
+    const handleWordSavedChange  = (word: WordSearchResult, saved: boolean)    => setSavedWords(markWordSaved(word, saved));
+    const handleKanjiSavedChange = (kanji: DictionaryKanjiDetail, saved: boolean) => setSavedKanjis(markKanjiSaved(kanji, saved));
 
     const hasVocabResults = !loading && results !== null;
     const hasKanjiResults = !loading && kanjiResults !== null;
@@ -441,8 +444,8 @@ export default function DictionaryPage() {
                 {hasVocabResults && results!.length > 0 && (
                     <div className="space-y-3">
                         {results!.map((w) => (
-                            <WordCard key={w.id} word={w} onSearch={quickSearch} furigana={furigana}
-                                savedIds={savedWordIds} onToggleSave={handleToggleSaveWord} />
+                            <WordCard key={w.id} word={w} onSearch={quickSearch} furigana={furigana} linkToDetail
+                                savedIds={savedWordIds} onSavedChange={handleWordSavedChange} />
                         ))}
                     </div>
                 )}
@@ -453,7 +456,7 @@ export default function DictionaryPage() {
                         {kanjiResults!.map((k) => (
                             <KanjiDetailCard key={k.character} kanji={k} onVocabSearch={quickVocabSearch}
                                 furigana={furigana}
-                                savedChars={savedKanjiChars} onToggleSave={handleToggleSaveKanji} />
+                                savedChars={savedKanjiChars} onSavedChange={handleKanjiSavedChange} />
                         ))}
                     </div>
                 )}
@@ -596,12 +599,15 @@ function SuggestionItem({ suggestion, active, onSelect, onHover }: {
 // ══════════════════════════════════════════════════════════════════════
 // Word card
 // ══════════════════════════════════════════════════════════════════════
-function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
+export function WordCard({ word, onSearch, furigana, savedIds, onSavedChange, linkToDetail }: {
     word: WordSearchResult;
     onSearch: (w: string) => void;
     furigana: boolean;
     savedIds: Set<number>;
-    onToggleSave: (word: WordSearchResult) => void;
+    /** Báo item còn được lưu ở ≥1 sổ tay hay không (sau khi chọn sổ tay trong picker). */
+    onSavedChange: (word: WordSearchResult, saved: boolean) => void;
+    /** Hiện nút mở trang chi tiết /words/:id (dùng ở danh sách kết quả; bỏ khi đã ở trang chi tiết). */
+    linkToDetail?: boolean;
 }) {
     const [showEx, setShowEx] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -682,7 +688,15 @@ function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
                         <SpeakButton text={word.reading || word.word} lookupWord={word.word} />
-                        <BookmarkButton saved={savedIds.has(word.id)} onToggle={() => onToggleSave(word)} />
+                        <NotebookPicker
+                            target={{ kind: "word", wordId: word.id }}
+                            savedAnywhere={savedIds.has(word.id)}
+                            onSavedChange={(saved) => onSavedChange(word, saved)} />
+                        {linkToDetail && (
+                            <Button asChild size="icon-sm" variant="ghost" title="Xem chi tiết">
+                                <Link to={`/words/${word.id}`}><BookOpen className="h-3.5 w-3.5" /></Link>
+                            </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={copy} className="h-8 px-2 text-xs">
                             {copied
                                 ? <><Check className="h-3 w-3 text-green-600 dark:text-green-400" />Đã copy</>
@@ -727,6 +741,9 @@ function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
                 </>
             )}
 
+            {/* Bảng chia động từ / tính từ (FE-only, suy từ wordType — tự ẩn nếu không chia được) */}
+            <ConjugationTable word={word.word} reading={word.reading} wordType={word.wordType} furigana={furigana} />
+
             {/* Examples accordion */}
             {word.examples.length > 0 && (
                 <>
@@ -746,7 +763,7 @@ function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
                             <Separator />
                             <div className="divide-y bg-muted/30">
                                 {word.examples.map((ex, i) => (
-                                    <ExampleRow key={i} example={ex} index={i + 1} />
+                                    <ExampleRow key={i} example={ex} index={i + 1} furigana={furigana} />
                                 ))}
                             </div>
                         </>
@@ -782,7 +799,7 @@ function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
                                 Đang tải ví dụ từ Tatoeba...
                             </div>
                         ) : tatoeba && tatoeba.length > 0 ? (
-                            tatoeba.map((ex, i) => <TatoebaRow key={ex.sentenceId ?? i} example={ex} />)
+                            tatoeba.map((ex, i) => <TatoebaRow key={ex.sentenceId ?? i} example={ex} furigana={furigana} />)
                         ) : (
                             <div className="px-5 py-4 text-xs text-muted-foreground text-center">
                                 Không tìm thấy ví dụ thực tế cho từ này.
@@ -798,12 +815,12 @@ function WordCard({ word, onSearch, furigana, savedIds, onToggleSave }: {
 // ══════════════════════════════════════════════════════════════════════
 // Kanji detail card
 // ══════════════════════════════════════════════════════════════════════
-function KanjiDetailCard({ kanji, onVocabSearch, furigana, savedChars, onToggleSave }: {
+function KanjiDetailCard({ kanji, onVocabSearch, furigana, savedChars, onSavedChange }: {
     kanji: DictionaryKanjiDetail;
     onVocabSearch: (w: string) => void;
     furigana: boolean;
     savedChars: Set<string>;
-    onToggleSave: (kanji: DictionaryKanjiDetail) => void;
+    onSavedChange: (kanji: DictionaryKanjiDetail, saved: boolean) => void;
 }) {
     const jlpt = kanji.jlptLevel ? JLPT[kanji.jlptLevel] : null;
     const splitReadings = (s: string | undefined) =>
@@ -830,7 +847,10 @@ function KanjiDetailCard({ kanji, onVocabSearch, furigana, savedChars, onToggleS
                         </span>
                         <div className="flex gap-1">
                             <SpeakButton text={kanji.character} lookupWord={kanji.character} />
-                            <BookmarkButton saved={savedChars.has(kanji.character)} onToggle={() => onToggleSave(kanji)} />
+                            <NotebookPicker
+                                target={{ kind: "kanji", character: kanji.character }}
+                                savedAnywhere={savedChars.has(kanji.character)}
+                                onSavedChange={(saved) => onSavedChange(kanji, saved)} />
                         </div>
                     </div>
 
@@ -1040,14 +1060,17 @@ function KanjiChip({ kanji, onClick }: { kanji: DictionaryKanjiInfo; onClick: ()
 // ══════════════════════════════════════════════════════════════════════
 // Example row
 // ══════════════════════════════════════════════════════════════════════
-function ExampleRow({ example, index }: { example: DictionaryExampleInfo; index: number }) {
+function ExampleRow({ example, index, furigana }: { example: DictionaryExampleInfo; index: number; furigana: boolean }) {
     return (
         <div className="flex gap-3 px-5 py-3">
             <span className="text-[10px] font-bold text-muted-foreground/60 shrink-0 w-4 pt-0.5 tabular-nums">
                 {index}.
             </span>
             <div className="min-w-0">
-                <p className="font-medium text-foreground text-sm leading-snug">{example.rootExample}</p>
+                <InteractiveSentence
+                    text={example.rootExample ?? ""}
+                    furigana={furigana}
+                    className="font-medium text-foreground text-sm leading-snug" />
                 <p className="text-sm text-primary mt-0.5 leading-snug">{example.toExample}</p>
             </div>
         </div>
@@ -1084,13 +1107,16 @@ function MeaningLangBadge({ code, name }: { code?: string; name?: string }) {
     );
 }
 
-function TatoebaRow({ example }: { example: TatoebaExample }) {
+function TatoebaRow({ example, furigana }: { example: TatoebaExample; furigana: boolean }) {
     const lang = TATOEBA_LANG[example.translationLang];
     return (
         <div className="flex gap-3 px-5 py-3">
             <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
-                    <p className="font-medium text-foreground text-sm leading-snug flex-1">{example.japanese}</p>
+                    <InteractiveSentence
+                        text={example.japanese}
+                        furigana={furigana}
+                        className="font-medium text-foreground text-sm leading-snug flex-1" />
                     <div className="shrink-0 -mt-1 -mr-1">
                         <SpeakButton text={example.japanese} />
                     </div>
@@ -1531,23 +1557,6 @@ function SpeakButton({ text, lookupWord }: { text: string; lookupWord?: string }
             className={speaking ? "text-primary" : ""}
         >
             <Volume2 className={`h-3.5 w-3.5 ${speaking ? "animate-pulse" : ""}`} />
-        </Button>
-    );
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// Bookmark button
-// ══════════════════════════════════════════════════════════════════════
-function BookmarkButton({ saved, onToggle }: { saved: boolean; onToggle: () => void }) {
-    return (
-        <Button
-            onClick={onToggle}
-            size="icon-sm"
-            variant="ghost"
-            title={saved ? "Bỏ lưu" : "Lưu từ này"}
-            className={saved ? "text-yellow-500 hover:text-yellow-600" : ""}
-        >
-            {saved ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
         </Button>
     );
 }

@@ -14,6 +14,8 @@ public interface AnkiReviewLogMapper extends BaseCrudMapper<AnkiReviewLog, AnkiR
     @Mapping(target = "progress", ignore = true)
     @Mapping(target = "sessionItem", ignore = true)
     @Mapping(target = "flashcard", ignore = true)
+    @Mapping(target = "deck", ignore = true)
+    @Mapping(target = "algorithmConfig", ignore = true)
     AnkiReviewLog toEntity(AnkiReviewLogDTO dto);
 
     @Override
@@ -21,6 +23,8 @@ public interface AnkiReviewLogMapper extends BaseCrudMapper<AnkiReviewLog, AnkiR
     @Mapping(target = "progressId", source = "progress.id")
     @Mapping(target = "sessionItemId", source = "sessionItem.id")
     @Mapping(target = "flashcardId", source = "flashcard.id")
+    @Mapping(target = "deckId", source = "deck.id")
+    @Mapping(target = "algorithmConfigId", source = "algorithmConfig.id")
     AnkiReviewLogDTO toResponse(AnkiReviewLog entity);
 
     @Override
@@ -28,6 +32,8 @@ public interface AnkiReviewLogMapper extends BaseCrudMapper<AnkiReviewLog, AnkiR
     @Mapping(target = "progress", ignore = true)
     @Mapping(target = "sessionItem", ignore = true)
     @Mapping(target = "flashcard", ignore = true)
+    @Mapping(target = "deck", ignore = true)
+    @Mapping(target = "algorithmConfig", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void update(@MappingTarget AnkiReviewLog entity, AnkiReviewLogDTO dto);
 }

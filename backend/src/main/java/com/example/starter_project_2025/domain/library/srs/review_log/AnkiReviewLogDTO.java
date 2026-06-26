@@ -28,6 +28,10 @@ public class AnkiReviewLogDTO extends BaseDTO {
     @NotNull(groups = OnCreate.class, message = "Flashcard ID is required")
     Long flashcardId;
 
+    Long deckId;
+
+    Long algorithmConfigId;
+
     @NotBlank(groups = OnCreate.class, message = "Rating is required")
     String rating;
 
@@ -60,4 +64,22 @@ public class AnkiReviewLogDTO extends BaseDTO {
     Long sourceId;
 
     LocalDateTime reviewedAt;
+
+    String algorithmType;
+
+    String parametersHash;
+
+    Integer elapsedDays;
+
+    Double oldDifficulty;
+    Double newDifficulty;
+
+    Double oldStability;
+    Double newStability;
+
+    Double oldRetrievability;
+    Double newRetrievability;
+
+    Integer oldScheduledDays;
+    Integer newScheduledDays;
 }

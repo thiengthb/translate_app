@@ -104,4 +104,64 @@ public class AnkiSrsProgress extends BaseEntity {
 
     @Column
     LocalDateTime nextReviewAt;
+
+    /* ──────────────────────────────────────────
+       Scheduler discriminator + FSRS memory-state fields.
+
+       SM-2 uses `easeFactor` + `intervalDays`.
+       FSRS uses difficulty / stability / retrievability driven by a
+       desired-retention target. These columns are nullable so existing SM-2
+       rows are unaffected; only FSRS-scheduled cards populate them.
+    ────────────────────────────────────────── */
+
+    /** Which algorithm last scheduled this card: "SM2" (default) or "FSRS". */
+    @Builder.Default
+    @Column(name = "algorithm_type", nullable = false, length = 20)
+    String algorithmType = "SM2";
+
+    /** FSRS: inherent difficulty of the card for this user. */
+    @Column
+    Double difficulty;
+
+    /** FSRS: memory stability — days for recall probability to fall to ~90%. */
+    @Column
+    Double stability;
+
+    /** FSRS: retrievability — recall probability at the last computation. */
+    @Column
+    Double retrievability;
+
+    /** FSRS: interval the card was scheduled for, in days. */
+    @Column(name = "scheduled_days")
+    Integer scheduledDays;
+
+    /** FSRS: days elapsed between the previous two reviews. */
+    @Column(name = "elapsed_days")
+    Integer elapsedDays;
+
+    /* ──────────────────────────────────────────
+       Leech handling (Anki-style).
+
+       A "leech" is a card the user keeps forgetting (lapses ≥ the deck's
+       leech_threshold). It is auto-flagged on the lapse that crosses the
+       threshold, and — if the deck enables suspend-leeches — also suspended.
+       Suspended cards are hidden from the study queue until manually resumed.
+
+       NOTE: intentionally NULLABLE (no NOT NULL) — the default active profile is
+       MySQL with ddl-auto=update, and adding a NOT NULL column without a DB
+       default to a table that already has rows fails on startup. Null is read as
+       false everywhere (Boolean.TRUE.equals).
+    ────────────────────────────────────────── */
+
+    /** True once the card's lapses reach the deck's leech threshold. */
+    @Builder.Default
+    @Column(name = "is_leech")
+    @FieldMeta(label = "Leech", type = "checkbox", order = 7, group = "SRS")
+    Boolean isLeech = false;
+
+    /** Suspended cards are excluded from study until manually resumed. */
+    @Builder.Default
+    @Column
+    @FieldMeta(label = "Suspended", type = "checkbox", order = 8, group = "SRS")
+    Boolean suspended = false;
 }

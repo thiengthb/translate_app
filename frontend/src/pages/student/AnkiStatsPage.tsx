@@ -157,6 +157,19 @@ function StatRow({ label, value, tone }: { label: string; value: string | number
   );
 }
 
+/* ── Big FSRS metric (stability / difficulty) ── */
+function FsrsMetric({ label, value, hint, tone }: {
+  label: string; value: string; hint: string; tone?: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn("text-3xl font-bold tabular-nums leading-tight", tone)}>{value}</p>
+      <p className="text-[11px] text-muted-foreground/80">{hint}</p>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────
    Page
 ───────────────────────────────────────── */
@@ -206,6 +219,7 @@ export default function AnkiStatsPage() {
   const memScore      = stats?.avgMemoryScore ?? 0;
   const memTone       = memScore >= 75 ? "text-green-600" : memScore >= 50 ? "text-amber-500" : "text-red-500";
   const memBarCls     = memScore >= 75 ? "bg-green-500" : memScore >= 50 ? "bg-amber-400" : "bg-red-400";
+  const isFsrs        = stats?.algorithmType === "FSRS";
 
   return (
     <MainLayout pathName={{ "/stats": "Statistics" }}>
@@ -268,6 +282,12 @@ export default function AnkiStatsPage() {
                 <StatRow label="Total reviews"    value={stats.totalReviews} />
                 <StatRow label="Average interval" value={`${stats.avgIntervalDays.toFixed(1)} days`} />
                 <StatRow label="Lapses"           value={stats.totalLapses}  tone={stats.totalLapses > 0 ? "text-red-500" : undefined} />
+                {stats.leechCards > 0 && (
+                  <StatRow label="Leeches" value={stats.leechCards} tone="text-red-500" />
+                )}
+                {stats.suspendedCards > 0 && (
+                  <StatRow label="Suspended" value={stats.suspendedCards} tone="text-muted-foreground" />
+                )}
               </div>
             </Panel>
 
@@ -314,22 +334,47 @@ export default function AnkiStatsPage() {
               />
             </Panel>
 
-            {/* Card Ease */}
-            <Panel
-              title="Card Ease"
-              subtitle="The lower the ease, the more frequently a card will appear."
-              footer={<>Average ease: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
-            >
-              <BarChart
-                data={eases}
-                colorFn={(i) => i <= 1 ? "bg-red-400" : i <= 3 ? "bg-green-500" : "bg-blue-400"}
-              />
-            </Panel>
+            {/* Card Ease (SM-2) — or FSRS memory (stability/difficulty) */}
+            {isFsrs ? (
+              <Panel
+                title="FSRS Memory"
+                subtitle="Stability (how long memory lasts) & difficulty (how hard the card is)."
+                footer={<>Avg difficulty: {stats.avgDifficulty.toFixed(1)} / 10</>}
+              >
+                <div className="flex flex-1 flex-col justify-center gap-6 pt-1">
+                  <FsrsMetric
+                    label="Average stability"
+                    value={`${stats.avgStability.toFixed(1)} days`}
+                    hint="Higher = memory decays slower, longer intervals."
+                    tone="text-sky-500"
+                  />
+                  <FsrsMetric
+                    label="Average difficulty"
+                    value={`${stats.avgDifficulty.toFixed(1)} / 10`}
+                    hint="Lower = easier to remember."
+                    tone={stats.avgDifficulty <= 4 ? "text-green-600" : stats.avgDifficulty <= 7 ? "text-amber-500" : "text-red-500"}
+                  />
+                </div>
+              </Panel>
+            ) : (
+              <Panel
+                title="Card Ease"
+                subtitle="The lower the ease, the more frequently a card will appear."
+                footer={<>Average ease: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
+              >
+                <BarChart
+                  data={eases}
+                  colorFn={(i) => i <= 1 ? "bg-red-400" : i <= 3 ? "bg-green-500" : "bg-blue-400"}
+                />
+              </Panel>
+            )}
 
             {/* Memory Score / Retention */}
             <Panel
               title="Retention"
-              subtitle="SM2 memory score — estimated pass rate per card."
+              subtitle={isFsrs
+                ? "FSRS memory score — estimated recall probability per card."
+                : "SM2 memory score — estimated pass rate per card."}
             >
               <div className="space-y-5 pt-1">
                 {/* Big score */}
@@ -358,7 +403,9 @@ export default function AnkiStatsPage() {
                   <StatRow label="New"           value={stats.newCards}                             tone="text-blue-500" />
                   <StatRow label="Learning"      value={stats.learningCards + stats.relearningCards} tone="text-orange-500" />
                   <StatRow label="Review"        value={stats.reviewCards}                          tone="text-green-600" />
-                  <StatRow label="Ease factor"   value={`${(stats.avgEaseFactor * 100).toFixed(0)}%`} />
+                  {isFsrs
+                    ? <StatRow label="Avg stability" value={`${stats.avgStability.toFixed(1)}d`} />
+                    : <StatRow label="Ease factor"   value={`${(stats.avgEaseFactor * 100).toFixed(0)}%`} />}
                 </div>
               </div>
             </Panel>

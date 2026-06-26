@@ -13,6 +13,7 @@ import StudentLandingPage from "@/pages/student/StudentLandingPage";
 import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
+
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
@@ -27,10 +28,12 @@ import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
+import WordDetailPage from "@/pages/dictionary/WordDetailPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
+import ImportDeckPage from "@/pages/student/ImportDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
 import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
@@ -59,11 +62,18 @@ import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
 import SakuraDashboardPage from "@/pages/sakura/SakuraDashboardPage";
 import type { ComponentType } from "react";
+import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { buildEntityRoutes } from "./build-router";
+
+const KanaSharkPage = lazy(() => import("@/pages/student/learning/KanaSharkPage"));
+
+export type RouteComponent =
+  | ComponentType<Record<string, never>>
+  | LazyExoticComponent<ComponentType<Record<string, never>>>;
 
 export interface RouteConfig {
   path: string;
-  component: ComponentType<any>;
+  component: RouteComponent;
   requiredPermission?: string;
   isPublic?: boolean;
   isModuleDriven?: boolean;
@@ -75,12 +85,14 @@ export const routes: RouteConfig[] = [
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
   { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
+  { path: "/words/:wordId", component: WordDetailPage, requiredPermission: "WORD_READ" },
   { path: "/student", component: StudentLandingPage },
   { path: "/teacher", component: TeacherLandingPage },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/decks/import", component: ImportDeckPage, requiredPermission: "DECK_CREATE" },
   // Card-template management is the base-CRUD ProTable (entityConfig at
   // pages/management/library/card-template/index.tsx, auto-registered via
   // buildEntityRoutes + the @ResourceMenu module). Create / Edit route to the
@@ -97,6 +109,7 @@ export const routes: RouteConfig[] = [
   { path: "/deck/:deckId/anki/template", component: AnkiTemplateEditPage, requiredPermission: "DECK_UPDATE" },
   { path: "/deck/:deckId/srs-preview", component: FlashcardSchedulePreviewPage, requiredPermission: "DECK_READ" },
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
+  { path: "/student/learning/kana-shark", component: KanaSharkPage, requiredPermission: "ANKI_SRS_PROGRESS_READ" },
 
   // ── Assessment ──
   { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
@@ -141,6 +154,7 @@ export const routes: RouteConfig[] = [
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },
+  { path: "/streak", component: StreakPage },
   { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },

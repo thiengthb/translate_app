@@ -12,6 +12,7 @@ import {
   DEFAULT_DRAFT,
   describeState,
   initialCardState,
+  isFsrsAlgorithm,
   normalizeDraft,
   normalizeSetting,
   previewOutcomes,
@@ -175,7 +176,7 @@ export default function FlashcardSchedulePreviewPage() {
             </div>
           </div>
           <span className="rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-semibold text-green-600">
-            {algorithm?.name ?? "Built-in Anki SM2"}
+            {isFsrsAlgorithm(algorithm) ? "FSRS-5" : "SM-2"}
           </span>
         </div>
 

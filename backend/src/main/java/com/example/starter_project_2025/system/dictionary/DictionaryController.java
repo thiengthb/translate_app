@@ -65,6 +65,12 @@ public class DictionaryController {
         return ResponseEntity.ok(wordService.createFull(request));
     }
 
+    @GetMapping("/words/{id}")
+    @Operation(summary = "Lấy chi tiết một từ vựng (kèm nghĩa đa ngôn ngữ, hán tự và ví dụ)")
+    public ResponseEntity<WordSearchResult> getWord(@PathVariable Long id) {
+        return ResponseEntity.ok(dictionaryService.getById(id));
+    }
+
     // ── Import / Export RIÊNG cho từ vựng (cấu trúc phức tạp: nghĩa + ví dụ) ──
 
     @GetMapping("/words/export")

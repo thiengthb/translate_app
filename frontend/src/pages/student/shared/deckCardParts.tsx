@@ -76,12 +76,13 @@ export function DeckStatsInline({ deck }: { deck: DeckDTO }) {
   }, [deck.id]);
   if (!stats) return null;
   const learning = stats.learningCards + stats.relearningCards;
+  const dueToday = stats.dueReviewCards ?? stats.dueToday ?? 0;
   // Pills shaped exactly like a TagChip (px-1.5 py-0.5 text-[10px] rounded-full),
   // neutral text, a coloured dot to tell them apart, full label on hover.
   const pills = [
-    { dot: "bg-blue-500", value: stats.newCards, label: `Thẻ mới: ${stats.newCards}` },
+    { dot: "bg-blue-500", value: stats.newCards, label: `New today: ${stats.newCards}` },
     { dot: "bg-orange-500", value: learning, label: `Đang học: ${learning}` },
-    { dot: "bg-emerald-600", value: stats.reviewCards, label: `Cần ôn: ${stats.reviewCards}` },
+    { dot: "bg-emerald-600", value: dueToday, label: `Due today: ${dueToday}` },
   ];
   return (
     <div className="flex shrink-0 items-center gap-1.5">

@@ -21,4 +21,10 @@ public class AnkiReviewRequest {
     /** AGAIN | HARD | GOOD | EASY */
     @NotNull
     String rating;
+
+    Double score;
+
+    Integer timeTakenMs;
+
+    String sourceType;
 }

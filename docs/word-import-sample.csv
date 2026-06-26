@@ -1,0 +1,4 @@
+Word,Reading,WordType,Frequency,Representation,Level,Meanings,Examples
+食べる,たべる,v1,1200,KANJI,N5,vi: ăn | en: to eat,毎朝ご飯を食べる。 => Mỗi sáng tôi ăn cơm.
+学生,がくせい,n,800,KANJI,N5,"vi: học sinh, sinh viên | en: student",私は学生です。 => Tôi là học sinh.
+飲む,のむ,v5m,1500,KANJI,N5,vi: uống | en: to drink,水を飲む。 => Uống nước.

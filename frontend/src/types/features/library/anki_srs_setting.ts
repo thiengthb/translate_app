@@ -8,6 +8,10 @@ export interface AnkiSrsSettingDTO extends BaseDTO {
   maxReviewsPerDay?: number;
   maxItemsPerDay?: number;
   buryRelatedItems?: boolean;
+  maximumIntervalDays?: number;
+  rescheduleCardsOnChange?: boolean;
+  suspendLeeches?: boolean;
+  leechThreshold?: number;
 }
 
 export interface AnkiSrsSettingFilter extends Partial<BaseFilter> {
