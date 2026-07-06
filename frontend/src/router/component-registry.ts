@@ -154,7 +154,6 @@ export const routes: RouteConfig[] = [
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
   { path: "/settings", component: SettingsPage },
-  { path: "/streak", component: StreakPage },
   { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
