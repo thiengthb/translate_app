@@ -4,8 +4,53 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing-page): rebuild login and registration forms with cherry-blossom design">
+      <change afterPath="$PROJECT_DIR$/frontend/dreamina-2026-06-22-5926-Combine image_16743583952644 and image_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0000s_0000_Place-Your-Logo-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000_Title.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000s_0000_Home.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000s_0001_About.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000s_0002_Sakura-Bloom.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000s_0003_Hanami-Party.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0000s_0004_Contact.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0001_Text.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0001s_0000_CTA.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0001s_0001_Button.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0002_Date.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0001s_0003_Web.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0002s_0000_Color-Fill.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0002s_0000s_0000_Instagram.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0002s_0000s_0001_Facebook.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0002s_0000s_0002_Twitter.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0002s_0000s_0003_WhatsApp.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0003s_0000_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0003s_0001_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0003s_0002_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0003s_0003_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0003s_0004_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0004s_0000_Place-Your-Design-Here-(Double-Click-to-Edit).png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/layers/6581705_0005s_0000_Background.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/bg.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/branch_bottom.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/branch_top.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/chibi.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/cloud.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/petals/bloom-a.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/petals/bloom-b.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/petals/bloom-c.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/petals/petal-a.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/petals/petal-d.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/public/cherry/photo.webp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/landing/CherryLoginForm.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/landing/CherryPetals.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/landing/CherryRegisterForm.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.claude/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/launch.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/login-bg.jpeg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/public/login-bg.mp4" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,7 +140,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -130,7 +175,8 @@
             <option name="modelValue" value="gemini-3.1-pro-preview" />
           </model>
         </option>
-        <option name="targetType" value="LOCAL" />
+        <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
       </template>
     </option>
   </component>
@@ -154,6 +200,7 @@
     &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;Test-theme-by-Akira-second&quot;,
     &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
@@ -221,8 +268,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -287,7 +333,13 @@
       <workItem from="1781071257608" duration="1201000" />
       <workItem from="1782110583422" duration="10546000" />
       <workItem from="1782180940648" duration="7742000" />
-      <workItem from="1783342248742" duration="3354000" />
+      <workItem from="1783342248742" duration="3651000" />
+      <workItem from="1783524172095" duration="227000" />
+      <workItem from="1783524509152" duration="5687000" />
+      <workItem from="1783613138846" duration="558000" />
+      <workItem from="1783660763355" duration="2493000" />
+      <workItem from="1783700727940" duration="1096000" />
+      <workItem from="1783702620785" duration="3095000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -649,7 +701,23 @@
       <option name="project" value="LOCAL" />
       <updated>1782199676501</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="feat(streak): remove streak page and clean up related references">
+      <option name="closed" value="true" />
+      <created>1783352481386</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1783352481386</updated>
+    </task>
+    <task id="LOCAL-00047" summary="feat(landing-page): rebuild login and registration forms with cherry-blossom design">
+      <option name="closed" value="true" />
+      <created>1783707675734</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1783707675734</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -700,8 +768,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
-    <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
     <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
     <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
     <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
@@ -725,7 +791,9 @@
     <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
     <MESSAGE value="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality" />
     <MESSAGE value="feat(role-management): refactor role permissions and add utility methods for permission handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(role-management): refactor role permissions and add utility methods for permission handling" />
+    <MESSAGE value="feat(streak): remove streak page and clean up related references" />
+    <MESSAGE value="feat(landing-page): rebuild login and registration forms with cherry-blossom design" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(landing-page): rebuild login and registration forms with cherry-blossom design" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

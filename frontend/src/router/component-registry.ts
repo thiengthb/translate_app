@@ -61,7 +61,6 @@ import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
 import SakuraDashboardPage from "@/pages/sakura/SakuraDashboardPage";
-import type { ComponentType } from "react";
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { buildEntityRoutes } from "./build-router";
 

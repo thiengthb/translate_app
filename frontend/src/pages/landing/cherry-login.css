@@ -1,0 +1,537 @@
+/* ── Cherry-blossom login stage ──────────────────────────────────────────
+   Faithful port of the cherry-blossom-site template: a fixed 1116×628
+   design canvas that COVERS the viewport (overflow is just the pink edge
+   of the artwork). All layer positions are % of that canvas, identical to
+   the template's index.html. Baked-in English text layers were replaced
+   with real HTML text + the live login form. Font sizes use cqw so type
+   scales with the stage, not the viewport. */
+
+.cherry-body {
+    position: fixed;
+    inset: 0;
+    background: #fcdee4;
+    overflow: hidden;
+}
+
+.cherry-stage {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: max(100vw, calc(100vh * 1116 / 628));
+    aspect-ratio: 1116 / 628;
+    background: url("/cherry/bg.jpg") center / cover no-repeat #fcdee4;
+    overflow: hidden;
+    user-select: none;
+    container-type: inline-size;
+    /* Whole login page uses the rounded "Baloo 2" display font to match the
+       cherry-blossom design's bubbly lettering (headings, nav, body & form). */
+    font-family: "Baloo 2", ui-rounded, "Varela Round", "Quicksand", system-ui, sans-serif;
+    color: #5c2e38;
+}
+
+.cherry-stage > img.deco {
+    position: absolute;
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+}
+
+/* ── Brand (replaces the "Cherry Blossom" circle logo layer) ── */
+.cherry-brand {
+    position: absolute;
+    left: 6.9%;
+    top: 12.898%;
+    width: 10.658%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #f7a8bc;
+    box-shadow: 0 0.6cqw 1.6cqw rgba(176, 58, 89, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2%;
+    text-align: center;
+}
+.cherry-brand .mark {
+    width: 40%;
+    aspect-ratio: 1;
+    margin-bottom: -2%;
+}
+.cherry-brand .name {
+    font-family: "Baloo 2", ui-rounded, "Varela Round", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 1.75cqw;
+    letter-spacing: 0.01em;
+    color: #5c2e38;
+    line-height: 0.95;
+    -webkit-text-stroke: 0.06cqw #fff;
+}
+.cherry-brand .name-jp {
+    font-size: 0.82cqw;
+    color: #7d4451;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+/* ── Top nav (replaces the baked HOME/ABOUT/… text layers) ── */
+.cherry-nav {
+    position: absolute;
+    left: 46%;
+    top: 13.4%;
+    width: 46.6%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2.4cqw;
+    font-size: 0.95cqw;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.cherry-nav a,
+.cherry-nav button {
+    color: #5c2e38;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    padding: 0;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+.cherry-nav a:hover,
+.cherry-nav button:hover {
+    color: #b03a59;
+    transform: translateY(-1px);
+}
+
+/* ── Right column: tagline / heading / login form ── */
+.cherry-panel {
+    position: absolute;
+    left: 65.86%;
+    top: 25%;
+    width: 17.5%;
+    display: flex;
+    flex-direction: column;
+}
+.cherry-tagline {
+    font-size: 0.82cqw;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #a04a5e;
+}
+.cherry-heading {
+    font-family: "Baloo 2", ui-rounded, system-ui, sans-serif;
+    margin-top: 0.35cqw;
+    font-size: 2.05cqw;
+    line-height: 1.05;
+    font-weight: 800;
+    color: #5c2e38;
+}
+.cherry-sub {
+    margin-top: 0.5cqw;
+    font-size: 0.86cqw;
+    line-height: 1.4;
+    color: #7d4451;
+    font-weight: 600;
+}
+
+.cherry-form {
+    margin-top: 0.9cqw;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6cqw;
+}
+/* First name / last name side by side (register) */
+.cherry-field-row {
+    display: flex;
+    gap: 0.7cqw;
+}
+.cherry-field-row .cherry-field {
+    flex: 1;
+    min-width: 0;
+}
+.cherry-field-err {
+    display: block;
+    margin-top: 0.2cqw;
+    font-size: 0.68cqw;
+    font-weight: 600;
+    color: #c0335a;
+}
+.cherry-field label {
+    display: block;
+    font-size: 0.8cqw;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #7d4451;
+    margin-bottom: 0.2cqw;
+}
+.cherry-field .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+.cherry-input-wrap {
+    position: relative;
+}
+.cherry-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid #f2b7c6;
+    border-radius: 999px;
+    padding: 0.55cqw 1cqw;
+    font-size: 0.88cqw;
+    color: #5c2e38;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cherry-input::placeholder {
+    color: #c58a99;
+}
+.cherry-input:focus {
+    border-color: #b03a59;
+    box-shadow: 0 0 0 0.25cqw rgba(176, 58, 89, 0.15);
+}
+.cherry-eye {
+    position: absolute;
+    right: 1cqw;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #a04a5e;
+    display: flex;
+    align-items: center;
+}
+
+.cherry-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.78cqw;
+    font-weight: 700;
+    color: #b03a59;
+    text-decoration: underline dotted;
+}
+.cherry-link:hover {
+    color: #8d2c47;
+}
+
+.cherry-error {
+    background: rgba(176, 58, 89, 0.12);
+    border: 1px solid rgba(176, 58, 89, 0.35);
+    color: #8d2c47;
+    border-radius: 0.7cqw;
+    padding: 0.5cqw 0.9cqw;
+    font-size: 0.82cqw;
+    font-weight: 600;
+}
+
+/* Submit button — soft pink pill that matches the sakura background
+   (replaces the old teal button.png; smaller & more compact). */
+.cherry-btn {
+    align-self: flex-start;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff9ebb 0%, #f472a0 55%, #ee5f92 100%);
+    padding: 0.62cqw 2.2cqw;
+    cursor: pointer;
+    font-family: "Baloo 2", ui-rounded, system-ui, sans-serif;
+    font-size: 0.98cqw;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5cqw;
+    margin-top: 0.35cqw;
+    box-shadow: 0 0.35cqw 0.9cqw rgba(238, 95, 146, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.cherry-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0.55cqw 1.2cqw rgba(238, 95, 146, 0.45);
+    filter: brightness(1.03);
+}
+.cherry-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+.cherry-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.cherry-google {
+    border: 1px solid #f2b7c6;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 999px;
+    padding: 0.45cqw 0.9cqw;
+    font-size: 0.85cqw;
+    font-weight: 700;
+    color: #5c2e38;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5cqw;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.cherry-google:hover:not(:disabled) {
+    background: #fff;
+    transform: translateY(-1px);
+}
+.cherry-google:disabled {
+    opacity: 0.6;
+}
+
+.cherry-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.7cqw;
+    font-size: 0.72cqw;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #a04a5e;
+    text-transform: uppercase;
+    margin-top: 0.1cqw;
+}
+.cherry-divider::before,
+.cherry-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #f2b7c6;
+}
+
+/* Footer line of the panel (replaces the www.cherryblossom.com layer) */
+.cherry-register {
+    margin-top: 0.8cqw;
+    font-size: 0.82cqw;
+    font-weight: 600;
+    color: #7d4451;
+}
+
+/* ── Cherry branches: anchored to the viewport edges so they're never
+      clipped by the cover-scaled stage. Both sway gently around the point
+      where they "attach" to the screen edge. ── */
+.cherry-branch-top,
+.cherry-branch-bottom {
+    position: absolute;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    z-index: 1;
+}
+.cherry-branch-top {
+    top: 0;
+    left: 25.6vw;
+    width: 12.8vw;
+    transform-origin: 50% 0;
+    animation: cherry-sway 6.5s ease-in-out infinite;
+}
+.cherry-branch-bottom {
+    bottom: 0;
+    left: 24vw;
+    width: 12.5vw;
+    transform-origin: 50% 100%;
+    animation: cherry-sway 7.5s ease-in-out infinite reverse;
+}
+@keyframes cherry-sway {
+    0%,
+    100% {
+        transform: rotate(-2deg);
+    }
+    50% {
+        transform: rotate(2deg);
+    }
+}
+
+/* ── Segmented tab switch (Đăng nhập / Đăng ký) with a sliding pill ── */
+.cherry-tabs {
+    position: relative;
+    display: flex;
+    margin-top: 1cqw;
+    padding: 0.28cqw;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid #f2b7c6;
+}
+.cherry-tabs-pill {
+    position: absolute;
+    top: 0.28cqw;
+    bottom: 0.28cqw;
+    /* width & left are the two halves; left is driven inline from React
+       (login → 0.28cqw, register → 50%) so it reliably wins the cascade. */
+    width: calc(50% - 0.28cqw);
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff9ebb, #ee5f92);
+    box-shadow: 0 0.2cqw 0.6cqw rgba(238, 95, 146, 0.3);
+    transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cherry-tabs button {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5cqw 0;
+    font-family: inherit;
+    font-size: 0.9cqw;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #a04a5e;
+    transition: color 0.25s ease;
+}
+.cherry-tabs button[data-active="true"] {
+    color: #fff;
+}
+
+/* Form area fades & slides up on each mode switch (keyed remount). */
+.cherry-formwrap {
+    animation: cherry-form-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes cherry-form-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.8cqw);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Falling petals: full-viewport layer of individually randomised petals
+      (original cropped petal/blossom sprites). Three nested spans decouple the
+      motions so nothing looks synchronised:
+        • .cherry-petal       → vertical fall + net horizontal drift
+        • .cherry-petal-sway  → side-to-side sway (alternates)
+        • .cherry-petal-spin  → continuous rotation + holds the sprite size
+      All timing/offset/spin values come from inline CSS vars per petal. ── */
+.cherry-petals {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 4;
+}
+.cherry-petal {
+    position: absolute;
+    top: 0;
+    will-change: transform;
+    animation: cherry-fall var(--fall-dur) linear var(--delay) infinite;
+}
+.cherry-petal-sway {
+    display: block;
+    animation: cherry-sway-x var(--sway-dur) ease-in-out var(--delay) infinite alternate;
+}
+.cherry-petal-spin {
+    display: block;
+    height: auto;
+    animation: cherry-spin var(--spin-dur) linear var(--delay) infinite;
+    filter: drop-shadow(0 1px 1px rgba(176, 58, 89, 0.12));
+}
+@keyframes cherry-fall {
+    from {
+        transform: translate3d(0, -12vh, 0);
+    }
+    to {
+        transform: translate3d(var(--drift), 112vh, 0);
+    }
+}
+@keyframes cherry-sway-x {
+    from {
+        transform: translateX(calc(var(--sway) * -1));
+    }
+    to {
+        transform: translateX(var(--sway));
+    }
+}
+@keyframes cherry-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(var(--spin));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cherry-branch-top,
+    .cherry-branch-bottom,
+    .cherry-petal,
+    .cherry-petal-sway,
+    .cherry-petal-spin {
+        animation: none;
+    }
+    .cherry-petals {
+        display: none;
+    }
+}
+
+/* ── Small screens: the fixed stage can't fit a usable form — fall back
+      to a simple scrollable column with the same artwork accents. ── */
+@media (max-width: 760px) {
+    .cherry-body {
+        position: static;
+        overflow: auto;
+        min-height: 100vh;
+    }
+    .cherry-stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: auto;
+        min-height: 100vh;
+        padding: 8% 6% 14%;
+    }
+    .cherry-stage > img.deco,
+    .cherry-branch-top,
+    .cherry-branch-bottom {
+        display: none;
+    }
+    /* Petals keep falling on mobile — pinned to the viewport, harmless. */
+    .cherry-petals {
+        position: fixed;
+    }
+    .cherry-field-row {
+        flex-direction: column;
+    }
+    .cherry-brand {
+        position: static;
+        width: 92px;
+        margin-bottom: 20px;
+    }
+    .cherry-brand .name { font-size: 12px; }
+    .cherry-brand .name-jp { font-size: 9px; }
+    .cherry-nav { display: none; }
+    .cherry-panel {
+        position: static;
+        width: 100%;
+        max-width: 420px;
+    }
+    .cherry-tagline { font-size: 11px; }
+    .cherry-heading { font-size: 28px; }
+    .cherry-sub { font-size: 14px; }
+    .cherry-form { gap: 12px; margin-top: 16px; }
+    .cherry-field label { font-size: 12px; margin-bottom: 4px; }
+    .cherry-field-err { font-size: 11px; margin-top: 3px; }
+    .cherry-input { font-size: 15px; padding: 10px 16px; }
+    .cherry-eye { right: 12px; }
+    .cherry-link { font-size: 12px; }
+    .cherry-error { font-size: 13px; padding: 8px 12px; border-radius: 10px; }
+    .cherry-tabs { margin-top: 16px; padding: 4px; }
+    .cherry-tabs button { font-size: 13px; padding: 8px 0; }
+    .cherry-tabs-pill { top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); }
+    .cherry-btn { font-size: 15px; padding: 11px 26px; box-shadow: 0 4px 12px rgba(238, 95, 146, 0.35); }
+    .cherry-google { font-size: 14px; padding: 9px 14px; }
+    .cherry-divider { font-size: 11px; }
+    .cherry-register { font-size: 13px; margin-top: 14px; }
+}
