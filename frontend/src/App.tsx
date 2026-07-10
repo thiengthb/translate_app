@@ -6,7 +6,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
-import { AuthModalProvider } from "./contexts/AuthModalContext";
 import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
@@ -201,9 +200,7 @@ function App() {
                 <AppToaster />
                 <I18nProvider>
                     <RoleSwitchProvider>
-                        <AuthModalProvider>
-                            <AppRoutes />
-                        </AuthModalProvider>
+                        <AppRoutes />
                     </RoleSwitchProvider>
                 </I18nProvider>
             </BrowserRouter>
