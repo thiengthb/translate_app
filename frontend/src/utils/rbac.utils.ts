@@ -143,19 +143,13 @@ export const formatRoleLabel = (role: string): string =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-export const getHomePathByRole = (role?: string | null): string => {
-  const normalizedRole = normalizeRole(role);
-
-  if (normalizedRole === STUDENT_ROLE) {
-    return "/student";
-  }
-
-  if (normalizedRole === TEACHER_ROLE) {
-    return "/teacher";
-  }
-
-  return "/dashboard";
-};
+/**
+ * Every role lands on the Sakura dashboard — it is role-aware itself
+ * (missions/quick actions adapt to the viewer's permissions), so the old
+ * per-role landing stubs (/student, /teacher) were retired.
+ */
+export const getHomePathByRole = (_role?: string | null): string =>
+  "/dashboard";
 
 export const canAccessByPermission = (
   requiredPermission: string | undefined,

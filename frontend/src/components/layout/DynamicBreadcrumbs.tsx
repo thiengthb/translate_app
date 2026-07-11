@@ -8,7 +8,6 @@ import {
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb.tsx";
 import { iconMap } from "@/components/datatable/iconMap";
 import { InfoLabel } from "@/components/common/InfoLabel";
@@ -45,10 +44,7 @@ function formatPath(path: string) {
 
 const PAGE_DESCRIPTIONS: Record<string, string> = {
     "/profile": "Your account profile and personal details.",
-    "/settings": "Personalize theme, color, typography and language.",
     "/help/shortcuts": "All keyboard shortcuts available across the app.",
-    "/student": "Learning area for students.",
-    "/teacher": "Workspace for teachers.",
     "/library": "Bộ sưu tập deck học tập của bạn.",
     "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
     "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
@@ -135,9 +131,12 @@ export default function DynamicBreadcrumbs({
                 {/* Optional explicit parent (e.g. "My Library" → /library) */}
                 {parentCrumb && (
                     <BreadcrumbItem className="flex items-center gap-2">
-                        <BreadcrumbSeparator className="text-muted-foreground/50">
+                        {/* Plain span — BreadcrumbSeparator is an <li>, and
+                            nesting it inside BreadcrumbItem's <li> is invalid
+                            HTML (React hydration warning). */}
+                        <span role="presentation" aria-hidden="true" className="text-muted-foreground/50">
                             <ChevronRight className="size-4" />
-                        </BreadcrumbSeparator>
+                        </span>
                         <BreadcrumbLink asChild>
                             {(() => {
                                 const { display, full, truncated } = truncateCrumb(parentCrumb.title);
@@ -186,9 +185,9 @@ export default function DynamicBreadcrumbs({
                             key={href}
                             className="flex items-center gap-2"
                         >
-                            <BreadcrumbSeparator className="text-muted-foreground/50">
+                            <span role="presentation" aria-hidden="true" className="text-muted-foreground/50">
                                 <ChevronRight className="size-4" />
-                            </BreadcrumbSeparator>
+                            </span>
 
                             {isLast && hasPage ? (
                                 <span className="flex items-center gap-2 px-2 py-1 rounded-md">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Home } from "lucide-react";
 
-import { HanabunMark } from "@/components/branding/HanabunLogo";
 import { CherryLoginForm } from "./CherryLoginForm";
 import { CherryRegisterForm } from "./CherryRegisterForm";
 import { CherryPetals } from "./CherryPetals";
@@ -40,26 +40,32 @@ export default function LandingPage() {
 
     return (
         <div className="cherry-body">
+            {/* Brand wordmark (chibi + "Hanabun" banner) pinned to the top-left
+                corner. Lives OUTSIDE the stage (viewport-anchored, rendered
+                first) so it stacks above the draping branch instead of being
+                trapped under the stage's own stacking context; on mobile it
+                falls to the top of the scroll column. */}
+            <img
+                className="cherry-wordmark"
+                src="/hanabun-wordmark.png"
+                alt="Hanabun — học tiếng Nhật"
+                draggable={false}
+            />
+
+            {/* Top-right home link — a soft candy pill. Viewport-anchored sibling
+                of the stage (z-index 3) so it stays above the draping branch. */}
+            <Link to="/" className="cherry-home" aria-label="Trang chủ">
+                <Home className="cherry-home-icon" aria-hidden />
+                <span>Trang chủ</span>
+            </Link>
+
             <main className="cherry-stage">
                 {/* ── Decorative artwork (positions identical to the template) ── */}
-                <img className="deco" style={{ left: "8.871%", top: "13.376%", width: "48.2%" }} src="/cherry/photo.webp" alt="" draggable={false} />
+                {/* Hero photo sits lower than the template so the top-left leaf
+                    logo (taller than a flat banner) never laps onto it. */}
+                <img className="deco" style={{ left: "8.871%", top: "22%", width: "48.2%" }} src="/cherry/photo.webp" alt="" draggable={false} />
                 <img className="deco" style={{ left: "4.749%", top: "28.662%", width: "9.899%" }} src="/cherry/cloud.png" alt="" draggable={false} />
                 <img className="deco" style={{ left: "84.409%", top: "44.108%", width: "10.546%" }} src="/cherry/chibi.png" alt="" draggable={false} />
-
-                {/* ── Brand circle (logo layer spot) ── */}
-                <div className="cherry-brand">
-                    <div className="mark">
-                        <HanabunMark />
-                    </div>
-                    <div className="name">HANABUN</div>
-                    <div className="name-jp">花文 · học tiếng Nhật</div>
-                </div>
-
-                {/* ── Top nav (nav-label layers spot) ── */}
-                <nav className="cherry-nav">
-                    <Link to="/">Trang chủ</Link>
-                    <Link to="/forgot-password">Quên mật khẩu</Link>
-                </nav>
 
                 {/* ── Right column: tagline / heading / auth forms ── */}
                 <section className="cherry-panel">

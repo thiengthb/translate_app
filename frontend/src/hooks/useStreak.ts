@@ -32,7 +32,9 @@ export function useStreakCalendar(year: number, month: number, enabled = true) {
  * Should be mounted once at the layout level.
  */
 export function useAutoCheckIn() {
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, email } = useSelector(
+        (state: RootState) => state.auth,
+    );
     const queryClient = useQueryClient();
     const ran = useRef(false);
 
@@ -40,7 +42,9 @@ export function useAutoCheckIn() {
         if (!isAuthenticated || ran.current) return;
         ran.current = true;
 
-        const today = new Date().toISOString().slice(0, 10);
+        // Flag is keyed per user — two accounts sharing one browser must
+        // each get their own daily check-in.
+        const today = `${new Date().toISOString().slice(0, 10)}|${email ?? ""}`;
         const lastFlag = localStorage.getItem(CHECK_IN_FLAG_KEY);
         if (lastFlag === today) return; // already checked in today on this device
 
@@ -49,9 +53,14 @@ export function useAutoCheckIn() {
             .then((res) => {
                 localStorage.setItem(CHECK_IN_FLAG_KEY, today);
                 queryClient.setQueryData(STREAK_QUERY_KEY, res.streak);
+                // Today just became an active date — refresh anything built
+                // on the per-month calendar (dashboard week counter, Record).
+                void queryClient.invalidateQueries({
+                    queryKey: ["streak", "calendar"],
+                });
             })
             .catch(() => {
                 // silent — feature is best-effort, never blocks the user
             });
-    }, [isAuthenticated, queryClient]);
+    }, [isAuthenticated, email, queryClient]);
 }

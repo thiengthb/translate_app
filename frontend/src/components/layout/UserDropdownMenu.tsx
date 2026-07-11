@@ -5,7 +5,6 @@ import {
     Coins,
     Keyboard,
     LogOut,
-    Settings2,
     Trophy,
     User as UserIcon,
 } from "lucide-react";
@@ -239,13 +238,6 @@ export function UserDropdownMenu({
                     label="Phím tắt"
                     hint="?"
                     onSelect={() => navigate(SHORTCUTS_PAGE_PATH)}
-                />
-
-                {/* Full settings page — palette + theme + language. */}
-                <MenuRow
-                    icon={Settings2}
-                    label="Cài đặt"
-                    onSelect={() => navigate("/settings")}
                 />
 
                 <DropdownMenuSeparator />

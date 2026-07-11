@@ -6,7 +6,6 @@ import {
   Layers,
   Library,
   ScrollText,
-  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -82,16 +81,6 @@ export function KanjiStudyHeader() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <TooltipWrapper content="Cài đặt">
-            <button
-              onClick={() => navigate("/settings")}
-              aria-label="Cài đặt"
-              className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none"
-            >
-              <Settings size={17} />
-            </button>
-          </TooltipWrapper>
 
           <span className="mx-1 h-5 w-px bg-border" aria-hidden />
 

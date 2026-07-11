@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Sakura Study Dashboard
-// Drop into: src/components/sakura-dashboard/SakuraStudyDashboard.tsx
+// Sakura Study Dashboard — in-shell content
 //
 // Stack: React + TS + Tailwind v4 + shadcn/ui + lucide-react  (matches Hanabun)
-// Palette: FIXED sakura candy palette (does NOT follow the app color-preset).
-//          Structural intent is kept readable via the `sakura` token map below.
-// Font:    headings use the `font-display` utility — see README step 2 to wire
-//          "Baloo 2" into your @theme inline block.
+// Palette: FIXED sakura candy palette (mirrors the :root vars in index.css).
+// Font:    headings use the `font-display` utility ("Baloo 2").
+//
+// Rendered inside MainLayout by the /dashboard page. All numbers are live —
+// streak, reward EXP, leaderboard rank — assembled by useDashboardData.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as React from "react";
@@ -15,18 +15,15 @@ import {
   CalendarCheck,
   CalendarDays,
   CheckSquare,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Flame,
   ListChecks,
   Medal,
-  RotateCcw,
   Trophy,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-import { SakuraSidebarContent } from "./SakuraSidebar";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAutoCheckIn, useMyStreak, useStreakCalendar } from "@/hooks/useStreak";
@@ -114,13 +111,33 @@ const accentMap: Record<
 
 // ── Small building blocks ─────────────────────────────────────────────────────
 function MissionCard({ mission }: { mission: Mission }) {
+  const navigate = useNavigate();
   const a = accentMap[mission.accent];
-  const pct = Math.round((mission.done / mission.total) * 100);
-  const showBadge = mission.status !== "challenge";
+  const pct =
+    mission.total > 0
+      ? Math.min(100, Math.round((mission.done / mission.total) * 100))
+      : 0;
+  const completed = mission.status === "completed";
+  const showBadge = completed || mission.status === "in-progress";
+  const badgeLabel = completed ? "Completed" : "in progress";
 
   return (
     <div
-      className="min-w-0 flex-1 rounded-[22px] p-4 pb-[18px]"
+      role={mission.to ? "link" : undefined}
+      tabIndex={mission.to ? 0 : undefined}
+      onClick={mission.to ? () => navigate(mission.to!) : undefined}
+      onKeyDown={
+        mission.to
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") navigate(mission.to!);
+            }
+          : undefined
+      }
+      className={cn(
+        "min-w-0 flex-1 rounded-[22px] p-4 pb-[18px]",
+        mission.to &&
+          "cursor-pointer transition-transform hover:-translate-y-0.5",
+      )}
       style={{ background: a.cardBg, border: `1.5px solid ${a.cardBorder}` }}
     >
       <div className="mb-[14px] flex items-center justify-between">
@@ -142,11 +159,11 @@ function MissionCard({ mission }: { mission: Mission }) {
           <div
             className="absolute right-[14px] top-[14px] flex h-[58px] w-[58px] -rotate-[14deg] items-center justify-center rounded-full text-center text-[8.5px] font-bold uppercase leading-tight tracking-[0.03em]"
             style={{
-              border: `2px solid ${a.badgeBorder}`,
-              color: a.badgeText,
+              border: `2px solid ${completed ? sakura.mint : a.badgeBorder}`,
+              color: completed ? sakura.mintDeep : a.badgeText,
             }}
           >
-            {a.badgeLabel}
+            {badgeLabel}
           </div>
         )}
 
@@ -479,18 +496,24 @@ function AchievementChart({ achievement }: { achievement: Achievement }) {
   const area = `${line} L ${right} ${bottom} L ${left} ${bottom} Z`;
 
   const peak = xy[achievement.peakIndex];
-  const peakValue = pts[achievement.peakIndex]?.value ?? 0;
+  const peakPoint = pts[achievement.peakIndex];
+  const peakLabel =
+    peakPoint?.raw !== undefined
+      ? `${peakPoint.raw} EXP`
+      : `${peakPoint?.value ?? 0}%`;
   const peakLeftPct = ((peak.x - left) / (right - left)) * 100;
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h3 className="font-display m-0 text-[20px] font-bold">achievement</h3>
-        <div className="flex cursor-pointer items-center gap-[5px] text-[14px] font-semibold text-[#9A8E92]">
-          {achievement.rangeLabel} <ChevronDown className="h-[15px] w-[15px]" />
+        <h3 className="font-display m-0 text-[20px] font-bold">Thành tích</h3>
+        <div className="flex items-center gap-[5px] text-[14px] font-semibold text-[#9A8E92]">
+          {achievement.rangeLabel}
         </div>
       </div>
-      <p className="m-0 mb-[6px] mt-1 text-[13px] text-[#9A8E92]">keep trying~</p>
+      <p className="m-0 mb-[6px] mt-1 text-[13px] text-[#9A8E92]">
+        EXP nhận được từng ngày — cố lên nhé~
+      </p>
 
       <div className="relative">
         <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-40">
@@ -506,10 +529,10 @@ function AchievementChart({ achievement }: { achievement: Achievement }) {
           <circle cx={peak.x} cy={peak.y} r="6" fill="#fff" stroke="#FF6B9D" strokeWidth="3" />
         </svg>
         <div
-          className="absolute top-[8px] -translate-x-1/2 rounded-[10px] border border-[#FFE0E8] bg-white px-[10px] py-[3px] text-[14px] font-bold text-[#FF6B9D] shadow-[0_4px_10px_rgba(255,143,171,0.2)]"
+          className="absolute top-[8px] -translate-x-1/2 whitespace-nowrap rounded-[10px] border border-[#FFE0E8] bg-white px-[10px] py-[3px] text-[14px] font-bold text-[#FF6B9D] shadow-[0_4px_10px_rgba(255,143,171,0.2)]"
           style={{ left: `${peakLeftPct}%` }}
         >
-          {peakValue}%
+          {peakLabel}
         </div>
       </div>
 
@@ -527,7 +550,7 @@ function AchievementChart({ achievement }: { achievement: Achievement }) {
   );
 }
 
-function DataDonut({ pct }: { pct: number }) {
+function DataDonut({ pct, caption }: { pct: number; caption?: string }) {
   const r = 52;
   const C = 2 * Math.PI * r;
   const filled = (Math.max(0, Math.min(100, pct)) / 100) * C;
@@ -552,7 +575,9 @@ function DataDonut({ pct }: { pct: number }) {
           {pct}%
         </div>
       </div>
-      <p className="m-0 mt-[14px] text-center text-[13px] text-[#9A8E92]">More than most people!</p>
+      <p className="m-0 mt-[14px] text-center text-[13px] text-[#9A8E92]">
+        {caption ?? "Tỷ lệ học đều tuần này"}
+      </p>
     </div>
   );
 }
@@ -582,139 +607,16 @@ function StatCard({
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-export function SakuraStudyDashboard({
-  user,
-  heroIllustrationUrl,
-  missions,
-  achievement,
-  stats,
-  onReturn,
-  className,
-}: SakuraDashboardProps) {
-  return (
-    <div
-      className={cn(
-        "flex min-h-screen items-start justify-center gap-7 p-8 font-[Quicksand,sans-serif] text-[#3A2E33]",
-        className,
-      )}
-      style={{ background: sakura.bg }}
-    >
-      {/* LEFT shell: sidebar + main */}
-      <div className="flex min-w-[780px] max-w-[1180px] flex-1 overflow-hidden rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
-        {/* Sidebar — shared candy rail (role-aware: admin gets full nav) */}
-        <aside className="flex w-24 flex-none border-r border-[#FBEAF0]">
-          <SakuraSidebarContent />
-        </aside>
-
-        {/* Main */}
-        <main className="min-w-0 flex-1 px-10 pb-10 pt-[34px]">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="font-display m-0 text-[26px] font-bold text-[#3A2E33]">
-              Hi! {user.name}, welcome
-            </h1>
-            <Button
-              onClick={onReturn}
-              className="gap-2 rounded-full border-0 px-5 text-white shadow-[0_8px_18px_rgba(255,107,157,0.35)] hover:opacity-95"
-              style={{ background: `linear-gradient(145deg, ${sakura.pink}, ${sakura.pinkDeep})` }}
-            >
-              Return <RotateCcw className="h-[15px] w-[15px]" />
-            </Button>
-          </div>
-
-          {/* Hero */}
-          <div className="relative flex items-center gap-6 overflow-hidden rounded-[24px] border border-[#FBEAF0] px-9 py-6 shadow-[0_8px_24px_rgba(255,143,171,0.10)]"
-            style={{ background: "linear-gradient(120deg,#FFF0F4 0%,#FFFFFF 60%)" }}
-          >
-            <div className="absolute left-[64px] top-[120px] text-[20px] leading-none text-[#FFC95C]">✦</div>
-            <div className="absolute right-20 top-[30px] h-2 w-[34px] -rotate-[25deg] rounded-full bg-[#FFE0E8]" />
-
-            <div className="flex w-[200px] flex-none items-end justify-center">
-              {heroIllustrationUrl ? (
-                <img src={heroIllustrationUrl} alt="" className="h-[190px] w-[190px] object-contain" />
-              ) : (
-                <div className="flex h-[190px] w-[190px] items-center justify-center rounded-[20px] bg-[#FFF0F4] text-[13px] text-[#FF8FAB]">
-                  illustration
-                </div>
-              )}
-            </div>
-
-            <div className="relative z-10 min-w-0 flex-1">
-              <h2 className="font-display m-0 mb-[10px] text-[34px] font-semibold uppercase leading-[1.15] tracking-[0.5px] text-[#3A2E33]">
-                This is your{" "}
-                <span className="font-display align-[-4px] text-[54px] font-extrabold text-[#FF8FAB]">
-                  {user.studyDay}
-                </span>{" "}
-                day of study
-              </h2>
-              <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Go and study</p>
-            </div>
-          </div>
-
-          {/* Mission */}
-          <div className="my-[18px] mt-[30px] flex items-center justify-between">
-            <div className="flex items-center gap-[10px]">
-              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#FFE5EC] text-[#FF6B9D]">
-                <CheckSquare className="h-[19px] w-[19px]" />
-              </span>
-              <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
-            </div>
-            <button className="flex text-[#B9AEB2] hover:text-[#FF8FAB]" title="Calendar">
-              <CalendarDays className="h-[22px] w-[22px]" />
-            </button>
-          </div>
-
-          {/* Mission carousel */}
-          <div className="relative flex items-stretch gap-5">
-            <button className="absolute left-[-16px] top-1/2 z-[2] flex h-[38px] w-[38px] -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#FF8FAB] shadow-[0_4px_14px_rgba(255,143,171,0.25)]">
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-
-            {missions.map((m) => (
-              <MissionCard key={m.id} mission={m} />
-            ))}
-
-            <button className="absolute right-[-16px] top-1/2 z-[2] flex h-[38px] w-[38px] -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#FF8FAB] shadow-[0_4px_14px_rgba(255,143,171,0.25)]">
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </main>
-      </div>
-
-      {/* RIGHT panel */}
-      <div className="flex w-[420px] flex-none flex-col gap-[26px]">
-        <RecordCalendar />
-        <AchievementChart achievement={achievement} />
-
-        <div>
-          <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">data</h3>
-          <div className="flex items-stretch gap-4">
-            <DataDonut pct={stats.donutPct} />
-            <div className="flex flex-1 flex-col gap-4">
-              <StatCard value={stats.ranking} label="Ranking" iconColor={sakura.pink} />
-              <StatCard value={stats.progressPct} suffix="%" label="Progress" iconColor={sakura.honey} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── In-shell content ─────────────────────────────────────────────────────────
-// The same Sakura design WITHOUT its own sidebar / full-screen wrapper, so it
-// can be dropped inside the app shell (MainLayout). Used by the /dashboard page.
+// The Sakura dashboard WITHOUT its own sidebar / full-screen wrapper, so it
+// drops inside the app shell (MainLayout). Used by the /dashboard page.
 export function SakuraDashboardContent({
   user,
   heroIllustrationUrl,
   missions,
   achievement,
   stats,
-}: Pick<
-  SakuraDashboardProps,
-  "user" | "heroIllustrationUrl" | "missions" | "achievement" | "stats"
->) {
+}: SakuraDashboardProps) {
   return (
     <div className="flex flex-col items-start gap-7 font-[Quicksand,sans-serif] text-[#3A2E33] xl:flex-row">
       {/* LEFT: greeting + hero + missions, in a white candy shell */}
@@ -761,9 +663,7 @@ export function SakuraDashboardContent({
             </span>
             <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
           </div>
-          <button className="flex text-[#B9AEB2] hover:text-[#FF8FAB]" title="Calendar">
-            <CalendarDays className="h-[22px] w-[22px]" />
-          </button>
+          <CalendarDays className="h-[22px] w-[22px] text-[#B9AEB2]" />
         </div>
 
         {/* Mission cards */}
@@ -780,12 +680,12 @@ export function SakuraDashboardContent({
         <AchievementChart achievement={achievement} />
 
         <div>
-          <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">data</h3>
+          <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">Thống kê</h3>
           <div className="flex items-stretch gap-4">
-            <DataDonut pct={stats.donutPct} />
+            <DataDonut pct={stats.donutPct} caption={stats.donutCaption} />
             <div className="flex flex-1 flex-col gap-4">
-              <StatCard value={stats.ranking} label="Ranking" iconColor={sakura.pink} />
-              <StatCard value={stats.progressPct} suffix="%" label="Progress" iconColor={sakura.honey} />
+              <StatCard value={stats.ranking} label="Xếp hạng" iconColor={sakura.pink} />
+              <StatCard value={stats.progressPct} suffix="%" label="Tiến độ cấp độ" iconColor={sakura.honey} />
             </div>
           </div>
         </div>
@@ -794,4 +694,4 @@ export function SakuraDashboardContent({
   );
 }
 
-export default SakuraStudyDashboard;
+export default SakuraDashboardContent;

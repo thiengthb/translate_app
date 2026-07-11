@@ -1,32 +1,20 @@
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { SakuraDashboardContent } from "@/components/sakura-dashboard/SakuraStudyDashboard";
 
-import { SakuraStudyDashboard } from "@/components/sakura-dashboard/SakuraStudyDashboard";
-import { defaultSakuraData } from "@/components/sakura-dashboard/sakura-dashboard.types";
-import type { RootState } from "@/store/store";
+import { useDashboardData } from "./useDashboardData";
 
 /**
- * Home dashboard — renders the full-screen Sakura study dashboard design
- * (its own candy sidebar, no app top bar). The greeting uses the logged-in
- * user's name; the rest is sample data (`defaultSakuraData`) until real
- * study endpoints are wired. Identical surface to `/sakura-dashboard`.
+ * Home dashboard for every role — the Sakura study dashboard rendered inside
+ * the app shell (candy rail + top bar), fed entirely by live data:
+ * streak/check-in, weekly consistency, EXP rewards, leaderboard rank, and —
+ * for admins — system user stats. See {@link useDashboardData}.
  */
 export function Dashboard() {
-    const navigate = useNavigate();
-    const { firstName, lastName, email } = useSelector(
-        (s: RootState) => s.auth,
-    );
-
-    const name =
-        [firstName, lastName].filter(Boolean).join(" ").trim() ||
-        email?.split("@")[0] ||
-        defaultSakuraData.user.name;
+    const data = useDashboardData();
 
     return (
-        <SakuraStudyDashboard
-            {...defaultSakuraData}
-            user={{ ...defaultSakuraData.user, name }}
-            onReturn={() => navigate(-1)}
-        />
+        <MainLayout pathName={{ "/dashboard": "Dashboard" }}>
+            <SakuraDashboardContent {...data} />
+        </MainLayout>
     );
 }

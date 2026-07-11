@@ -27,7 +27,6 @@ const SEPARATOR = " · ";
 const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Personal pages
     ["/profile", "Hồ sơ"],
-    ["/settings", "Cài đặt"],
     ["/leaderboard", "Bảng xếp hạng"],
     ["/notifications", "Thông báo"],
     ["/audit-logs", "Audit log"],
@@ -35,9 +34,7 @@ const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Help & support
     ["/help/shortcuts", "Phím tắt"],
 
-    // Role landing pages
-    ["/student", "Khu vực học sinh"],
-    ["/teacher", "Khu vực giáo viên"],
+    // Home
     ["/dashboard", "Dashboard"],
 
     // Auth flows

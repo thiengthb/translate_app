@@ -9,14 +9,15 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+// /dashboard is every role's home: a static FE route, never permission-gated.
 @ResourceMenu(
-        title = "Dashboard Stats",
+        title = "Dashboard",
         group = "Dashboard",
         icon = "dashboard",
         url = "/dashboard",
-        description = "Overview of key system metrics at a glance.",
+        description = "Trang chủ học tập — streak, nhiệm vụ và thống kê.",
     order = 1,
-    permission = "USER_READ"
+    permission = ""
 )
 public class DashboardStatsDTO {
     Long totalUsers;

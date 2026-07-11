@@ -9,10 +9,7 @@ import { Dashboard } from "@/pages/management/dashboard";
 import AuditLogPage from "@/pages/auditLog/AuditLogPage";
 import KeyboardShortcutsPage from "@/pages/help/KeyboardShortcutsPage";
 import NotificationsPage from "@/pages/notifications/NotificationsPage";
-import StudentLandingPage from "@/pages/student/StudentLandingPage";
-import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
-import SettingsPage from "@/pages/settings/SettingsPage";
 
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
@@ -60,7 +57,6 @@ import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
-import SakuraDashboardPage from "@/pages/sakura/SakuraDashboardPage";
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import { buildEntityRoutes } from "./build-router";
 
@@ -79,14 +75,15 @@ export interface RouteConfig {
 }
 
 export const routes: RouteConfig[] = [
-  { path: "/dashboard", component: Dashboard, isModuleDriven: true },
+  // Static (not module-driven): /dashboard is every role's home, so the
+  // route must always resolve — never gated behind a DB Module row (the BE
+  // seeds one with USER_READ, which would 404 students/teachers).
+  { path: "/dashboard", component: Dashboard },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
   { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/words/:wordId", component: WordDetailPage, requiredPermission: "WORD_READ" },
-  { path: "/student", component: StudentLandingPage },
-  { path: "/teacher", component: TeacherLandingPage },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
@@ -134,11 +131,6 @@ export const routes: RouteConfig[] = [
   // can be swapped for a backend feed later without touching the route.
   { path: "/kanji-radical", component: KanjiRadicalGamePage },
 
-  // ── Sakura Study Dashboard (design handoff) ──
-  // Standalone full-screen design surface with its own sidebar — rendered
-  // outside MainLayout. Fixed sakura palette, independent of color presets.
-  { path: "/sakura-dashboard", component: SakuraDashboardPage },
-
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
   // dashboard is the feature's own landing, reached from the sidebar menu
@@ -152,7 +144,6 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
-  { path: "/settings", component: SettingsPage },
   { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
