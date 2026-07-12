@@ -212,7 +212,7 @@ export function useDashboardData(): SakuraDashboardProps {
                 name,
                 studyDay: Math.max(1, streak?.totalActiveDays ?? 1),
             },
-            heroIllustrationUrl: "/cherry/chibi.png",
+            heroIllustrationUrl: "/hanabun-girl.png",
             missions,
             achievement,
             stats: {

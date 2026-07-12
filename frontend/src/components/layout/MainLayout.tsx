@@ -33,6 +33,13 @@ interface MainLayoutProps {
     focus?: boolean;
     /** Back handler for focus mode (falls back to browser history). */
     onBack?: () => void;
+    /** Shift the whole content block LEFT so its leading card sits flush
+     *  against the sidebar's right edge (left gap → 0) WITHOUT resizing any
+     *  card. The left padding isn't dropped — it's moved to the right, so the
+     *  total horizontal padding (and therefore every child's width) is
+     *  unchanged; the cluster just slides left and the slack lands on the
+     *  right. Used by the dashboard. */
+    flushLeft?: boolean;
 }
 
 /**
@@ -60,7 +67,7 @@ interface MainLayoutProps {
  * Layout markup lives in the dedicated sub-components — keep this file
  * easy to skim.
  */
-export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack }: MainLayoutProps) {
+export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack, flushLeft }: MainLayoutProps) {
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -92,6 +99,7 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
                         ignorePaths={ignorePaths}
                         pageDescription={pageDescription}
                         breadcrumbIcon={breadcrumbIcon}
+                        flushLeft={flushLeft}
                     >
                         {children}
                     </AppShell>
@@ -163,6 +171,7 @@ interface AppShellProps {
     ignorePaths?: MainLayoutProps["ignorePaths"];
     pageDescription?: MainLayoutProps["pageDescription"];
     breadcrumbIcon?: MainLayoutProps["breadcrumbIcon"];
+    flushLeft?: MainLayoutProps["flushLeft"];
 }
 
 /**
@@ -212,14 +221,28 @@ function AppShell({
     ignorePaths,
     pageDescription,
     breadcrumbIcon,
+    flushLeft,
 }: AppShellProps) {
     return (
-        <SidebarProvider
-            defaultOpen={readPersistedSidebarOpen()}
-            style={{ "--sidebar-width": "96px" } as CSSProperties}
-        >
-            <SidebarMenu />
-            <SidebarInset className="flex h-svh max-h-[calc(100svh-16px)] flex-col overflow-hidden min-w-0 max-w-full">
+        // Floating-panel shell: the pink page background shows as a margin around a
+        // single large rounded panel that holds BOTH the sidebar and the content.
+        // The outer div owns the viewport height (`h-svh`) and paints the pink
+        // margin (`bg-background` + padding); the SidebarProvider wrapper becomes
+        // the rounded, clipped, shadowed panel itself.
+        <div className="h-svh bg-background p-2 sm:p-3">
+            <SidebarProvider
+                defaultOpen={readPersistedSidebarOpen()}
+                // Inline minHeight/height override the wrapper's built-in `min-h-svh`
+                // (a class can't reliably beat it) so the panel fills the padded
+                // frame instead of forcing a full viewport height that overflows it.
+                style={{ "--sidebar-width": "96px", minHeight: 0, height: "100%" } as CSSProperties}
+                // overflow-hidden + rounded clips the sidebar (left corners) and the
+                // inset (right corners) into one rounded rectangle; the shadow lifts
+                // the whole panel off the pink margin.
+                className="h-full w-full overflow-hidden rounded-[28px] shadow-[0_20px_60px_rgba(255,143,171,0.18)]"
+            >
+                <SidebarMenu />
+                <SidebarInset className="flex h-full flex-col overflow-hidden min-w-0 max-w-full">
                 <MainLayoutTopBar
                     pathName={pathName}
                     headerExtra={headerExtra}
@@ -231,13 +254,22 @@ function AppShell({
                 <ScrollHintContainer
                     axis="vertical"
                     className="flex-1 min-h-0 min-w-0 max-w-full"
-                    viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
+                    viewportClassName={
+                        flushLeft
+                            // Left padding moved onto the right: total horizontal
+                            // padding (12/16/24 → 24/32/48 on the right) matches the
+                            // symmetric case, so children keep their width and the
+                            // block merely slides left, flush against the sidebar.
+                            ? "flex flex-col pl-0 pr-6 sm:pr-8 lg:pr-12 py-2 sm:py-3"
+                            : "flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
+                    }
                 >
                     <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
                         {children}
                     </main>
                 </ScrollHintContainer>
             </SidebarInset>
-        </SidebarProvider>
+            </SidebarProvider>
+        </div>
     );
 }

@@ -6,41 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/DashboardStatsDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/dashboard/DashboardStatsDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/streak/dto/StreakResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/DynamicBreadcrumbs.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/DynamicBreadcrumbs.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavGroup.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/NavItem.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/PinnedSection.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/RecentSection.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarBranding.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSearch.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarSettings.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useFilteredNavGroups.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useGroupCollapseState.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarFavorites.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarPreferences.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/hooks/useSidebarRecent.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/types.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/dreamina-2026-06-22-5926-Combine image_16743583952644 and image_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/dreamina-2026-06-22-5926-Combine image_16743583952644 and image_1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/sakura-dashboard.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/sakura-dashboard.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useSidebarMenus.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useSidebarMenus.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useStreak.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useStreak.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionTagsPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/CherryLoginForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/CherryLoginForm.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/sakura/SakuraDashboardPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/settings/SettingsPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/StudentLandingPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/teacher/TeacherLandingPage.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

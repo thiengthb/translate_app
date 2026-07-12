@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Home } from "lucide-react";
 
 import { CherryLoginForm } from "./CherryLoginForm";
 import { CherryRegisterForm } from "./CherryRegisterForm";
+import { CherryForgotForm } from "./CherryForgotForm";
 import { CherryPetals } from "./CherryPetals";
 
 import "./cherry-login.css";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot";
 
 /**
  * Landing = login/register page, rebuilt from the cherry-blossom-site template.
@@ -40,30 +40,33 @@ export default function LandingPage() {
 
     return (
         <div className="cherry-body">
-            {/* Brand wordmark (chibi + "Hanabun" banner) pinned to the top-left
-                corner. Lives OUTSIDE the stage (viewport-anchored, rendered
-                first) so it stacks above the draping branch instead of being
-                trapped under the stage's own stacking context; on mobile it
-                falls to the top of the scroll column. */}
+            {/* Brand logo (girl + "Hanabun" wordmark) pinned to the top-left
+                viewport corner. The PNG has a TRANSPARENT background so it melts
+                straight into the sakura page — no white plate behind it. A soft
+                drop-shadow lifts it off the pink. Viewport-anchored sibling of
+                the stage (z-index 3) so it stacks above the draping branch; on
+                mobile it collapses to a centered logo (see the media query). */}
             <img
-                className="cherry-wordmark"
-                src="/hanabun-wordmark.png"
+                className="cherry-logo"
+                src="/hanabun-logo-full.png"
                 alt="Hanabun — học tiếng Nhật"
                 draggable={false}
             />
 
-            {/* Top-right home link — a soft candy pill. Viewport-anchored sibling
-                of the stage (z-index 3) so it stays above the draping branch. */}
-            <Link to="/" className="cherry-home" aria-label="Trang chủ">
-                <Home className="cherry-home-icon" aria-hidden />
-                <span>Trang chủ</span>
-            </Link>
-
             <main className="cherry-stage">
+                {/* Top marketing nav — INSIDE the stage so it uses the same
+                    %-of-canvas coordinates as the reference template (its nav
+                    row starts at left 46.147%, top 12.58%, ≈5% gaps between
+                    items). Styled to match the reference art: small uppercase
+                    Quicksand, wide tracking, active item bold + darker. */}
+                <nav className="cherry-nav" aria-label="Điều hướng">
+                    <Link to="/" className="cherry-nav-link is-active">Trang chủ</Link>
+                    <Link to="/" className="cherry-nav-link">Giới thiệu</Link>
+                    <Link to="/" className="cherry-nav-link">Về chúng tôi</Link>
+                </nav>
+
                 {/* ── Decorative artwork (positions identical to the template) ── */}
-                {/* Hero photo sits lower than the template so the top-left leaf
-                    logo (taller than a flat banner) never laps onto it. */}
-                <img className="deco" style={{ left: "8.871%", top: "22%", width: "48.2%" }} src="/cherry/photo.webp" alt="" draggable={false} />
+                <img className="deco" style={{ left: "8.871%", top: "13.376%", width: "48.2%" }} src="/cherry/photo.webp" alt="" draggable={false} />
                 <img className="deco" style={{ left: "4.749%", top: "28.662%", width: "9.899%" }} src="/cherry/cloud.png" alt="" draggable={false} />
                 <img className="deco" style={{ left: "84.409%", top: "44.108%", width: "10.546%" }} src="/cherry/chibi.png" alt="" draggable={false} />
 
@@ -71,7 +74,11 @@ export default function LandingPage() {
                 <section className="cherry-panel">
                     <p className="cherry-tagline">Mỗi ngày một cánh hoa</p>
                     <h1 className="cherry-heading">
-                        {mode === "login" ? "Chào mừng trở lại!" : "Tạo tài khoản"}
+                        {mode === "login"
+                            ? "Chào mừng trở lại!"
+                            : mode === "register"
+                              ? "Tạo tài khoản"
+                              : "Quên mật khẩu?"}
                     </h1>
                     {mode === "login" && (
                         <p className="cherry-sub">
@@ -79,28 +86,41 @@ export default function LandingPage() {
                             kanji và bài luyện đang chờ nở rộ.
                         </p>
                     )}
+                    {mode === "forgot" && (
+                        <p className="cherry-sub">
+                            Nhập email, chúng tôi sẽ gửi link đặt lại mật khẩu cho bạn.
+                        </p>
+                    )}
 
-                    {/* Segmented tab switch (pill position driven inline so it
-                        reliably wins the cascade & animates via CSS transition). */}
-                    <div className="cherry-tabs" data-mode={mode}>
-                        <span
-                            className="cherry-tabs-pill"
-                            style={{ left: mode === "register" ? "50%" : "1.6%" }}
-                        />
-                        <button type="button" data-active={mode === "login"} onClick={() => setMode("login")}>
-                            Đăng nhập
-                        </button>
-                        <button type="button" data-active={mode === "register"} onClick={() => setMode("register")}>
-                            Đăng ký
-                        </button>
-                    </div>
+                    {/* Segmented tab switch — only for the login/register pair.
+                        (pill position driven inline so it reliably wins the
+                        cascade & animates via CSS transition). */}
+                    {mode !== "forgot" && (
+                        <div className="cherry-tabs" data-mode={mode}>
+                            <span
+                                className="cherry-tabs-pill"
+                                style={{ left: mode === "register" ? "50%" : "1.6%" }}
+                            />
+                            <button type="button" data-active={mode === "login"} onClick={() => setMode("login")}>
+                                Đăng nhập
+                            </button>
+                            <button type="button" data-active={mode === "register"} onClick={() => setMode("register")}>
+                                Đăng ký
+                            </button>
+                        </div>
+                    )}
 
                     {/* Forms crossfade/slide when the mode changes (keyed remount). */}
                     <div className="cherry-formwrap" key={mode}>
                         {mode === "login" ? (
-                            <CherryLoginForm initialError={loginError} />
-                        ) : (
+                            <CherryLoginForm
+                                initialError={loginError}
+                                onForgot={() => setMode("forgot")}
+                            />
+                        ) : mode === "register" ? (
                             <CherryRegisterForm />
+                        ) : (
+                            <CherryForgotForm onBack={() => setMode("login")} />
                         )}
                     </div>
 
@@ -112,9 +132,16 @@ export default function LandingPage() {
                                     Đăng ký miễn phí
                                 </button>
                             </>
-                        ) : (
+                        ) : mode === "register" ? (
                             <>
                                 Đã có tài khoản?{" "}
+                                <button type="button" className="cherry-link" onClick={() => setMode("login")}>
+                                    Đăng nhập
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                Nhớ ra mật khẩu rồi?{" "}
                                 <button type="button" className="cherry-link" onClick={() => setMode("login")}>
                                     Đăng nhập
                                 </button>

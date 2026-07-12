@@ -37,70 +37,67 @@
     pointer-events: none;
 }
 
-/* ── Brand wordmark (chibi + "Hanabun" banner; replaces the old circle logo
-      layer AND the top nav links). Sits in the free top strip above the hero
-      photo. The PNG has a transparent background so it melts into the sakura
-      backdrop; a soft drop-shadow lifts it off the pink. ── */
-.cherry-wordmark {
+/* ── Brand logo (girl + "Hanabun" wordmark). The PNG is transparent, so it sits
+      directly on the sakura page with no white plate behind it — just a soft
+      drop-shadow. Pinned to the top-left viewport corner, above the draping
+      branch (z-index 3). ── */
+.cherry-logo {
     position: absolute;
-    /* Top-left brand logo set on a horizontal sakura-leaf backdrop (the leaf +
-       logo are baked into one PNG, hanabun-leaf.png). The transparent leaf
-       silhouette gives the drop-shadow its natural leaf shape. Sized to stay
-       clear of the hero photo below. Viewport-anchored sibling of the stage →
-       z-index 3 keeps it above the draping branch (z-index 1); petals
-       (z-index 4) drift over. */
-    left: 1.6vw;
-    top: 1.4vh;
-    width: min(30vw, 40vh, 360px);
+    top: 1.2vh;
+    left: 1.4vw;
+    z-index: 3;
+    width: min(17vw, 240px);
     height: auto;
     display: block;
     pointer-events: none;
-    z-index: 3;
-    filter: drop-shadow(0 8px 16px rgba(95, 181, 147, 0.30));
+    filter: drop-shadow(0 6px 14px rgba(176, 58, 89, 0.22));
 }
 
-/* ── Top-right home link: a soft candy pill that matches the sakura theme ── */
-.cherry-home {
+/* ── Top marketing nav — matches the reference template's nav row exactly:
+      the row starts at left 46.147%, sits at top 12.58% of the design canvas,
+      and neighbouring items are separated by ≈5% of the canvas width. Lives
+      INSIDE the stage so those %-coordinates track the canvas 1:1 (gap/font
+      use cqw = 1% of stage width, same unit the reference's baked-in PNG art
+      effectively used). Reference art style: small UPPERCASE geometric sans
+      (Quicksand), wide tracking, muted ink — the active item bold + darker. ── */
+.cherry-nav {
     position: absolute;
-    top: 3.2vh;
-    right: 2.4vw;
-    z-index: 3;
-    display: inline-flex;
+    left: 46.147%;
+    top: 12.58%;
+    z-index: 2;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.62rem 1.35rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1.5px solid #f6b8cb;
-    color: #b03a59;
-    font-family: "Baloo 2", ui-rounded, "Varela Round", system-ui, sans-serif;
-    font-size: clamp(0.82rem, 1.05vw, 1rem);
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    gap: 5cqw;
+}
+.cherry-nav-link {
+    font-family: "Quicksand", "Varela Round", ui-rounded, system-ui, sans-serif;
+    font-size: 1.15cqw;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6d5a60;
     text-decoration: none;
-    box-shadow: 0 6px 16px rgba(238, 95, 146, 0.18);
-    backdrop-filter: blur(4px);
-    transition: transform 0.16s ease, box-shadow 0.16s ease,
-        background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    white-space: nowrap;
+    line-height: 1;
+    transition: color 0.16s ease;
 }
-.cherry-home:hover {
-    transform: translateY(-2px);
-    background: linear-gradient(135deg, #ff9ebb 0%, #ee5f92 100%);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 10px 22px rgba(238, 95, 146, 0.38);
+.cherry-nav-link:hover {
+    color: #ee5f92;
 }
-.cherry-home-icon {
-    width: 1.05em;
-    height: 1.05em;
-    stroke-width: 2.4;
+.cherry-nav-link.is-active {
+    font-weight: 700;
+    color: #33262b;
 }
 
 /* ── Right column: tagline / heading / login form ── */
 .cherry-panel {
     position: absolute;
     left: 65.86%;
-    top: 25%;
+    /* Vertically centred in the reference's right-column band (date ≈28.7% →
+       web ≈86.3%, centre ≈57%) so the form stays balanced — and re-centres
+       itself when the shorter "forgot password" form is shown. */
+    top: 57%;
+    transform: translateY(-50%);
     width: 17.5%;
     display: flex;
     flex-direction: column;
@@ -493,19 +490,20 @@
     .cherry-field-row {
         flex-direction: column;
     }
-    .cherry-home {
+    .cherry-nav {
         position: static;
-        display: flex;
-        width: fit-content;
-        margin: 0 auto 6px;
-        padding: 8px 18px;
-        font-size: 14px;
+        justify-content: center;
+        width: 100%;
+        margin: 4px auto 8px;
+        gap: 1.4rem;
     }
-    .cherry-wordmark {
+    .cherry-nav-link {
+        font-size: 13px;
+    }
+    .cherry-logo {
         position: static;
-        width: min(340px, 84%);
-        margin: 16px auto 2px;
-        filter: drop-shadow(0 6px 12px rgba(95, 181, 147, 0.28));
+        width: min(320px, 86%);
+        margin: 14px auto 2px;
     }
     .cherry-panel {
         position: static;

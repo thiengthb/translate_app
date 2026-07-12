@@ -620,7 +620,10 @@ export function SakuraDashboardContent({
   return (
     <div className="flex flex-col items-start gap-7 font-[Quicksand,sans-serif] text-[#3A2E33] xl:flex-row">
       {/* LEFT: greeting + hero + missions, in a white candy shell */}
-      <div className="min-w-0 flex-1 rounded-[32px] bg-white px-6 pb-8 pt-7 shadow-[0_18px_50px_rgba(255,143,171,0.16)] sm:px-9">
+      {/* Left corners squared off (only the right side is rounded): the card's
+          left edge is flat and flush against the white sidebar rail, so the rail
+          and this card merge into one continuous white surface. */}
+      <div className="min-w-0 flex-1 rounded-l-none rounded-r-[32px] bg-white px-6 pb-8 pt-7 shadow-[0_18px_50px_rgba(255,143,171,0.16)] sm:px-9">
         <h1 className="font-display m-0 mb-6 text-[26px] font-bold text-[#3A2E33]">
           Hi! {user.name}, welcome
         </h1>

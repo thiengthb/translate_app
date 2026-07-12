@@ -13,7 +13,7 @@ export function Dashboard() {
     const data = useDashboardData();
 
     return (
-        <MainLayout pathName={{ "/dashboard": "Dashboard" }}>
+        <MainLayout pathName={{ "/dashboard": "Dashboard" }} flushLeft>
             <SakuraDashboardContent {...data} />
         </MainLayout>
     );

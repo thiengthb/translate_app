@@ -18,7 +18,15 @@ const URL_LOGIN_WITH_GOOGLE =
  * the old glass-modal LoginForm (email/password + TOTP 2FA + Google) but
  * styled with the sakura `cherry-*` classes instead of `auth-glass-*`.
  */
-export function CherryLoginForm({ initialError }: { initialError?: string }) {
+export function CherryLoginForm({
+    initialError,
+    onForgot,
+}: {
+    initialError?: string;
+    /** Switch the landing stage into its inline "forgot password" mode
+     *  (no navigation away from the landing page). */
+    onForgot?: () => void;
+}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(initialError ?? "");
@@ -158,7 +166,7 @@ export function CherryLoginForm({ initialError }: { initialError?: string }) {
                     <button
                         type="button"
                         className="cherry-link"
-                        onClick={() => navigate("/forgot-password")}
+                        onClick={() => (onForgot ? onForgot() : navigate("/forgot-password"))}
                     >
                         {t("auth.login.forgotPassword")}
                     </button>
