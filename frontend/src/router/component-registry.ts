@@ -45,6 +45,7 @@ import AnkiStatsPage from "@/pages/student/AnkiStatsPage";
 import QuizListPage from "@/pages/assessment/QuizListPage";
 import QuestionBankPage from "@/pages/assessment/QuestionBankPage";
 import QuestionFormPage from "@/pages/assessment/QuestionFormPage";
+import MultiQuestionCreatePage from "@/pages/assessment/MultiQuestionCreatePage";
 import QuizDetailPage from "@/pages/assessment/QuizDetailPage";
 import QuizCreateEditPage from "@/pages/assessment/QuizCreateEditPage";
 import QuizSessionPage from "@/pages/assessment/QuizSessionPage";
@@ -111,7 +112,7 @@ export const routes: RouteConfig[] = [
 
   // ── Assessment ──
   { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
-  { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
+  { path: "/questions/new", component: MultiQuestionCreatePage, requiredPermission: "QUESTION_CREATE" },
   { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
   // /question-tags is now driven by the entityConfig at
   // pages/management/assessment/question-tag/index.tsx (ProTable via AutoCrudPage),
