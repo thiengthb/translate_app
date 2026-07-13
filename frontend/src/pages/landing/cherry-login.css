@@ -62,7 +62,7 @@
       (Quicksand), wide tracking, muted ink — the active item bold + darker. ── */
 .cherry-nav {
     position: absolute;
-    left: 46.147%;
+    left: 60%;
     top: 12.58%;
     z-index: 2;
     display: flex;
@@ -75,18 +75,21 @@
     font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #6d5a60;
+    color: #856267;
     text-decoration: none;
     white-space: nowrap;
     line-height: 1;
     transition: color 0.16s ease;
+    position: relative;
+    top: 0.3cqw;
+    left: 0.3cqw;
 }
 .cherry-nav-link:hover {
     color: #ee5f92;
 }
 .cherry-nav-link.is-active {
     font-weight: 700;
-    color: #33262b;
+    color: #573036;
 }
 
 /* ── Right column: tagline / heading / login form ── */
