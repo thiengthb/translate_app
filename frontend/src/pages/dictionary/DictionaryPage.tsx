@@ -6,6 +6,8 @@ import {
     Sparkles, AlertCircle, Languages, Layers, BookMarked, StickyNote,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { SakuraDashboardSidePanel } from "@/components/sakura-dashboard/SakuraStudyDashboard";
+import { useDashboardData } from "@/pages/management/dashboard/useDashboardData";
 import { EmptyState } from "@/components/common/EmptyState";
 import { FuriganaText } from "@/components/common/FuriganaText";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
@@ -70,6 +72,10 @@ type SearchMode = "vocabulary" | "kanji";
 // Page
 // ══════════════════════════════════════════════════════════════════════
 export default function DictionaryPage() {
+    // Same side-panel data (Record / Thành tích / Thống kê) as the dashboard —
+    // this page reuses the dashboard `pageScroll` shell + `sidePanel`.
+    const dashboardData = useDashboardData();
+
     const [searchMode, setSearchMode]     = useState<SearchMode>("vocabulary");
     const [query, setQuery]               = useState("");
     const [results, setResults]           = useState<WordSearchResult[] | null>(null);
@@ -238,7 +244,11 @@ export default function DictionaryPage() {
     const totalSaved = savedWords.length + savedKanjis.length;
 
     return (
-        <MainLayout pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}>
+        <MainLayout
+            pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}
+            pageScroll
+            sidePanel={<SakuraDashboardSidePanel {...dashboardData} />}
+        >
             <div className="w-full space-y-4">
 
                 {/* ── Search hero ───────────────────────────── */}
