@@ -22,12 +22,16 @@ public class AnkiStatsDTO {
     Long   deckId;
     String deckTitle;
 
-    /* ── Card state counts ── */
+    /* ── Card state counts (true deck composition, NOT capped by daily limit) ── */
     int totalCards;
-    int newCards;
+    int newCards;      // total NEW cards in the deck (real count)
     int learningCards;
     int relearningCards;
     int reviewCards;
+
+    /** New cards still allowed to be introduced TODAY = min(newCards, dailyNewLimit − learnedToday).
+     *  This is the "today's workload" figure; distinct from `newCards` (composition). */
+    int newAvailableToday;
 
     /* ── Today ── */
     int studiedToday;

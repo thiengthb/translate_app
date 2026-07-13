@@ -401,6 +401,9 @@ export default function AnkiStatsPage() {
                 {/* State rows */}
                 <div className="space-y-0.5">
                   <StatRow label="New"           value={stats.newCards}                             tone="text-blue-500" />
+                  {stats.newAvailableToday < stats.newCards && (
+                    <StatRow label="New today"   value={stats.newAvailableToday}                    tone="text-blue-400" />
+                  )}
                   <StatRow label="Learning"      value={stats.learningCards + stats.relearningCards} tone="text-orange-500" />
                   <StatRow label="Review"        value={stats.reviewCards}                          tone="text-green-600" />
                   {isFsrs

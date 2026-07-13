@@ -65,7 +65,10 @@ export interface AnkiStatsDTO {
   deckId: number;
   deckTitle: string;
   totalCards: number;
+  /** Total NEW cards in the deck (real composition count, not capped by daily limit). */
   newCards: number;
+  /** NEW cards still allowed to be introduced today (min(newCards, remaining daily limit)). */
+  newAvailableToday: number;
   learningCards: number;
   relearningCards: number;
   reviewCards: number;

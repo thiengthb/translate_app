@@ -483,7 +483,7 @@ public class AnkiStudyController {
                 .count();
         int newLimit = Math.max(0, maxNewCardsPerDay(setting) - (int) learnedToday);
 
-        int availableNew = 0, learning = 0, relearning = 0, review = 0;
+        int newCards = 0, learning = 0, relearning = 0, review = 0;
         int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
         double sumMemory = 0, sumEase = 0, sumInterval = 0;
         int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
@@ -497,7 +497,11 @@ public class AnkiStudyController {
         for (DeckItem item : items) {
             AnkiSrsProgress p = progressMap.get(item.getFlashcard().getId());
             if (p == null || "NEW".equals(p.getState())) {
-                if (availableNew < newLimit) availableNew++;
+                // True total of NEW cards (deck composition). Deliberately NOT
+                // capped by the daily new-card limit — that cap is a "today's
+                // workload" concept and belongs to `newAvailableToday`, not to
+                // the deck's card-count statistics.
+                newCards++;
                 continue;
             }
 
@@ -564,7 +568,8 @@ public class AnkiStudyController {
                 .deckId(deck.getId())
                 .deckTitle(deck.getTitle())
                 .totalCards(total)
-                .newCards(availableNew)
+                .newCards(newCards)
+                .newAvailableToday(Math.min(newCards, newLimit))
                 .learningCards(learning)
                 .relearningCards(relearning)
                 .reviewCards(review)
