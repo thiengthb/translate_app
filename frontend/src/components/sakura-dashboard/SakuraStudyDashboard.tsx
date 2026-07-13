@@ -609,87 +609,89 @@ function StatCard({
 
 // ── In-shell content ─────────────────────────────────────────────────────────
 // The Sakura dashboard WITHOUT its own sidebar / full-screen wrapper, so it
-// drops inside the app shell (MainLayout). Used by the /dashboard page.
+// drops inside the app shell's `<main>` (MainLayout). Used by the /dashboard
+// page. Just hero + missions — the white rounded shell + shadow live one
+// level up, on AppShell's own shell (which also holds the sidebar).
 export function SakuraDashboardContent({
   user,
   heroIllustrationUrl,
   missions,
-  achievement,
-  stats,
 }: SakuraDashboardProps) {
   return (
-    <div className="flex flex-col items-start gap-7 font-[Quicksand,sans-serif] text-[#3A2E33] xl:flex-row">
-      {/* LEFT: greeting + hero + missions, in a white candy shell */}
-      {/* Left corners squared off (only the right side is rounded): the card's
-          left edge is flat and flush against the white sidebar rail, so the rail
-          and this card merge into one continuous white surface. */}
-      <div className="min-w-0 flex-1 rounded-l-none rounded-r-[32px] bg-white px-6 pb-8 pt-7 shadow-[0_18px_50px_rgba(255,143,171,0.16)] sm:px-9">
-        <h1 className="font-display m-0 mb-6 text-[26px] font-bold text-[#3A2E33]">
-          Hi! {user.name}, welcome
-        </h1>
+    <div>
+      {/* Hero */}
+      <div
+        className="relative flex flex-col items-center gap-6 overflow-hidden rounded-[24px] border border-[#FBEAF0] px-6 py-6 shadow-[0_8px_24px_rgba(255,143,171,0.10)] sm:flex-row sm:px-9"
+        style={{ background: "linear-gradient(120deg,#FFF0F4 0%,#FFFFFF 60%)" }}
+      >
+        <div className="absolute left-[64px] top-[120px] text-[20px] leading-none text-[#FFC95C]">✦</div>
+        <div className="absolute right-20 top-[30px] h-2 w-[34px] -rotate-[25deg] rounded-full bg-[#FFE0E8]" />
 
-        {/* Hero */}
-        <div
-          className="relative flex flex-col items-center gap-6 overflow-hidden rounded-[24px] border border-[#FBEAF0] px-6 py-6 shadow-[0_8px_24px_rgba(255,143,171,0.10)] sm:flex-row sm:px-9"
-          style={{ background: "linear-gradient(120deg,#FFF0F4 0%,#FFFFFF 60%)" }}
-        >
-          <div className="absolute left-[64px] top-[120px] text-[20px] leading-none text-[#FFC95C]">✦</div>
-          <div className="absolute right-20 top-[30px] h-2 w-[34px] -rotate-[25deg] rounded-full bg-[#FFE0E8]" />
-
-          <div className="flex w-full max-w-[200px] flex-none items-end justify-center sm:w-[200px]">
-            {heroIllustrationUrl ? (
-              <img src={heroIllustrationUrl} alt="" className="h-[170px] w-[170px] max-w-full object-contain" />
-            ) : (
-              <div className="flex h-[170px] w-[170px] items-center justify-center rounded-[20px] bg-[#FFF0F4] text-[13px] text-[#FF8FAB]">
-                illustration
-              </div>
-            )}
-          </div>
-
-          <div className="relative z-10 min-w-0 flex-1">
-            <h2 className="font-display m-0 mb-[10px] text-[28px] font-semibold uppercase leading-[1.15] tracking-[0.5px] text-[#3A2E33] sm:text-[34px]">
-              This is your{" "}
-              <span className="font-display align-[-4px] text-[44px] font-extrabold text-[#FF8FAB] sm:text-[54px]">
-                {user.studyDay}
-              </span>{" "}
-              day of study
-            </h2>
-            <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Go and study</p>
-          </div>
+        <div className="flex w-full max-w-[200px] flex-none items-end justify-center sm:w-[200px]">
+          {heroIllustrationUrl ? (
+            <img src={heroIllustrationUrl} alt="" className="h-[170px] w-[170px] max-w-full object-contain" />
+          ) : (
+            <div className="flex h-[170px] w-[170px] items-center justify-center rounded-[20px] bg-[#FFF0F4] text-[13px] text-[#FF8FAB]">
+              illustration
+            </div>
+          )}
         </div>
 
-        {/* Mission header */}
-        <div className="my-[18px] mt-[30px] flex items-center justify-between">
-          <div className="flex items-center gap-[10px]">
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#FFE5EC] text-[#FF6B9D]">
-              <CheckSquare className="h-[19px] w-[19px]" />
-            </span>
-            <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
-          </div>
-          <CalendarDays className="h-[22px] w-[22px] text-[#B9AEB2]" />
-        </div>
-
-        {/* Mission cards */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {missions.map((m) => (
-            <MissionCard key={m.id} mission={m} />
-          ))}
+        <div className="relative z-10 min-w-0 flex-1">
+          <h2 className="font-display m-0 mb-[10px] text-[28px] font-semibold uppercase leading-[1.15] tracking-[0.5px] text-[#3A2E33] sm:text-[34px]">
+            This is your{" "}
+            <span className="font-display align-[-4px] text-[44px] font-extrabold text-[#FF8FAB] sm:text-[54px]">
+              {user.studyDay}
+            </span>{" "}
+            day of study
+          </h2>
+          <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Go and study</p>
         </div>
       </div>
 
-      {/* RIGHT panel */}
-      <div className="flex w-full flex-none flex-col gap-[26px] xl:w-[420px]">
-        <RecordCalendar />
-        <AchievementChart achievement={achievement} />
+      {/* Mission header */}
+      <div className="my-[18px] mt-[30px] flex items-center justify-between">
+        <div className="flex items-center gap-[10px]">
+          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#FFE5EC] text-[#FF6B9D]">
+            <CheckSquare className="h-[19px] w-[19px]" />
+          </span>
+          <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
+        </div>
+        <CalendarDays className="h-[22px] w-[22px] text-[#B9AEB2]" />
+      </div>
 
-        <div>
-          <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">Thống kê</h3>
-          <div className="flex items-stretch gap-4">
-            <DataDonut pct={stats.donutPct} caption={stats.donutCaption} />
-            <div className="flex flex-1 flex-col gap-4">
-              <StatCard value={stats.ranking} label="Xếp hạng" iconColor={sakura.pink} />
-              <StatCard value={stats.progressPct} suffix="%" label="Tiến độ cấp độ" iconColor={sakura.honey} />
-            </div>
+      {/* Mission cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {missions.map((m) => (
+          <MissionCard key={m.id} mission={m} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Side panel (Record / Achievement / Data) ─────────────────────────────────
+// The reference's right-hand column is NOT part of the shell — it floats
+// directly on the page's pink background, and each widget draws its own
+// white card. Rendered as AppShell's `sidePanel`, a sibling of the shell
+// rather than nested inside `<main>`, so it never stretches the shell to
+// match its (usually taller) height.
+export function SakuraDashboardSidePanel({
+  achievement,
+  stats,
+}: Pick<SakuraDashboardProps, "achievement" | "stats">) {
+  return (
+    <div className="flex w-full flex-none flex-col gap-[26px] xl:w-[420px]">
+      <RecordCalendar />
+      <AchievementChart achievement={achievement} />
+
+      <div>
+        <h3 className="font-display m-0 mb-[14px] text-[20px] font-bold">Thống kê</h3>
+        <div className="flex items-stretch gap-4">
+          <DataDonut pct={stats.donutPct} caption={stats.donutCaption} />
+          <div className="flex flex-1 flex-col gap-4">
+            <StatCard value={stats.ranking} label="Xếp hạng" iconColor={sakura.pink} />
+            <StatCard value={stats.progressPct} suffix="%" label="Tiến độ cấp độ" iconColor={sakura.honey} />
           </div>
         </div>
       </div>

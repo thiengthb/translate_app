@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useSelector } from "react-redux";
 import { ArrowLeft } from "lucide-react";
 
@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { KeyboardShortcutsDialog } from "@/components/common/KeyboardShortcutsDialog";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { GuestLayout } from "@/components/layout/GuestLayout";
+import HeaderRight from "@/components/layout/HeaderRight";
 import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
@@ -33,13 +33,18 @@ interface MainLayoutProps {
     focus?: boolean;
     /** Back handler for focus mode (falls back to browser history). */
     onBack?: () => void;
-    /** Shift the whole content block LEFT so its leading card sits flush
-     *  against the sidebar's right edge (left gap → 0) WITHOUT resizing any
-     *  card. The left padding isn't dropped — it's moved to the right, so the
-     *  total horizontal padding (and therefore every child's width) is
-     *  unchanged; the cluster just slides left and the slack lands on the
-     *  right. Used by the dashboard. */
-    flushLeft?: boolean;
+    /** The whole page scrolls as one document (matches the reference Sakura
+     *  Study Dashboard shell) instead of the default fixed-viewport frame with
+     *  internal scroll. Only use on pages with no ProTable/data-table content —
+     *  those size themselves to `h-full` and need the fixed frame to fit the
+     *  viewport. Used by the dashboard. */
+    pageScroll?: boolean;
+    /** Only meaningful with `pageScroll`: extra content rendered as a second
+     *  column OUTSIDE the sidebar+main shell, floating directly on the page
+     *  background — matches the reference's right-hand panel (Record
+     *  calendar / Achievement / Data), which is its own set of floating white
+     *  cards, not part of the shell. */
+    sidePanel?: ReactNode;
 }
 
 /**
@@ -67,7 +72,7 @@ interface MainLayoutProps {
  * Layout markup lives in the dedicated sub-components — keep this file
  * easy to skim.
  */
-export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack, flushLeft }: MainLayoutProps) {
+export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack, pageScroll, sidePanel }: MainLayoutProps) {
     const { isAuthenticated } = useSelector(
         (state: RootState) => state.auth,
     );
@@ -99,7 +104,8 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
                         ignorePaths={ignorePaths}
                         pageDescription={pageDescription}
                         breadcrumbIcon={breadcrumbIcon}
-                        flushLeft={flushLeft}
+                        pageScroll={pageScroll}
+                        sidePanel={sidePanel}
                     >
                         {children}
                     </AppShell>
@@ -162,7 +168,7 @@ function FocusShell({
     );
 }
 
-// ─── App shell (sidebar + top bar + main) ───────────────────────────────────
+// ─── App shell (sidebar + main, one unified shell) ──────────────────────────
 interface AppShellProps {
     children: ReactNode;
     pathName?: MainLayoutProps["pathName"];
@@ -171,105 +177,88 @@ interface AppShellProps {
     ignorePaths?: MainLayoutProps["ignorePaths"];
     pageDescription?: MainLayoutProps["pageDescription"];
     breadcrumbIcon?: MainLayoutProps["breadcrumbIcon"];
-    flushLeft?: MainLayoutProps["flushLeft"];
+    pageScroll?: MainLayoutProps["pageScroll"];
+    sidePanel?: MainLayoutProps["sidePanel"];
 }
 
 /**
- * Sidebar + top bar + scrolling main. Self-contained so MainLayout stays
- * declarative.
+ * Sidebar + main, both flex children of ONE rounded white shell — matches the
+ * reference Sakura Study Dashboard shell 1:1 (`rounded-[36px]`, single
+ * shadow, sidebar separated by a hairline border instead of its own nested
+ * card). Self-contained so MainLayout stays declarative.
  *
- * Sizing notes:
- *   - `h-svh` (small-viewport-height) avoids the mobile-keyboard jump
- *     that `100vh` triggers on iOS Safari when the soft keyboard opens.
- *   - `max-h-[calc(100svh-2px)]` is a defensive cap: shadcn's
- *     `variant="inset"` sidebar applies 1px borders that can spill into
- *     a phantom body scrollbar on certain Windows DPI scales.
+ * Two scroll models, chosen per page via `pageScroll`:
  *
- * Padding is intentionally **symmetric top/bottom** so a self-contained
- * page like ProTable (toolbar + table + pagination filling `h-full`)
- * uses both edges identically and doesn't trigger ScrollHintContainer
- * with a 1–2px residual overflow. Mobile gets 12px each, desktop 24px.
+ *   pageScroll=true  (Dashboard only) — the shell grows with its content and
+ *     the whole page scrolls as one document, exactly like the reference
+ *     mockup. The header row (`headerExtra` + `HeaderRight`) is the first
+ *     child inside `<main>`, not pinned — it scrolls away with the rest of
+ *     the page. `sidePanel` (if given) renders as a SEPARATE sibling column
+ *     next to the shell, floating on the page background rather than inside
+ *     it — the reference's Record/Achievement/Data column is its own set of
+ *     floating white cards, not part of the shell, so a taller side panel
+ *     never stretches the shell and leaves dead white space behind it.
  *
- * `<main>` carries `min-h-0` so its `flex-1` can shrink below the
- * intrinsic content height. Without that, a child element with
- * `h-full` (ProTable) and any sub-pixel rounding will push `<main>`
- * slightly past the viewport and force the outer scroll to engage.
+ *   pageScroll=false (default, every other page) — the shell fills the
+ *     viewport (`h-svh`) and only `<main>` scrolls internally, via
+ *     `ScrollHintContainer`. Required by ProTable pages, which size their
+ *     table + pagination to fill `h-full`. The header row (`MainLayoutTopBar`)
+ *     stays outside that internal scroll region so notifications/avatar
+ *     remain reachable while a long list scrolls.
  */
-/**
- * Read the persisted sidebar open/closed state from the cookie set by
- * shadcn's SidebarProvider. The primitive WRITES this cookie on every
- * toggle but never reads it back on mount — so without this helper the
- * sidebar opens fresh on every page load even if the user collapsed it.
- *
- * Returns `true` (open) when the cookie is missing so first-time
- * visitors land on the expanded sidebar.
- */
-function readPersistedSidebarOpen(): boolean {
-    if (typeof document === "undefined") return true;
-    const match = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("sidebar_state="));
-    if (!match) return true;
-    return match.split("=")[1] === "true";
-}
-
 function AppShell({
     children,
-    pathName,
     headerExtra,
-    parentCrumb,
-    ignorePaths,
-    pageDescription,
-    breadcrumbIcon,
-    flushLeft,
+    pageScroll,
+    sidePanel,
 }: AppShellProps) {
+    if (pageScroll) {
+        return (
+            <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-8">
+                {/* Page-level row: the sidebar+main shell and the (optional) side
+                    panel are independent siblings floating on the pink page
+                    background — matches the reference exactly. The shell only
+                    grows as tall as its OWN content, so a taller side panel no
+                    longer stretches it and leaves dead white space behind. */}
+                <div className="mx-auto flex w-full max-w-[1600px] flex-col items-start gap-7 xl:flex-row">
+                    <div className="flex min-w-0 flex-1 overflow-hidden rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
+                        <SidebarMenu />
+                        <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
+                            <div className="mb-6 flex min-w-0 items-center justify-between gap-2">
+                                {headerExtra && (
+                                    <div className="flex min-w-0 items-center">{headerExtra}</div>
+                                )}
+                                <div className="flex-1" />
+                                <HeaderRight />
+                            </div>
+                            {children}
+                        </main>
+                    </div>
+                    {sidePanel && (
+                        <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     return (
-        // Floating-panel shell: the pink page background shows as a margin around a
-        // single large rounded panel that holds BOTH the sidebar and the content.
-        // The outer div owns the viewport height (`h-svh`) and paints the pink
-        // margin (`bg-background` + padding); the SidebarProvider wrapper becomes
-        // the rounded, clipped, shadowed panel itself.
         <div className="h-svh bg-background p-2 sm:p-3">
-            <SidebarProvider
-                defaultOpen={readPersistedSidebarOpen()}
-                // Inline minHeight/height override the wrapper's built-in `min-h-svh`
-                // (a class can't reliably beat it) so the panel fills the padded
-                // frame instead of forcing a full viewport height that overflows it.
-                style={{ "--sidebar-width": "96px", minHeight: 0, height: "100%" } as CSSProperties}
-                // overflow-hidden + rounded clips the sidebar (left corners) and the
-                // inset (right corners) into one rounded rectangle; the shadow lifts
-                // the whole panel off the pink margin.
-                className="h-full w-full overflow-hidden rounded-[28px] shadow-[0_20px_60px_rgba(255,143,171,0.18)]"
-            >
+            <div className="flex h-full w-full overflow-hidden rounded-[36px] shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
                 <SidebarMenu />
-                <SidebarInset className="flex h-full flex-col overflow-hidden min-w-0 max-w-full">
-                <MainLayoutTopBar
-                    pathName={pathName}
-                    headerExtra={headerExtra}
-                    parentCrumb={parentCrumb}
-                    ignorePaths={ignorePaths}
-                    pageDescription={pageDescription}
-                    breadcrumbIcon={breadcrumbIcon}
-                />
-                <ScrollHintContainer
-                    axis="vertical"
-                    className="flex-1 min-h-0 min-w-0 max-w-full"
-                    viewportClassName={
-                        flushLeft
-                            // Left padding moved onto the right: total horizontal
-                            // padding (12/16/24 → 24/32/48 on the right) matches the
-                            // symmetric case, so children keep their width and the
-                            // block merely slides left, flush against the sidebar.
-                            ? "flex flex-col pl-0 pr-6 sm:pr-8 lg:pr-12 py-2 sm:py-3"
-                            : "flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
-                    }
-                >
-                    <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
-                        {children}
-                    </main>
-                </ScrollHintContainer>
-            </SidebarInset>
-            </SidebarProvider>
+                <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
+                    <MainLayoutTopBar headerExtra={headerExtra} />
+                    <ScrollHintContainer
+                        axis="vertical"
+                        className="flex-1 min-h-0 min-w-0 max-w-full"
+                        viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
+                    >
+                        <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
+                            {children}
+                        </main>
+                    </ScrollHintContainer>
+                </div>
+            </div>
         </div>
     );
 }

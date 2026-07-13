@@ -346,7 +346,7 @@ export function SakuraSidebarContent() {
     })();
 
     return (
-        <div className="flex h-full w-full flex-col items-center gap-[30px] pt-3 pb-6">
+        <>
             {/* Avatar → profile */}
             <button
                 type="button"
@@ -399,6 +399,6 @@ export function SakuraSidebarContent() {
                     <Power className="h-[22px] w-[22px]" />
                 </RailButton>
             </div>
-        </div>
+        </>
     );
 }

@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { SakuraDashboardContent } from "@/components/sakura-dashboard/SakuraStudyDashboard";
+import { SakuraDashboardContent, SakuraDashboardSidePanel } from "@/components/sakura-dashboard/SakuraStudyDashboard";
 
 import { useDashboardData } from "./useDashboardData";
 
@@ -13,7 +13,16 @@ export function Dashboard() {
     const data = useDashboardData();
 
     return (
-        <MainLayout pathName={{ "/dashboard": "Dashboard" }} flushLeft>
+        <MainLayout
+            pathName={{ "/dashboard": "Dashboard" }}
+            pageScroll
+            headerExtra={
+                <h1 className="font-display m-0 text-[26px] font-bold text-[#3A2E33]">
+                    Hi! {data.user.name}, welcome
+                </h1>
+            }
+            sidePanel={<SakuraDashboardSidePanel {...data} />}
+        >
             <SakuraDashboardContent {...data} />
         </MainLayout>
     );

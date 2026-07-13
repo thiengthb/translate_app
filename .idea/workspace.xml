@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sidebar): update layout spacing and improve navigation element alignment">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,7 +86,7 @@
     <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/assessment" />
+        <entry key="$PROJECT_DIR$" value="Test-theme-by-Akira-second" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -93,12 +97,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/thiengthb/translate_app.git",
-    "accountId": "f6f81030-4e38-4841-a11b-4754b5a2dc53"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -127,8 +131,8 @@
         <option name="modeId" value="Agent" />
         <option name="model">
           <model>
-            <option name="modelType" value="builtin_family" />
-            <option name="modelValue" value="gemini-3.1-pro-preview" />
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="auto" />
           </model>
         </option>
         <option name="targetType" value="BACKGROUND" />
@@ -224,7 +228,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
       </set>
     </attachedChunks>
   </component>
@@ -298,6 +303,7 @@
       <workItem from="1783702620785" duration="4123000" />
       <workItem from="1783749161961" duration="6143000" />
       <workItem from="1783828721002" duration="3180000" />
+      <workItem from="1783910917781" duration="2632000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -729,7 +735,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Test-by-ân" />
+                        <option value="origin/Test-theme-by-Akira-second" />
                       </list>
                     </value>
                   </entry>
@@ -742,7 +748,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
     <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
     <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
     <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
@@ -767,7 +772,8 @@
     <MESSAGE value="feat(landing-page): rebuild login and registration forms with cherry-blossom design" />
     <MESSAGE value="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals" />
     <MESSAGE value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
+    <MESSAGE value="feat(sidebar): update layout spacing and improve navigation element alignment" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(sidebar): update layout spacing and improve navigation element alignment" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
