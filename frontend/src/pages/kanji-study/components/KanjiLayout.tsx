@@ -1,25 +1,27 @@
 import type { ReactNode } from "react";
 
-import { KanjiStudyHeader } from "./KanjiStudyHeader";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiContentNav } from "./KanjiStudyHeader";
 
 /**
- * Dedicated shell for the Kanji-study area.
+ * Shell for the Kanji-study area.
  *
- * Unlike the shared `MainLayout`, this deliberately renders **no** Hanabun
- * sidebar — the feature has its own in-page nav (`KanjiStudyHeader`) and a
- * "back to Hanabun" exit button. Routes here are already gated by
- * `ProtectedRoute`, so no auth gate is needed at this level.
+ * Uses the shared {@link MainLayout} so the Kanji pages get the same Hanabun
+ * sidebar + rounded shell + top bar as every other page. The feature's own
+ * sub-nav (Decks / Bộ Thủ / Bài đọc) rides in the top bar via `headerExtra`
+ * ({@link KanjiContentNav}); global nav + exit-to-home are handled by the
+ * shared sidebar.
  *
- * Theming is the fixed light-only Sakura palette set in index.css `:root`;
- * there is no runtime color/typography preset to apply here anymore.
+ * Content stays centered at `max-w-6xl` to preserve the Kanji area's reading
+ * width inside the wider shell.
  */
 export function KanjiLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-svh bg-background flex flex-col">
-      <KanjiStudyHeader />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
-        {children}
-      </main>
-    </div>
+    <MainLayout
+      pathName={{ "/kanji-study": "Học Kanji" }}
+      headerExtra={<KanjiContentNav />}
+    >
+      <div className="mx-auto w-full max-w-6xl">{children}</div>
+    </MainLayout>
   );
 }
