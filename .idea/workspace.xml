@@ -4,17 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/dreamina-2026-06-22-5926-Combine image_16743583952644 and image_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/dreamina-2026-06-22-5926-Combine image_16743583952644 and image_1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/CherryLoginForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/CherryLoginForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,12 +93,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/thiengthb/translate_app.git",
+    "accountId": "f6f81030-4e38-4841-a11b-4754b5a2dc53"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -232,8 +224,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -306,6 +297,7 @@
       <workItem from="1783700727940" duration="1096000" />
       <workItem from="1783702620785" duration="4123000" />
       <workItem from="1783749161961" duration="6143000" />
+      <workItem from="1783828721002" duration="3180000" />
     </task>
     <task id="LOCAL-00001" summary="test add">
       <option name="closed" value="true" />
@@ -691,7 +683,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783707704054</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements">
+      <option name="closed" value="true" />
+      <created>1783828907895</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1783828907895</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -729,7 +729,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Test-theme-by-Akira-second" />
+                        <option value="origin/Test-by-ân" />
                       </list>
                     </value>
                   </entry>
@@ -742,7 +742,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
     <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
     <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
     <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
@@ -767,7 +766,8 @@
     <MESSAGE value="feat(streak): remove streak page and clean up related references" />
     <MESSAGE value="feat(landing-page): rebuild login and registration forms with cherry-blossom design" />
     <MESSAGE value="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals" />
+    <MESSAGE value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

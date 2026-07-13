@@ -346,7 +346,7 @@ export function SakuraSidebarContent() {
     })();
 
     return (
-        <div className="flex h-full w-full flex-col items-center gap-[18px] py-6 pb-5">
+        <div className="flex h-full w-full flex-col items-center gap-[30px] pt-3 pb-6">
             {/* Avatar → profile */}
             <button
                 type="button"
@@ -362,7 +362,7 @@ export function SakuraSidebarContent() {
             </button>
 
             {/* Primary nav — Home, the pinned features, then the catalog flyout */}
-            <nav className="flex w-full flex-1 flex-col items-center gap-[14px] overflow-y-auto scrollbar-hidden">
+            <nav className="mt-1 flex w-full flex-1 flex-col items-center gap-[26px] overflow-y-auto scrollbar-hidden">
                 <RailButton
                     label="Trang chủ"
                     active={isHome}
