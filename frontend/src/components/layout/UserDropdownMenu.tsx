@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
     Coins,
-    Keyboard,
     LogOut,
     Trophy,
     User as UserIcon,
@@ -23,7 +22,6 @@ import { profileApi } from "@/api/features/profile.api";
 import { rewardApi, type RewardBalance } from "@/api/features/reward.api";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useLogout } from "@/hooks/useLogout";
-import { SHORTCUTS_PAGE_PATH } from "@/lib/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 
@@ -47,9 +45,6 @@ interface UserDropdownMenuProps {
  *   │ [Avatar + Name + Email] │
  *   ├─────────────────────────┤
  *   │ 👤 Trang cá nhân         │
- *   ├─────────────────────────┤
- *   │ ⌨ Phím tắt          ?   │
- *   │ ⚙ Tùy chỉnh         →   │  ← single submenu (language + theme combined)
  *   ├─────────────────────────┤
  *   │ 🚪 Đăng xuất       ⇧+L  │
  *   └─────────────────────────┘
@@ -228,16 +223,6 @@ export function UserDropdownMenu({
                     icon={UserIcon}
                     label={t("nav.profile")}
                     onSelect={() => navigate("/profile")}
-                />
-
-                {/* ── Tools ────────────────────────────────────────────── */}
-                {/* Goes straight to the full docs page; the quick popup is
-                    still one `?` keypress away (hinted by the kbd). */}
-                <MenuRow
-                    icon={Keyboard}
-                    label="Phím tắt"
-                    hint="?"
-                    onSelect={() => navigate(SHORTCUTS_PAGE_PATH)}
                 />
 
                 <DropdownMenuSeparator />

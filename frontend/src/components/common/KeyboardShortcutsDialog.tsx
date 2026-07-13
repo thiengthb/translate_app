@@ -1,7 +1,5 @@
-import { ExternalLink, Keyboard } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Keyboard } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
     Dialog,
@@ -10,10 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    SHORTCUTS_PAGE_PATH,
-    SHORTCUT_GROUPS,
-} from "@/lib/keyboard-shortcuts";
+import { SHORTCUT_GROUPS } from "@/lib/keyboard-shortcuts";
 
 interface KeyboardShortcutsDialogProps {
     open: boolean;
@@ -21,16 +16,15 @@ interface KeyboardShortcutsDialogProps {
 }
 
 /**
- * Quick-reference popup. Reads from the shared `SHORTCUT_GROUPS` so the
- * dialog never drifts from the full docs page. Includes a footer link
- * to the page for users who want longer explanations.
+ * Quick-reference popup, opened via the global `?` shortcut. Reads from
+ * the shared `SHORTCUT_GROUPS` registry.
  *
  * The body uses `ScrollHintContainer` instead of a raw `overflow-y-auto`:
  * the scrollbar stays hidden and floating chevrons hint when more rows
  * sit below the fold — no jarring scrollbar inside the rounded dialog.
  *
  * The "tips" group is hidden here — it's prose, not table rows, so it
- * belongs only on the docs page where there's room for it.
+ * doesn't fit this compact row layout.
  */
 export function KeyboardShortcutsDialog({
     open,
@@ -95,21 +89,10 @@ export function KeyboardShortcutsDialog({
                 </ScrollHintContainer>
 
                 {/* ── Footer ───────────────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-2 border-t px-6 py-3">
+                <div className="flex items-center justify-center gap-2 border-t px-6 py-3">
                     <span className="text-xs text-muted-foreground">
                         Bấm <Kbd>?</Kbd> ở bất kỳ đâu để mở lại
                     </span>
-                    <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onOpenChange(false)}
-                    >
-                        <Link to={SHORTCUTS_PAGE_PATH}>
-                            Xem trang đầy đủ
-                            <ExternalLink size={13} />
-                        </Link>
-                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

@@ -31,9 +31,6 @@ const STATIC_TITLES: Array<[path: string, title: string]> = [
     ["/notifications", "Thông báo"],
     ["/audit-logs", "Audit log"],
 
-    // Help & support
-    ["/help/shortcuts", "Phím tắt"],
-
     // Home
     ["/dashboard", "Dashboard"],
 

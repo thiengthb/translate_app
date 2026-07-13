@@ -159,8 +159,6 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     },
 ];
 
-export const SHORTCUTS_PAGE_PATH = "/help/shortcuts";
-
 /** Convenience lookup for icons by group id (used in dashboard tiles, etc.). */
 export const SHORTCUT_GROUP_ICONS: Record<string, LucideIcon> = {
     general: Command,

@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(sidebar): update layout spacing and improve navigation element alignment">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(dashboard): enhance layout with side panel and welcome message">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/common/KeyboardShortcutsDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/common/KeyboardShortcutsDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/lib/keyboard-shortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/lib/keyboard-shortcuts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/help/KeyboardShortcutsPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -304,14 +306,6 @@
       <workItem from="1783749161961" duration="6143000" />
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
-    </task>
-    <task id="LOCAL-00001" summary="test add">
-      <option name="closed" value="true" />
-      <created>1779866076909</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1779866076909</updated>
     </task>
     <task id="LOCAL-00002" summary="fix dictionary">
       <option name="closed" value="true" />
@@ -697,7 +691,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783828907895</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="feat(dashboard): enhance layout with side panel and welcome message">
+      <option name="closed" value="true" />
+      <created>1783920250736</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1783920250736</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -748,7 +750,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
     <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
     <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
     <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
@@ -773,7 +774,8 @@
     <MESSAGE value="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals" />
     <MESSAGE value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
     <MESSAGE value="feat(sidebar): update layout spacing and improve navigation element alignment" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(sidebar): update layout spacing and improve navigation element alignment" />
+    <MESSAGE value="feat(dashboard): enhance layout with side panel and welcome message" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(dashboard): enhance layout with side panel and welcome message" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -7,7 +7,6 @@ import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
 import AuditLogPage from "@/pages/auditLog/AuditLogPage";
-import KeyboardShortcutsPage from "@/pages/help/KeyboardShortcutsPage";
 import NotificationsPage from "@/pages/notifications/NotificationsPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 
@@ -144,7 +143,6 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
-  { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
