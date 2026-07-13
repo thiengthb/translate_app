@@ -4,9 +4,7 @@ import type { QuestionBankDTO, QuestionTagDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirmdialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -16,6 +14,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { EmptyState } from "@/components/common/EmptyState";
 import { QuestionFormSheet } from "./QuestionFormSheet";
 import { TagBadges } from "./QuestionTags";
 import {
@@ -208,10 +207,7 @@ export function QuestionBankSelector({
           {loading ? (
             <div className="flex items-center justify-center h-72"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
           ) : questions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-72 gap-2 text-muted-foreground">
-              <Search className="size-8 opacity-30" />
-              <p className="text-sm">No questions found.</p>
-            </div>
+            <EmptyState className="h-72" icon={<Search className="size-7" />} title="No questions found." />
           ) : (
             <>
               {/* Header row */}
@@ -300,44 +296,36 @@ export function QuestionBankSelector({
       />
 
       {/* Delete confirmation */}
-      <Dialog open={confirmDel != null} onOpenChange={(o) => !deleting && !o && setConfirmDel(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete question?</DialogTitle>
-            <DialogDescription>
-              This permanently deletes the question{confirmDel && ` “${confirmDel.prompt.slice(0, 60)}${confirmDel.prompt.length > 60 ? "…" : ""}”`}
-              {" "}and removes it from this quiz. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmDel(null)} disabled={deleting}>Cancel</Button>
-            <Button
-              className="bg-destructive text-white hover:bg-destructive/90"
-              disabled={deleting}
-              onClick={async () => {
-                if (!confirmDel) return;
-                setDeleting(true);
-                try {
-                  // Remove the placement first if it's in the quiz, then delete.
-                  if (selectedIds.has(confirmDel.id)) await onToggle(confirmDel.id);
-                  await assessmentApi.deleteQuestion(confirmDel.id);
-                  toast.success("Question deleted.");
-                  setConfirmDel(null);
-                  load();
-                  await onChanged?.();
-                } catch {
-                  toast.error("Failed to delete question.");
-                } finally {
-                  setDeleting(false);
-                }
-              }}
-            >
-              {deleting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Trash2 className="size-4 mr-1.5" />}
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={confirmDel != null}
+        loading={deleting}
+        title="Delete question?"
+        description={
+          confirmDel
+            ? `This permanently deletes the question “${confirmDel.prompt.slice(0, 60)}${confirmDel.prompt.length > 60 ? "…" : ""}” and removes it from this quiz. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          if (!confirmDel) return;
+          setDeleting(true);
+          try {
+            // Remove the placement first if it's in the quiz, then delete.
+            if (selectedIds.has(confirmDel.id)) await onToggle(confirmDel.id);
+            await assessmentApi.deleteQuestion(confirmDel.id);
+            toast.success("Question deleted.");
+            setConfirmDel(null);
+            load();
+            await onChanged?.();
+          } catch {
+            toast.error("Failed to delete question.");
+          } finally {
+            setDeleting(false);
+          }
+        }}
+        onCancel={() => { if (!deleting) setConfirmDel(null); }}
+      />
     </div>
   );
 }
@@ -410,7 +398,7 @@ function BankQuestionRow({
         <span className="flex-1 min-w-0 text-sm font-medium truncate flex items-center gap-1.5">
           <span className="truncate">{q.prompt}</span>
           {isPrivate && (
-            <Badge variant="outline" className="shrink-0 text-[9px] border-amber-400/50 text-amber-600">
+            <Badge variant="outline" className="shrink-0 text-[11px] border-amber-400/50 text-amber-600">
               Quiz only
             </Badge>
           )}
@@ -440,6 +428,7 @@ function BankQuestionRow({
           <button
             type="button"
             title="Choose tags"
+            aria-label="Choose tags"
             onClick={(e) => { e.stopPropagation(); onTags(); }}
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
           >
@@ -448,6 +437,7 @@ function BankQuestionRow({
           <button
             type="button"
             title="Edit question"
+            aria-label="Edit question"
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
           >
@@ -456,6 +446,7 @@ function BankQuestionRow({
           <button
             type="button"
             title="Delete question"
+            aria-label="Delete question"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >

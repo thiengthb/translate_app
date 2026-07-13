@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { assessmentApi } from "@/api";
 import type { QuizDTO, UserQuizProgressDTO } from "@/types";
@@ -11,10 +11,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Clock, FileQuestion, Loader2, Plus, RotateCcw, Search } from "lucide-react";
+import { Clock, FileQuestion, Plus, RotateCcw, Search } from "lucide-react";
 import { SearchableSelect } from "@/components/common/SearchableSelect";
 import { DataPagination } from "@/components/common/DataPagination";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
+import { EmptyState } from "@/components/common/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
@@ -41,45 +43,71 @@ export default function QuizListPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
+  // Debounce the search box so the list is fetched once the user pauses typing,
+  // not on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  // Load the quiz list. Progress is fetched separately (below), only for the
+  // page in view — avoids an N+1 fetch across the whole result set on each load.
   useEffect(() => {
     setLoading(true);
     const params = {
       ...(difficulty !== "all" ? { difficultyLevel: difficulty as DifficultyLevel } : {}),
-      ...(search.trim() ? { search: search.trim() } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     };
     const loader =
       tab === "mine"
         ? assessmentApi.fetchQuizzes({ ...params, ...(userId ? { creatorId: userId } : {}) })
         : assessmentApi.fetchPublicQuizzes(params);
 
+    let cancelled = false;
     loader
-      .then(async (data) => {
-        setQuizzes(data);
-        if (userId) {
-          const entries = await Promise.all(
-            data.map(async (q) => {
-              const p = await assessmentApi.getQuizProgress(userId, q.id).catch(() => null);
-              return [q.id, p] as const;
-            })
-          );
-          const map: Record<number, UserQuizProgressDTO> = {};
-          for (const [id, p] of entries) if (p) map[id] = p;
-          setProgressMap(map);
-        }
-      })
-      .catch(() => toast.error("Failed to load quizzes."))
-      .finally(() => setLoading(false));
-  }, [tab, difficulty, search, userId]);
+      .then((data) => { if (!cancelled) setQuizzes(data); })
+      .catch(() => { if (!cancelled) toast.error("Failed to load quizzes."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [tab, difficulty, debouncedSearch, userId]);
 
-  // Any change to the result set (filters/tab) or page size returns to page 1.
+  // A new result set (filters/tab) clears cached progress and returns to page 1.
+  const fetchedProgressRef = useRef<Set<number>>(new Set());
   useEffect(() => {
     setPage(1);
-  }, [tab, difficulty, search, pageSize]);
+    fetchedProgressRef.current = new Set();
+    setProgressMap({});
+  }, [tab, difficulty, debouncedSearch, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(quizzes.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * pageSize;
   const pageItems = quizzes.slice(pageStart, pageStart + pageSize);
+
+  // Fetch progress lazily for the questions on the current page only, skipping
+  // any we've already looked up for this result set.
+  useEffect(() => {
+    if (!userId || pageItems.length === 0) return;
+    const missing = pageItems.filter((q) => !fetchedProgressRef.current.has(q.id));
+    if (missing.length === 0) return;
+    missing.forEach((q) => fetchedProgressRef.current.add(q.id));
+    let cancelled = false;
+    Promise.all(
+      missing.map((q) =>
+        assessmentApi.getQuizProgress(userId, q.id).catch(() => null).then((p) => [q.id, p] as const)
+      )
+    ).then((entries) => {
+      if (cancelled) return;
+      setProgressMap((prev) => {
+        const next: Record<number, UserQuizProgressDTO> = { ...prev };
+        for (const [id, p] of entries) if (p) next[id] = p;
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safePage, pageSize, quizzes, userId]);
 
   const headerExtra = useMemo(
     () => (
@@ -128,16 +156,34 @@ export default function QuizListPage() {
         {/* Content (scrolls; footer below stays pinned) */}
         <ScrollHintContainer axis="vertical" viewportClassName="px-1">
         {loading ? (
-          <div className="flex items-center justify-center h-60">
-            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="p-4 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Skeleton className="h-5 w-3/5" />
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <div className="flex gap-2 mt-auto">
+                  <Skeleton className="h-4 w-10" />
+                  <Skeleton className="h-4 w-10" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </Card>
+            ))}
           </div>
         ) : quizzes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-60 gap-2 text-muted-foreground">
-            <FileQuestion className="size-10 opacity-40" />
-            <p className="text-sm">
-              {tab === "mine" ? "You haven't created any quizzes yet." : "No public quizzes found."}
-            </p>
-          </div>
+          <EmptyState
+            className="h-60"
+            icon={<FileQuestion className="size-7" />}
+            title={tab === "mine" ? "You haven't created any quizzes yet." : "No public quizzes found."}
+            action={
+              tab === "mine"
+                ? { label: "Create quiz", icon: <Plus className="size-4" />, onClick: () => navigate("/quizzes/create") }
+                : undefined
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2 pb-4">
             {pageItems.map((quiz) => {
@@ -194,7 +240,7 @@ export default function QuizListPage() {
         <div className="shrink-0 border-t border-border bg-background px-2 py-1.5 flex flex-wrap items-center justify-end gap-3 min-h-[44px]">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="tabular-nums">
-              Tổng: <span className="font-semibold text-foreground">{quizzes.length}</span>
+              Total: <span className="font-semibold text-foreground">{quizzes.length}</span>
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>

@@ -178,7 +178,7 @@ function SelectedRow({
         <span className="flex-1 min-w-0 text-sm font-medium truncate flex items-center gap-1.5">
           <span className="truncate">{q?.prompt ?? `Question #${p.questionId}`}</span>
           {isPrivate && (
-            <Badge variant="outline" className="shrink-0 text-[9px] border-amber-400/50 text-amber-600">
+            <Badge variant="outline" className="shrink-0 text-[11px] border-amber-400/50 text-amber-600">
               Quiz only
             </Badge>
           )}

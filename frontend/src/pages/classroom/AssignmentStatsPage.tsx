@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { classroomApi } from "@/api";
 import type { AttemptSummary, ClassAssignmentDTO, ClassroomDTO, GradebookDTO, StudentResultDTO } from "@/types";
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
   BarChart3, CalendarClock, CheckCircle2, ChevronDown,
-  Clock, Loader2, Repeat, Target, TrendingUp, Trophy, Users,
+  Clock, Loader2, RefreshCw, Repeat, Target, TrendingUp, Trophy, Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AttemptStatusBadge, formatDateTime, formatSeconds } from "@/pages/assessment/_shared";
@@ -30,24 +30,28 @@ export default function AssignmentStatsPage() {
   const [assignment, setAssignment] = useState<ClassAssignmentDTO | null>(null);
   const [gradebook, setGradebook]   = useState<GradebookDTO | null>(null);
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
   const [expanded, setExpanded]     = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(async () => {
     setLoading(true);
-    Promise.all([
-      classroomApi.getClassroomById(cid),
-      classroomApi.getAssignmentById(aid),
-      classroomApi.getGradebook(aid),
-    ])
-      .then(([c, a, g]) => {
-        if (cancelled) return;
-        setClassroom(c); setAssignment(a); setGradebook(g);
-      })
-      .catch(() => toast.error("Failed to load assignment statistics."))
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    setError(false);
+    try {
+      const [c, a, g] = await Promise.all([
+        classroomApi.getClassroomById(cid),
+        classroomApi.getAssignmentById(aid),
+        classroomApi.getGradebook(aid),
+      ]);
+      setClassroom(c); setAssignment(a); setGradebook(g);
+    } catch {
+      setError(true);
+      toast.error("Failed to load assignment statistics.");
+    } finally {
+      setLoading(false);
+    }
   }, [cid, aid]);
+
+  useEffect(() => { void load(); }, [load]);
 
   const toggle = (userId: number) =>
     setExpanded((prev) => {
@@ -92,6 +96,20 @@ export default function AssignmentStatsPage() {
         <div className="flex items-center justify-center h-60">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />}>
+        <EmptyState
+          className="h-60"
+          icon={<BarChart3 className="size-7" />}
+          title="Couldn't load these statistics."
+          description="Something went wrong fetching the assignment data. Please try again."
+          action={{ label: "Retry", icon: <RefreshCw className="size-4" />, onClick: () => void load() }}
+        />
       </MainLayout>
     );
   }

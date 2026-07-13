@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirmdialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { QuestionBankSelector } from "./QuestionBankSelector";
 import { SelectedQuestionsPanel } from "./SelectedQuestionsPanel";
 
@@ -39,6 +40,8 @@ export default function QuizCreateEditPage() {
 
   // Two-step wizard: 1 = configuration, 2 = question selection.
   const [step, setStep] = useState<1 | 2>(1);
+  // Inline field errors are surfaced once the author first tries to advance.
+  const [showErrors, setShowErrors] = useState(false);
 
   // form fields
   const [title, setTitle] = useState("");
@@ -86,14 +89,25 @@ export default function QuizCreateEditPage() {
     isRandomQuestion, isRandomOption, allowRetake, showAnswerAfterSubmit, visibility,
   });
 
-  // Step 1 is complete only when every configuration field has a value.
+  // Only the title is required by the backend. The other fields are optional,
+  // but if filled must hold a sensible value. Errors render inline (below).
+  const step1Errors = {
+    title: title.trim() === "" ? "Title is required." : undefined,
+    passScore:
+      passScore.trim() !== "" && (Number(passScore) < 0 || Number(passScore) > 100)
+        ? "Pass score must be between 0 and 100."
+        : undefined,
+    timeLimit:
+      timeLimit.trim() !== "" && !(Number(timeLimit) > 0)
+        ? "Time must be a positive number of minutes."
+        : undefined,
+    maxAttempts:
+      maxAttempts.trim() !== "" && !(Number(maxAttempts) > 0)
+        ? "Max attempts must be at least 1."
+        : undefined,
+  };
   const step1Valid =
-    title.trim() !== "" &&
-    description.trim() !== "" &&
-    difficulty !== "none" &&
-    passScore.trim() !== "" && Number(passScore) >= 0 && Number(passScore) <= 100 &&
-    timeLimit.trim() !== "" && Number(timeLimit) > 0 &&
-    maxAttempts.trim() !== "" && Number(maxAttempts) > 0;
+    !step1Errors.title && !step1Errors.passScore && !step1Errors.timeLimit && !step1Errors.maxAttempts;
 
   const persist = async (): Promise<number | null> => {
     if (!title.trim()) { toast.error("Title is required."); return null; }
@@ -157,7 +171,7 @@ export default function QuizCreateEditPage() {
   // (the draft must exist so questions attach to a saved quiz).
   const handleNext = async () => {
     if (!step1Valid) {
-      toast.error("Please fill in every field before continuing.");
+      setShowErrors(true);
       return;
     }
     const savedId = await persist();
@@ -224,7 +238,15 @@ export default function QuizCreateEditPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Quiz title" />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Quiz title"
+                aria-invalid={showErrors && !!step1Errors.title}
+              />
+              {showErrors && step1Errors.title && (
+                <p className="text-xs text-destructive">{step1Errors.title}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Description</Label>
@@ -242,15 +264,27 @@ export default function QuizCreateEditPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Pass score (%)</Label>
-                <Input type="number" min={0} max={100} value={passScore} onChange={(e) => setPassScore(e.target.value)} placeholder="e.g. 60" />
+                <Input type="number" min={0} max={100} value={passScore} onChange={(e) => setPassScore(e.target.value)} placeholder="e.g. 60"
+                  aria-invalid={showErrors && !!step1Errors.passScore} />
+                {showErrors && step1Errors.passScore && (
+                  <p className="text-xs text-destructive">{step1Errors.passScore}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Time (min)</Label>
-                <Input type="number" min={1} value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} placeholder="e.g. 30" />
+                <Input type="number" min={1} value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} placeholder="e.g. 30"
+                  aria-invalid={showErrors && !!step1Errors.timeLimit} />
+                {showErrors && step1Errors.timeLimit && (
+                  <p className="text-xs text-destructive">{step1Errors.timeLimit}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Max attempts</Label>
-                <Input type="number" min={1} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} placeholder="e.g. 3" />
+                <Input type="number" min={1} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} placeholder="e.g. 3"
+                  aria-invalid={showErrors && !!step1Errors.maxAttempts} />
+                {showErrors && step1Errors.maxAttempts && (
+                  <p className="text-xs text-destructive">{step1Errors.maxAttempts}</p>
+                )}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -324,7 +358,7 @@ export default function QuizCreateEditPage() {
           {step === 1 ? (
             <>
               <Button variant="ghost" onClick={requestCancel}>Cancel</Button>
-              <Button onClick={handleNext} disabled={saving || !step1Valid}>
+              <Button onClick={handleNext} disabled={saving}>
                 {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : null}
                 Next: select questions
                 <ChevronRight className="size-4 ml-1" />
@@ -339,9 +373,22 @@ export default function QuizCreateEditPage() {
                 <Button variant="outline" onClick={handleSaveDraft} disabled={saving}>
                   {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}Save draft
                 </Button>
-                <Button onClick={handlePublish} disabled={saving || questions.length === 0}>
-                  <Send className="size-4 mr-1" />{isEditMode ? "Save & publish" : "Create quiz"}
-                </Button>
+                {questions.length === 0 ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-block">
+                        <Button disabled className="pointer-events-none">
+                          <Send className="size-4 mr-1" />{isEditMode ? "Save & publish" : "Create quiz"}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Add at least one question to publish.</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button onClick={handlePublish} disabled={saving}>
+                    <Send className="size-4 mr-1" />{isEditMode ? "Save & publish" : "Create quiz"}
+                  </Button>
+                )}
               </div>
             </>
           )}

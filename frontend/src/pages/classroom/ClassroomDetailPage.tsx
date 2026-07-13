@@ -18,9 +18,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirmdialog";
+import { EmptyState } from "@/components/common/EmptyState";
+import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
   BarChart3, BookOpen, CalendarClock, Check, ChevronRight, ClipboardList, Copy,
   Eye, GraduationCap, Image as ImageIcon, LayoutGrid, List, Loader2, Play, Plus, RefreshCw,
@@ -57,6 +59,11 @@ export default function ClassroomDetailPage() {
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const [tab, setTab] = useState("assignments");
+  // Settings lives in an unmounted (inactive) tab, so leaving it while the form
+  // is dirty would silently drop edits — guard the switch with a confirm.
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   // Generic confirm for destructive actions (remove member / remove deck).
   const [pendingAction, setPendingAction] =
     useState<null | { title: string; description: string; run: () => Promise<void> }>(null);
@@ -97,10 +104,21 @@ export default function ClassroomDetailPage() {
     );
   }
 
+  // Switching away from Settings while its form has unsaved edits → confirm first.
+  const handleTabChange = (next: string) => {
+    if (tab === "settings" && next !== "settings" && settingsDirty) {
+      setPendingTab(next);
+      return;
+    }
+    setTab(next);
+  };
+
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(classroom.inviteCode);
+      setCodeCopied(true);
       toast.success("Invite code copied.");
+      window.setTimeout(() => setCodeCopied(false), 1500);
     } catch {
       toast.error("Couldn't copy code.");
     }
@@ -137,7 +155,7 @@ export default function ClassroomDetailPage() {
   return (
     <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
       <div className="space-y-5">
-        <Tabs value={tab} onValueChange={setTab} className="space-y-5">
+        <Tabs value={tab} onValueChange={handleTabChange} className="space-y-5">
           {/* ── Tabs + contextual action, on one row near the breadcrumb ── */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList className="justify-start gap-1 h-auto p-1">
@@ -215,11 +233,18 @@ export default function ClassroomDetailPage() {
               <code className="px-3 py-1 rounded-lg bg-muted font-mono text-sm tracking-[0.2em] font-semibold">
                 {classroom.inviteCode}
               </code>
-              <Button variant="ghost" size="sm" className="size-8 p-0" onClick={copyCode} title="Copy code">
-                <Copy className="size-3.5" />
+              <Button
+                variant="ghost" size="sm" className="size-8 p-0"
+                onClick={copyCode} title="Copy code" aria-label="Copy invite code"
+              >
+                {codeCopied ? <Check className="size-3.5 text-green-600" /> : <Copy className="size-3.5" />}
               </Button>
               {isOwner && (
-                <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => setRegenConfirmOpen(true)} title="Regenerate code">
+                <Button
+                  variant="ghost" size="sm" className="size-8 p-0"
+                  onClick={() => setRegenConfirmOpen(true)} title="Regenerate code"
+                  aria-label="Regenerate invite code"
+                >
                   <RefreshCw className="size-3.5" />
                 </Button>
               )}
@@ -230,10 +255,11 @@ export default function ClassroomDetailPage() {
           {/* ── Assignments ── */}
           <TabsContent value="assignments" className="mt-4 space-y-3">
             {visibleAssignments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
-                <ClipboardList className="size-8 opacity-40" />
-                <p className="text-sm">No assignments yet.</p>
-              </div>
+              <EmptyState
+                className="rounded-xl border border-dashed"
+                icon={<ClipboardList className="size-7" />}
+                title="No assignments yet."
+              />
             ) : assignmentView === "list" ? (
               <div className="space-y-2">
                 {visibleAssignments.map((a) => (
@@ -270,10 +296,11 @@ export default function ClassroomDetailPage() {
           {/* ── Materials ── */}
           <TabsContent value="materials" className="mt-4 space-y-4">
             {decks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-14 text-muted-foreground">
-                <BookOpen className="size-8 opacity-40" />
-                <p className="text-sm">No decks shared yet.</p>
-              </div>
+              <EmptyState
+                className="rounded-xl border border-dashed"
+                icon={<BookOpen className="size-7" />}
+                title="No decks shared yet."
+              />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {decks.map((d) => {
@@ -347,6 +374,7 @@ export default function ClassroomDetailPage() {
                 <AddMemberInline onAdd={async (email) => { await cls.addMember(email); toast.success("Member added."); }} />
               )}
             </div>
+            <ScrollHintContainer axis="horizontal">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -358,6 +386,13 @@ export default function ClassroomDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {filteredMembers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={isOwner ? 5 : 4} className="h-24 text-center text-sm text-muted-foreground">
+                      No members found.
+                    </TableCell>
+                  </TableRow>
+                )}
                 {filteredMembers.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
@@ -379,6 +414,8 @@ export default function ClassroomDetailPage() {
                         <Button
                           variant="ghost" size="sm"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title={`Remove ${m.displayName}`}
+                          aria-label={`Remove ${m.displayName}`}
                           onClick={() => setPendingAction({
                             title: "Remove member?",
                             description: `Remove ${m.displayName} from this group?`,
@@ -393,6 +430,7 @@ export default function ClassroomDetailPage() {
                 ))}
               </TableBody>
             </Table>
+            </ScrollHintContainer>
           </TabsContent>
 
           {/* ── Settings ── */}
@@ -406,6 +444,7 @@ export default function ClassroomDetailPage() {
                 initialCover={classroom.coverImageUrl ?? ""}
                 onSaved={() => cls.refreshAll()}
                 onDeleted={() => navigate("/classrooms")}
+                onDirtyChange={setSettingsDirty}
               />
             </TabsContent>
           )}
@@ -454,6 +493,22 @@ export default function ClassroomDetailPage() {
         cancelLabel="Cancel"
         onConfirm={async () => { setRegenConfirmOpen(false); await regenerate(); }}
         onCancel={() => setRegenConfirmOpen(false)}
+      />
+
+      {/* Leaving Settings with unsaved edits. */}
+      <ConfirmDialog
+        open={pendingTab != null}
+        tone="warning"
+        title="Discard changes?"
+        description="You have unsaved changes in Settings. Leaving this tab will discard them."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => {
+          setSettingsDirty(false);
+          if (pendingTab) setTab(pendingTab);
+          setPendingTab(null);
+        }}
+        onCancel={() => setPendingTab(null)}
       />
     </MainLayout>
   );
@@ -604,8 +659,15 @@ function AddMemberInline({ onAdd }: { onAdd: (email: string) => Promise<void> })
     try {
       await onAdd(value);
       setEmail("");
-    } catch {
-      toast.error("No user found with that email.");
+    } catch (e: unknown) {
+      const resp = (e as { response?: { status?: number; data?: { message?: string } } })?.response;
+      const status = resp?.status;
+      toast.error(
+        resp?.data?.message ||
+          (status === 404 ? "No user found with that email."
+            : status === 409 ? "That user is already a member."
+            : "Couldn't add member."),
+      );
     } finally {
       setAdding(false);
     }
@@ -696,11 +758,12 @@ function DeckPickerDialog({
 
 /* ── Settings ── */
 function SettingsForm({
-  classroomId, initialName, initialDescription, initialMax, initialCover, onSaved, onDeleted,
+  classroomId, initialName, initialDescription, initialMax, initialCover, onSaved, onDeleted, onDirtyChange,
 }: {
   classroomId: number; initialName: string; initialDescription: string;
   initialMax: number | null; initialCover: string;
   onSaved: () => void; onDeleted: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
@@ -711,6 +774,17 @@ function SettingsForm({
   const [deleting, setDeleting] = useState(false);
   const coverFileRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Report dirtiness up so the parent can guard tab switches. Reset on unmount.
+  const dirty =
+    name !== initialName ||
+    description !== initialDescription ||
+    coverImageUrl !== initialCover ||
+    maxMembers !== (initialMax != null ? String(initialMax) : "");
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
 
   // Cover image can be a pasted link OR a locally-picked file (uploaded to the
   // file store, which returns a URL we save just like a pasted one).
@@ -825,27 +899,16 @@ function SettingsForm({
       </div>
 
       {/* Delete confirmation */}
-      <Dialog open={confirmOpen} onOpenChange={(o) => !deleting && setConfirmOpen(o)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete group?</DialogTitle>
-            <DialogDescription>
-              This permanently deletes “{name.trim() || "this group"}” for everyone. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={deleting}>Cancel</Button>
-            <Button
-              className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={remove}
-              disabled={deleting}
-            >
-              {deleting ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Trash2 className="size-4 mr-1.5" />}
-              Delete group
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        loading={deleting}
+        title="Delete group?"
+        description={`This permanently deletes “${name.trim() || "this group"}” for everyone. This cannot be undone.`}
+        confirmLabel="Delete group"
+        cancelLabel="Cancel"
+        onConfirm={remove}
+        onCancel={() => { if (!deleting) setConfirmOpen(false); }}
+      />
     </div>
   );
 }
