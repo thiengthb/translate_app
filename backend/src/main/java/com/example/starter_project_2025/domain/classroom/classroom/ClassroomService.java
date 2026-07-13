@@ -22,19 +22,20 @@ public interface ClassroomService extends BaseCrudService<Long, ClassroomDTO, Ba
 
     ClassMemberDTO joinByInviteCode(Long userId, String inviteCode);
 
-    ClassroomDTO regenerateInviteCode(Long classroomId);
+    ClassroomDTO regenerateInviteCode(Long classroomId, Long currentUserId);
 
-    List<ClassMemberDTO> getMembers(Long classroomId);
+    List<ClassMemberDTO> getMembers(Long classroomId, Long currentUserId);
 
-    ClassMemberDTO addMember(Long classroomId, Long userId);
+    ClassMemberDTO addMember(Long classroomId, Long userId, Long currentUserId);
 
-    ClassMemberDTO addMemberByEmail(Long classroomId, String email);
+    ClassMemberDTO addMemberByEmail(Long classroomId, String email, Long currentUserId);
 
-    void removeMember(Long classroomId, Long userId);
+    void removeMember(Long classroomId, Long userId, Long currentUserId);
 
-    List<ClassDeckDTO> getDecks(Long classroomId);
+    List<ClassDeckDTO> getDecks(Long classroomId, Long currentUserId);
 
+    /** {@code addedBy} is the current user; only the classroom owner may add decks. */
     ClassDeckDTO addDeck(Long classroomId, Long deckId, Long addedBy);
 
-    void removeDeck(Long classroomId, Long deckId);
+    void removeDeck(Long classroomId, Long deckId, Long currentUserId);
 }

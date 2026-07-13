@@ -74,11 +74,23 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         Long assignmentId = request.getAssignmentId();
         if (assignmentId != null) {
             ClassAssignment assignment = classAssignmentRepository.findById(assignmentId).orElse(null);
-            if (assignment != null && assignment.getMaxAttempts() != null) {
-                long usedForAssignment =
-                        attemptRepository.countByUserIdAndAssignmentIdAndIsDeletedFalse(userId, assignmentId);
-                if (usedForAssignment >= assignment.getMaxAttempts()) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Maximum attempts reached for this assignment");
+            if (assignment != null) {
+                // Enforce the assignment's availability window server-side — these
+                // fields were previously stored but never checked, so a direct API
+                // call could start an assignment before it opened or after it closed.
+                LocalDateTime nowCheck = LocalDateTime.now();
+                if (assignment.getAvailableFrom() != null && nowCheck.isBefore(assignment.getAvailableFrom())) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This assignment is not open yet");
+                }
+                if (assignment.getDeadline() != null && nowCheck.isAfter(assignment.getDeadline())) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "The deadline for this assignment has passed");
+                }
+                if (assignment.getMaxAttempts() != null) {
+                    long usedForAssignment =
+                            attemptRepository.countByUserIdAndAssignmentIdAndIsDeletedFalse(userId, assignmentId);
+                    if (usedForAssignment >= assignment.getMaxAttempts()) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT, "Maximum attempts reached for this assignment");
+                    }
                 }
             }
         }
@@ -116,7 +128,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                     .questionType(question.getQuestionType())
                     .originalQuestionVersion(question.getContentVersion())
                     .questionSnapshot(buildQuestionSnapshot(question))
-                    .optionsSnapshot(buildOptionsSnapshot(question))
+                    .optionsSnapshot(buildOptionsSnapshot(question, quiz.isRandomOption()))
                     .correctAnswerSnapshot(buildCorrectAnswer(question))
                     .orderIndex(order++)
                     .score(qq.getScore())
@@ -144,6 +156,16 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         QuizAttempt attempt = loadOwnedAttempt(userId, attemptId);
         if (!"IN_PROGRESS".equals(attempt.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Attempt is already finished");
+        }
+        // Time's up: reject the new answer and auto-close the attempt (the
+        // frontend timer is UX-only and easily bypassed). We finalize and return
+        // the closed attempt rather than throwing — an exception would roll back
+        // the auto-close in this same transaction, leaving the attempt open.
+        if (isExpired(attempt)) {
+            Quiz expiredQuiz = quizRepository.findById(attempt.getQuizId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+            QuizAttempt closed = finalizeAttempt(attempt, expiredQuiz);
+            return assembleDto(closed, expiredQuiz);
         }
 
         QuizAttemptQuestion aq = attempt.getAttemptQuestions().stream()
@@ -182,6 +204,16 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         Quiz quiz = quizRepository.findById(attempt.getQuizId())
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
 
+        QuizAttempt saved = finalizeAttempt(attempt, quiz);
+        return assembleDto(saved, quiz);
+    }
+
+    /**
+     * Grade totals, mark the attempt SUBMITTED, and roll up progress. Used both
+     * when the student explicitly submits and when the server auto-closes an
+     * attempt whose time limit has elapsed.
+     */
+    private QuizAttempt finalizeAttempt(QuizAttempt attempt, Quiz quiz) {
         int answered = 0, correct = 0, wrong = 0, skipped = 0;
         double earned = 0;
         for (QuizAttemptQuestion aq : attempt.getAttemptQuestions()) {
@@ -212,9 +244,13 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         attempt.setTimeSpentSeconds((int) Duration.between(attempt.getStartedAt(), now).getSeconds());
 
         QuizAttempt saved = attemptRepository.save(attempt);
-        updateProgressOnSubmit(userId, quiz, saved);
+        updateProgressOnSubmit(attempt.getUserId(), quiz, saved);
+        return saved;
+    }
 
-        return assembleDto(saved, quiz);
+    /** An attempt is expired once its wall-clock time limit has elapsed. */
+    private static boolean isExpired(QuizAttempt attempt) {
+        return attempt.getExpiredAt() != null && LocalDateTime.now().isAfter(attempt.getExpiredAt());
     }
 
     @Override
@@ -245,7 +281,10 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         }
 
         Quiz quiz = quizRepository.findById(attempt.getQuizId()).orElse(null);
-        return assembleDto(attempt, quiz);
+        // A classroom owner reviewing a student's attempt always sees the full
+        // answer key; the student's own review still respects the quiz flags.
+        boolean forceReveal = isGroupOwner && !isOwner;
+        return assembleDto(attempt, quiz, forceReveal);
     }
 
     @Override
@@ -274,12 +313,19 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         double full = aq.getScore();
 
         if ("WRITING".equals(type)) {
-            // Manual / LLM grading — leave pending
+            // NOT AUTO-GRADABLE. WRITING answers need manual/LLM grading, which is
+            // not implemented yet — and WRITING is also not creatable from the UI
+            // (see QuestionForm.tsx ACTIVE_QUESTION_TYPES). We leave the question
+            // ungraded (isCorrect = null, earnedScore = 0) rather than mark it wrong,
+            // so a future manual-grading pass can fill in the score.
             aq.setIsCorrect(null);
             aq.setEarnedScore(0);
             return;
         }
 
+        // ORDERING / MATCHING / LISTENING are fully auto-graded below, but are not
+        // yet creatable from the UI (QuestionForm.tsx hides them). The grading paths
+        // stay so that if/when authoring is enabled, no server change is needed.
         boolean isCorrect;
         switch (type == null ? "" : type) {
             case "MULTIPLE_CHOICE" -> {
@@ -363,7 +409,7 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
      * {@link #buildCorrectAnswer(QuestionBank)} so it can never leak through the
      * options payload, even if a client inspects the raw response.
      */
-    private List<Map<String, Object>> buildOptionsSnapshot(QuestionBank q) {
+    private List<Map<String, Object>> buildOptionsSnapshot(QuestionBank q, boolean randomOption) {
         List<Map<String, Object>> list = new ArrayList<>();
         List<QuestionOption> options = q.getOptions() == null ? List.of() : q.getOptions();
         options.stream()
@@ -379,6 +425,13 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                     m.put("orderIndex", o.getOrderIndex());
                     list.add(m);
                 });
+        // When the quiz enables option shuffling, randomise the presentation order
+        // once at snapshot time so it's stable for the rest of the attempt. Grading
+        // matches on option IDs (and the correct-answer snapshot keeps the authored
+        // order), so shuffling the display never affects scoring.
+        if (randomOption) {
+            Collections.shuffle(list);
+        }
         return list;
     }
 
@@ -429,7 +482,25 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
        DTO assembly (with anti-cheat masking)
     ────────────────────────────────────────── */
     private QuizAttemptDTO assembleDto(QuizAttempt attempt, Quiz quiz) {
+        return assembleDto(attempt, quiz, false);
+    }
+
+    /**
+     * @param forceReveal show the full answer key regardless of the quiz's
+     *   after-submit flags — used when a classroom owner reviews a student's
+     *   attempt. For the student's own view, the quiz's
+     *   {@code showAnswerAfterSubmit} / {@code showExplanationAfterSubmit} flags
+     *   decide what is revealed once the attempt is SUBMITTED.
+     */
+    private QuizAttemptDTO assembleDto(QuizAttempt attempt, Quiz quiz, boolean forceReveal) {
         boolean submitted = "SUBMITTED".equals(attempt.getStatus());
+        // Two independent reveals: the answer key (correctness + user's answer +
+        // per-question score) and the explanation text. When the quiz is unknown
+        // (quiz == null) fall back to the entity defaults (both shown).
+        boolean revealAnswer = forceReveal
+                || (submitted && (quiz == null || quiz.isShowAnswerAfterSubmit()));
+        boolean revealExplanation = forceReveal
+                || (submitted && (quiz == null || quiz.isShowExplanationAfterSubmit()));
 
         QuizAttemptDTO dto = QuizAttemptDTO.builder()
                 .userId(attempt.getUserId())
@@ -455,14 +526,14 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
 
         attempt.getAttemptQuestions().stream()
                 .sorted(java.util.Comparator.comparingInt(QuizAttemptQuestion::getOrderIndex))
-                .forEach(aq -> {
-                    // Never reveal correctness mid-attempt — only after the whole quiz is submitted.
-                    dto.getAttemptQuestions().add(toQuestionDto(aq, submitted));
-                });
+                .forEach(aq ->
+                    // Correctness/answer key is revealed only per revealAnswer;
+                    // the explanation is gated separately by revealExplanation.
+                    dto.getAttemptQuestions().add(toQuestionDto(aq, revealAnswer, revealExplanation)));
         return dto;
     }
 
-    private QuizAttemptQuestionDTO toQuestionDto(QuizAttemptQuestion aq, boolean reveal) {
+    private QuizAttemptQuestionDTO toQuestionDto(QuizAttemptQuestion aq, boolean revealAnswer, boolean revealExplanation) {
         // Defensive: new snapshots no longer store isCorrect inside options, but
         // strip it from any legacy snapshot anyway so the key never leaks through
         // the options payload. The answer key is exposed solely via
@@ -476,19 +547,27 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
             safeOptions.add(copy);
         }
 
+        // Explanation lives inside the question snapshot — strip it unless the
+        // quiz opts into showing explanations after submit.
+        Map<String, Object> questionSnapshot = aq.getQuestionSnapshot();
+        if (!revealExplanation && questionSnapshot != null && questionSnapshot.containsKey("explanation")) {
+            questionSnapshot = new LinkedHashMap<>(questionSnapshot);
+            questionSnapshot.remove("explanation");
+        }
+
         QuizAttemptQuestionDTO dto = QuizAttemptQuestionDTO.builder()
                 .questionType(aq.getQuestionType())
                 .originalQuestionVersion(aq.getOriginalQuestionVersion())
-                .questionSnapshot(aq.getQuestionSnapshot())
+                .questionSnapshot(questionSnapshot)
                 .optionsSnapshot(safeOptions)
-                .correctAnswerSnapshot(reveal ? aq.getCorrectAnswerSnapshot() : null)
+                .correctAnswerSnapshot(revealAnswer ? aq.getCorrectAnswerSnapshot() : null)
                 .orderIndex(aq.getOrderIndex())
                 .score(aq.getScore())
                 .isAnswered(aq.isAnswered())
-                .isCorrect(reveal ? aq.getIsCorrect() : null)
-                .earnedScore(reveal ? aq.getEarnedScore() : 0)
+                .isCorrect(revealAnswer ? aq.getIsCorrect() : null)
+                .earnedScore(revealAnswer ? aq.getEarnedScore() : 0)
                 .answeredAt(aq.getAnsweredAt())
-                .userAnswerSnapshot(reveal ? aq.getUserAnswerSnapshot() : null)
+                .userAnswerSnapshot(revealAnswer ? aq.getUserAnswerSnapshot() : null)
                 .build();
         dto.setId(aq.getId());
         return dto;

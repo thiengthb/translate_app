@@ -22,13 +22,21 @@ public class QuizController {
     QuizActionService quizActionService;
 
     @PutMapping("/{quizId}/publish")
-    public ResponseEntity<QuizDTO> publish(@PathVariable Long quizId) {
-        return ResponseEntity.ok(quizActionService.publish(quizId));
+    public ResponseEntity<QuizDTO> publish(
+            @PathVariable Long quizId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(quizActionService.publish(quizId, userId));
     }
 
     @PutMapping("/{quizId}/archive")
-    public ResponseEntity<QuizDTO> archive(@PathVariable Long quizId) {
-        return ResponseEntity.ok(quizActionService.archive(quizId));
+    public ResponseEntity<QuizDTO> archive(
+            @PathVariable Long quizId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal != null ? principal.getId() : null;
+        return ResponseEntity.ok(quizActionService.archive(quizId, userId));
     }
 
     @PostMapping("/{quizId}/duplicate")

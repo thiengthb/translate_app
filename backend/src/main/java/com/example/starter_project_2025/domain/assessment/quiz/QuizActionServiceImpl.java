@@ -11,12 +11,17 @@ import com.example.starter_project_2025.exception.ResourceNotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -30,11 +35,15 @@ public class QuizActionServiceImpl implements QuizActionService {
     QuestionBankMapper questionBankMapper;
 
     @Override
-    public QuizDTO publish(Long quizId) {
+    public QuizDTO publish(Long quizId, Long currentUserId) {
         Quiz quiz = load(quizId);
+        assertOwner(quiz, currentUserId);
         // Recompute totals from the placed questions
         List<QuizQuestion> questions =
                 quizQuestionRepository.findByQuizIdAndIsDeletedFalseOrderByOrderIndexAsc(quizId);
+        if (questions.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot publish a quiz with no questions");
+        }
         double totalScore = questions.stream().mapToDouble(QuizQuestion::getScore).sum();
         quiz.setTotalQuestions(questions.size());
         quiz.setTotalScore(totalScore);
@@ -44,8 +53,9 @@ public class QuizActionServiceImpl implements QuizActionService {
     }
 
     @Override
-    public QuizDTO archive(Long quizId) {
+    public QuizDTO archive(Long quizId, Long currentUserId) {
         Quiz quiz = load(quizId);
+        assertOwner(quiz, currentUserId);
         quiz.setStatus("ARCHIVED");
         return toDto(quizRepository.save(quiz));
     }
@@ -189,6 +199,16 @@ public class QuizActionServiceImpl implements QuizActionService {
     public List<QuizQuestionDTO> getQuestions(Long quizId) {
         List<QuizQuestion> questions =
                 quizQuestionRepository.findByQuizIdAndIsDeletedFalseOrderByOrderIndexAsc(quizId);
+
+        // Batch-load the referenced questions in one query instead of one findById
+        // per placement (was N+1).
+        List<Long> questionIds = questions.stream()
+                .map(QuizQuestion::getQuestionId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, QuestionBank> questionsById = questionBankRepository.findAllById(questionIds).stream()
+                .collect(Collectors.toMap(QuestionBank::getId, Function.identity()));
+
         List<QuizQuestionDTO> result = new ArrayList<>();
         for (QuizQuestion qq : questions) {
             QuizQuestionDTO dto = QuizQuestionDTO.builder()
@@ -200,7 +220,7 @@ public class QuizActionServiceImpl implements QuizActionService {
                     .isRequired(qq.isRequired())
                     .build();
             dto.setId(qq.getId());
-            QuestionBank question = questionBankRepository.findById(qq.getQuestionId()).orElse(null);
+            QuestionBank question = questionsById.get(qq.getQuestionId());
             if (question != null) {
                 dto.setQuestion(questionBankMapper.toResponse(question));
             }
@@ -242,6 +262,14 @@ public class QuizActionServiceImpl implements QuizActionService {
     private Quiz load(Long quizId) {
         return quizRepository.findById(quizId)
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found"));
+    }
+
+    /** Only the quiz's creator may mutate it (same guard as discardDraft). */
+    private void assertOwner(Quiz quiz, Long currentUserId) {
+        if (currentUserId != null && quiz.getCreatorId() != null
+                && !currentUserId.equals(quiz.getCreatorId())) {
+            throw new ResourceNotFoundException("Quiz not found");
+        }
     }
 
     private QuizDTO toDto(Quiz quiz) {

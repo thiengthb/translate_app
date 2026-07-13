@@ -1,10 +1,12 @@
 package com.example.starter_project_2025.domain.classroom.assignment;
 
+import com.example.starter_project_2025.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,17 +29,26 @@ public class ClassAssignmentController {
     }
 
     @PutMapping("/{assignmentId}/publish")
-    public ResponseEntity<ClassAssignmentDTO> publish(@PathVariable Long assignmentId) {
-        return ResponseEntity.ok(assignmentService.publish(assignmentId));
+    public ResponseEntity<ClassAssignmentDTO> publish(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(assignmentService.publish(assignmentId, principal.getId()));
     }
 
     @PutMapping("/{assignmentId}/close")
-    public ResponseEntity<ClassAssignmentDTO> close(@PathVariable Long assignmentId) {
-        return ResponseEntity.ok(assignmentService.close(assignmentId));
+    public ResponseEntity<ClassAssignmentDTO> close(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(assignmentService.close(assignmentId, principal.getId()));
     }
 
     @GetMapping("/{assignmentId}/gradebook")
-    public ResponseEntity<GradebookDTO> gradebook(@PathVariable Long assignmentId) {
-        return ResponseEntity.ok(assignmentService.getGradebook(assignmentId));
+    public ResponseEntity<GradebookDTO> gradebook(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(assignmentService.getGradebook(assignmentId, principal.getId()));
     }
 }

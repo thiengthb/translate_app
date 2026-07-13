@@ -101,12 +101,14 @@ function MediaInput({
   );
 }
 
-// Only these four types can be created for now.
+// Only these four types can be authored for now.
 const ACTIVE_QUESTION_TYPES: QuestionType[] = [
   "SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK",
 ];
-// Future types (hidden until implemented):
-// "WRITING", "MATCHING", "ORDERING", "LISTENING"
+// Hidden types and their backend status (see QuizAttemptServiceImpl.grade):
+//  - ORDERING / MATCHING / LISTENING: backend auto-grading EXISTS; only the
+//    authoring UI is missing, so they stay hidden until this form supports them.
+//  - WRITING: NOT auto-gradable (needs manual/LLM grading, not implemented).
 
 // FILL_BLANK uses a dedicated "accepted answers" input instead of options.
 const NO_OPTION_TYPES: QuestionType[] = ["FILL_BLANK"];

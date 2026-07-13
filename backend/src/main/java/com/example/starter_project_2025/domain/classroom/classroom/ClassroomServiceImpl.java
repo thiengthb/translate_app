@@ -118,13 +118,20 @@ public class ClassroomServiceImpl
         if (!"PUBLIC".equalsIgnoreCase(classroom.getVisibility())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This class is private — join with an invite code");
         }
+        // Lock the classroom row so concurrent joins serialise on it — the
+        // capacity check below and the insert are then effectively atomic.
+        Classroom locked = classroomRepository.findByIdForUpdate(classroomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
         // Block re-joining a class the user is already an active member of.
         memberRepository.findByClassroomIdAndUserId(classroomId, userId).ifPresent(m -> {
             if (Boolean.TRUE.equals(m.getIsActive())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this group");
             }
         });
-        return addMember(classroomId, userId);
+        assertNotFull(locked);
+        // Self-join: the joining user is (intentionally) not the owner, so bypass
+        // the owner check and add the membership directly.
+        return doAddMember(classroomId, userId);
     }
 
     /* ── Clone a class into the current user's own classes ── */
@@ -179,8 +186,13 @@ public class ClassroomServiceImpl
 
     @Override
     public ClassMemberDTO joinByInviteCode(Long userId, String inviteCode) {
-        Classroom classroom = classroomRepository.findByInviteCode(inviteCode == null ? "" : inviteCode.trim().toUpperCase())
+        Classroom found = classroomRepository.findByInviteCode(inviteCode == null ? "" : inviteCode.trim().toUpperCase())
                 .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite code"));
+
+        // Lock the classroom row so concurrent joins serialise on it — the
+        // capacity check and the insert below are then effectively atomic.
+        Classroom classroom = classroomRepository.findByIdForUpdate(found.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite code"));
 
         if (memberRepository.existsByClassroomIdAndUserId(classroom.getId(), userId)) {
@@ -191,15 +203,14 @@ public class ClassroomServiceImpl
             if (Boolean.TRUE.equals(existing.getIsActive())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this group");
             }
+            // Reactivation still adds an active member — enforce capacity here too.
+            assertNotFull(classroom);
             existing.setIsActive(true);
             existing.setJoinedAt(LocalDateTime.now());
             return toMemberDto(memberRepository.save(existing));
         }
 
-        if (classroom.getMaxMembers() != null
-                && memberRepository.countByClassroomIdAndIsActiveTrue(classroom.getId()) >= classroom.getMaxMembers()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Classroom is full");
-        }
+        assertNotFull(classroom);
 
         ClassMember member = ClassMember.builder()
                 .classroomId(classroom.getId())
@@ -214,7 +225,8 @@ public class ClassroomServiceImpl
     /* ── Invite code ── */
 
     @Override
-    public ClassroomDTO regenerateInviteCode(Long classroomId) {
+    public ClassroomDTO regenerateInviteCode(Long classroomId, Long currentUserId) {
+        assertClassroomOwner(classroomId, currentUserId);
         Classroom classroom = load(classroomId);
         classroom.setInviteCode(generateInviteCode());
         return enrich(classroomRepository.save(classroom));
@@ -224,16 +236,32 @@ public class ClassroomServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClassMemberDTO> getMembers(Long classroomId) {
+    public List<ClassMemberDTO> getMembers(Long classroomId, Long currentUserId) {
+        // Member roster carries PII (names + avatars) — restrict to the owner and
+        // active members of the class.
+        assertClassroomOwnerOrMember(classroomId, currentUserId);
+        List<ClassMember> members = memberRepository.findByClassroomIdAndIsActiveTrue(classroomId);
+
+        // Batch-load member users in one query instead of one findById per row.
+        List<Long> userIds = members.stream().map(ClassMember::getUserId).distinct().toList();
+        Map<Long, User> usersById = userRepository.findAllById(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, u -> u));
+
         List<ClassMemberDTO> result = new ArrayList<>();
-        for (ClassMember m : memberRepository.findByClassroomIdAndIsActiveTrue(classroomId)) {
-            result.add(toMemberDto(m));
+        for (ClassMember m : members) {
+            result.add(toMemberDto(m, usersById.get(m.getUserId())));
         }
         return result;
     }
 
     @Override
-    public ClassMemberDTO addMember(Long classroomId, Long userId) {
+    public ClassMemberDTO addMember(Long classroomId, Long userId, Long currentUserId) {
+        assertClassroomOwner(classroomId, currentUserId);
+        return doAddMember(classroomId, userId);
+    }
+
+    /** Add (or reactivate) a membership — no ownership check; callers must gate it. */
+    private ClassMemberDTO doAddMember(Long classroomId, Long userId) {
         load(classroomId);
         if (memberRepository.existsByClassroomIdAndUserId(classroomId, userId)) {
             ClassMember existing = memberRepository.findByClassroomIdAndUserId(classroomId, userId).orElseThrow();
@@ -251,7 +279,8 @@ public class ClassroomServiceImpl
     }
 
     @Override
-    public ClassMemberDTO addMemberByEmail(Long classroomId, String email) {
+    public ClassMemberDTO addMemberByEmail(Long classroomId, String email, Long currentUserId) {
+        assertClassroomOwner(classroomId, currentUserId);
         String normalized = email == null ? "" : email.trim();
         if (normalized.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
@@ -260,11 +289,15 @@ public class ClassroomServiceImpl
                 .or(() -> userRepository.findByEmail(normalized.toLowerCase()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "No user found with email " + normalized));
-        return addMember(classroomId, user.getId());
+        return doAddMember(classroomId, user.getId());
     }
 
     @Override
-    public void removeMember(Long classroomId, Long userId) {
+    public void removeMember(Long classroomId, Long userId, Long currentUserId) {
+        // The owner may remove anyone; a member may remove only themselves (leave).
+        if (currentUserId == null || !currentUserId.equals(userId)) {
+            assertClassroomOwner(classroomId, currentUserId);
+        }
         memberRepository.findByClassroomIdAndUserId(classroomId, userId).ifPresent(m -> {
             m.setIsActive(false);
             memberRepository.save(m);
@@ -275,16 +308,27 @@ public class ClassroomServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClassDeckDTO> getDecks(Long classroomId) {
+    public List<ClassDeckDTO> getDecks(Long classroomId, Long currentUserId) {
+        // Deck list is class content — restrict to the owner and active members.
+        assertClassroomOwnerOrMember(classroomId, currentUserId);
+        List<ClassDeck> links = deckLinkRepository.findByClassroomIdAndIsActiveTrue(classroomId);
+
+        // Batch-load the linked decks in one query instead of one findById per row.
+        List<Long> deckIds = links.stream().map(ClassDeck::getDeckId).distinct().toList();
+        Map<Long, Deck> decksById = deckRepository.findAllById(deckIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Deck::getId, d -> d));
+
         List<ClassDeckDTO> result = new ArrayList<>();
-        for (ClassDeck cd : deckLinkRepository.findByClassroomIdAndIsActiveTrue(classroomId)) {
-            result.add(toDeckDto(cd));
+        for (ClassDeck cd : links) {
+            result.add(toDeckDto(cd, decksById.get(cd.getDeckId())));
         }
         return result;
     }
 
     @Override
     public ClassDeckDTO addDeck(Long classroomId, Long deckId, Long addedBy) {
+        // addedBy is the current user (passed from @AuthenticationPrincipal).
+        assertClassroomOwner(classroomId, addedBy);
         load(classroomId);
         if (deckLinkRepository.existsByClassroomIdAndDeckId(classroomId, deckId)) {
             ClassDeck existing = deckLinkRepository.findByClassroomIdAndDeckId(classroomId, deckId).orElseThrow();
@@ -301,7 +345,8 @@ public class ClassroomServiceImpl
     }
 
     @Override
-    public void removeDeck(Long classroomId, Long deckId) {
+    public void removeDeck(Long classroomId, Long deckId, Long currentUserId) {
+        assertClassroomOwner(classroomId, currentUserId);
         deckLinkRepository.findByClassroomIdAndDeckId(classroomId, deckId).ifPresent(cd -> {
             cd.setIsActive(false);
             deckLinkRepository.save(cd);
@@ -315,13 +360,54 @@ public class ClassroomServiceImpl
                 .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
     }
 
+    /**
+     * Reject with 409 when adding one more active member would exceed
+     * {@code maxMembers}. Call while holding the classroom row lock so the
+     * count-then-insert stays atomic under concurrent joins.
+     */
+    private void assertNotFull(Classroom classroom) {
+        if (classroom.getMaxMembers() != null
+                && memberRepository.countByClassroomIdAndIsActiveTrue(classroom.getId()) >= classroom.getMaxMembers()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Classroom is full");
+        }
+    }
+
+    /** Reject the call with 403 unless {@code currentUserId} owns the classroom. */
+    private void assertClassroomOwner(Long classroomId, Long currentUserId) {
+        Classroom classroom = load(classroomId);
+        if (currentUserId == null || !currentUserId.equals(classroom.getOwnerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this classroom");
+        }
+    }
+
+    /** Allow the owner or any active member; reject everyone else with 403. */
+    private void assertClassroomOwnerOrMember(Long classroomId, Long currentUserId) {
+        Classroom classroom = load(classroomId);
+        if (currentUserId != null && currentUserId.equals(classroom.getOwnerId())) {
+            return;
+        }
+        boolean activeMember = currentUserId != null
+                && memberRepository.findByClassroomIdAndUserId(classroomId, currentUserId)
+                        .map(m -> Boolean.TRUE.equals(m.getIsActive()))
+                        .orElse(false);
+        if (!activeMember) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this classroom");
+        }
+    }
+
     private ClassroomDTO enrich(Classroom c) {
         ClassroomDTO dto = classroomMapper.toResponse(c);
         dto.setMemberCount((int) memberRepository.countByClassroomIdAndIsActiveTrue(c.getId()));
         return dto;
     }
 
+    /** Single-item convenience: loads the member's user itself. */
     private ClassMemberDTO toMemberDto(ClassMember m) {
+        return toMemberDto(m, userRepository.findById(m.getUserId()).orElse(null));
+    }
+
+    /** Batch-friendly: caller supplies the already-loaded user (may be null). */
+    private ClassMemberDTO toMemberDto(ClassMember m, User user) {
         ClassMemberDTO dto = ClassMemberDTO.builder()
                 .classroomId(m.getClassroomId())
                 .userId(m.getUserId())
@@ -331,7 +417,6 @@ public class ClassroomServiceImpl
                 .build();
         dto.setId(m.getId());
         dto.setIsActive(m.getIsActive());
-        User user = userRepository.findById(m.getUserId()).orElse(null);
         if (user != null) {
             dto.setDisplayName(user.getFullName());
             dto.setAvatarUrl(user.getAvatarUrl());
@@ -339,7 +424,13 @@ public class ClassroomServiceImpl
         return dto;
     }
 
+    /** Single-item convenience: loads the linked deck itself. */
     private ClassDeckDTO toDeckDto(ClassDeck cd) {
+        return toDeckDto(cd, deckRepository.findById(cd.getDeckId()).orElse(null));
+    }
+
+    /** Batch-friendly: caller supplies the already-loaded deck (may be null). */
+    private ClassDeckDTO toDeckDto(ClassDeck cd, Deck deck) {
         ClassDeckDTO dto = ClassDeckDTO.builder()
                 .classroomId(cd.getClassroomId())
                 .deckId(cd.getDeckId())
@@ -348,7 +439,6 @@ public class ClassroomServiceImpl
                 .build();
         dto.setId(cd.getId());
         dto.setIsActive(cd.getIsActive());
-        Deck deck = deckRepository.findById(cd.getDeckId()).orElse(null);
         if (deck != null) dto.setDeckTitle(deck.getTitle());
         return dto;
     }

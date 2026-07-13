@@ -133,6 +133,10 @@ public class QuestionBankServiceImpl
 
     @Override
     protected void beforeCreate(QuestionBank entity, QuestionBankDTO request, ValidationContext ctx) {
+        validateQuestionShape(request.getQuestionType(),
+                countFilled(request.getOptions()),
+                countCorrectFilled(request.getOptions()), ctx);
+
         Long uid = getCurrentUserId();
         if (uid != null) entity.setCreatedByUser(uid); // owner = current user
         // Questions quick-created in the quiz wizard are private to that quiz.
@@ -145,6 +149,27 @@ public class QuestionBankServiceImpl
 
     @Override
     protected void beforeUpdate(QuestionBank entity, QuestionBankDTO request, ValidationContext ctx) {
+        // Validate the effective final shape: the incoming type/options when the
+        // request carries them, otherwise the persisted ones (partial updates
+        // that only touch metadata must still leave a valid question behind).
+        String effectiveType = request.getQuestionType() != null
+                ? request.getQuestionType() : entity.getQuestionType();
+        int filled, correct;
+        if (request.getOptions() != null) {
+            filled = countFilled(request.getOptions());
+            correct = countCorrectFilled(request.getOptions());
+        } else {
+            List<QuestionOption> active = entity.getOptions().stream()
+                    .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
+                    .collect(Collectors.toList());
+            filled = (int) active.stream().filter(o -> isNotBlank(o.getContent())).count();
+            correct = (int) active.stream()
+                    .filter(QuestionOption::isCorrect)
+                    .filter(o -> isNotBlank(o.getContent()))
+                    .count();
+        }
+        validateQuestionShape(effectiveType, filled, correct, ctx);
+
         // beforeUpdate runs BEFORE the mapper copies the request onto the entity,
         // so `entity` still holds the persisted values and `request` the incoming
         // ones — perfect for an old-vs-new diff.
@@ -241,6 +266,57 @@ public class QuestionBankServiceImpl
         questionBankRepository.save(question);
     }
 
+    /* ── Business-rule validation (mirrors the frontend QuestionForm rules) ── */
+
+    /**
+     * Enforce the answer-shape rules server-side so a direct API call cannot
+     * bypass them:
+     * <ul>
+     *   <li>SINGLE_CHOICE / MULTIPLE_CHOICE / TRUE_FALSE → ≥2 filled options and
+     *       ≥1 marked correct.</li>
+     *   <li>FILL_BLANK → ≥1 accepted answer (a filled, correct option).</li>
+     * </ul>
+     * Other (not-yet-active) types are left unconstrained here.
+     */
+    private void validateQuestionShape(String questionType, int filledOptionCount,
+                                       int correctFilledCount, ValidationContext ctx) {
+        switch (questionType == null ? "" : questionType) {
+            case "SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE" -> {
+                if (filledOptionCount < 2) {
+                    ctx.add("options", "At least 2 options are required");
+                }
+                if (correctFilledCount < 1) {
+                    ctx.add("options", "At least one option must be marked correct");
+                }
+            }
+            case "FILL_BLANK" -> {
+                if (correctFilledCount < 1) {
+                    ctx.add("options", "At least one accepted answer is required");
+                }
+            }
+            default -> { /* no shape constraint for other types */ }
+        }
+    }
+
+    /** Options carrying non-blank content. */
+    private static int countFilled(List<QuestionOptionDTO> options) {
+        if (options == null) return 0;
+        return (int) options.stream().filter(o -> isNotBlank(o.getContent())).count();
+    }
+
+    /** Filled options that are marked correct (an "accepted answer" for FILL_BLANK). */
+    private static int countCorrectFilled(List<QuestionOptionDTO> options) {
+        if (options == null) return 0;
+        return (int) options.stream()
+                .filter(o -> Boolean.TRUE.equals(o.getIsCorrect()))
+                .filter(o -> isNotBlank(o.getContent()))
+                .count();
+    }
+
+    private static boolean isNotBlank(String s) {
+        return s != null && !s.isBlank();
+    }
+
     private List<QuestionOption> buildOptions(QuestionBank parent, QuestionBankDTO request) {
         List<QuestionOption> result = new ArrayList<>();
         if (request.getOptions() == null) return result;
@@ -265,6 +341,7 @@ public class QuestionBankServiceImpl
 
     @Override
     public QuestionOptionDTO addOption(Long questionId, QuestionOptionDTO request) {
+        assertOwned(questionId);
         QuestionBank question = questionBankRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
 
@@ -291,6 +368,9 @@ public class QuestionBankServiceImpl
     public void removeOption(Long optionId) {
         QuestionOption option = questionOptionRepository.findById(optionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Option not found"));
+        if (option.getQuestion() != null) {
+            assertOwned(option.getQuestion().getId());
+        }
         option.setIsDeleted(true);
         questionOptionRepository.save(option);
 
@@ -302,6 +382,7 @@ public class QuestionBankServiceImpl
 
     @Override
     public void reorderOptions(Long questionId, List<Long> orderedOptionIds) {
+        assertOwned(questionId);
         if (orderedOptionIds == null || orderedOptionIds.isEmpty()) return;
         List<QuestionOption> options = questionOptionRepository.findByQuestionIdOrderByOrderIndexAsc(questionId);
         Map<Long, QuestionOption> byId = new HashMap<>();
@@ -322,6 +403,7 @@ public class QuestionBankServiceImpl
     @Override
     @Transactional(readOnly = true)
     public int getCurrentVersion(Long questionId) {
+        assertOwned(questionId);
         QuestionBank question = questionBankRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
         return question.getContentVersion();
@@ -331,6 +413,7 @@ public class QuestionBankServiceImpl
 
     @Override
     public void addTags(Long questionId, List<Long> tagIds) {
+        assertOwned(questionId);
         if (tagIds == null || tagIds.isEmpty()) return;
         QuestionBank question = questionBankRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
@@ -342,6 +425,7 @@ public class QuestionBankServiceImpl
 
     @Override
     public void removeTag(Long questionId, Long tagId) {
+        assertOwned(questionId);
         QuestionBank question = questionBankRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
         question.getTags().removeIf(t -> t.getId().equals(tagId));

@@ -9,9 +9,9 @@ public interface ClassAssignmentService extends BaseCrudService<Long, ClassAssig
 
     List<ClassAssignmentDTO> getByClassroom(Long classroomId, String status);
 
-    ClassAssignmentDTO publish(Long assignmentId);
+    ClassAssignmentDTO publish(Long assignmentId, Long currentUserId);
 
-    ClassAssignmentDTO close(Long assignmentId);
+    ClassAssignmentDTO close(Long assignmentId, Long currentUserId);
 
-    GradebookDTO getGradebook(Long assignmentId);
+    GradebookDTO getGradebook(Long assignmentId, Long currentUserId);
 }

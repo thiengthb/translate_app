@@ -61,36 +61,50 @@ public class ClassroomController {
     }
 
     @PutMapping("/{classroomId}/invite-code/regenerate")
-    public ResponseEntity<ClassroomDTO> regenerate(@PathVariable Long classroomId) {
-        return ResponseEntity.ok(classroomService.regenerateInviteCode(classroomId));
+    public ResponseEntity<ClassroomDTO> regenerate(
+            @PathVariable Long classroomId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(classroomService.regenerateInviteCode(classroomId, principal.getId()));
     }
 
     @GetMapping("/{classroomId}/members")
-    public ResponseEntity<List<ClassMemberDTO>> members(@PathVariable Long classroomId) {
-        return ResponseEntity.ok(classroomService.getMembers(classroomId));
+    public ResponseEntity<List<ClassMemberDTO>> members(
+            @PathVariable Long classroomId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(classroomService.getMembers(classroomId, principal.getId()));
     }
 
     @PostMapping("/{classroomId}/members")
     public ResponseEntity<ClassMemberDTO> addMember(
             @PathVariable Long classroomId,
-            @RequestBody MemberRequest body
+            @RequestBody MemberRequest body,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
         // Prefer inviting by email; fall back to userId for backward compatibility.
         if (body.getEmail() != null && !body.getEmail().isBlank()) {
-            return ResponseEntity.ok(classroomService.addMemberByEmail(classroomId, body.getEmail()));
+            return ResponseEntity.ok(classroomService.addMemberByEmail(classroomId, body.getEmail(), principal.getId()));
         }
-        return ResponseEntity.ok(classroomService.addMember(classroomId, body.getUserId()));
+        return ResponseEntity.ok(classroomService.addMember(classroomId, body.getUserId(), principal.getId()));
     }
 
     @DeleteMapping("/{classroomId}/members/{userId}")
-    public ResponseEntity<Void> removeMember(@PathVariable Long classroomId, @PathVariable Long userId) {
-        classroomService.removeMember(classroomId, userId);
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long classroomId,
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        classroomService.removeMember(classroomId, userId, principal.getId());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{classroomId}/decks")
-    public ResponseEntity<List<ClassDeckDTO>> decks(@PathVariable Long classroomId) {
-        return ResponseEntity.ok(classroomService.getDecks(classroomId));
+    public ResponseEntity<List<ClassDeckDTO>> decks(
+            @PathVariable Long classroomId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return ResponseEntity.ok(classroomService.getDecks(classroomId, principal.getId()));
     }
 
     @PostMapping("/{classroomId}/decks")
@@ -104,8 +118,12 @@ public class ClassroomController {
     }
 
     @DeleteMapping("/{classroomId}/decks/{deckId}")
-    public ResponseEntity<Void> removeDeck(@PathVariable Long classroomId, @PathVariable Long deckId) {
-        classroomService.removeDeck(classroomId, deckId);
+    public ResponseEntity<Void> removeDeck(
+            @PathVariable Long classroomId,
+            @PathVariable Long deckId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        classroomService.removeDeck(classroomId, deckId, principal.getId());
         return ResponseEntity.noContent().build();
     }
 

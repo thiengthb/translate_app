@@ -49,7 +49,7 @@ export default function ClassroomDetailPage() {
   const userId = getCurrentUserId();
 
   const cls = useClassroom(cid);
-  const { classroom, members, decks, assignments, loading } = cls;
+  const { classroom, members, decks, assignments, loading, error } = cls;
   const isOwner = classroom != null && classroom.ownerId === userId;
 
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
@@ -61,6 +61,7 @@ export default function ClassroomDetailPage() {
   const [pendingAction, setPendingAction] =
     useState<null | { title: string; description: string; run: () => Promise<void> }>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
   const [assignmentView, setAssignmentView] = useState<AssignmentView>(() => {
     try { return (localStorage.getItem(ASSIGNMENT_VIEW_KEY) as AssignmentView) ?? "list"; }
     catch { return "list"; }
@@ -72,6 +73,20 @@ export default function ClassroomDetailPage() {
   };
   const openStats = (a: ClassAssignmentDTO) => navigate(`/classrooms/${cid}/stats/${a.id}`);
 
+  // Load failed (and nothing to show) → error state with retry, not an endless spinner.
+  if (error && !classroom) {
+    return (
+      <MainLayout pathName={{ "/classrooms": "Groups" }}>
+        <div className="flex flex-col items-center justify-center gap-3 h-60 text-center">
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => cls.refreshAll()}>
+            <RefreshCw className="size-4 mr-1.5" />Retry
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
   if (loading || !classroom) {
     return (
       <MainLayout pathName={{ "/classrooms": "Groups" }}>
@@ -82,12 +97,22 @@ export default function ClassroomDetailPage() {
     );
   }
 
-  const copyCode = () => { navigator.clipboard.writeText(classroom.inviteCode); toast.success("Invite code copied."); };
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(classroom.inviteCode);
+      toast.success("Invite code copied.");
+    } catch {
+      toast.error("Couldn't copy code.");
+    }
+  };
   const regenerate = async () => {
-    if (!confirm("Regenerate invite code? The old code stops working.")) return;
-    await classroomApi.regenerateInviteCode(cid);
-    await cls.refreshAll();
-    toast.success("New invite code generated.");
+    try {
+      await classroomApi.regenerateInviteCode(cid);
+      await cls.refreshAll();
+      toast.success("New invite code generated.");
+    } catch {
+      toast.error("Failed to regenerate invite code.");
+    }
   };
 
   const visibleAssignments = isOwner ? assignments : assignments.filter((a) => a.status === "PUBLISHED");
@@ -194,7 +219,7 @@ export default function ClassroomDetailPage() {
                 <Copy className="size-3.5" />
               </Button>
               {isOwner && (
-                <Button variant="ghost" size="sm" className="size-8 p-0" onClick={regenerate} title="Regenerate code">
+                <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => setRegenConfirmOpen(true)} title="Regenerate code">
                   <RefreshCw className="size-3.5" />
                 </Button>
               )}
@@ -417,6 +442,18 @@ export default function ClassroomDetailPage() {
           finally { setActionBusy(false); setPendingAction(null); }
         }}
         onCancel={() => { if (!actionBusy) setPendingAction(null); }}
+      />
+
+      {/* Regenerate invite code confirmation. */}
+      <ConfirmDialog
+        open={regenConfirmOpen}
+        tone="warning"
+        title="Regenerate invite code?"
+        description="The current code stops working immediately. Anyone using the old code will need the new one."
+        confirmLabel="Regenerate"
+        cancelLabel="Cancel"
+        onConfirm={async () => { setRegenConfirmOpen(false); await regenerate(); }}
+        onCancel={() => setRegenConfirmOpen(false)}
       />
     </MainLayout>
   );

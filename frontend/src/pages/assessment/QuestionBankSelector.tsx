@@ -247,7 +247,7 @@ export function QuestionBankSelector({
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="tabular-nums">
-              Tổng: <span className="font-semibold text-foreground">{questions.length}</span>
+              Total: <span className="font-semibold text-foreground">{questions.length}</span>
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>

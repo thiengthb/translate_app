@@ -11,9 +11,9 @@ import java.util.List;
  */
 public interface QuizActionService {
 
-    QuizDTO publish(Long quizId);
+    QuizDTO publish(Long quizId, Long currentUserId);
 
-    QuizDTO archive(Long quizId);
+    QuizDTO archive(Long quizId, Long currentUserId);
 
     QuizDTO duplicate(Long quizId, Long userId);
 

@@ -67,6 +67,11 @@ export function CreateEditAssignmentModal({
       toast.error("Max attempts must be a whole number of at least 1.");
       return null;
     }
+    // When both are set, the availability window must be valid (open before it closes).
+    if (availableFrom && deadline && new Date(availableFrom) >= new Date(deadline)) {
+      toast.error("“Available from” must be before the deadline.");
+      return null;
+    }
     setSaving(true);
     try {
       const payload: Partial<ClassAssignmentDTO> = {

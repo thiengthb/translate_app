@@ -9,6 +9,8 @@ import com.example.starter_project_2025.domain.assessment.attempt.QuizAttempt;
 import com.example.starter_project_2025.domain.assessment.attempt.QuizAttemptRepository;
 import com.example.starter_project_2025.domain.assessment.quiz.Quiz;
 import com.example.starter_project_2025.domain.assessment.quiz.QuizRepository;
+import com.example.starter_project_2025.domain.classroom.classroom.Classroom;
+import com.example.starter_project_2025.domain.classroom.classroom.ClassroomRepository;
 import com.example.starter_project_2025.domain.classroom.member.ClassMember;
 import com.example.starter_project_2025.domain.classroom.member.ClassMemberRepository;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
@@ -17,8 +19,10 @@ import com.example.starter_project_2025.system.rbac.user.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,6 +44,7 @@ public class ClassAssignmentServiceImpl
     QuizRepository quizRepository;
     QuizAttemptRepository attemptRepository;
     ClassMemberRepository memberRepository;
+    ClassroomRepository classroomRepository;
     UserRepository userRepository;
 
     @Override
@@ -81,23 +86,28 @@ public class ClassAssignmentServiceImpl
     }
 
     @Override
-    public ClassAssignmentDTO publish(Long assignmentId) {
+    public ClassAssignmentDTO publish(Long assignmentId, Long currentUserId) {
         ClassAssignment a = load(assignmentId);
+        assertAssignmentManager(a, currentUserId);
         a.setStatus("PUBLISHED");
         return toEnrichedDto(assignmentRepository.save(a));
     }
 
     @Override
-    public ClassAssignmentDTO close(Long assignmentId) {
+    public ClassAssignmentDTO close(Long assignmentId, Long currentUserId) {
         ClassAssignment a = load(assignmentId);
+        assertAssignmentManager(a, currentUserId);
         a.setStatus("CLOSED");
         return toEnrichedDto(assignmentRepository.save(a));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public GradebookDTO getGradebook(Long assignmentId) {
+    public GradebookDTO getGradebook(Long assignmentId, Long currentUserId) {
         ClassAssignment assignment = load(assignmentId);
+        // Gradebook exposes every student's name + scores — restrict to the
+        // classroom owner (or the teacher who created the assignment).
+        assertAssignmentManager(assignment, currentUserId);
         boolean highest = "HIGHEST".equalsIgnoreCase(assignment.getScoreStrategy());
 
         List<ClassMember> members = memberRepository.findByClassroomIdAndIsActiveTrue(assignment.getClassroomId());
@@ -105,6 +115,15 @@ public class ClassAssignmentServiceImpl
                 .findByAssignmentIdAndIsDeletedFalse(assignmentId)
                 .stream()
                 .collect(Collectors.groupingBy(QuizAttempt::getUserId));
+
+        // Batch-load every member's user in one query instead of one findById per
+        // member inside the loop (was N+1).
+        List<Long> memberUserIds = members.stream()
+                .map(ClassMember::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, User> usersById = userRepository.findAllById(memberUserIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
 
         List<StudentResultDTO> results = new ArrayList<>();
         int passedCount = 0;
@@ -117,7 +136,7 @@ public class ClassAssignmentServiceImpl
                     .filter(a -> "SUBMITTED".equals(a.getStatus()))
                     .collect(Collectors.toList());
 
-            User user = userRepository.findById(member.getUserId()).orElse(null);
+            User user = usersById.get(member.getUserId());
             String displayName = user != null ? user.getFullName() : ("User #" + member.getUserId());
 
             // Every attempt (all statuses), oldest → newest, numbered for the UI.
@@ -209,6 +228,24 @@ public class ClassAssignmentServiceImpl
     private ClassAssignment load(Long id) {
         return assignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
+    }
+
+    /**
+     * Reject with 403 unless the caller manages the assignment — i.e. owns the
+     * classroom it belongs to, or created the assignment.
+     */
+    private void assertAssignmentManager(ClassAssignment assignment, Long currentUserId) {
+        if (currentUserId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to manage this assignment");
+        }
+        if (currentUserId.equals(assignment.getCreatedBy())) {
+            return;
+        }
+        Classroom classroom = classroomRepository.findById(assignment.getClassroomId()).orElse(null);
+        if (classroom != null && currentUserId.equals(classroom.getOwnerId())) {
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to manage this assignment");
     }
 
     private ClassAssignmentDTO toEnrichedDto(ClassAssignment a) {
