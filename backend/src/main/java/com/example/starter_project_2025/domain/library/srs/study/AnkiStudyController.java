@@ -17,6 +17,7 @@ import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSe
 import com.example.starter_project_2025.domain.library.srs.srs_setting.AnkiSrsSettingRepository;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgress;
 import com.example.starter_project_2025.domain.library.srs.srs_progress.AnkiSrsProgressRepository;
+import com.example.starter_project_2025.domain.library.srs.study.scheduler.FsrsScheduler;
 import com.example.starter_project_2025.domain.library.srs.study.scheduler.PreviewResult;
 import com.example.starter_project_2025.domain.library.srs.study.scheduler.Rating;
 import com.example.starter_project_2025.domain.library.srs.study.scheduler.SchedulerFactory;
@@ -30,7 +31,6 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -129,7 +129,6 @@ public class AnkiStudyController {
         int queuedDue = 0;
 
         List<AnkiStudyCardDTO> studyCards = new ArrayList<>();
-        int totalNew = 0;
         int totalLearning = 0;
         int totalReview = 0;
         int dueReviewCards = 0;
@@ -149,7 +148,6 @@ public class AnkiStudyController {
             boolean isDue = !isNew && isDue(progress, now);
 
             if (isNew) {
-                totalNew++;
                 if (queuedNew >= newLimit) continue;
                 queuedNew++;
             } else {
@@ -231,13 +229,7 @@ public class AnkiStudyController {
         ReviewSnapshot before = ReviewSnapshot.of(progress);
         LocalDateTime lastReviewedBefore = progress.getLastReviewedAt();
 
-        try {
-            scheduler.review(progress, Rating.fromString(req.getRating()), schedulingConfig, now);
-        } catch (UnsupportedOperationException notImplemented) {
-            // A not-yet-implemented scheduler (e.g. FSRS) was selected. We do NOT
-            // fabricate a result — report 501 so the client keeps the deck on SM-2.
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-        }
+        scheduler.review(progress, Rating.fromString(req.getRating()), schedulingConfig, now);
 
         applyLeechDetection(progress, before, setting);
 
@@ -473,6 +465,7 @@ public class AnkiStudyController {
         // FSRS memory metrics (stability/difficulty).
         AnkiSrsSetting setting = settingRepository.findByUserIdAndDeckId(userId, deckId).orElse(null);
         String algorithmType = SchedulingConfig.from(setting, objectMapper).algorithmType;
+        boolean isFsrs = "FSRS".equalsIgnoreCase(algorithmType);
 
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
@@ -487,8 +480,8 @@ public class AnkiStudyController {
         int studiedToday = 0, dueToday = 0, dueTomorrow = 0, dueReviewCards = 0;
         double sumMemory = 0, sumEase = 0, sumInterval = 0;
         int totalReviews = 0, totalLapses = 0, hasEaseCount = 0;
-        double sumStability = 0, sumDifficulty = 0;
-        int stabilityCount = 0, difficultyCount = 0, leechCards = 0, suspendedCards = 0;
+        double sumStability = 0, sumDifficulty = 0, sumLiveRetention = 0;
+        int stabilityCount = 0, difficultyCount = 0, leechCards = 0, suspendedCards = 0, liveRetentionCount = 0;
 
         int[] futureDue = new int[31];
         List<Integer> intervals = new ArrayList<>();
@@ -516,6 +509,15 @@ public class AnkiStudyController {
             if (Boolean.TRUE.equals(p.getIsLeech())) leechCards++;
             if (p.getStability() != null)  { sumStability  += p.getStability();  stabilityCount++; }
             if (p.getDifficulty() != null) { sumDifficulty += p.getDifficulty(); difficultyCount++; }
+
+            // FSRS "current" retention: recompute R live from stability + days
+            // since the last review, so the retention stat reflects memory NOW
+            // rather than the R snapshot captured at the card's last review.
+            if (isFsrs && p.getStability() != null && p.getLastReviewedAt() != null) {
+                int elapsed = (int) Math.max(0, ChronoUnit.DAYS.between(p.getLastReviewedAt(), now));
+                sumLiveRetention += FsrsScheduler.currentRetrievability(elapsed, p.getStability()) * 100.0;
+                liveRetentionCount++;
+            }
 
             if (p.getLastReviewedAt() != null && today.equals(p.getLastReviewedAt().toLocalDate())) {
                 studiedToday++;
@@ -553,7 +555,12 @@ public class AnkiStudyController {
         }
 
         int    total        = items.size();
-        double avgMem       = rows.size() > 0 ? Math.round(sumMemory   / rows.size() * 10.0) / 10.0 : 0;
+        // Per-algorithm so a deck's "memory" number is never a mix of two units:
+        //  • FSRS → live average retention (recall probability right now, %)
+        //  • SM-2 → stored ease-based memory score (over studied cards)
+        double avgMem       = isFsrs
+                ? (liveRetentionCount > 0 ? Math.round(sumLiveRetention / liveRetentionCount * 10.0) / 10.0 : 0)
+                : (hasEaseCount > 0 ? Math.round(sumMemory / hasEaseCount * 10.0) / 10.0 : 0);
         double avgEase      = hasEaseCount > 0 ? Math.round(sumEase    / hasEaseCount * 100.0) / 100.0 : 2.5;
         double avgInterval  = hasEaseCount > 0 ? Math.round(sumInterval / hasEaseCount * 10.0) / 10.0 : 0;
         double avgStability = stabilityCount  > 0 ? Math.round(sumStability  / stabilityCount  * 10.0) / 10.0 : 0;

@@ -382,7 +382,7 @@ export default function AnkiStatsPage() {
                   <p className={cn("text-6xl font-bold tabular-nums leading-none", memTone)}>
                     {memScore.toFixed(0)}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">Average retention</p>
+                  <p className="text-xs text-muted-foreground mt-2">{isFsrs ? "Average retention (now)" : "Average memory"}</p>
                 </div>
 
                 {/* Gauge bar */}

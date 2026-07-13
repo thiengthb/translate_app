@@ -226,7 +226,18 @@ public class FsrsScheduler implements SrsScheduler {
 
     /** R(t, S) = (1 + FACTOR·t/S)^DECAY. */
     private double retrievability(int elapsedDays, double stability) {
-        return Math.pow(1.0 + FACTOR * elapsedDays / stability, DECAY);
+        return currentRetrievability(elapsedDays, stability);
+    }
+
+    /**
+     * Recall probability R(t, S) for a card with memory stability {@code S} last
+     * reviewed {@code elapsedDays} ago. Public + static so callers (e.g. the stats
+     * endpoint) can compute a card's CURRENT retrievability without running a full
+     * review. Returns 0 for non-positive stability.
+     */
+    public static double currentRetrievability(int elapsedDays, double stability) {
+        if (stability <= 0) return 0.0;
+        return Math.pow(1.0 + FACTOR * Math.max(0, elapsedDays) / stability, DECAY);
     }
 
     /** I(R, S) = (S/FACTOR)·(R^(1/DECAY) - 1), rounded to whole days, clamped [1, max]. */
