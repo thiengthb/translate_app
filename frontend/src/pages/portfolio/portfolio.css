@@ -1,0 +1,1240 @@
+/* =====================================================================
+   Hanabun — Designer Portfolio (landing + about)
+   Scoped design system. Every rule lives under `.pf-root` so it never
+   leaks into (or is overridden by) the app's global Sakura candy theme.
+   Palette is sakura-derived but editorial: sumi ink on washi blush, with a
+   traditional beni (紅) rose accent and a rare hazakura (葉桜) matcha green.
+   Type: Shippori Mincho (display) + Zen Kaku Gothic New (body).
+   ===================================================================== */
+
+/* Smooth ink-bloom reveal for the hero kanji (animated by GSAP as a number). */
+@property --pf-bloom {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: false;
+}
+
+.pf-root {
+  /* ---- palette ---- */
+  --sumi: #201a1e; /* warm near-black ink */
+  --sumi-soft: #4b4045; /* secondary ink */
+  --muted: #8d7f84; /* captions */
+  --faint: #b9abaf;
+  --washi: #fbf3f1; /* paper — cool sakura undertone, NOT cream */
+  --washi-deep: #f3e6e4; /* recessed panels */
+  --hairline: #e7d7d6;
+  --sakura: #f1a9c4; /* soft blossom — atmosphere */
+  --sakura-wash: #fbe4ec;
+  --beni: #b23a62; /* traditional rose — primary accent */
+  --beni-deep: #8f2c4d;
+  --hazakura: #7e9463; /* young-leaf green — rare secondary */
+  --gold: #c79a46; /* metallic — very rare */
+
+  --maxw: 1240px;
+  --gut: clamp(1.25rem, 5vw, 5rem);
+  /* Latin/Vietnamese type (full diacritic coverage) */
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  /* Japanese-glyph accents only (kanji / kana) — no Vietnamese runs through it */
+  --font-jp: "Shippori Mincho", "Yu Mincho", serif;
+
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: clip;
+  background: var(--washi);
+  color: var(--sumi);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Faint layered wash so the paper has depth without a flat fill. */
+.pf-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 82% -5%, rgba(241, 169, 196, 0.28), transparent 70%),
+    radial-gradient(55% 40% at 0% 8%, rgba(178, 58, 98, 0.06), transparent 70%),
+    radial-gradient(80% 60% at 50% 120%, rgba(126, 148, 99, 0.07), transparent 70%);
+}
+
+.pf-root *,
+.pf-root *::before,
+.pf-root *::after {
+  box-sizing: border-box;
+}
+
+.pf-root ::selection {
+  background: var(--beni);
+  color: #fff;
+}
+
+/* ---- shared primitives ---------------------------------------------- */
+.pf-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.pf-wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gut);
+}
+
+.pf-section {
+  position: relative;
+  padding-block: clamp(5rem, 12vw, 10rem);
+}
+
+.pf-rule {
+  height: 1px;
+  border: 0;
+  background: var(--hairline);
+  margin: 0;
+}
+
+/* Vertical Japanese eyebrow — structure that is content-true (Japanese is
+   written top-to-bottom), used to label sections. */
+.pf-eyebrow {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: var(--font-jp);
+  font-size: 0.86rem;
+  letter-spacing: 0.34em;
+  color: var(--beni);
+  line-height: 1;
+}
+.pf-eyebrow::before {
+  content: "";
+  width: 1px;
+  height: 3.1em;
+  margin-top: 0.15em;
+  background: var(--beni);
+  opacity: 0.5;
+}
+.pf-eyebrow small {
+  writing-mode: horizontal-tb;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.2em;
+}
+
+.pf-kicker {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pf-lead {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--sumi);
+}
+
+/* reveal helper — GSAP toggles .is-in; base state is graceful for no-JS / RM */
+.pf-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.pf-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- link + button treatments --------------------------------------- */
+.pf-inklink {
+  --_c: var(--beni);
+  position: relative;
+  color: var(--sumi);
+  text-decoration: none;
+  font-weight: 500;
+  background-image: linear-gradient(var(--_c), var(--_c));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1.5px;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s ease;
+  padding-bottom: 2px;
+}
+.pf-inklink:hover,
+.pf-inklink:focus-visible {
+  background-size: 100% 1.5px;
+  color: var(--beni);
+}
+
+.pf-btn {
+  --_bg: var(--beni);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--_bg);
+  border: 1px solid var(--_bg);
+  border-radius: 999px;
+  padding: 0.85rem 1.55rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 30px -14px rgba(178, 58, 98, 0.7);
+}
+.pf-btn:hover,
+.pf-btn:focus-visible {
+  background: var(--beni-deep);
+  box-shadow: 0 16px 40px -14px rgba(178, 58, 98, 0.75);
+}
+.pf-btn--ghost {
+  color: var(--sumi);
+  background: transparent;
+  border-color: var(--hairline);
+  box-shadow: none;
+}
+.pf-btn--ghost:hover,
+.pf-btn--ghost:focus-visible {
+  background: transparent;
+  border-color: var(--sumi);
+  color: var(--sumi);
+}
+.pf-btn .pf-arrow {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pf-btn:hover .pf-arrow {
+  transform: translateX(4px);
+}
+
+/* focus ring (quality floor) */
+.pf-root :focus-visible {
+  outline: 2px solid var(--beni);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* =====================================================================
+   NAV
+   ===================================================================== */
+.pf-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem var(--gut);
+  transition: background 0.4s ease, box-shadow 0.4s ease, padding 0.4s ease;
+}
+.pf-nav.is-stuck {
+  background: rgba(251, 243, 241, 0.82);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 1px 0 var(--hairline);
+  padding-block: 0.8rem;
+}
+.pf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--sumi);
+}
+.pf-brand-mark {
+  font-family: var(--font-jp);
+  font-size: 1.35rem;
+  color: var(--beni);
+  line-height: 1;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pf-brand:hover .pf-brand-mark {
+  transform: rotate(28deg);
+}
+.pf-brand-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+.pf-brand-name small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.pf-nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.2rem, 2.4vw, 2.4rem);
+}
+.pf-nav-link {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sumi-soft);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  position: relative;
+}
+.pf-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  height: 1.5px;
+  width: 0;
+  background: var(--beni);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pf-nav-link:hover::after,
+.pf-nav-link:focus-visible::after {
+  width: 100%;
+}
+.pf-nav-cta {
+  font-size: 0.82rem;
+  padding: 0.6rem 1.15rem;
+}
+.pf-nav-toggle {
+  display: none;
+}
+
+/* =====================================================================
+   HERO
+   ===================================================================== */
+.pf-hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding-block: 7.5rem 3.5rem;
+  overflow: hidden;
+}
+.pf-petals {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.pf-hero-grid {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gut);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
+}
+.pf-hero-copy {
+  max-width: 40rem;
+}
+.pf-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.8rem;
+}
+.pf-hero-eyebrow .pf-ja {
+  font-family: var(--font-jp);
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
+  color: var(--sumi);
+}
+.pf-hero-eyebrow .pf-ro {
+  font-size: 0.66rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-left: 1px solid var(--hairline);
+  padding-left: 0.85rem;
+}
+.pf-hero-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.15rem, 5.4vw, 4.3rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--sumi);
+  margin: 0;
+}
+.pf-hero-title .pf-em {
+  color: var(--beni);
+  font-style: italic;
+}
+.pf-hero-title .pf-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.04em; /* room for descenders under the mask */
+}
+.pf-hero-title .pf-line > span {
+  display: block;
+}
+/* self-drawing brush sweep under the headline */
+.pf-brushline {
+  display: block;
+  width: min(360px, 78%);
+  height: 26px;
+  margin-top: 0.4rem;
+  color: var(--sakura);
+}
+.pf-brushline path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.pf-hero-sub {
+  margin: 1.9rem 0 2.4rem;
+  font-size: 1.06rem;
+  line-height: 1.7;
+  color: var(--sumi-soft);
+  max-width: 40ch;
+}
+.pf-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.4rem;
+}
+
+/* Hero kanji — 花, ink-blooms in on load */
+.pf-hero-figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+}
+.pf-hero-seal {
+  position: absolute;
+  top: 4%;
+  right: 6%;
+  width: clamp(46px, 7vw, 74px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--beni);
+  color: #fff;
+  font-family: var(--font-jp);
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  line-height: 1;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.1em;
+  box-shadow: 0 14px 34px -18px rgba(178, 58, 98, 0.9);
+  transform: rotate(2deg);
+}
+.pf-hero-kanji {
+  font-family: var(--font-jp);
+  font-weight: 800;
+  font-size: clamp(13rem, 30vw, 26rem);
+  line-height: 0.8;
+  color: var(--sumi);
+  user-select: none;
+  --pf-bloom: 1; /* JS sets 0 then animates to 1; CSS fallback shows it */
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 54%,
+    #000 calc(var(--pf-bloom) * 62%),
+    transparent calc(var(--pf-bloom) * 118% + 2%)
+  );
+  mask-image: radial-gradient(
+    circle at 50% 54%,
+    #000 calc(var(--pf-bloom) * 62%),
+    transparent calc(var(--pf-bloom) * 118% + 2%)
+  );
+}
+.pf-hero-gloss {
+  position: absolute;
+  bottom: 4%;
+  left: 2%;
+  writing-mode: vertical-rl;
+  font-family: var(--font-jp);
+  font-size: 0.9rem;
+  letter-spacing: 0.28em;
+  color: var(--muted);
+}
+.pf-scrollcue {
+  position: absolute;
+  left: 50%;
+  bottom: 1.6rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pf-scrollcue span {
+  width: 1px;
+  height: 42px;
+  background: linear-gradient(var(--beni), transparent);
+  animation: pf-cue 2s ease-in-out infinite;
+  transform-origin: top;
+}
+@keyframes pf-cue {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* =====================================================================
+   PHILOSOPHY (ma)
+   ===================================================================== */
+.pf-ma {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(1.5rem, 5vw, 4.5rem);
+}
+.pf-ma-body {
+  max-width: 30ch;
+}
+.pf-ma-statement {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--sumi);
+  margin: 0;
+  max-width: 22ch;
+}
+.pf-ma-statement .pf-em {
+  color: var(--beni);
+}
+.pf-ma-note {
+  margin-top: 2rem;
+  font-size: 1rem;
+  color: var(--sumi-soft);
+  max-width: 46ch;
+}
+.pf-ma-figure {
+  font-family: var(--font-jp);
+  font-size: clamp(4rem, 12vw, 9rem);
+  color: var(--sakura);
+  line-height: 1;
+  align-self: start;
+}
+
+/* =====================================================================
+   SELECTED WORK
+   ===================================================================== */
+.pf-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
+}
+.pf-section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0.6rem 0 0;
+}
+.pf-section-count {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.pf-works {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3rem, 7vw, 6rem);
+}
+.pf-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+}
+.pf-work:nth-child(even) .pf-work-visual {
+  order: 2;
+}
+.pf-work-visual {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+.pf-work-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--_panel, var(--washi-deep));
+}
+.pf-work-visual[data-tint="sakura"] {
+  --_panel: linear-gradient(150deg, #fde4ec 0%, #f9c9dc 100%);
+  --_glyph: #d65e8c;
+}
+.pf-work-visual[data-tint="beni"] {
+  --_panel: linear-gradient(150deg, #f6dbe3 0%, #d98aa4 100%);
+  --_glyph: #8f2c4d;
+}
+.pf-work-visual[data-tint="hazakura"] {
+  --_panel: linear-gradient(150deg, #eef2e4 0%, #cfdcb6 100%);
+  --_glyph: #5f764a;
+}
+.pf-work-visual[data-tint="sumi"] {
+  --_panel: linear-gradient(150deg, #efe7e5 0%, #d7c9c8 100%);
+  --_glyph: #201a1e;
+}
+.pf-work-glyph {
+  font-family: var(--font-jp);
+  font-weight: 800;
+  font-size: clamp(6rem, 18vw, 12rem);
+  line-height: 1;
+  color: var(--_glyph, var(--sumi));
+  opacity: 0.9;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.pf-work:hover .pf-work-glyph {
+  transform: scale(1.06) rotate(-2deg);
+}
+/* a hint of "product UI" — a floating card + progress, drawn in CSS */
+.pf-work-chip {
+  position: absolute;
+  left: 8%;
+  bottom: 9%;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  box-shadow: 0 18px 40px -22px rgba(32, 26, 30, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 44%;
+}
+.pf-work-chip b {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--sumi);
+  font-weight: 700;
+}
+.pf-work-chip i {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(32, 26, 30, 0.1);
+  overflow: hidden;
+}
+.pf-work-chip i::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: var(--_p, 64%);
+  border-radius: inherit;
+  background: var(--beni);
+}
+.pf-work-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.4rem;
+}
+.pf-work-index {
+  writing-mode: vertical-rl;
+  font-family: var(--font-jp);
+  font-size: 0.82rem;
+  letter-spacing: 0.28em;
+  color: var(--beni);
+  padding-top: 0.2rem;
+}
+.pf-work-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  line-height: 1.05;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.pf-work-gloss {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 500;
+}
+.pf-work-summary {
+  margin: 1rem 0 1.4rem;
+  color: var(--sumi-soft);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  max-width: 42ch;
+}
+.pf-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.3rem;
+}
+.pf-tag {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--sumi-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.32rem 0.75rem;
+}
+.pf-work-foot {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.pf-work-year {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* =====================================================================
+   APPROACH — stroke order
+   ===================================================================== */
+.pf-approach {
+  background: var(--sumi);
+  color: var(--washi);
+  border-radius: 28px;
+  padding: clamp(2.5rem, 6vw, 5rem);
+  position: relative;
+  overflow: hidden;
+}
+.pf-approach .pf-eyebrow {
+  color: var(--sakura);
+}
+.pf-approach .pf-eyebrow::before {
+  background: var(--sakura);
+}
+.pf-approach-lead {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  margin: 1.2rem 0 3rem;
+  max-width: 24ch;
+  color: var(--washi);
+}
+.pf-approach-lead .pf-em {
+  color: var(--sakura);
+}
+.pf-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(251, 243, 241, 0.16);
+  border: 1px solid rgba(251, 243, 241, 0.16);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.pf-step {
+  background: var(--sumi);
+  padding: clamp(1.4rem, 2.4vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: 220px;
+}
+.pf-step-numeral {
+  font-family: var(--font-jp);
+  font-size: clamp(2.4rem, 4.5vw, 3.4rem);
+  line-height: 1;
+  color: var(--sakura);
+}
+.pf-step-kanji {
+  font-family: var(--font-jp);
+  font-size: 1.15rem;
+  color: var(--washi);
+  letter-spacing: 0.08em;
+}
+.pf-step-kanji small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(251, 243, 241, 0.5);
+  margin-top: 3px;
+}
+.pf-step-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--washi);
+}
+.pf-step-body {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(251, 243, 241, 0.72);
+  margin: 0;
+}
+
+/* =====================================================================
+   ABOUT TEASER (on landing)
+   ===================================================================== */
+.pf-teaser {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+}
+.pf-teaser-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.15;
+  margin: 0.8rem 0 1.4rem;
+  max-width: 20ch;
+}
+
+/* =====================================================================
+   FOOTER / CONTACT
+   ===================================================================== */
+.pf-footer {
+  position: relative;
+  z-index: 1;
+  background: var(--washi-deep);
+  border-top: 1px solid var(--hairline);
+  padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+.pf-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2.5rem;
+  align-items: end;
+}
+.pf-contact-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 1rem 0;
+}
+.pf-contact-mail {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.4vw, 1.6rem);
+  color: var(--beni);
+}
+.pf-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: right;
+}
+.pf-social {
+  font-size: 0.9rem;
+  color: var(--sumi-soft);
+  text-decoration: none;
+}
+.pf-social span {
+  color: var(--muted);
+  margin-left: 0.5rem;
+  font-size: 0.78rem;
+}
+.pf-social:hover {
+  color: var(--beni);
+}
+.pf-footer-base {
+  margin-top: clamp(3rem, 7vw, 5rem);
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* =====================================================================
+   ABOUT PAGE
+   ===================================================================== */
+.pf-about-hero {
+  padding-block: clamp(8rem, 16vw, 11rem) clamp(3rem, 8vw, 5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: center;
+}
+.pf-about-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 1.2rem 0 1.6rem;
+}
+.pf-about-title .pf-em {
+  color: var(--beni);
+  font-style: italic;
+}
+.pf-about-intro {
+  font-size: 1.12rem;
+  line-height: 1.75;
+  color: var(--sumi-soft);
+  max-width: 46ch;
+}
+.pf-about-intro + .pf-about-intro {
+  margin-top: 1.2rem;
+}
+.pf-portrait {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: linear-gradient(160deg, #fde4ec 0%, #f4bcd1 55%, #e79bbb 100%);
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+.pf-portrait-glyph {
+  font-family: var(--font-jp);
+  font-weight: 800;
+  font-size: clamp(9rem, 22vw, 15rem);
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 0.8;
+}
+.pf-portrait-tag {
+  position: absolute;
+  bottom: 6%;
+  left: 6%;
+  writing-mode: vertical-rl;
+  font-family: var(--font-jp);
+  color: #fff;
+  letter-spacing: 0.28em;
+  font-size: 1rem;
+  text-shadow: 0 2px 10px rgba(143, 44, 77, 0.5);
+}
+
+/* two-column labelled rows used across about */
+.pf-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 5vw, 4rem);
+}
+.pf-cols-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+}
+.pf-cols-label small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+/* timeline */
+.pf-timeline {
+  display: flex;
+  flex-direction: column;
+}
+.pf-milestone {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.6rem;
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--hairline);
+}
+.pf-milestone:last-child {
+  border-bottom: 1px solid var(--hairline);
+}
+.pf-milestone-when {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+.pf-milestone-season {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--sakura);
+  line-height: 1;
+}
+.pf-milestone-year {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--muted);
+}
+.pf-milestone-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0 0 0.4rem;
+}
+.pf-milestone-body {
+  margin: 0;
+  color: var(--sumi-soft);
+  font-size: 0.98rem;
+  line-height: 1.65;
+  max-width: 52ch;
+}
+
+/* skills / tools chips */
+.pf-chipwrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.pf-chip {
+  font-size: 0.9rem;
+  color: var(--sumi);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  background: var(--washi);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.pf-chip:hover {
+  border-color: var(--beni);
+  transform: translateY(-2px);
+}
+.pf-chip--tool {
+  background: transparent;
+  color: var(--sumi-soft);
+}
+
+.pf-backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+}
+.pf-backlink:hover {
+  color: var(--beni);
+}
+
+/* =====================================================================
+   MOBILE MENU
+   ===================================================================== */
+.pf-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: var(--washi);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: var(--gut);
+  transform: translateY(-100%);
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.pf-menu.is-open {
+  transform: none;
+}
+.pf-menu a,
+.pf-menu button {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--sumi);
+  text-decoration: none;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+.pf-menu .pf-menu-ja {
+  font-family: var(--font-jp);
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 900px) {
+  .pf-nav-links {
+    display: none;
+  }
+  .pf-nav-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+  }
+  .pf-nav-toggle span {
+    width: 26px;
+    height: 2px;
+    background: var(--sumi);
+    transition: transform 0.4s ease, opacity 0.3s ease;
+  }
+  .pf-nav-toggle.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .pf-nav-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+  .pf-nav-toggle.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .pf-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .pf-hero-figure {
+    grid-row: 1;
+    aspect-ratio: auto;
+    justify-self: end;
+    width: 62%;
+    opacity: 0.9;
+  }
+  .pf-hero-copy {
+    max-width: none;
+  }
+  .pf-hero-seal {
+    display: none;
+  }
+
+  .pf-ma {
+    grid-template-columns: 1fr;
+  }
+  .pf-work {
+    grid-template-columns: 1fr;
+  }
+  .pf-work:nth-child(even) .pf-work-visual {
+    order: 0;
+  }
+  .pf-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pf-about-hero {
+    grid-template-columns: 1fr;
+  }
+  .pf-portrait {
+    max-width: 340px;
+  }
+  .pf-cols {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .pf-teaser {
+    grid-template-columns: 1fr;
+  }
+  .pf-contact {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .pf-socials {
+    text-align: left;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .pf-hero-figure {
+    width: 78%;
+  }
+  .pf-steps {
+    grid-template-columns: 1fr;
+  }
+  .pf-step {
+    min-height: 0;
+  }
+  .pf-work-body {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+  .pf-work-index {
+    writing-mode: horizontal-tb;
+  }
+  .pf-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* =====================================================================
+   REDUCED MOTION — keep it beautiful, just still
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .pf-root *,
+  .pf-root *::before,
+  .pf-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pf-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .pf-hero-kanji {
+    --pf-bloom: 1;
+  }
+  .pf-scrollcue span {
+    animation: none;
+  }
+}

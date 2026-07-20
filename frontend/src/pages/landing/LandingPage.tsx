@@ -21,16 +21,18 @@ export default function LandingPage() {
     const [mode, setMode] = useState<Mode>("login");
     const [loginError, setLoginError] = useState<string | undefined>();
 
-    // Arriving via /login?error=... (OAuth failure) or /register redirects.
+    // This screen is mounted at /login and /register (and still supports the
+    // legacy /?auth=… flag). Pick the tab from the path, and surface any
+    // ?error from the OAuth failure callback (/login?error=…).
     useEffect(() => {
+        const path = window.location.pathname;
         const auth = searchParams.get("auth");
-        if (auth === "register") {
+        const err = searchParams.get("error");
+        if (auth === "register" || path === "/register") {
             setMode("register");
-        } else if (auth === "login") {
-            const err = searchParams.get("error");
-            if (err) setLoginError(err);
         }
-        if (auth) {
+        if (err) setLoginError(err);
+        if (auth || err) {
             searchParams.delete("auth");
             searchParams.delete("error");
             setSearchParams(searchParams, { replace: true });

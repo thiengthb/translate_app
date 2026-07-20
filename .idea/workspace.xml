@@ -4,11 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(portfolio): implement landing and about pages with navigation and footer components">
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioAbout.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioFooter.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioLanding.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioNav.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/SakuraPetalsGL.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio-data.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/usePrefersReducedMotion.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -301,7 +318,7 @@
       <workItem from="1783749161961" duration="6143000" />
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
-      <workItem from="1784562392334" duration="626000" />
+      <workItem from="1784562392334" duration="3075000" />
     </task>
     <task id="LOCAL-00004" summary="feat(dictionary): fix dictionary UI">
       <option name="closed" value="true" />
@@ -746,8 +763,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
-    <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
     <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
     <MESSAGE value="feat(landing): simplify video background styling on LandingPage" />
     <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
@@ -771,7 +786,9 @@
     <MESSAGE value="feat(dashboard): enhance layout with side panel and welcome message" />
     <MESSAGE value="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns" />
     <MESSAGE value="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics" />
+    <MESSAGE value="feat(layout): implement sticky sidebar for improved navigation and user experience" />
+    <MESSAGE value="feat(portfolio): implement landing and about pages with navigation and footer components" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(portfolio): implement landing and about pages with navigation and footer components" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -13,6 +13,7 @@ import { SidebarMenu } from "@/components/layout/sidebar";
 import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
 import { useAutoCheckIn } from "@/hooks/useStreak";
+import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 
 interface MainLayoutProps {
@@ -212,17 +213,32 @@ function AppShell({
     pageScroll,
     sidePanel,
 }: AppShellProps) {
-    if (pageScroll) {
-        return (
-            <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-8">
-                {/* Page-level row: the sidebar+main shell and the (optional) side
-                    panel are independent siblings floating on the pink page
-                    background — matches the reference exactly. The shell only
-                    grows as tall as its OWN content, so a taller side panel no
-                    longer stretches it and leaves dead white space behind. */}
-                <div className="mx-auto flex w-full max-w-[1600px] flex-col items-start gap-7 xl:flex-row">
-                    <div className="flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
-                        <SidebarMenu sticky />
+    // Shared page frame (padding, max-width, centering) — kept IDENTICAL
+    // across both scroll models so the sidebar sits at the same position/size
+    // on every page. Only the scroll model and sidePanel differ per page:
+    //   pageScroll=true  → whole document scrolls; shell height follows content.
+    //   pageScroll=false → shell fills the viewport; only <main> scrolls internally.
+    return (
+        <div
+            className={cn(
+                "bg-background p-2 sm:p-4 lg:p-8",
+                pageScroll ? "min-h-screen" : "h-svh",
+            )}
+        >
+            <div
+                className={cn(
+                    "mx-auto flex w-full max-w-[1600px] gap-7",
+                    pageScroll ? "flex-col items-start xl:flex-row" : "h-full",
+                )}
+            >
+                <div
+                    className={cn(
+                        "flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]",
+                        !pageScroll && "h-full overflow-hidden",
+                    )}
+                >
+                    <SidebarMenu sticky={pageScroll} />
+                    {pageScroll ? (
                         <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
                             <div className="mb-6 flex min-w-0 items-center justify-between gap-2">
                                 {headerExtra && (
@@ -233,31 +249,24 @@ function AppShell({
                             </div>
                             {children}
                         </main>
-                    </div>
-                    {sidePanel && (
-                        <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
+                    ) : (
+                        <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
+                            <MainLayoutTopBar headerExtra={headerExtra} />
+                            <ScrollHintContainer
+                                axis="vertical"
+                                className="flex-1 min-h-0 min-w-0 max-w-full"
+                                viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
+                            >
+                                <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
+                                    {children}
+                                </main>
+                            </ScrollHintContainer>
+                        </div>
                     )}
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="h-svh bg-background p-2 sm:p-3">
-            <div className="flex h-full w-full overflow-hidden rounded-[36px] shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
-                <SidebarMenu />
-                <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
-                    <MainLayoutTopBar headerExtra={headerExtra} />
-                    <ScrollHintContainer
-                        axis="vertical"
-                        className="flex-1 min-h-0 min-w-0 max-w-full"
-                        viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
-                    >
-                        <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
-                            {children}
-                        </main>
-                    </ScrollHintContainer>
-                </div>
+                {pageScroll && sidePanel && (
+                    <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
+                )}
             </div>
         </div>
     );

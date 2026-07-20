@@ -1,6 +1,7 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
-import { LoginRouteRedirect, RegisterRouteRedirect } from "@/components/auth/AuthRouteRedirect";
+import LandingPage from "@/pages/landing/LandingPage";
+import PortfolioAbout from "@/pages/portfolio/PortfolioAbout";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
@@ -165,9 +166,13 @@ export const routes: RouteConfig[] = [
   { path: "/grammar/detail/:subUseId", component: GrammarDetailPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
-  { path: "/login", component: LoginRouteRedirect, isPublic: true },
+  // Marketing / portfolio about page — the landing nav's "About" links here.
+  { path: "/about", component: PortfolioAbout, isPublic: true },
+  // The cherry auth screen (login/register tabs). It reads the pathname
+  // (/register → register tab) and any ?error from the OAuth callback.
+  { path: "/login", component: LandingPage, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
-  { path: "/register", component: RegisterRouteRedirect, isPublic: true },
+  { path: "/register", component: LandingPage, isPublic: true },
   { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},

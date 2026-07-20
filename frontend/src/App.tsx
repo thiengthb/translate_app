@@ -11,7 +11,7 @@ import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
-import LandingPage from "./pages/landing/LandingPage";
+import PortfolioLanding from "./pages/portfolio/PortfolioLanding";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
 import { routes, type RouteComponent } from "./router/component-registry";
 import type { RootState } from "./store/store";
@@ -57,11 +57,12 @@ function AppRoutes() {
     // titles from the BE feed the title resolver directly.
     useAppMeta();
 
-    // Authenticated users go to role home, guests stay on landing page
+    // Authenticated users go to role home; guests get the portfolio landing.
+    // (The cherry auth screen now lives at /login + /register.)
     const rootElement = isAuthenticated ? (
         <Navigate to={getHomePathByRole(activeRole)} replace />
     ) : (
-        <LandingPage />
+        <PortfolioLanding />
     );
 
     // Public module URLs — skipped from protected routes
