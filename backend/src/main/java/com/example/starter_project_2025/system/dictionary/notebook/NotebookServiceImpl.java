@@ -131,9 +131,15 @@ public class NotebookServiceImpl implements NotebookService {
     @Override
     public NotebookResponse.KanjiEntry addKanji(Long userId, Long notebookId, String character) {
         Notebook nb = requireNotebook(userId, notebookId);
-        Kanji kanji = findLiveKanji(character);
+        Kanji kanji = kanjiRepository.findByCharacter(character)
+                .orElseThrow(() -> new ResourceNotFoundException("Kanji", "character", character));
+        // Idempotent trước (giống addWord): kanji đã có trong sổ vẫn trả về, kể cả khi
+        // sau đó bị tắt. Chỉ chặn kanji "chưa live" khi THÊM MỚI.
         NotebookEntry existing = entryRepository.findByNotebookIdAndKanjiId(notebookId, kanji.getId()).orElse(null);
         if (existing != null) return toKanjiEntry(existing);
+        if (!isLiveKanji(kanji)) {
+            throw new ResourceNotFoundException("Kanji", "character", character);
+        }
         return toKanjiEntry(insertIgnoringDuplicate(NotebookEntry.builder()
                 .notebook(nb)
                 .user(userRepository.getReferenceById(userId))
@@ -281,17 +287,17 @@ public class NotebookServiceImpl implements NotebookService {
                 .orElseThrow(() -> new ResourceNotFoundException("Notebook", "id", notebookId));
     }
 
-    /** Hai request lưu song song có thể đụng unique constraint → coi như đã lưu. */
+    /**
+     * Hai request lưu song song có thể đụng unique constraint. KHÔNG bắt
+     * {@link DataIntegrityViolationException} tại đây: bắt trong chính transaction
+     * vừa ném constraint violation sẽ khiến tx bị đánh rollback-only, nên câu
+     * find… ngay sau đó (hoặc lúc commit) lại nổ tiếp. Để lỗi propagate ra ngoài
+     * → tx rollback sạch → {@code NotebookController.retryOnConflict} chạy lại
+     * trên transaction MỚI, lần đó thấy dòng bên thắng đã insert và trả về
+     * idempotent (các add/sync đều check tồn tại trước khi insert).
+     */
     private NotebookEntry insertIgnoringDuplicate(NotebookEntry entry) {
-        try {
-            return entryRepository.save(entry);
-        } catch (DataIntegrityViolationException e) {
-            Long nid = entry.getNotebook().getId();
-            if (entry.getWord() != null) {
-                return entryRepository.findByNotebookIdAndWordId(nid, entry.getWord().getId()).orElseThrow(() -> e);
-            }
-            return entryRepository.findByNotebookIdAndKanjiId(nid, entry.getKanji().getId()).orElseThrow(() -> e);
-        }
+        return entryRepository.save(entry);
     }
 
     private static String normalizeName(String name) {
@@ -310,10 +316,8 @@ public class NotebookServiceImpl implements NotebookService {
                 .orElseThrow(() -> new ResourceNotFoundException("Word", "id", wordId));
     }
 
-    private Kanji findLiveKanji(String character) {
-        return kanjiRepository.findByCharacter(character)
-                .filter(k -> Boolean.FALSE.equals(k.getIsDeleted()) && Boolean.TRUE.equals(k.getIsActive()))
-                .orElseThrow(() -> new ResourceNotFoundException("Kanji", "character", character));
+    private static boolean isLiveKanji(Kanji k) {
+        return Boolean.FALSE.equals(k.getIsDeleted()) && Boolean.TRUE.equals(k.getIsActive());
     }
 
     private static boolean isLive(Word w) {

@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FuriganaText } from "@/components/common/FuriganaText";
+import { NotebookPicker } from "./NotebookPicker";
 import { analyzeApi, type AnalyzedToken } from "@/api/features/analyze.api";
 import { dictionaryApi } from "@/api/features/dictionary.api";
 import type { WordSearchResult } from "@/types";
@@ -83,6 +84,7 @@ export function InteractiveSentence({ text, className, furigana = true }: {
 
 function WordToken({ token, furigana }: { token: AnalyzedToken; furigana: boolean }) {
     const [open, setOpen] = useState(false);
+    const [saved, setSaved] = useState(false);
     const navigate = useNavigate();
     const lemma = token.baseForm ?? token.surface;
 
@@ -153,13 +155,21 @@ function WordToken({ token, furigana }: { token: AnalyzedToken; furigana: boolea
                         )}
                     </div>
                 </div>
-                <div className="border-t p-1.5">
-                    <Button variant="ghost" size="sm" className="w-full justify-between gap-1.5" onClick={openDetail}>
+                <div className="border-t p-1.5 flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="flex-1 justify-start gap-1.5" onClick={openDetail}>
                         <span className="flex items-center gap-1.5">
                             {hit ? <ArrowRight className="h-3.5 w-3.5" /> : <Search className="h-3.5 w-3.5" />}
                             {hit ? "Xem chi tiết" : `Tìm “${lemma}”`}
                         </span>
                     </Button>
+                    {/* Lưu thẳng vào sổ tay khi đang đọc — chỉ khả dụng nếu từ có trong từ điển. */}
+                    {hit && (
+                        <NotebookPicker
+                            target={{ kind: "word", wordId: hit.id }}
+                            savedAnywhere={saved}
+                            onSavedChange={setSaved}
+                        />
+                    )}
                 </div>
             </PopoverContent>
         </Popover>

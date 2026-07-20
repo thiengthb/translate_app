@@ -104,6 +104,11 @@ export default function WordCreatePage() {
         meanings.forEach((m, i) => {
             if (m.name.trim() && !m.languageId) next[`meaning-lang-${i}`] = ["Chọn ngôn ngữ"];
         });
+        // Ví dụ có nội dung nhưng thiếu ngôn ngữ → chặn submit thay vì âm thầm bỏ dòng.
+        examples.forEach((e, i) => {
+            if (e.rootExample.trim() && (!e.rootLanguageId || !e.toLanguageId))
+                next[`example-lang-${i}`] = ["Chọn ngôn ngữ câu gốc và bản dịch cho ví dụ này"];
+        });
         setErrors(next);
         return Object.keys(next).length === 0;
     };
@@ -372,6 +377,9 @@ export default function WordCreatePage() {
                                         />
                                     </div>
                                 </div>
+                                {err(`example-lang-${i}`) && (
+                                    <p className="text-xs text-destructive">{err(`example-lang-${i}`)}</p>
+                                )}
                             </div>
                         ))}
                 </InfoCard>

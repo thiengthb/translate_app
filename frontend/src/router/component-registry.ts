@@ -25,6 +25,8 @@ import GrammarSessionPage from "@/pages/grammar/GrammarSessionPage";
 import GrammarLevelPage from "@/pages/grammar/GrammarLevelPage";
 import GrammarDetailPage from "@/pages/grammar/GrammarDetailPage";
 import DictionaryPage from "@/pages/dictionary/DictionaryPage";
+import ReadingListPage from "@/pages/reading/ReadingListPage";
+import ReadingDetailPage from "@/pages/reading/ReadingDetailPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
@@ -81,6 +83,8 @@ export interface RouteConfig {
 export const routes: RouteConfig[] = [
   { path: "/dashboard", component: Dashboard, isModuleDriven: true },
   { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  { path: "/reader", component: ReadingListPage, isModuleDriven: true },
+  { path: "/reader/:id", component: ReadingDetailPage, requiredPermission: "READING_PASSAGE_READ" },
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
   { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },

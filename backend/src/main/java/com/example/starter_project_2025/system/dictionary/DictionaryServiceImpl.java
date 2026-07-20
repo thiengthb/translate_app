@@ -85,7 +85,7 @@ public class DictionaryServiceImpl implements DictionaryService {
     @Override
     public WordSearchResult getById(Long id) {
         return searchRepository.findById(id)
-                .filter(w -> Boolean.FALSE.equals(w.getIsDeleted()))
+                .filter(w -> Boolean.FALSE.equals(w.getIsDeleted()) && Boolean.TRUE.equals(w.getIsActive()))
                 .map(this::toWordResult)
                 .orElseThrow(() -> new ResourceNotFoundException("Word", "id", id));
     }
@@ -100,8 +100,9 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     @Override
     public List<KanjiSearchResult> searchKanji(String query, int limit) {
-        String q    = query.trim();
-        String kana = RomajiConverter.isRomaji(q) ? RomajiConverter.toHiragana(q) : q;
+        String q        = query.trim();
+        String kana     = RomajiConverter.isRomaji(q) ? RomajiConverter.toHiragana(q) : q;
+        String kanaKata = RomajiConverter.toKatakana(kana); // onyomi thường lưu katakana
         Set<String> queryKanjiChars = extractKanjiChars(q);
 
         LinkedHashMap<String, Kanji> kanjiMap = new LinkedHashMap<>();
@@ -116,9 +117,10 @@ public class DictionaryServiceImpl implements DictionaryService {
         // ── Step 2: Keyword search in kanji table ─────────────────────
         //    Matches character / meaning / onyomi / kunyomi (both q and kana form)
         if (kanjiMap.size() < limit) {
-            String likeQ    = "%" + q    + "%";
-            String likeKana = "%" + kana + "%";
-            for (Kanji k : kanjiRepository.searchByKeyword(likeQ, likeKana, PageRequest.of(0, limit))) {
+            String likeQ        = "%" + q        + "%";
+            String likeKana     = "%" + kana     + "%";
+            String likeKanaKata = "%" + kanaKata + "%";
+            for (Kanji k : kanjiRepository.searchByKeyword(likeQ, likeKana, likeKanaKata, PageRequest.of(0, limit))) {
                 kanjiMap.putIfAbsent(k.getCharacter(), k);
                 if (kanjiMap.size() >= limit) break;
             }
@@ -210,27 +212,31 @@ public class DictionaryServiceImpl implements DictionaryService {
 
     // ── Helpers ────────────────────────────────────────────────────────
 
-    /** True nếu chuỗi có ít nhất một ký tự hiragana / katakana / kanji. */
+    /** True nếu chuỗi có ít nhất một ký tự hiragana / katakana / kanji (kể cả ngoài BMP). */
     private static boolean containsJapanese(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            Character.UnicodeBlock block = Character.UnicodeBlock.of(s.charAt(i));
-            if (Character.UnicodeBlock.HIRAGANA.equals(block)
+        return s.codePoints().anyMatch(cp -> {
+            Character.UnicodeBlock block = Character.UnicodeBlock.of(cp);
+            return Character.UnicodeBlock.HIRAGANA.equals(block)
                     || Character.UnicodeBlock.KATAKANA.equals(block)
-                    || Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(block)) {
-                return true;
-            }
-        }
-        return false;
+                    || isKanjiBlock(block);
+        });
     }
 
+    /** Lặp theo code point để không bỏ sót kanji ngoài BMP (surrogate pair, Ext-B). */
     private static Set<String> extractKanjiChars(String s) {
         Set<String> result = new LinkedHashSet<>();
-        for (char c : s.toCharArray()) {
-            if (Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(Character.UnicodeBlock.of(c))) {
-                result.add(String.valueOf(c));
+        s.codePoints().forEach(cp -> {
+            if (isKanjiBlock(Character.UnicodeBlock.of(cp))) {
+                result.add(new String(Character.toChars(cp)));
             }
-        }
+        });
         return result;
+    }
+
+    private static boolean isKanjiBlock(Character.UnicodeBlock block) {
+        return Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(block)
+                || Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A.equals(block)
+                || Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B.equals(block);
     }
 
     // ── Mappers ────────────────────────────────────────────────────────

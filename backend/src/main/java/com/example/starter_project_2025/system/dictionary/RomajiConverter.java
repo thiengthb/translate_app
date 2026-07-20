@@ -82,8 +82,11 @@ public class RomajiConverter {
             // "nn" or "n" before consonant/end → ん
             if (cur == 'n') {
                 if (next == 'n') {
+                    // Chỉ nuốt MỘT 'n' làm ん; 'n' thứ hai để ghép âm tiết kế tiếp.
+                    // "konnichiwa" → こんにちわ (nni = ん+に), "annai" → あんない.
+                    // Nếu chỉ còn "nn" cuối chuỗi thì vòng sau biến 'n' còn lại → ん.
                     result.append("ん");
-                    i += 2;
+                    i += 1;
                     continue;
                 }
                 // n before a consonant (not y) or at end
@@ -111,6 +114,18 @@ public class RomajiConverter {
             }
         }
         return result.toString();
+    }
+
+    /** Chuyển hiragana → katakana (ký tự khác giữ nguyên). Dùng để match onyomi (katakana). */
+    public static String toKatakana(String hira) {
+        if (hira == null || hira.isEmpty()) return hira;
+        StringBuilder sb = new StringBuilder(hira.length());
+        hira.codePoints().forEach(cp -> {
+            // Khối hiragana U+3041..U+3096 → katakana bằng cách cộng offset 0x60.
+            if (cp >= 0x3041 && cp <= 0x3096) sb.appendCodePoint(cp + 0x60);
+            else sb.appendCodePoint(cp);
+        });
+        return sb.toString();
     }
 
     /** Returns true if the string contains only ASCII letters (likely romaji). */

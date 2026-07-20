@@ -62,11 +62,19 @@ export function useAutoPageSize(options: UseAutoPageSizeOptions = {}) {
         const rawSize = Math.floor((availableHeight + 0.5) / effectiveRowH);
         const size = Math.max(minSize, Math.min(maxSize, rawSize));
 
-        if (size !== lastSizeRef.current) {
-            lastSizeRef.current = size;
-            setCalculatedSize(size);
-            onSizeChange?.(size);
-        }
+        // Anti-oscillation hysteresis. A ±1-row difference is almost always
+        // jitter, not a real layout change: the row count that *exactly* fills
+        // the viewport flip-flops as the vertical scrollbar appears/disappears
+        // (each toggle shifts clientHeight by a row's worth), or as an async
+        // image load nudges the measured row height. Each flip changes
+        // totalPages and bounces the current page (the "trang 4↔5 liên tục"
+        // loop). Only react to changes of 2+ rows so the size settles; genuine
+        // resizes (window drag, density swap) always clear that threshold.
+        if (Math.abs(size - lastSizeRef.current) < 2) return;
+
+        lastSizeRef.current = size;
+        setCalculatedSize(size);
+        onSizeChange?.(size);
     }, [headerHeight, rowHeight, minSize, maxSize, onSizeChange]);
 
     useEffect(() => {

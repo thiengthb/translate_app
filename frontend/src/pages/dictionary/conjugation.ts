@@ -55,6 +55,9 @@ const GODAN: Record<string, GodanRow> = {
     "る": { a: "ら", i: "り", e: "れ", o: "ろ", te: "って", ta: "った" },
 };
 
+// Số ít động từ đuôi 〜う giữ nguyên âm う ở thể て/た (問うて, không phải 問って).
+const U_EUPHONIC = new Set(["問う", "請う", "乞う", "厭う", "訪う"]);
+
 // ── Nhận diện loại từ — ưu tiên mã, fallback theo bề mặt cho dữ liệu thiếu ──
 function detectClass(word: string, reading: string, wordType: string): VerbClass {
     const t = (wordType || "").toLowerCase().trim();
@@ -86,8 +89,10 @@ function conjugateGodan(word: string, reading: string): ConjGroup[] | null {
     let m = GODAN[last];
     if (!m) return null;
 
-    // 行く / 〜いく: biến âm て đặc cách (って, không phải いて).
-    if (reading.endsWith("いく")) m = { ...m, te: "って", ta: "った" };
+    // 行く / 〜いく / 〜ゆく (逝く, 往く): biến âm て đặc cách (って, không phải いて).
+    if (reading.endsWith("いく") || reading.endsWith("ゆく")) m = { ...m, te: "って", ta: "った" };
+    // Ngoại lệ 〜う giữ âm う ở thể て/た (問う→問うて).
+    else if (last === "う" && U_EUPHONIC.has(word)) m = { ...m, te: "うて", ta: "うた" };
 
     const sStem = word.slice(0, -1);
     const kStem = reading.slice(0, -1);

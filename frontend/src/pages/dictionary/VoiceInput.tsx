@@ -39,8 +39,18 @@ export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
     const [state, setState]     = useState<RecognitionState>("idle");
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const recRef = useRef<SpeechRecognitionLike | null>(null);
+    const errTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => () => { recRef.current?.abort(); }, []);
+    // Đặt lịch tự ẩn thông báo lỗi; clear lịch cũ để tránh setState sau unmount.
+    const scheduleReset = useCallback(() => {
+        if (errTimer.current) clearTimeout(errTimer.current);
+        errTimer.current = setTimeout(() => { setState("idle"); setErrorMsg(null); }, 3000);
+    }, []);
+
+    useEffect(() => () => {
+        recRef.current?.abort();
+        if (errTimer.current) clearTimeout(errTimer.current);
+    }, []);
 
     const stop = useCallback(() => {
         recRef.current?.stop();
@@ -51,9 +61,12 @@ export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
         if (!SpeechRecognitionCtor) {
             setErrorMsg("Trình duyệt không hỗ trợ nhận diện giọng nói");
             setState("error");
-            setTimeout(() => { setState("idle"); setErrorMsg(null); }, 3000);
+            scheduleReset();
             return;
         }
+
+        // Hủy phiên trước (nếu có) trước khi tạo phiên mới → không bỏ rơi instance cũ.
+        recRef.current?.abort();
 
         const rec = new SpeechRecognitionCtor();
         rec.lang = "ja-JP";
@@ -71,7 +84,7 @@ export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
                 "network":     "Lỗi mạng, kiểm tra kết nối",
             };
             setErrorMsg(msgs[e.error] ?? "Nhận diện thất bại");
-            setTimeout(() => { setState("idle"); setErrorMsg(null); }, 3000);
+            scheduleReset();
         };
         rec.onresult = (e) => {
             const text = e.results[0][0].transcript.trim();
@@ -81,7 +94,7 @@ export function VoiceInput({ onSelect }: { onSelect: (text: string) => void }) {
 
         recRef.current = rec;
         rec.start();
-    }, [onSelect]);
+    }, [onSelect, scheduleReset]);
 
     if (!SpeechRecognitionCtor) return null;
 

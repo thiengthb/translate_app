@@ -60,6 +60,7 @@ function mapFieldType(fm: FieldMetadata): FieldType {
   if (t === "boolean") return "boolean";
   if (t === "date" || t === "datetime") return "date";
   if (t === "select") return "select";
+  if (t === "image") return "image";
   return "text";
 }
 

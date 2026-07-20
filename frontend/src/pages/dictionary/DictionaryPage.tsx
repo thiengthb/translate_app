@@ -95,21 +95,29 @@ export default function DictionaryPage() {
 
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapRef  = useRef<HTMLDivElement>(null);
+    // Chống race: mỗi lần search tăng seq; chỉ áp kết quả nếu vẫn là request mới nhất
+    // (2 lần tra nhanh có thể resolve đảo thứ tự → tránh kết quả cũ đè kết quả mới).
+    const searchSeqRef = useRef(0);
+    // Từ vừa được tra (Enter/chọn gợi ý) — để suggest effect đang chờ debounce không
+    // bật lại dropdown đè lên kết quả vừa hiện.
+    const lastSubmittedRef = useRef<string>("");
     const debouncedQ = useDebounce(query, 250);
 
     useEffect(() => {
-        dictionaryApi.featured(9).then(setFeatured).catch(() => {});
+        let cancelled = false;
+        dictionaryApi.featured(9).then((f) => { if (!cancelled) setFeatured(f); }).catch(() => {});
         // Tổng số từ/kanji cho card "Kho từ vựng tổng hợp" (size=1 — chỉ cần totalItems).
         Promise.all([
             dictionaryApi.browseWords(undefined, 0, 1),
             dictionaryApi.browseKanjis(undefined, 0, 1),
-        ]).then(([w, k]) => setHubStats({ words: w.totalItems, kanjis: k.totalItems }))
+        ]).then(([w, k]) => { if (!cancelled) setHubStats({ words: w.totalItems, kanjis: k.totalItems }); })
           .catch(() => {});
         // Đồng bộ sổ tay từ server để icon bookmark đúng trạng thái đa thiết bị.
         // Lỗi mạng → giữ cache localStorage (đã là initial state).
         fetchNotebook()
-            .then(({ words, kanjis }) => { setSavedWords(words); setSavedKanjis(kanjis); })
+            .then(({ words, kanjis }) => { if (!cancelled) { setSavedWords(words); setSavedKanjis(kanjis); } })
             .catch(() => {});
+        return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
@@ -123,15 +131,24 @@ export default function DictionaryPage() {
 
     useEffect(() => {
         if (!debouncedQ.trim()) { setSuggestions([]); return; }
+        // Vừa tra đúng từ này (Enter/chọn gợi ý) → không bật lại dropdown đè kết quả.
+        if (debouncedQ.trim() === lastSubmittedRef.current) return;
+        let cancelled = false;
         dictionaryApi.suggest(debouncedQ)
-            .then((d) => { setSuggestions(d); setDropMode("suggestions"); setShowDrop(d.length > 0); setActiveIdx(-1); })
-            .catch(() => { setSuggestions([]); setShowDrop(false); });
+            .then((d) => {
+                if (cancelled) return;
+                setSuggestions(d); setDropMode("suggestions"); setShowDrop(d.length > 0); setActiveIdx(-1);
+            })
+            .catch(() => { if (!cancelled) { setSuggestions([]); setShowDrop(false); } });
+        return () => { cancelled = true; };
     }, [debouncedQ]);
 
     const handleSearch = useCallback(async (q?: string, mode?: SearchMode) => {
         const term = (q ?? query).trim();
         const effectiveMode = mode ?? searchMode;
         if (!term) return;
+        const reqId = ++searchSeqRef.current;
+        lastSubmittedRef.current = term;
         setShowDrop(false);
         setLoading(true);
         setError(null);
@@ -142,14 +159,16 @@ export default function DictionaryPage() {
         setHistory(loadHistory());
         try {
             if (effectiveMode === "kanji") {
-                setKanjiResults(await dictionaryApi.kanjiSearch(term));
+                const r = await dictionaryApi.kanjiSearch(term);
+                if (reqId === searchSeqRef.current) setKanjiResults(r);
             } else {
-                setResults(await dictionaryApi.search(term));
+                const r = await dictionaryApi.search(term);
+                if (reqId === searchSeqRef.current) setResults(r);
             }
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? "Tìm kiếm thất bại.");
+            if (reqId === searchSeqRef.current) setError(e?.response?.data?.message ?? "Tìm kiếm thất bại.");
         } finally {
-            setLoading(false);
+            if (reqId === searchSeqRef.current) setLoading(false);
         }
     }, [query, searchMode]);
 
@@ -1499,8 +1518,22 @@ function SpeakButton({ text, lookupWord }: { text: string; lookupWord?: string }
     const audioRef = useRef<HTMLAudioElement | null>(null);
     // Cache kết quả tra Forvo theo từ: undefined = chưa tra, null = đã tra & không có.
     const forvoCache = useRef<{ word?: string; url?: string | null }>({});
+    // Thế hệ phát: stop() tăng số này để lần speak() đang chờ mạng biết đã bị hủy.
+    const playGenRef = useRef(0);
+    // Gương của `speaking` để cleanup lúc unmount biết có đang phát không (chỉ
+    // cancel TTS toàn cục nếu chính nút này đang nói, tránh cắt nút khác).
+    const speakingRef = useRef(false);
+    useEffect(() => { speakingRef.current = speaking; }, [speaking]);
+
+    // Unmount (đổi từ khóa search làm WordCard bị gỡ, hoặc rời trang) → dừng phát,
+    // nếu không audio/Web-Speech (singleton) sẽ tiếp tục kêu mà không còn nút để tắt.
+    useEffect(() => () => {
+        if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+        if (speakingRef.current) window.speechSynthesis?.cancel();
+    }, []);
 
     const stop = () => {
+        playGenRef.current++;
         window.speechSynthesis?.cancel();
         if (audioRef.current) {
             audioRef.current.pause();
@@ -1534,6 +1567,7 @@ function SpeakButton({ text, lookupWord }: { text: string; lookupWord?: string }
 
     const speak = async () => {
         if (speaking) { stop(); return; }
+        const gen = ++playGenRef.current;
 
         if (lookupWord) {
             let url = forvoCache.current.word === lookupWord ? forvoCache.current.url : undefined;
@@ -1541,10 +1575,12 @@ function SpeakButton({ text, lookupWord }: { text: string; lookupWord?: string }
                 setSpeaking(true); // phản hồi tức thì trong lúc chờ mạng
                 try { url = (await dictionaryApi.audio(lookupWord))?.url ?? null; }
                 catch { url = null; }
+                if (gen !== playGenRef.current) return; // người dùng đã bấm dừng khi đang chờ
                 forvoCache.current = { word: lookupWord, url };
             }
             if (url) { playAudio(url); return; }
         }
+        if (gen !== playGenRef.current) return;
         playTts();
     };
 

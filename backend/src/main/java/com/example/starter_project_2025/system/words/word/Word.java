@@ -55,6 +55,9 @@ public class Word extends BaseEntity {
     @Column(name = "frequency")
     Integer frequency;
 
+    // @BatchSize: gom lazy-load các collection theo lô (thay vì 1 query/dòng) —
+    // đặc biệt cho browse/search list nơi toWordResult đọc cả 3 collection.
+    @BatchSize(size = 30)
     @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<WordKanji> wordKanjis;
 
@@ -62,6 +65,7 @@ public class Word extends BaseEntity {
     @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     List<Meaning> meanings;
 
+    @BatchSize(size = 30)
     @OneToMany(mappedBy = "word", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     List<Example> examples;
 }

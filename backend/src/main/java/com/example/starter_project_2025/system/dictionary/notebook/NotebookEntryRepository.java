@@ -51,11 +51,19 @@ public interface NotebookEntryRepository extends JpaRepository<NotebookEntry, Lo
 
     Optional<NotebookEntry> findByNotebookIdAndKanjiId(Long notebookId, Long kanjiId);
 
-    /** Id các sổ tay (của user) đang chứa một từ — cho trạng thái picker. */
-    @Query("SELECT e.notebook.id FROM NotebookEntry e WHERE e.user.id = :userId AND e.word.id = :wordId")
+    /** Id các sổ tay (của user) đang chứa một từ — cho trạng thái picker. Bỏ qua từ đã xóa/tắt để khớp với danh sách hiển thị. */
+    @Query("""
+            SELECT e.notebook.id FROM NotebookEntry e
+            WHERE e.user.id = :userId AND e.word.id = :wordId
+            AND e.word.isDeleted = false AND e.word.isActive = true
+            """)
     List<Long> findNotebookIdsByUserIdAndWordId(@Param("userId") Long userId, @Param("wordId") Long wordId);
 
-    @Query("SELECT e.notebook.id FROM NotebookEntry e WHERE e.user.id = :userId AND e.kanji.id = :kanjiId")
+    @Query("""
+            SELECT e.notebook.id FROM NotebookEntry e
+            WHERE e.user.id = :userId AND e.kanji.id = :kanjiId
+            AND e.kanji.isDeleted = false AND e.kanji.isActive = true
+            """)
     List<Long> findNotebookIdsByUserIdAndKanjiId(@Param("userId") Long userId, @Param("kanjiId") Long kanjiId);
 
     // ── Thao tác xuyên sổ tay (legacy/aggregate) ───────────────────────

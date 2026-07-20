@@ -162,7 +162,7 @@ export default function VocabularyBrowsePage() {
                 {loading && <BrowseSkeleton mode={tab} />}
 
                 {/* ── Word list ── */}
-                {!loading && tab === "vocabulary" && words && words.items.length > 0 && (
+                {!loading && !error && tab === "vocabulary" && words && words.items.length > 0 && (
                     <Card className="gap-0 py-0 overflow-hidden">
                         <div className="divide-y">
                             {words.items.map((w) => (
@@ -173,7 +173,7 @@ export default function VocabularyBrowsePage() {
                 )}
 
                 {/* ── Kanji grid ── */}
-                {!loading && tab === "kanji" && kanjis && kanjis.items.length > 0 && (
+                {!loading && !error && tab === "kanji" && kanjis && kanjis.items.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {kanjis.items.map((k) => (
                             <BrowseKanjiCard key={k.character} kanji={k} onClick={() => goKanji(k.character)} />

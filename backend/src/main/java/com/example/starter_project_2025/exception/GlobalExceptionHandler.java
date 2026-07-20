@@ -18,6 +18,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -153,6 +154,18 @@ public class GlobalExceptionHandler {
         log.warn("[{}] ResponseStatus: {}", status.value(), message);
         ErrorResponse error = new ErrorResponse(status.value(), message, LocalDateTime.now());
         return new ResponseEntity<>(error, status);
+    }
+
+    /**
+     * Client disconnected mid-response (closed tab, navigated away, or the SPA
+     * cancelled an in-flight fetch when a component unmounted). The socket is
+     * already dead, so there's nothing to write back — and it's NOT a server
+     * fault. Log at DEBUG to keep it out of the ERROR stream, where it used to
+     * masquerade as a 500 via the catch-all below.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientDisconnect(AsyncRequestNotUsableException ex) {
+        log.debug("Client disconnected before the response was flushed: {}", ex.getMessage());
     }
 
     // Catch-all — keep last so the specific 4xx handlers above run first.

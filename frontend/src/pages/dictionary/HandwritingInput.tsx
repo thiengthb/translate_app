@@ -19,6 +19,9 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
     const strokesRef   = useRef<Stroke[]>([]);
     const currentXs    = useRef<number[]>([]);
     const currentYs    = useRef<number[]>([]);
+    // Chống race: mỗi lần recognize tăng seq; chỉ áp kết quả nếu vẫn mới nhất
+    // (vẽ nhanh nhiều nét có thể để response ít-nét cũ land sau response nhiều-nét).
+    const recognizeSeq = useRef(0);
 
     // Close on outside click
     useEffect(() => {
@@ -190,20 +193,23 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
     };
 
     const recognize = async (strokes: Stroke[]) => {
+        const reqId = ++recognizeSeq.current;
         setRecognizing(true);
         setErrorMsg(null);
         try {
             const results = await dictionaryApi.recognizeHandwriting(strokes);
+            if (reqId !== recognizeSeq.current) return; // đã có lần recognize mới hơn
             setSuggestions(results);
             if (results.length === 0) setErrorMsg("Không nhận diện được — thử vẽ lại rõ hơn");
         } catch (e: any) {
+            if (reqId !== recognizeSeq.current) return;
             const status = e?.response?.status;
             if (status === 401) setErrorMsg("Lỗi 401 — chưa đăng nhập");
             else if (status === 500) setErrorMsg("Lỗi 500 — backend gặp sự cố");
             else setErrorMsg(e?.message ?? "Không kết nối được backend");
             console.error("[Handwriting] recognize error:", e);
         } finally {
-            setRecognizing(false);
+            if (reqId === recognizeSeq.current) setRecognizing(false);
         }
     };
 
@@ -213,13 +219,16 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
         setStrokeCount(newStrokes.length);
         redrawAll(newStrokes);
         if (newStrokes.length) recognize(newStrokes);
-        else setSuggestions([]);
+        else { recognizeSeq.current++; setSuggestions([]); setRecognizing(false); setErrorMsg(null); }
     };
 
     const clear = () => {
         strokesRef.current = [];
+        recognizeSeq.current++; // vô hiệu hóa mọi recognize đang bay
         setStrokeCount(0);
         setSuggestions([]);
+        setRecognizing(false);
+        setErrorMsg(null);
         drawGuides();
     };
 

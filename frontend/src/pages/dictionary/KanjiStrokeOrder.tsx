@@ -80,6 +80,7 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
     // Fetch KanjiVG SVG
     useEffect(() => {
         if (!character) return;
+        let cancelled = false;
         setPhase("loading");
         setStrokes([]);
         setDrawn(0);
@@ -89,6 +90,7 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
         fetch(`https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${toHex5(character)}.svg`)
             .then(r => { if (!r.ok) throw 0; return r.text(); })
             .then(xml => {
+                if (cancelled) return;
                 const doc = new DOMParser().parseFromString(xml, "image/svg+xml");
                 const paths = Array.from(doc.querySelectorAll("path"))
                     .filter(p => /-s\d+$/.test(p.getAttribute("id") ?? ""))
@@ -96,9 +98,10 @@ export function KanjiStrokeOrder({ character }: { character: string }) {
                 setStrokes(paths);
                 setPhase(paths.length ? "ok" : "error");
             })
-            .catch(() => setPhase("error"));
+            .catch(() => { if (!cancelled) setPhase("error"); });
 
         return () => {
+            cancelled = true;
             if (timer.current) clearTimeout(timer.current);
         };
     }, [character]);

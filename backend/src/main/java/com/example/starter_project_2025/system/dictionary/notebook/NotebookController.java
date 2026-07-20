@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -92,7 +93,7 @@ public class NotebookController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long notebookId,
             @PathVariable Long wordId) {
-        return ResponseEntity.ok(retryOnDeadlock(() ->
+        return ResponseEntity.ok(retryOnConflict(() ->
                 notebookService.addWord(principal.getId(), notebookId, wordId)));
     }
 
@@ -112,7 +113,7 @@ public class NotebookController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long notebookId,
             @PathVariable String character) {
-        return ResponseEntity.ok(retryOnDeadlock(() ->
+        return ResponseEntity.ok(retryOnConflict(() ->
                 notebookService.addKanji(principal.getId(), notebookId, character)));
     }
 
@@ -158,7 +159,7 @@ public class NotebookController {
     public ResponseEntity<NotebookResponse.WordEntry> saveWord(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long wordId) {
-        return ResponseEntity.ok(retryOnDeadlock(() ->
+        return ResponseEntity.ok(retryOnConflict(() ->
                 notebookService.saveWordToDefault(principal.getId(), wordId)));
     }
 
@@ -176,7 +177,7 @@ public class NotebookController {
     public ResponseEntity<NotebookResponse.KanjiEntry> saveKanji(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String character) {
-        return ResponseEntity.ok(retryOnDeadlock(() ->
+        return ResponseEntity.ok(retryOnConflict(() ->
                 notebookService.saveKanjiToDefault(principal.getId(), character)));
     }
 
@@ -212,22 +213,23 @@ public class NotebookController {
     public ResponseEntity<NotebookResponse> sync(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody NotebookSyncRequest request) {
-        return ResponseEntity.ok(retryOnDeadlock(() ->
+        return ResponseEntity.ok(retryOnConflict(() ->
                 notebookService.sync(principal.getId(), request)));
     }
 
     /**
-     * Hai request ghi song song cho cùng user có thể deadlock trên unique index
-     * — InnoDB rollback transaction thua cuộc. Retry phải đứng NGOÀI
-     * @Transactional (ở tầng controller) để mỗi lần thử chạy trên transaction
-     * mới; lần thử lại thấy dòng đã insert và bỏ qua (các thao tác idempotent).
+     * Hai request ghi song song cho cùng user có thể xung đột trên unique index —
+     * hoặc deadlock ({@link PessimisticLockingFailureException}), hoặc bên thua
+     * đụng constraint ({@link DataIntegrityViolationException}). Retry phải đứng
+     * NGOÀI @Transactional (ở tầng controller) để mỗi lần thử chạy trên transaction
+     * MỚI; lần thử lại thấy dòng đã insert và bỏ qua (các thao tác idempotent).
      */
-    private static <T> T retryOnDeadlock(Supplier<T> action) {
+    private static <T> T retryOnConflict(Supplier<T> action) {
         final int maxRetries = 2;
         for (int attempt = 0; ; attempt++) {
             try {
                 return action.get();
-            } catch (PessimisticLockingFailureException e) {
+            } catch (PessimisticLockingFailureException | DataIntegrityViolationException e) {
                 if (attempt >= maxRetries) throw e;
                 try {
                     Thread.sleep(50L * (attempt + 1));

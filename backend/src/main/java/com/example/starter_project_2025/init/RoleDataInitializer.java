@@ -80,14 +80,16 @@ public class RoleDataInitializer implements CommandLineRunner {
                         "CLASSROOM_READ", "CLASSROOM_CREATE", "CLASSROOM_UPDATE", "CLASSROOM_DELETE",
                         "CLASS_MEMBER_READ", "CLASS_MEMBER_CREATE", "CLASS_MEMBER_UPDATE", "CLASS_MEMBER_DELETE",
                         "CLASS_DECK_READ", "CLASS_DECK_CREATE", "CLASS_DECK_UPDATE", "CLASS_DECK_DELETE",
-                        "CLASS_ASSIGNMENT_READ", "CLASS_ASSIGNMENT_CREATE", "CLASS_ASSIGNMENT_UPDATE", "CLASS_ASSIGNMENT_DELETE"
+                        "CLASS_ASSIGNMENT_READ", "CLASS_ASSIGNMENT_CREATE", "CLASS_ASSIGNMENT_UPDATE", "CLASS_ASSIGNMENT_DELETE",
+                        // ── Reading (đọc hiểu) module — học viên chỉ đọc bài admin soạn sẵn ──
+                        "READING_PASSAGE_READ"
                 )
         );
 
         upsertRole(
                 TEACHER_ROLE,
                 "Teacher",
-                findPermissions("MENU_READ")
+                findPermissions("MENU_READ", "READING_PASSAGE_READ")
         );
 
         log.info("Ensured roles and permission mappings: ADMIN, STUDENT, TEACHER.");

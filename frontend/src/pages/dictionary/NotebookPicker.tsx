@@ -60,6 +60,8 @@ export function NotebookPicker({ target, savedAnywhere, onSavedChange }: {
             ? notebooksApi.wordMembership(target.wordId)
             : notebooksApi.kanjiMembership(target.character),
         enabled: open,
+        // Không refetch khi focus lại cửa sổ — tránh ghi đè toggle optimistic đang bay.
+        refetchOnWindowFocus: false,
     });
 
     const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -89,6 +91,7 @@ export function NotebookPicker({ target, savedAnywhere, onSavedChange }: {
                     : await notebooksApi.addKanji(nb.id, target.character);
             }
             qc.invalidateQueries({ queryKey: NOTEBOOKS_KEY });
+            qc.invalidateQueries({ queryKey: ["notebook-entries"] });
         } catch (e) {
             logger.warn("notebook picker: toggle thất bại, hoàn tác", e);
             setSelected(prev);
@@ -110,6 +113,7 @@ export function NotebookPicker({ target, savedAnywhere, onSavedChange }: {
             setSelected((s) => new Set(s).add(nb.id));
             onSavedChange(true);
             qc.invalidateQueries({ queryKey: NOTEBOOKS_KEY });
+            qc.invalidateQueries({ queryKey: ["notebook-entries"] });
         } catch (e) {
             logger.warn("notebook picker: tạo sổ tay thất bại", e);
         } finally {

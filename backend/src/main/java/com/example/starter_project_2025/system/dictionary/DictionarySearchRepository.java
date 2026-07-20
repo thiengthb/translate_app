@@ -13,9 +13,12 @@ import java.util.List;
 @Repository
 public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
 
+    // LEFT JOIN (không INNER) để từ chưa có nghĩa nào vẫn tra được qua word/reading;
+    // ON m.isDeleted = false để không khớp trên nghĩa đã soft-delete (nghĩa đó cũng
+    // bị lọc khỏi kết quả hiển thị ở toWordResult — tránh "match text không hiện ra").
     @Query("""
             SELECT DISTINCT w FROM Word w
-            JOIN w.meanings m
+            LEFT JOIN w.meanings m ON m.isDeleted = false
             JOIN FETCH w.level l
             JOIN FETCH w.representation r
             WHERE w.isDeleted = false
@@ -33,7 +36,7 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
 
     @Query("""
             SELECT DISTINCT w FROM Word w
-            JOIN w.meanings m
+            LEFT JOIN w.meanings m ON m.isDeleted = false
             JOIN FETCH w.level l
             WHERE w.isDeleted = false
             AND w.isActive = true
@@ -62,7 +65,8 @@ public interface DictionarySearchRepository extends JpaRepository<Word, Long> {
      */
     @Query(value = """
             SELECT w FROM Word w
-            JOIN w.level l
+            JOIN FETCH w.level l
+            JOIN FETCH w.representation r
             WHERE w.isDeleted = false AND w.isActive = true
             AND (:level IS NULL OR l.code = :level)
             ORDER BY w.frequency ASC NULLS LAST, w.word ASC

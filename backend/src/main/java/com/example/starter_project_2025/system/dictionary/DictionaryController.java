@@ -59,6 +59,14 @@ public class DictionaryController {
     private static final String GOOGLE_HWR_URL =
             "https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8";
 
+    // Tái dùng 1 HttpClient/ObjectMapper cho mọi lần nhận diện viết tay — HttpClient
+    // giữ selector thread + executor, tạo mới mỗi request sẽ rò rỉ đến khi GC.
+    private static final HttpClient HWR_CLIENT = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(8))
+            .build();
+    private static final ObjectMapper HWR_MAPPER = new ObjectMapper();
+
     @PostMapping("/words")
     @Operation(summary = "Tạo từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ trong một lần")
     public ResponseEntity<WordDTO> createWord(@Valid @RequestBody WordCreateRequest request) {
@@ -202,7 +210,7 @@ public class DictionaryController {
             return ResponseEntity.ok(List.of());
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = HWR_MAPPER;
 
             // Convert [[xs],[ys]] → [[xs],[ys],[ts]] — Google requires timestamps per point
             List<List<List<Integer>>> ink = request.getStrokes().stream()
@@ -238,10 +246,7 @@ public class DictionaryController {
             log.info("[Handwriting] {} stroke(s) → Google", request.getStrokes().size());
             log.info("[Handwriting] body: {}", bodyJson);
 
-            HttpClient client = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_1_1)
-                    .connectTimeout(Duration.ofSeconds(8))
-                    .build();
+            HttpClient client = HWR_CLIENT;
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(GOOGLE_HWR_URL))
