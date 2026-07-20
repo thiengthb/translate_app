@@ -4,13 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,7 +98,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -228,8 +226,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -304,14 +301,7 @@
       <workItem from="1783749161961" duration="6143000" />
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
-    </task>
-    <task id="LOCAL-00003" summary="fix frontend">
-      <option name="closed" value="true" />
-      <created>1779874916299</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1779874916299</updated>
+      <workItem from="1784562392334" duration="626000" />
     </task>
     <task id="LOCAL-00004" summary="feat(dictionary): fix dictionary UI">
       <option name="closed" value="true" />
@@ -697,7 +687,15 @@
       <option name="project" value="LOCAL" />
       <updated>1783921032843</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics">
+      <option name="closed" value="true" />
+      <created>1784558776331</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1784558776331</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -748,7 +746,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
     <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
     <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
     <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
@@ -773,7 +770,8 @@
     <MESSAGE value="feat(sidebar): update layout spacing and improve navigation element alignment" />
     <MESSAGE value="feat(dashboard): enhance layout with side panel and welcome message" />
     <MESSAGE value="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns" />
+    <MESSAGE value="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

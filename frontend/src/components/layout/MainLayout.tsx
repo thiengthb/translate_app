@@ -221,8 +221,8 @@ function AppShell({
                     grows as tall as its OWN content, so a taller side panel no
                     longer stretches it and leaves dead white space behind. */}
                 <div className="mx-auto flex w-full max-w-[1600px] flex-col items-start gap-7 xl:flex-row">
-                    <div className="flex min-w-0 flex-1 overflow-hidden rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
-                        <SidebarMenu />
+                    <div className="flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]">
+                        <SidebarMenu sticky />
                         <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
                             <div className="mb-6 flex min-w-0 items-center justify-between gap-2">
                                 {headerExtra && (
