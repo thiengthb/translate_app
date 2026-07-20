@@ -26,4 +26,4 @@ export interface PublicProfileResponse {
     streak: PublicProfileStreakSummary;
 }
 
-export type LeaderboardSort = "current" | "longest";
+export type LeaderboardSort = "current" | "longest" | "active";

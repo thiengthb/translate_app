@@ -251,50 +251,54 @@ export default function DictionaryPage() {
         >
             <div className="w-full space-y-4">
 
-                {/* ── Search hero ───────────────────────────── */}
+                {/* ── Dictionary panel: search hero + Kho từ vựng + Sổ tay — nội dung phẳng, không khung bọc ───── */}
                 <div>
-                    <div className="relative rounded-2xl border bg-card shadow-sm overflow-visible">
-                        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-                        <div className="relative p-4 sm:p-5 space-y-3.5">
+
+                    {/* ── Search hero ── */}
+                    <div className="space-y-4">
 
                             {/* Title */}
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                                    <Book className="h-[18px] w-[18px]" />
+                            <div className="flex flex-wrap items-center gap-3.5 min-w-0">
+                                <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                                    <Book className="h-5 w-5" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <h1 className="text-base sm:text-lg font-bold leading-tight text-foreground">
+                                    <h1 className="text-lg sm:text-[22px] font-extrabold leading-tight text-foreground">
                                         Từ điển Nhật - Việt
                                     </h1>
-                                    <p className="hidden sm:block text-xs text-muted-foreground">
+                                    <p className="hidden sm:block text-[13.5px] text-muted-foreground mt-0.5">
                                         Tra từ vựng, kanji, kana, romaji hoặc tiếng Việt
                                     </p>
                                 </div>
-                                <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0"
-                                    title="Duyệt toàn bộ từ vựng & kanji theo cấp độ JLPT">
-                                    <Link to="/vocabulary">
-                                        <Layers className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:inline">Kho từ vựng</span>
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
-                                    <Link to="/notebook">
-                                        <Bookmark className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:inline">Sổ tay</span>
-                                        {totalSaved > 0 && (
-                                            <Badge variant="secondary" className="ml-0.5 px-1.5 h-4 text-[10px]">
-                                                {totalSaved}
-                                            </Badge>
-                                        )}
-                                    </Link>
-                                </Button>
+                                <div className="flex gap-2.5 shrink-0">
+                                    <Button asChild variant="outline" size="sm"
+                                        className="gap-1.5 rounded-full border-primary/15 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:border-primary/30 transition"
+                                        title="Duyệt toàn bộ từ vựng & kanji theo cấp độ JLPT">
+                                        <Link to="/vocabulary">
+                                            <Layers className="h-3.5 w-3.5" />
+                                            <span className="hidden sm:inline">Kho từ vựng</span>
+                                        </Link>
+                                    </Button>
+                                    <Button asChild variant="outline" size="sm"
+                                        className="gap-1.5 rounded-full border-primary/15 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:border-primary/30 transition">
+                                        <Link to="/notebook">
+                                            <Bookmark className="h-3.5 w-3.5" />
+                                            <span className="hidden sm:inline">Sổ tay</span>
+                                            {totalSaved > 0 && (
+                                                <Badge variant="secondary" className="ml-0.5 px-1.5 h-4 text-[10px]">
+                                                    {totalSaved}
+                                                </Badge>
+                                            )}
+                                        </Link>
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* ── Search bar ── */}
                             <div ref={wrapRef} className="relative">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2.5 rounded-2xl border border-primary/10 bg-gradient-to-b from-primary/[0.06] to-primary/[0.1] px-3.5 py-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]">
                                     <div className="relative flex-1">
-                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted-foreground pointer-events-none" />
+                                        <Search className="absolute left-1 top-1/2 -translate-y-1/2 h-[17px] w-[17px] text-muted-foreground pointer-events-none" />
                                         <Input
                                             ref={inputRef}
                                             value={query}
@@ -306,7 +310,7 @@ export default function DictionaryPage() {
                                                     ? "成人・seijin・học sinh..."
                                                     : "食べる・taberu・ăn・eat..."
                                             }
-                                            className="h-11 pl-10 pr-3 text-base rounded-xl bg-background"
+                                            className="h-10 pl-7 pr-2 text-[15px] rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent"
                                             autoFocus
                                             autoComplete="off"
                                         />
@@ -322,15 +326,14 @@ export default function DictionaryPage() {
                                     <Button
                                         onClick={() => handleSearch()}
                                         disabled={loading || !query.trim()}
-                                        className="h-11 px-4 sm:px-5 rounded-xl shrink-0"
+                                        size="icon"
+                                        className="h-9 w-9 rounded-full shrink-0"
+                                        title="Tìm"
                                     >
                                         {loading ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
-                                            <>
-                                                <Search className="h-4 w-4 sm:hidden" />
-                                                <span className="hidden sm:inline">Tìm</span>
-                                            </>
+                                            <span className="text-[12px] font-bold">Tìm</span>
                                         )}
                                     </Button>
                                 </div>
@@ -433,8 +436,33 @@ export default function DictionaryPage() {
                                     </span>
                                 )}
                             </div>
-                        </div>
                     </div>
+
+                    {/* ── Kho từ vựng tổng hợp (entry point sang /vocabulary) ── */}
+                    {!loading && (
+                        <>
+                            <div className="h-px bg-border my-6" />
+                            <VocabularyHubCard stats={hubStats} />
+                        </>
+                    )}
+
+                    {/* ── Sổ tay (entry point sang /notebook, kèm preview mục mới lưu) ── */}
+                    {!loading && (
+                        <>
+                            <div className="h-px bg-border my-6" />
+                            <NotebookHubCard
+                                words={savedWords}
+                                kanjis={savedKanjis}
+                                furigana={furigana}
+                                onWordClick={quickVocabSearch}
+                                onKanjiClick={(ch) => {
+                                    setSearchMode("kanji");
+                                    setQuery(ch);
+                                    handleSearch(ch, "kanji");
+                                }}
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* ── Error ── */}
@@ -469,24 +497,6 @@ export default function DictionaryPage() {
                                 savedChars={savedKanjiChars} onSavedChange={handleKanjiSavedChange} />
                         ))}
                     </div>
-                )}
-
-                {/* ── Kho từ vựng tổng hợp (entry point sang /vocabulary) ── */}
-                {!loading && <VocabularyHubCard stats={hubStats} />}
-
-                {/* ── Sổ tay (entry point sang /notebook, kèm preview mục mới lưu) ── */}
-                {!loading && (
-                    <NotebookHubCard
-                        words={savedWords}
-                        kanjis={savedKanjis}
-                        furigana={furigana}
-                        onWordClick={quickVocabSearch}
-                        onKanjiClick={(ch) => {
-                            setSearchMode("kanji");
-                            setQuery(ch);
-                            handleSearch(ch, "kanji");
-                        }}
-                    />
                 )}
 
                 {/* ── Featured ── */}
@@ -1152,20 +1162,17 @@ function TatoebaRow({ example, furigana }: { example: TatoebaExample; furigana: 
 function VocabularyHubCard({ stats }: { stats: { words: number; kanjis: number } | null }) {
     const fmt = (n: number) => n.toLocaleString("vi-VN");
     return (
-        <Card className="gap-0 py-0 overflow-hidden">
-            <div className="relative p-4 sm:p-5">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent" />
-
-                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Layers className="h-5 w-5" />
+        <>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5">
+                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/25 to-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                        <Layers className="h-[17px] w-[17px]" />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <p className="text-[17px] font-bold text-foreground flex items-center gap-1.5">
                             <Layers className="sm:hidden h-4 w-4 text-primary" />
                             Kho từ vựng tổng hợp
                         </p>
-                        <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                        <p className="text-[13.5px] text-muted-foreground leading-relaxed mt-1">
                             {stats ? (
                                 <>
                                     Duyệt toàn bộ{" "}
@@ -1178,14 +1185,14 @@ function VocabularyHubCard({ stats }: { stats: { words: number; kanjis: number }
                             )}
                         </p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                    <div className="flex gap-2.5 shrink-0">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:border-primary/30 transition">
                             <Link to="/vocabulary?tab=vocabulary">
                                 <BookOpen className="h-3.5 w-3.5" />
                                 Duyệt từ vựng
                             </Link>
                         </Button>
-                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:border-primary/30 transition">
                             <Link to="/vocabulary?tab=kanji">
                                 <span className="font-black text-xs leading-none">漢</span>
                                 Duyệt kanji
@@ -1195,24 +1202,23 @@ function VocabularyHubCard({ stats }: { stats: { words: number; kanjis: number }
                 </div>
 
                 {/* Chip cấp độ — đi thẳng tới danh sách đã lọc theo level */}
-                <div className="relative mt-3 flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mr-0.5">
-                        Học theo cấp độ
+                <div className="relative mt-3.5 flex items-center gap-2 flex-wrap sm:pl-[3.375rem]">
+                    <span className="text-[11.5px] font-bold text-muted-foreground tracking-wide">
+                        HỌC THEO CẤP ĐỘ
                     </span>
                     {JLPT_LEVELS.map((lv) => (
                         <Link
                             key={lv}
                             to={`/vocabulary?level=${lv}`}
                             title={`Toàn bộ từ vựng cấp độ ${lv}`}
-                            className={`px-2.5 py-1 rounded-md border text-[11px] font-bold transition-all hover:shadow-sm hover:-translate-y-px ${JLPT[lv].badge}`}
+                            className={`px-3 py-1 rounded-full border text-xs font-bold shadow-sm transition-all hover:shadow-md hover:-translate-y-px ${JLPT[lv].badge}`}
                         >
                             {lv}
                         </Link>
                     ))}
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
                 </div>
-            </div>
-        </Card>
+        </>
     );
 }
 
@@ -1238,24 +1244,21 @@ function NotebookHubCard({ words, kanjis, furigana, onWordClick, onKanjiClick }:
     const moreCount = total - previewWords.length - previewKanjis.length;
 
     return (
-        <Card className="gap-0 py-0 overflow-hidden">
-            <div className="relative p-4 sm:p-5">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent" />
-
+        <>
                 {/* Header */}
-                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <BookMarked className="h-5 w-5" />
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-3.5">
+                    <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/25 to-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                        <BookMarked className="h-[17px] w-[17px]" />
                     </span>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                        <p className="text-[17px] font-bold text-foreground flex items-center gap-1.5">
                             <BookMarked className="sm:hidden h-4 w-4 text-primary" />
                             Sổ tay của tôi
                             {total > 0 && (
                                 <Badge variant="secondary" className="px-1.5 h-4 text-[10px]">{total}</Badge>
                             )}
                         </p>
-                        <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                        <p className="text-[13.5px] text-muted-foreground leading-relaxed mt-1">
                             {total > 0 ? (
                                 <>
                                     Đã lưu{" "}
@@ -1274,7 +1277,7 @@ function NotebookHubCard({ words, kanjis, furigana, onWordClick, onKanjiClick }:
                         </p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:border-primary/30 transition">
                             <Link to="/notebook">
                                 <BookMarked className="h-3.5 w-3.5" />
                                 Mở sổ tay
@@ -1341,8 +1344,7 @@ function NotebookHubCard({ words, kanjis, furigana, onWordClick, onKanjiClick }:
                         </p>
                     </div>
                 )}
-            </div>
-        </Card>
+        </>
     );
 }
 

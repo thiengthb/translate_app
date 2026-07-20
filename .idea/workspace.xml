@@ -6,7 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/Podium.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/components/RankRow.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/types/features/leaderboard.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
