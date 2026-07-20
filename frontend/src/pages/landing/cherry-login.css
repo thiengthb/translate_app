@@ -70,12 +70,12 @@
     gap: 5cqw;
 }
 .cherry-nav-link {
-    font-family: "Quicksand", "Varela Round", ui-rounded, system-ui, sans-serif;
+    font-family: "Baloo 2", ui-rounded, system-ui, sans-serif;
     font-size: 1.15cqw;
     font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #856267;
+    color: #5c2e38;
     text-decoration: none;
     white-space: nowrap;
     line-height: 1;
@@ -89,7 +89,7 @@
 }
 .cherry-nav-link.is-active {
     font-weight: 700;
-    color: #573036;
+    color: #5c2e38;
 }
 
 /* ── Right column: tagline / heading / login form ── */
@@ -224,7 +224,7 @@
 /* Submit button — soft pink pill that matches the sakura background
    (replaces the old teal button.png; smaller & more compact). */
 .cherry-btn {
-    align-self: flex-start;
+    align-self: center;
     border: none;
     border-radius: 999px;
     background: linear-gradient(135deg, #ff9ebb 0%, #f472a0 55%, #ee5f92 100%);
@@ -305,6 +305,7 @@
     font-size: 0.82cqw;
     font-weight: 600;
     color: #7d4451;
+    text-align: center;
 }
 
 /* ── Cherry branches: anchored to the viewport edges so they're never
