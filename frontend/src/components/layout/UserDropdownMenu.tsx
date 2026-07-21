@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import {
     Coins,
     LogOut,
-    Settings,
     Trophy,
     User as UserIcon,
 } from "lucide-react";
@@ -224,13 +223,6 @@ export function UserDropdownMenu({
                     icon={UserIcon}
                     label={t("nav.profile")}
                     onSelect={() => navigate("/profile")}
-                />
-                {/* /profile is the immersive designer profile now; the account
-                    settings UI lives at /profile/settings. */}
-                <MenuRow
-                    icon={Settings}
-                    label={t("nav.settings")}
-                    onSelect={() => navigate("/profile/settings")}
                 />
 
                 <DropdownMenuSeparator />

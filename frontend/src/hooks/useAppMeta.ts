@@ -26,7 +26,6 @@ const SEPARATOR = " · ";
  */
 const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Personal pages
-    ["/profile/settings", "Cài đặt tài khoản"],
     ["/profile", "Hồ sơ"],
     ["/leaderboard", "Bảng xếp hạng"],
     ["/notifications", "Thông báo"],

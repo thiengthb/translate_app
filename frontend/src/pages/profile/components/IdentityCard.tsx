@@ -55,21 +55,26 @@ export function IdentityCard({ profile, onAvatarChange, index = 0 }: Props) {
                 </div>
             </div>
 
-            {/* ── Identity row ────────────────────────────────────────────── */}
-            <div className="px-5 pb-5 sm:px-7 sm:pb-7">
-                <div className="-mt-16 flex flex-col items-center gap-4 sm:-mt-20 sm:flex-row sm:items-end">
-                    <AvatarUploader profile={profile} onAvatarChange={onAvatarChange} />
+            {/* ── Identity ─────────────────────────────────────────────────
+                Centered hero: the avatar overlaps the banner while the name and
+                role badges sit clearly BELOW it on white — so the name always
+                has strong contrast and never straddles the banner seam. */}
+            <div className="px-5 pb-6 sm:px-8 sm:pb-7">
+                <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="-mt-16 sm:-mt-[4.75rem]">
+                        <AvatarUploader profile={profile} onAvatarChange={onAvatarChange} />
+                    </div>
 
-                    <div className="flex-1 space-y-2 pb-1 text-center sm:text-left">
+                    <div className="space-y-2.5">
                         <motion.h1
                             initial={reduce ? false : { opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.25, duration: 0.5 }}
-                            className="font-display text-2xl font-bold leading-tight text-foreground sm:text-[28px]"
+                            className="font-display text-[26px] font-extrabold leading-tight tracking-tight text-foreground sm:text-[32px]"
                         >
                             {fullName}
                         </motion.h1>
-                        <div className="flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                        <div className="flex flex-wrap justify-center gap-1.5">
                             {(profile?.roles ?? []).map((r) => (
                                 <span
                                     key={r}
@@ -84,7 +89,7 @@ export function IdentityCard({ profile, onAvatarChange, index = 0 }: Props) {
                 </div>
 
                 {/* ── Metadata pills ──────────────────────────────────────── */}
-                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <MetaPill
                         icon={<Mail size={15} />}
                         label={t("profile.identity.email")}

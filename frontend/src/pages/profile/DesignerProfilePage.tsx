@@ -199,7 +199,7 @@ export default function DesignerProfilePage() {
         </div>
 
         <div className="yz-nav-actions">
-          <Link className="yz-nav-gear" to="/profile/settings" aria-label="Account settings">
+          <Link className="yz-nav-gear" to="/profile" aria-label="Account settings">
             <GearIcon />
             <span>Settings</span>
           </Link>
@@ -221,7 +221,7 @@ export default function DesignerProfilePage() {
             {s.label}
           </button>
         ))}
-        <Link to="/profile/settings" onClick={() => setMenuOpen(false)}>
+        <Link to="/profile" onClick={() => setMenuOpen(false)}>
           Account settings
         </Link>
         <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
@@ -474,7 +474,7 @@ export default function DesignerProfilePage() {
           <div className="yz-footer-base">
             <span>© 2026 {designer.name} · Fictional profile · Hanabun</span>
             <span>
-              <Link to="/profile/settings">Account settings</Link>
+              <Link to="/profile">Account settings</Link>
               {"  ·  "}
               <Link to="/dashboard">Back to app</Link>
             </span>

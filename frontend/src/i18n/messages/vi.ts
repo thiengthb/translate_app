@@ -33,7 +33,6 @@ export const vi: Messages = {
     "nav.register": "Đăng ký",
     "nav.logout": "Đăng xuất",
     "nav.profile": "Hồ sơ cá nhân",
-    "nav.settings": "Cài đặt tài khoản",
     "nav.dashboard": "Bảng điều khiển",
 
     "auth.login.title": "Chào mừng quay lại!",

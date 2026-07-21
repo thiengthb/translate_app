@@ -11,6 +11,7 @@ import { Dashboard } from "@/pages/management/dashboard";
 import AuditLogPage from "@/pages/auditLog/AuditLogPage";
 import NotificationsPage from "@/pages/notifications/NotificationsPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import DesignerProfilePage from "@/pages/profile/DesignerProfilePage";
 
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
@@ -144,10 +145,7 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
-  // /profile is the immersive "Yozakura" designer profile, mounted full-bleed
-  // (outside the app shell) by a dedicated route in App.tsx. The account
-  // settings UI that used to live at /profile now lives here, inside the shell.
-  { path: "/profile/settings", component: ProfilePage },
+  { path: "/profile", component: ProfilePage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
@@ -176,6 +174,11 @@ export const routes: RouteConfig[] = [
   // platform — fully self-contained (own scoped CSS + Three.js petals),
   // public so it works without auth. Additive: touches no existing page.
   { path: "/showcase", component: HanabunShowcase, isPublic: true },
+  // Standalone "Yozakura / Night Bloom" designer-profile showcase for a
+  // fictional UI/UX designer (Hana Mizuno). Full-bleed + public, fully
+  // self-contained (own scoped CSS + Three.js petals). Kept OFF /profile so
+  // the real user Profile & Account Settings page owns that route.
+  { path: "/designer-portfolio", component: DesignerProfilePage, isPublic: true },
   // The cherry auth screen (login/register tabs). It reads the pathname
   // (/register → register tab) and any ?error from the OAuth callback.
   { path: "/login", component: LandingPage, isPublic: true },
