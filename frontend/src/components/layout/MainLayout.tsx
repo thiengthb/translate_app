@@ -220,55 +220,66 @@ function AppShell({
     return (
         <div
             className={cn(
-                "bg-background px-2 pb-2 pt-14 sm:px-4 sm:pb-4 sm:pt-16 lg:px-8 lg:pb-8 lg:pt-20",
+                "bg-background px-2 pb-2 sm:px-4 sm:pb-4 lg:px-8 lg:pb-8",
                 pageScroll ? "min-h-screen" : "h-svh",
             )}
         >
             <div
                 className={cn(
-                    "relative mx-auto flex w-full max-w-[1600px] gap-7",
-                    pageScroll ? "flex-col items-start xl:flex-row" : "h-full",
+                    "mx-auto flex w-full max-w-[1600px] flex-col",
+                    !pageScroll && "h-full",
                 )}
             >
-                {/* Top-left brand mark — sits in the extra top padding above
-                    the shell, left-aligned with the sidebar's left edge
-                    (same containing block, no separate centering math). */}
-                <img
-                    src="/hanabun-logo-full.png"
-                    alt="Hanabun"
-                    draggable={false}
-                    className="absolute left-0 -top-10 h-8 w-auto select-none sm:-top-12 sm:h-9 lg:-top-14 lg:h-10"
-                />
+                {/* Top brand header — its own full-width row above the
+                    sidebar+main cluster, spanning the same max-width
+                    container so its edges line up with the shell below. */}
+                <div className="flex h-14 w-full shrink-0 items-center sm:h-16 lg:h-20">
+                    <img
+                        src="/hanabun-logo-full.png"
+                        alt="Hanabun"
+                        draggable={false}
+                        className="h-full w-full select-none object-contain object-left py-[5px]"
+                    />
+                </div>
 
                 <div
                     className={cn(
-                        "flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]",
-                        !pageScroll && "h-full overflow-hidden",
+                        "flex w-full gap-7",
+                        pageScroll
+                            ? "flex-col items-start xl:flex-row"
+                            : "min-h-0 flex-1",
                     )}
                 >
-                    <SidebarMenu sticky={pageScroll} />
-                    {pageScroll ? (
-                        <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
-                            {children}
-                        </main>
-                    ) : (
-                        <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
-                            <MainLayoutTopBar headerExtra={headerExtra} />
-                            <ScrollHintContainer
-                                axis="vertical"
-                                className="flex-1 min-h-0 min-w-0 max-w-full"
-                                viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
-                            >
-                                <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
-                                    {children}
-                                </main>
-                            </ScrollHintContainer>
-                        </div>
+                    <div
+                        className={cn(
+                            "flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]",
+                            !pageScroll && "h-full overflow-hidden",
+                        )}
+                    >
+                        <SidebarMenu sticky={pageScroll} />
+                        {pageScroll ? (
+                            <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
+                                {children}
+                            </main>
+                        ) : (
+                            <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
+                                <MainLayoutTopBar headerExtra={headerExtra} />
+                                <ScrollHintContainer
+                                    axis="vertical"
+                                    className="flex-1 min-h-0 min-w-0 max-w-full"
+                                    viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
+                                >
+                                    <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
+                                        {children}
+                                    </main>
+                                </ScrollHintContainer>
+                            </div>
+                        )}
+                    </div>
+                    {pageScroll && sidePanel && (
+                        <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
                     )}
                 </div>
-                {pageScroll && sidePanel && (
-                    <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
-                )}
             </div>
         </div>
     );
