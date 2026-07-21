@@ -234,7 +234,7 @@ function AppShell({
                 {/* Top brand header — its own full-width row above the
                     sidebar+main cluster, spanning the same max-width
                     container so its edges line up with the shell below. */}
-                <div className="flex h-14 w-full shrink-0 items-center sm:h-16 lg:h-20">
+                <div className="flex h-14 w-full shrink-0 items-center sm:h-16 lg:h-[90px]">
                     <img
                         src="/hanabun-logo-full.png"
                         alt="Hanabun"
