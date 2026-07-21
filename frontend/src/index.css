@@ -13,6 +13,32 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Page scrollbar: soft pink to match the Sakura theme. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #f9a8d4 transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: #f9c9de;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: #f7b3cf;
+}
+
 /* Hide the scrollbar visually while keeping scroll behaviour intact. */
 @utility scrollbar-hidden {
   scrollbar-width: none; /* Firefox */
@@ -128,6 +154,7 @@ html {
      "comfortable" density preset; lowering it gives "compact". */
   html {
     font-size: var(--app-font-size);
+    @apply bg-background;
   }
   body {
     font-family: var(--font-sans);

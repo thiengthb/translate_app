@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -303,15 +300,7 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-      <workItem from="1784631119163" duration="2478000" />
-    </task>
-    <task id="LOCAL-00011" summary="fix merge">
-      <option name="closed" value="true" />
-      <created>1780056910269</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1780056910269</updated>
+      <workItem from="1784631119163" duration="4561000" />
     </task>
     <task id="LOCAL-00012" summary="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
       <option name="closed" value="true" />
@@ -697,7 +686,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784631585560</updated>
     </task>
-    <option name="localTasksCounter" value="60" />
+    <task id="LOCAL-00060" summary="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784634739104</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1784634739104</updated>
+    </task>
+    <option name="localTasksCounter" value="61" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -748,7 +745,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(toaster): implement custom AppToaster component with theme support" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and related types" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
     <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
@@ -773,7 +769,8 @@
     <MESSAGE value="feat(layout): update MainLayout header height for improved layout consistency" />
     <MESSAGE value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
     <MESSAGE value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
+    <MESSAGE value="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
