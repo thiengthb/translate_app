@@ -7,6 +7,7 @@ import LivePreview from "./sections/LivePreview";
 import Roles from "./sections/Roles";
 import CTAFooter from "./sections/CTAFooter";
 import { useReducedMotion } from "./useReducedMotion";
+import { useScrollReveal } from "./useScrollReveal";
 import { brand } from "./showcase-data";
 import "./showcase.css";
 
@@ -30,29 +31,9 @@ export default function HanabunShowcase() {
   }, []);
 
   // Scroll reveals: toggle `.is-in` on every `.sk-reveal` as it enters view.
-  // Native IO (unlike Framer's whileInView here) fires reliably.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const items = Array.from(root.querySelectorAll<HTMLElement>(".sk-reveal"));
-    if (reduced) {
-      items.forEach((el) => el.classList.add("is-in"));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-in");
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
-    );
-    items.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [reduced]);
+  // Scroll-event driven (IntersectionObserver is unreliable in the in-app
+  // browser pane — it left every reveal stuck hidden).
+  useScrollReveal(rootRef, reduced);
 
   const jump = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });

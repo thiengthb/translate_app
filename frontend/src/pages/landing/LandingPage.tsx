@@ -63,7 +63,7 @@ export default function LandingPage() {
                     Quicksand, wide tracking, active item bold + darker. */}
                 <nav className="cherry-nav" aria-label="Điều hướng">
                     <Link to="/" className="cherry-nav-link is-active">Trang chủ</Link>
-                    <Link to="/" className="cherry-nav-link">Giới thiệu</Link>
+                    <Link to="/showcase" className="cherry-nav-link">Giới thiệu</Link>
                     <Link to="/" className="cherry-nav-link">Về chúng tôi</Link>
                 </nav>
 

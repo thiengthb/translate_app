@@ -6,13 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/RoleDataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/anim.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/CTAFooter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/CTAFooter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Features.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Features.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Roles.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Roles.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/showcase.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/showcase.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,12 +96,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/thiengthb/translate_app.git",
-    "accountId": "f6f81030-4e38-4841-a11b-4754b5a2dc53"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -306,15 +303,7 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-      <workItem from="1784631119163" duration="446000" />
-    </task>
-    <task id="LOCAL-00010" summary="feat(dictionary): add word">
-      <option name="closed" value="true" />
-      <created>1780053093512</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1780053093512</updated>
+      <workItem from="1784631119163" duration="2478000" />
     </task>
     <task id="LOCAL-00011" summary="fix merge">
       <option name="closed" value="true" />
@@ -700,7 +689,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784627621371</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency">
+      <option name="closed" value="true" />
+      <created>1784631585560</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1784631585560</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -751,7 +748,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage" />
     <MESSAGE value="feat(toaster): implement custom AppToaster component with theme support" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and related types" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
@@ -776,7 +772,8 @@
     <MESSAGE value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
     <MESSAGE value="feat(layout): update MainLayout header height for improved layout consistency" />
     <MESSAGE value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
+    <MESSAGE value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

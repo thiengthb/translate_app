@@ -1,32 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Check, Flame, Medal, Sparkles } from "lucide-react";
 import { dash } from "../showcase-data";
+import { useInViewOnce } from "../useScrollReveal";
 
 const PINK = "#ff6b9d";
 const MINT = "#3fb99a";
 const HONEY = "#e2a53a";
-
-/** Native IntersectionObserver — reliable here where Framer's useInView isn't. */
-function useInViewOnce<T extends Element>() {
-  const ref = useRef<T | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return [ref, inView] as const;
-}
 
 /** Ease-out count-up; snaps to target under reduced motion. */
 function useCountUp(target: number, active: boolean, reduced: boolean, dur = 1100) {
@@ -52,7 +31,7 @@ function useCountUp(target: number, active: boolean, reduced: boolean, dur = 110
 }
 
 export default function LivePreview({ reduced }: { reduced: boolean }) {
-  const [ref, rawInView] = useInViewOnce<HTMLDivElement>();
+  const [ref, rawInView] = useInViewOnce<HTMLDivElement>(reduced);
   const live = rawInView || reduced;
 
   const streak = useCountUp(dash.streak.current, live, reduced);

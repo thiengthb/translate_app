@@ -96,7 +96,7 @@ public class RoleDataInitializer implements CommandLineRunner {
 
     /**
      * Permission-name prefixes representing a personal "learner footprint"
-     * (taking quizzes, Anki/Quizlet study, authoring personal flashcards,
+     * (taking quizzes, Quizlet study, authoring personal flashcards,
      * personal favourites & progress). ADMIN is granted every permission EXCEPT
      * these — an administrator manages the system rather than learning inside
      * it, so their actions don't pollute learning analytics or audit trails. To
@@ -111,12 +111,12 @@ public class RoleDataInitializer implements CommandLineRunner {
      *       decks/folders.</li>
      *   <li>{@code FLASHCARD_READ} / {@code FLASHCARD_TEMPLATE_READ} — view-only
      *       for moderation; only flashcard create/update/delete is stripped.</li>
+     *   <li>{@code ANKI_*} — admin can also use Anki/SRS study personally.</li>
      * </ul>
      */
     private static final String[] ADMIN_EXCLUDED_PREFIXES = {
             "QUIZ_ATTEMPT_",
             "USER_QUIZ_PROGRESS_",
-            "ANKI_",
             "QUIZLET_",
             "FAVORITE_DECK_",
             "GRAMMAR_PROGRESS_",
