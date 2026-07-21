@@ -6,10 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(portfolio): add Hanabun project to portfolio and update project count">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/AccountInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/AccountInfoCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/IdentityCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/IdentityCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/LanguageCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/LanguageCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/PasswordField.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/PersonalInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/PersonalInfoCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/SecurityCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/SecurityCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,43 +152,43 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Maven.starter_project_2025 [clean].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Test-theme-by-Akira-second&quot;,
-    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/OneDrive/Documents/FPT_University/SWD/frontend/public&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\Admin\\OneDrive\\Documents\\FPT_University\\SWD\\frontend\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Maven.starter_project_2025 [clean].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.StarterProject2025Application.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "copilot.chat.legacySessionMetadata.migrated": "true",
+    "git-widget-placeholder": "Test-theme-by-Akira-second",
+    "git.auto.fetch.suggestion.counter": "2",
+    "ignore.virus.scanning.warn.message": "true",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Admin/OneDrive/Documents/FPT_University/SWD/frontend/public",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\Users\\Admin\\OneDrive\\Documents\\FPT_University\\SWD\\frontend\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Admin\OneDrive\Documents\FPT_University\SWD\frontend\public" />
@@ -304,14 +313,6 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-    </task>
-    <task id="LOCAL-00006" summary="feat(dictionary): fix UI add search kanji likes mazii">
-      <option name="closed" value="true" />
-      <created>1779954232000</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1779954232000</updated>
     </task>
     <task id="LOCAL-00007" summary="feat(dictionary): chinh sua UI va them de xuat tu vung">
       <option name="closed" value="true" />
@@ -697,7 +698,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784607093567</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher">
+      <option name="closed" value="true" />
+      <created>1784609355902</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1784609355903</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -748,7 +757,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
     <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
     <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
@@ -773,7 +781,8 @@
     <MESSAGE value="feat(portfolio): implement landing and about pages with navigation and footer components" />
     <MESSAGE value="feat(localization): update labels and messages to Vietnamese for improved accessibility" />
     <MESSAGE value="feat(portfolio): add Hanabun project to portfolio and update project count" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(portfolio): add Hanabun project to portfolio and update project count" />
+    <MESSAGE value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

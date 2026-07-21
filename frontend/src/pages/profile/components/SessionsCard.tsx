@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { Laptop, Loader2, LogOut, Monitor } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { profileApi } from "@/api/features/profile.api";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useFormat } from "@/i18n/format";
+import { usePrefersReducedMotion } from "@/pages/portfolio/usePrefersReducedMotion";
 import type { SessionResponse } from "@/types/features/profile";
+
+import { CardHeading, RevealCard } from "./profile-ui";
 
 function shortUserAgent(ua?: string): string | null {
     if (!ua) return null;
@@ -34,9 +35,14 @@ function shortUserAgent(ua?: string): string | null {
     return os ? `${browser} • ${os}` : browser;
 }
 
-export function SessionsCard() {
+interface Props {
+    index?: number;
+}
+
+export function SessionsCard({ index = 0 }: Props) {
     const { t } = useTranslation();
     const fmt = useFormat();
+    const reduce = usePrefersReducedMotion();
     const [sessions, setSessions] = useState<SessionResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [revokingId, setRevokingId] = useState<number | null>(null);
@@ -72,14 +78,13 @@ export function SessionsCard() {
     };
 
     return (
-        <Card className="gap-3 py-4">
-            <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                    <Monitor size={16} className="text-primary" />
-                    <InfoLabel title={t("profile.sessions.title")} info={t("profile.sessions.description")} />
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 space-y-1">
+        <RevealCard index={index} reduce={reduce} className="p-5 sm:p-6">
+            <CardHeading
+                icon={<Monitor size={18} />}
+                title={t("profile.sessions.title")}
+                info={t("profile.sessions.description")}
+            />
+            <div className="mt-4 space-y-1">
                 {loading ? (
                     <div className="flex justify-center py-6">
                         <Loader2 size={20} className="animate-spin text-primary" />
@@ -150,7 +155,7 @@ export function SessionsCard() {
                         );
                     })
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </RevealCard>
     );
 }

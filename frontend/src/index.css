@@ -15,6 +15,10 @@
 @theme inline {
   /* Sakura Study Dashboard display font (fixed, outside the color-preset system). */
   --font-display: "Baloo 2", cursive;
+  /* Top-header rotating quote (WritingQuoteHeader): JP brush calligraphy +
+     a Vietnamese-subset handwriting script for the caption line. */
+  --font-hand-jp: "Yuji Syuku", "Zen Kurenaido", cursive;
+  --font-hand-vi: "Caveat", cursive;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

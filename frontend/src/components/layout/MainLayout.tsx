@@ -8,6 +8,7 @@ import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { GuestLayout } from "@/components/layout/GuestLayout";
 import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
+import { WritingQuoteHeader } from "@/components/layout/WritingQuoteHeader";
 
 import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
@@ -238,8 +239,9 @@ function AppShell({
                         src="/hanabun-logo-full.png"
                         alt="Hanabun"
                         draggable={false}
-                        className="h-full w-full select-none object-contain object-left py-[5px]"
+                        className="h-full w-auto shrink-0 select-none object-contain object-left py-[5px]"
                     />
+                    <WritingQuoteHeader />
                 </div>
 
                 <div
