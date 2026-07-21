@@ -37,6 +37,7 @@ export const en = {
     "nav.register": "Sign up",
     "nav.logout": "Sign out",
     "nav.profile": "Profile",
+    "nav.settings": "Account settings",
     "nav.dashboard": "Dashboard",
 
     // Login page.

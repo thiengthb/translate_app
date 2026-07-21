@@ -13,6 +13,14 @@
     overflow: hidden;
 }
 
+/* This page never scrolls the document, so the app-wide reserved
+   scrollbar gutter (html { scrollbar-gutter: stable } in index.css)
+   just leaves a white strip on the right. Drop it while this page is
+   mounted. */
+html:has(> body .cherry-body) {
+    scrollbar-gutter: auto;
+}
+
 .cherry-stage {
     position: absolute;
     inset: 0;

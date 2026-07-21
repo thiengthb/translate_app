@@ -6,7 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/en.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/en.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/ja.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/ja.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/i18n/messages/vi.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/i18n/messages/vi.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/cherry-login.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,7 +234,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
       </set>
     </attachedChunks>
   </component>
@@ -300,15 +311,8 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-      <workItem from="1784631119163" duration="4561000" />
-    </task>
-    <task id="LOCAL-00012" summary="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
-      <option name="closed" value="true" />
-      <created>1780068282096</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1780068282096</updated>
+      <workItem from="1784631119163" duration="5578000" />
+      <workItem from="1784644777571" duration="841000" />
     </task>
     <task id="LOCAL-00013" summary="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic">
       <option name="closed" value="true" />
@@ -694,7 +698,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784634739104</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784636240185</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1784636240185</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

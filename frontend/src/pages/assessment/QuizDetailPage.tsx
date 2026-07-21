@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import { usePermissions } from "@/hooks/usePermissions";
 import { AttemptStatusBadge, DifficultyBadge, QuizStatusBadge, formatDateTime, formatSeconds } from "./_shared";
 
 export default function QuizDetailPage() {
@@ -20,6 +21,8 @@ export default function QuizDetailPage() {
   const id = Number(quizId);
   const navigate = useNavigate();
   const userId = getCurrentUserId();
+  const { hasPermission } = usePermissions();
+  const canTakeQuiz = hasPermission("QUIZ_ATTEMPT_CREATE");
 
   const [quiz, setQuiz] = useState<QuizDTO | null>(null);
   const [questions, setQuestions] = useState<QuizQuestionDTO[]>([]);
@@ -34,7 +37,7 @@ export default function QuizDetailPage() {
     Promise.all([
       assessmentApi.fetchQuizById(id),
       assessmentApi.fetchQuizQuestions(id),
-      assessmentApi.getMyAttempts(id).catch(() => []),
+      canTakeQuiz ? assessmentApi.getMyAttempts(id).catch(() => []) : Promise.resolve([]),
     ])
       .then(([q, qs, at]) => {
         setQuiz(q);
@@ -99,28 +102,32 @@ export default function QuizDetailPage() {
               <span className="flex items-center gap-1"><FileQuestion className="size-4" />{quiz.totalQuestions} questions</span>
               {quiz.timeLimitMinutes != null && <span className="flex items-center gap-1"><Clock className="size-4" />{quiz.timeLimitMinutes} min</span>}
               <span className="flex items-center gap-1"><Trophy className="size-4" />Pass: {quiz.passScore}</span>
-              <span className="flex items-center gap-1.5">
-                <RotateCcw className="size-4" />
-                Attempts: {attemptsUsed}{maxAttempts != null ? `/${maxAttempts}` : ""}
-                {maxAttempts != null ? (
-                  <span className={cn(
-                    "inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium",
-                    attemptsLeft! > 0 ? "bg-primary/10 text-primary" : "bg-red-500/10 text-red-600",
-                  )}>
-                    {attemptsLeft} left
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">(unlimited)</span>
-                )}
-              </span>
+              {canTakeQuiz && (
+                <span className="flex items-center gap-1.5">
+                  <RotateCcw className="size-4" />
+                  Attempts: {attemptsUsed}{maxAttempts != null ? `/${maxAttempts}` : ""}
+                  {maxAttempts != null ? (
+                    <span className={cn(
+                      "inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium",
+                      attemptsLeft! > 0 ? "bg-primary/10 text-primary" : "bg-red-500/10 text-red-600",
+                    )}>
+                      {attemptsLeft} left
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">(unlimited)</span>
+                  )}
+                </span>
+              )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={handleStart} disabled={starting || questions.length === 0 || noAttemptsLeft}>
-              {starting ? <Loader2 className="size-4 animate-spin mr-1" /> : <Play className="size-4 mr-1" />}
-              {noAttemptsLeft ? "No attempts left" : "Start quiz"}
-            </Button>
+            {canTakeQuiz && (
+              <Button onClick={handleStart} disabled={starting || questions.length === 0 || noAttemptsLeft}>
+                {starting ? <Loader2 className="size-4 animate-spin mr-1" /> : <Play className="size-4 mr-1" />}
+                {noAttemptsLeft ? "No attempts left" : "Start quiz"}
+              </Button>
+            )}
             {isCreator && (
               <>
                 <Button variant="outline" onClick={() => navigate(`/quizzes/${id}/edit`)}><Pencil className="size-4 mr-1" />Edit</Button>
@@ -139,7 +146,7 @@ export default function QuizDetailPage() {
         <Tabs defaultValue="overview">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="attempts">My attempts</TabsTrigger>
+            {canTakeQuiz && <TabsTrigger value="attempts">My attempts</TabsTrigger>}
             {isCreator && <TabsTrigger value="questions">Questions</TabsTrigger>}
           </TabsList>
 
@@ -163,6 +170,7 @@ export default function QuizDetailPage() {
           </TabsContent>
 
           {/* My attempts */}
+          {canTakeQuiz && (
           <TabsContent value="attempts" className="space-y-2 mt-4">
             <p className="text-sm text-muted-foreground">
               {maxAttempts != null
@@ -191,6 +199,7 @@ export default function QuizDetailPage() {
               ))
             )}
           </TabsContent>
+          )}
 
           {/* Questions management (creator) */}
           {isCreator && (

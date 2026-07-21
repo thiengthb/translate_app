@@ -33,6 +33,7 @@ export const ja: Messages = {
     "nav.register": "新規登録",
     "nav.logout": "ログアウト",
     "nav.profile": "プロフィール",
+    "nav.settings": "アカウント設定",
     "nav.dashboard": "ダッシュボード",
 
     "auth.login.title": "おかえりなさい!",

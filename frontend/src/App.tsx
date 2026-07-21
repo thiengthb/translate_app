@@ -14,6 +14,7 @@ import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
 import PortfolioLanding from "./pages/portfolio/PortfolioLanding";
+import DesignerProfilePage from "./pages/profile/DesignerProfilePage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
 import { routes, type RouteComponent } from "./router/component-registry";
 import type { RootState } from "./store/store";
@@ -90,6 +91,20 @@ function AppRoutes() {
                         />
                     );
                 })}
+
+            {/* Immersive designer profile — authenticated, but full-bleed:
+                mounted OUTSIDE the persistent app shell so it fills the
+                viewport edge-to-edge (its own nav + dark night identity),
+                like the portfolio landing. Account settings stay inside the
+                shell at /profile/settings. */}
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <RouteContent Component={DesignerProfilePage} />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* Public static routes (login, register, about, ...) — no auth,
                 no persistent shell; each renders its own complete layout. */}

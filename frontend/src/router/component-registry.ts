@@ -144,7 +144,10 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   ...buildEntityRoutes(),
-  { path: "/profile", component: ProfilePage },
+  // /profile is the immersive "Yozakura" designer profile, mounted full-bleed
+  // (outside the app shell) by a dedicated route in App.tsx. The account
+  // settings UI that used to live at /profile now lives here, inside the shell.
+  { path: "/profile/settings", component: ProfilePage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
