@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { KeyboardShortcutsDialog } from "@/components/common/KeyboardShortcutsDialog";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import { GuestLayout } from "@/components/layout/GuestLayout";
-import HeaderRight from "@/components/layout/HeaderRight";
 import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
 
@@ -221,16 +220,26 @@ function AppShell({
     return (
         <div
             className={cn(
-                "bg-background p-2 sm:p-4 lg:p-8",
+                "bg-background px-2 pb-2 pt-14 sm:px-4 sm:pb-4 sm:pt-16 lg:px-8 lg:pb-8 lg:pt-20",
                 pageScroll ? "min-h-screen" : "h-svh",
             )}
         >
             <div
                 className={cn(
-                    "mx-auto flex w-full max-w-[1600px] gap-7",
+                    "relative mx-auto flex w-full max-w-[1600px] gap-7",
                     pageScroll ? "flex-col items-start xl:flex-row" : "h-full",
                 )}
             >
+                {/* Top-left brand mark — sits in the extra top padding above
+                    the shell, left-aligned with the sidebar's left edge
+                    (same containing block, no separate centering math). */}
+                <img
+                    src="/hanabun-logo-full.png"
+                    alt="Hanabun"
+                    draggable={false}
+                    className="absolute left-0 -top-10 h-8 w-auto select-none sm:-top-12 sm:h-9 lg:-top-14 lg:h-10"
+                />
+
                 <div
                     className={cn(
                         "flex min-w-0 flex-1 rounded-[36px] bg-white shadow-[0_18px_50px_rgba(255,143,171,0.16)]",
@@ -240,13 +249,6 @@ function AppShell({
                     <SidebarMenu sticky={pageScroll} />
                     {pageScroll ? (
                         <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
-                            <div className="mb-6 flex min-w-0 items-center justify-between gap-2">
-                                {headerExtra && (
-                                    <div className="flex min-w-0 items-center">{headerExtra}</div>
-                                )}
-                                <div className="flex-1" />
-                                <HeaderRight />
-                            </div>
                             {children}
                         </main>
                     ) : (

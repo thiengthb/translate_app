@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import {
     BookOpen,
     BookText,
+    ChevronDown,
+    ChevronUp,
     ClipboardList,
     GraduationCap,
     Home,
@@ -16,8 +18,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge.tsx";
+import { RoleSwitcher } from "@/components/layout/header/RoleSwitcher";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { iconMap } from "@/components/datatable/iconMap";
+import { useRoleSwitch } from "@/contexts/RoleSwitchContext";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
 import { useLogout } from "@/hooks/useLogout";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -27,6 +32,17 @@ import type { RootState } from "@/store/store";
 
 const PINK = "#FF8FAB";
 const PINK_DEEP = "#FF6B9D";
+
+/** Rail buttons are paginated instead of scrolled/expanded — this many per
+ *  page, so the nav area's height stays fixed regardless of how many items
+ *  the viewer's permissions unlock. */
+const RAIL_PAGE_SIZE = 5;
+const RAIL_BUTTON_HEIGHT = 54;
+const RAIL_GAP = 26;
+/** Height of exactly `RAIL_PAGE_SIZE` buttons + the gaps between them —
+ *  keeps the nav area from growing/shrinking when switching pages. */
+const RAIL_PAGE_HEIGHT =
+    RAIL_PAGE_SIZE * RAIL_BUTTON_HEIGHT + (RAIL_PAGE_SIZE - 1) * RAIL_GAP;
 
 /**
  * Primary features pinned directly on the rail, in priority order.
@@ -289,11 +305,14 @@ export function SakuraSidebarContent() {
     const location = useLocation();
     const navigate = useNavigate();
     const logout = useLogout();
-    const { firstName, lastName, email } = useSelector(
+    const { firstName, lastName, email, role, roles } = useSelector(
         (s: RootState) => s.auth,
     );
     const { activeRole, hasPermission } = usePermissions();
     const { data: moduleGroups = [] } = useActiveModuleGroups();
+    const { isPreviewMode } = useRoleSwitch();
+    const [page, setPage] = useState(0);
+    const [pageVisible, setPageVisible] = useState(true);
 
     const home = getHomePathByRole(activeRole);
     const isHome = location.pathname === home;
@@ -345,6 +364,88 @@ export function SakuraSidebarContent() {
         return out;
     })();
 
+    // Every rail button — Home, the pinned features, the catalog flyout, and
+    // (for multi-role viewers) the role switcher — flattened into one array
+    // and paginated, instead of scrolling or expanding. Each entry renders
+    // itself, so mixed widgets (plain nav buttons vs. the catalog flyout vs.
+    // the role-switcher dropdown) all slot in the same page uniformly.
+    const railItems: { key: string; node: ReactNode }[] = [
+        {
+            key: "home",
+            node: (
+                <RailButton
+                    label="Trang chủ"
+                    active={isHome}
+                    onClick={() => navigate(home)}
+                >
+                    <Home className="h-6 w-6" />
+                </RailButton>
+            ),
+        },
+        ...visiblePrimary.map((item) => ({
+            key: item.url,
+            node: (
+                <RailButton
+                    label={item.label}
+                    active={isItemActive(item)}
+                    onClick={() => navigate(item.url)}
+                >
+                    {item.glyph ? (
+                        <span className="font-display text-[22px] font-bold leading-none">
+                            {item.glyph}
+                        </span>
+                    ) : (
+                        item.icon && <item.icon className="h-[22px] w-[22px]" />
+                    )}
+                </RailButton>
+            ),
+        })),
+        ...(catalogGroups.length > 0
+            ? [{ key: "catalog", node: <CatalogFlyout groups={catalogGroups} /> }]
+            : []),
+        ...(roles && roles.length > 1
+            ? [
+                  {
+                      key: "role",
+                      node: (
+                          <div className="flex h-[54px] w-full flex-col items-center justify-center gap-1">
+                              <RoleSwitcher primaryRole={role} roles={roles} />
+                              {isPreviewMode && (
+                                  <Badge
+                                      variant="secondary"
+                                      className="text-[9px] uppercase tracking-wide"
+                                  >
+                                      Xem trước
+                                  </Badge>
+                              )}
+                          </div>
+                      ),
+                  },
+              ]
+            : []),
+    ];
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(railItems.length / RAIL_PAGE_SIZE),
+    );
+    const currentPage = Math.min(page, totalPages - 1);
+    const pageItems = railItems.slice(
+        currentPage * RAIL_PAGE_SIZE,
+        currentPage * RAIL_PAGE_SIZE + RAIL_PAGE_SIZE,
+    );
+
+    // Fade the page out, swap its contents, then fade back in — avoids the
+    // icon list flashing/jumping straight to the new set.
+    const goToPage = (next: number) => {
+        if (next === currentPage) return;
+        setPageVisible(false);
+        window.setTimeout(() => {
+            setPage(next);
+            setPageVisible(true);
+        }, 150);
+    };
+
     return (
         <>
             {/* Avatar → profile */}
@@ -361,40 +462,73 @@ export function SakuraSidebarContent() {
                 </Avatar>
             </button>
 
-            {/* Primary nav — Home, the pinned features, then the catalog flyout */}
-            <nav className="mt-1 flex w-full flex-1 flex-col items-center gap-[26px] overflow-y-auto scrollbar-hidden">
-                <RailButton
-                    label="Trang chủ"
-                    active={isHome}
-                    onClick={() => navigate(home)}
+            {/* Primary nav — fixed-height page of up to RAIL_PAGE_SIZE rail
+                buttons; pagination controls in the footer switch pages. */}
+            <nav
+                className="mt-1 flex w-full flex-none flex-col items-center justify-start"
+                style={{ height: RAIL_PAGE_HEIGHT }}
+            >
+                <div
+                    className={cn(
+                        "flex w-full flex-col items-center gap-[26px] transition-opacity duration-150",
+                        pageVisible ? "opacity-100" : "opacity-0",
+                    )}
                 >
-                    <Home className="h-6 w-6" />
-                </RailButton>
-
-                {visiblePrimary.map((item) => (
-                    <RailButton
-                        key={item.url}
-                        label={item.label}
-                        active={isItemActive(item)}
-                        onClick={() => navigate(item.url)}
-                    >
-                        {item.glyph ? (
-                            <span className="font-display text-[22px] font-bold leading-none">
-                                {item.glyph}
-                            </span>
-                        ) : (
-                            item.icon && <item.icon className="h-[22px] w-[22px]" />
-                        )}
-                    </RailButton>
-                ))}
-
-                {catalogGroups.length > 0 && (
-                    <CatalogFlyout groups={catalogGroups} />
-                )}
+                    {pageItems.map((item) => (
+                        <div key={item.key} className="shrink-0">
+                            {item.node}
+                        </div>
+                    ))}
+                </div>
             </nav>
 
-            {/* Footer */}
-            <div className="flex shrink-0 flex-col items-center">
+            {/* Footer — pagination controls (only when the rail overflows a
+                single page), then the logout button. */}
+            <div className="flex w-full shrink-0 flex-col items-center gap-2">
+                {totalPages > 1 && (
+                    <div className="flex flex-col items-center gap-1">
+                        <button
+                            type="button"
+                            aria-label="Trang trước"
+                            disabled={currentPage === 0}
+                            onClick={() => goToPage(currentPage - 1)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#B9AEB2] transition-colors hover:text-[#FF8FAB] disabled:opacity-30 disabled:hover:text-[#B9AEB2] cursor-pointer disabled:cursor-not-allowed"
+                        >
+                            <ChevronUp className="h-4 w-4" />
+                        </button>
+
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    aria-label={`Trang ${i + 1}`}
+                                    aria-current={i === currentPage}
+                                    onClick={() => goToPage(i)}
+                                    className={cn(
+                                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors cursor-pointer",
+                                        i === currentPage
+                                            ? "bg-[#FF8FAB] text-white"
+                                            : "text-[#B9AEB2] hover:text-[#FF8FAB]",
+                                    )}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            aria-label="Trang sau"
+                            disabled={currentPage === totalPages - 1}
+                            onClick={() => goToPage(currentPage + 1)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#B9AEB2] transition-colors hover:text-[#FF8FAB] disabled:opacity-30 disabled:hover:text-[#B9AEB2] cursor-pointer disabled:cursor-not-allowed"
+                        >
+                            <ChevronDown className="h-4 w-4" />
+                        </button>
+                    </div>
+                )}
+
                 <RailButton label="Đăng xuất" onClick={() => void logout()}>
                     <Power className="h-[22px] w-[22px]" />
                 </RailButton>

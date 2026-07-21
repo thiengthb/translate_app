@@ -1,5 +1,3 @@
-import HeaderRight from "@/components/layout/HeaderRight";
-
 interface MainLayoutTopBarProps {
     pathName?: Record<string, string>;
     headerExtra?: React.ReactNode;
@@ -38,7 +36,6 @@ export function MainLayoutTopBar({
                 <div className="flex items-center min-w-0">{headerExtra}</div>
             )}
             <div className="flex-1" />
-            <HeaderRight />
         </header>
     );
 }
