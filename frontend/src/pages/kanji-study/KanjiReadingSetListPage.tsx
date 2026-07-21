@@ -22,7 +22,7 @@ export default function KanjiReadingSetListPage() {
   }, []);
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="pb-8">
         <div className="flex items-center gap-2 mb-1">
           <ScrollText className="text-rose-500" size={22} />

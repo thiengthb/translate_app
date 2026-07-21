@@ -308,7 +308,7 @@ export default function LibraryPage() {
   });
 
   return (
-    <MainLayout headerExtra={<LibraryKindTabs tab={tab} onChange={setTab} />}>
+    <MainLayout headerExtra={<LibraryKindTabs tab={tab} onChange={setTab} />} pageScroll>
       {tab === "template" ? (
         <TemplateLibrary mode="owned" />
       ) : (

@@ -225,6 +225,7 @@ export default function ImportDeckPage() {
       parentCrumb={{ href: "/library", title: "Library" }}
       breadcrumbIcon={<UploadCloud className="size-4" />}
       pageDescription="Import deck flashcards from CSV, TSV, TXT or Excel."
+      pageScroll
     >
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

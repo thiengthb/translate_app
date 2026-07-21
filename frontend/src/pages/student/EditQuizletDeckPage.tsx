@@ -380,7 +380,7 @@ export default function EditQuizletDeckPage() {
   /* ── Loading ── */
   if (loading) {
     return (
-      <MainLayout {...layoutProps}>
+      <MainLayout {...layoutProps} pageScroll>
         <div className="flex items-center justify-center h-64 gap-3">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Đang tải deck…</span>
@@ -390,7 +390,7 @@ export default function EditQuizletDeckPage() {
   }
 
   return (
-    <MainLayout {...layoutProps}>
+    <MainLayout {...layoutProps} pageScroll>
       <div className="w-full pb-6 space-y-4 pt-1">
 
         {/* ── Action bar (TOP) ── */}

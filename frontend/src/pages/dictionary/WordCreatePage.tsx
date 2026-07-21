@@ -154,7 +154,7 @@ export default function WordCreatePage() {
     };
 
     return (
-        <MainLayout pathName={{ "/words": "Từ vựng", "/words/create": "Tạo từ vựng" }}>
+        <MainLayout pathName={{ "/words": "Từ vựng", "/words/create": "Tạo từ vựng" }} pageScroll>
             <div className="w-full space-y-3 pb-8">
 
                 {/* ── Actions (top) ── */}

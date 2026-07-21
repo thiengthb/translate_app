@@ -64,7 +64,7 @@ export default function ClassroomListPage() {
   const pageItems  = activeList.slice(pageStart, pageStart + pageSize);
 
   return (
-    <MainLayout pathName={{ "/classrooms": "Groups" }}>
+    <MainLayout pathName={{ "/classrooms": "Groups" }} pageScroll>
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
 
         {/* ── Toolbar ── */}

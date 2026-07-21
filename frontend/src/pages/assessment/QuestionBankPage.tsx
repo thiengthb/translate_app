@@ -127,7 +127,7 @@ export default function QuestionBankPage() {
   const pageItems = questions.slice(pageStart, pageStart + pageSize);
 
   return (
-    <MainLayout pathName={{ "/questions": "Question Bank" }}>
+    <MainLayout pathName={{ "/questions": "Question Bank" }} pageScroll>
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 shrink-0">

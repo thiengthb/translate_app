@@ -62,9 +62,9 @@ export default function LandingPage() {
                     items). Styled to match the reference art: small uppercase
                     Quicksand, wide tracking, active item bold + darker. */}
                 <nav className="cherry-nav" aria-label="Điều hướng">
-                    <span className="cherry-nav-link is-active">Trang chủ</span>
+                    <Link to="/tra-cuu" className="cherry-nav-link">Tra cứu</Link>
                     <Link to="/showcase" className="cherry-nav-link">Giới thiệu</Link>
-                    <Link to="/" className="cherry-nav-link">Về chúng tôi</Link>
+                    <Link to="/portfolio" className="cherry-nav-link">Về chúng tôi</Link>
                 </nav>
 
                 {/* ── Decorative artwork (positions identical to the template) ── */}

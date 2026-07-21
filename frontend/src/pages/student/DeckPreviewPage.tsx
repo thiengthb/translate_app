@@ -172,6 +172,7 @@ export default function DeckPreviewPage() {
       parentCrumb={{ href: "/community", title: "Shared" }}
       ignorePaths={["deck", String(deckId)]}
       pathName={{ [`/deck/${deckId}/preview`]: deck?.title ?? "Preview" }}
+      pageScroll
     >
       <div className="w-full pb-16 space-y-6 pt-2">
 

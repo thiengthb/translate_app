@@ -228,7 +228,7 @@ export default function AnalyzePage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <MainLayout pathName={{ "/translator": "Dịch thuật" }}>
+    <MainLayout pathName={{ "/translator": "Dịch thuật" }} pageScroll>
       <div className="w-full flex flex-col gap-4">
         {/* Main translator */}
         <Card className="p-0 overflow-hidden gap-0">

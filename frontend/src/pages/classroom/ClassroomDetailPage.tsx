@@ -74,7 +74,7 @@ export default function ClassroomDetailPage() {
 
   if (loading || !classroom) {
     return (
-      <MainLayout pathName={{ "/classrooms": "Groups" }}>
+      <MainLayout pathName={{ "/classrooms": "Groups" }} pageScroll>
         <div className="flex items-center justify-center h-60">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
@@ -110,7 +110,7 @@ export default function ClassroomDetailPage() {
   };
 
   return (
-    <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }}>
+    <MainLayout pathName={{ "/classrooms": "Groups", [`/classrooms/${cid}`]: classroom.name }} pageScroll>
       <div className="space-y-5">
         <Tabs value={tab} onValueChange={setTab} className="space-y-5">
           {/* ── Tabs + contextual action, on one row near the breadcrumb ── */}

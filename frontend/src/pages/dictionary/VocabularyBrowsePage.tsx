@@ -79,7 +79,7 @@ export default function VocabularyBrowsePage() {
     const goKanji = (ch: string) => navigate(`/dictionary?q=${encodeURIComponent(ch)}&mode=kanji`);
 
     return (
-        <MainLayout pathName={{ "/vocabulary": "Từ vựng tổng hợp" }}>
+        <MainLayout pathName={{ "/vocabulary": "Từ vựng tổng hợp" }} pageScroll>
             <div className="w-full space-y-4">
 
                 {/* ── Hero ── */}

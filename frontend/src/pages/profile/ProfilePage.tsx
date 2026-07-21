@@ -17,7 +17,7 @@ export default function ProfilePage() {
     const reduce = usePrefersReducedMotion();
 
     return (
-        <MainLayout>
+        <MainLayout pageScroll>
             {/* Ambient pastel-pink field: soft blurred sakura blobs drift behind
                 the frosted cards, giving the flat white shell some depth. */}
             <div className="relative isolate w-full">

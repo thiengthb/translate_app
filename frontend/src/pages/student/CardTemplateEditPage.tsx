@@ -276,6 +276,7 @@ export default function CardTemplateEditPage() {
       parentCrumb={{ href: "/library?tab=template", title: "Mẫu thẻ" }}
       ignorePaths={["card-templates", String(templateId ?? "")]}
       pathName={{ [location.pathname]: isEdit ? "Sửa mẫu thẻ" : "Tạo mẫu thẻ" }}
+      pageScroll
     >
       {loading ? (
         <div className="flex flex-1 min-h-0 items-center justify-center">

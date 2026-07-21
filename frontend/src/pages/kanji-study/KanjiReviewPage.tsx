@@ -66,7 +66,7 @@ export default function KanjiReviewPage() {
   );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="max-w-3xl mx-auto w-full pb-8">
         <button
           onClick={() => navigate("/kanji-study")}

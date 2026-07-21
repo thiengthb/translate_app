@@ -78,6 +78,7 @@ export default function CardTemplatePreviewPage() {
       parentCrumb={{ href: "/library?tab=template", title: "Mẫu thẻ" }}
       ignorePaths={["card-templates", String(templateId ?? "")]}
       pathName={{ [`/card-templates/${templateId}/preview`]: tpl?.name || "Xem trước" }}
+      pageScroll
     >
       {loading ? (
         <div className="flex flex-1 min-h-0 items-center justify-center">

@@ -263,7 +263,7 @@ export default function KanjiDeckBrowsePage() {
         : 0;
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="pb-28">
         <button
           onClick={() => navigate("/kanji-study/decks")}

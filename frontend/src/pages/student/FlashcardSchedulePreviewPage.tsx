@@ -145,7 +145,7 @@ export default function FlashcardSchedulePreviewPage() {
 
   if (loading) {
     return (
-      <MainLayout pathName={pathName}>
+      <MainLayout pathName={pathName} pageScroll>
         <div className="flex h-60 items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
@@ -154,7 +154,7 @@ export default function FlashcardSchedulePreviewPage() {
   }
 
   return (
-    <MainLayout pathName={pathName}>
+    <MainLayout pathName={pathName} pageScroll>
       <div className="mx-auto w-full max-w-5xl space-y-5">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">

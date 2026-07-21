@@ -453,7 +453,7 @@ export default function KanjiWritingPage() {
 
   if (isLoading) {
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <p className="mx-auto max-w-2xl text-muted-foreground">Đang tải...</p>
       </KanjiLayout>
     );
@@ -463,7 +463,7 @@ export default function KanjiWritingPage() {
 
   if (phase === "setup") {
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <div className="mx-auto w-full max-w-2xl pb-10">
           <button
             onClick={() => navigate(`/kanji-study/deck/${deckId}`)}
@@ -567,7 +567,7 @@ export default function KanjiWritingPage() {
     const pct = rows.length ? Math.round((correctCount / rows.length) * 100) : 0;
 
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <div className="mx-auto w-full max-w-2xl pb-28">
           <div className="rounded-2xl border border-border bg-gradient-to-br from-rose-500 to-rose-600 p-6 text-center text-white">
             <p className="text-sm font-semibold text-white/80">Kết quả luyện viết</p>
@@ -636,7 +636,7 @@ export default function KanjiWritingPage() {
   const kunTokens = readingTokens(cur.kunyomi);
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="mx-auto w-full max-w-2xl pb-10">
         {/* top bar */}
         <div className="mb-1 flex items-center gap-3">

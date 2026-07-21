@@ -52,7 +52,7 @@ export default function WordDetailPage() {
     }, [navigate]);
 
     return (
-        <MainLayout>
+        <MainLayout pageScroll>
             <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
                 <Button asChild variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
                     <Link to="/dictionary"><ArrowLeft className="h-4 w-4" />Từ điển</Link>

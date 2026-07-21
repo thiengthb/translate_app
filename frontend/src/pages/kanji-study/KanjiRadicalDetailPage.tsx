@@ -56,7 +56,7 @@ export default function KanjiRadicalDetailPage() {
     );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="max-w-3xl mx-auto pb-10">
         <button
           onClick={() => navigate(-1)}

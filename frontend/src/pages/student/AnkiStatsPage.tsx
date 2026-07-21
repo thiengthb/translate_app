@@ -222,7 +222,7 @@ export default function AnkiStatsPage() {
   const isFsrs        = stats?.algorithmType === "FSRS";
 
   return (
-    <MainLayout pathName={{ "/stats": "Thống kê" }}>
+    <MainLayout pathName={{ "/stats": "Thống kê" }} pageScroll>
       {/* ── Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h1 className="text-xl font-bold tracking-tight">Thống kê</h1>

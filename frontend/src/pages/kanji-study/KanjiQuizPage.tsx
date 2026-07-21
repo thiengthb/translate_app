@@ -629,7 +629,7 @@ export default function KanjiQuizPage() {
 
   if (isLoading) {
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <p className="text-muted-foreground max-w-2xl mx-auto">Đang tải...</p>
       </KanjiLayout>
     );
@@ -637,7 +637,7 @@ export default function KanjiQuizPage() {
 
   if (phase === "setup" || phase === "preparing") {
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <div className="max-w-2xl mx-auto w-full pb-10">
           <button
             onClick={() => navigate(`/kanji-study/deck/${deckId}`)}
@@ -787,7 +787,7 @@ export default function KanjiQuizPage() {
         return n;
       });
     return (
-      <KanjiLayout>
+      <KanjiLayout pageScroll>
         <div className="max-w-2xl mx-auto w-full pb-28">
           <div className="rounded-2xl border border-border bg-gradient-to-br from-rose-500 to-rose-600 text-white p-6 text-center">
             <p className="text-sm font-semibold text-white/80">Kết quả</p>
@@ -974,7 +974,7 @@ export default function KanjiQuizPage() {
   const infoFallbackMeaning = isInfo && !showMeaningClue && !onKunLine && !showExtra && !!meaning;
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="max-w-2xl mx-auto w-full pb-10">
         {/* top bar */}
         <div className="flex items-center gap-3 mb-1">

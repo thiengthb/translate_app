@@ -34,6 +34,10 @@ const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Home
     ["/dashboard", "Tổng quan"],
 
+    // Guest lookup tools (no-login)
+    ["/tra-cuu", "Tra cứu"],
+    ["/portfolio", "Portfolio"],
+
     // Auth flows
     ["/login", "Đăng nhập"],
     ["/register", "Đăng ký"],

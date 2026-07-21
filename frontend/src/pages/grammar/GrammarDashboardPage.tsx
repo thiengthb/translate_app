@@ -200,7 +200,7 @@ export default function GrammarDashboardPage() {
   const totalAll = levels.reduce((a, l) => a + l.total, 0);
 
   return (
-    <MainLayout pathName={{ "/grammar": "Ngữ pháp" }}>
+    <MainLayout pathName={{ "/grammar": "Ngữ pháp" }} pageScroll>
       <div className="w-full max-w-6xl flex flex-col gap-5">
         <div className="flex items-center gap-3">
           <GraduationCap className="text-primary" />

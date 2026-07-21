@@ -205,7 +205,7 @@ export default function QuizCreateEditPage() {
 
   if (loading) {
     return (
-      <MainLayout pathName={{ "/quizzes": "Quizzes" }}>
+      <MainLayout pathName={{ "/quizzes": "Quizzes" }} pageScroll>
         <div className="flex items-center justify-center h-60"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
       </MainLayout>
     );
@@ -217,6 +217,7 @@ export default function QuizCreateEditPage() {
     <MainLayout
       pathName={{ "/quizzes": "Quizzes", [id ? `/quizzes/${id}/edit` : "/quizzes/create"]: id ? "Edit quiz" : "Create" }}
       headerExtra={headerExtra}
+      pageScroll
     >
       <div className={cn("w-full mx-auto space-y-6 transition-[max-width]", step === 1 ? "max-w-3xl" : "max-w-full")}>
         {/* ── Step 1 · Configuration ── */}

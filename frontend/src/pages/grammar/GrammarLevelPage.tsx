@@ -58,7 +58,7 @@ export default function GrammarLevelPage() {
   const go = (id: number) => navigate(`/grammar/detail/${id}`);
 
   return (
-    <MainLayout pathName={{ [`/grammar/levels/${level}`]: `Ngữ pháp ${level}` }}>
+    <MainLayout pathName={{ [`/grammar/levels/${level}`]: `Ngữ pháp ${level}` }} pageScroll>
       <div className="w-full max-w-2xl flex flex-col gap-5">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold">{level}</h1>

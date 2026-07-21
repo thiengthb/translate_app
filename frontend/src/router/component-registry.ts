@@ -1,6 +1,8 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
 import LandingPage from "@/pages/landing/LandingPage";
+import GuestToolsPage from "@/pages/guest/GuestToolsPage";
+import PortfolioLanding from "@/pages/portfolio/PortfolioLanding";
 import PortfolioAbout from "@/pages/portfolio/PortfolioAbout";
 import HanabunShowcase from "@/pages/showcase/HanabunShowcase";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
@@ -182,6 +184,13 @@ export const routes: RouteConfig[] = [
   { path: "/grammar/detail/:subUseId", component: GrammarDetailPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
+  // Guest lookup tools (Mazii-style): word/kanji search, sentence analysis,
+  // translate — usable WITHOUT login. Also rendered for guests at "/" (see
+  // App.tsx rootElement); this is the shareable/bookmarkable alias.
+  { path: "/tra-cuu", component: GuestToolsPage, isPublic: true },
+  // Marketing / portfolio landing (Rin Aizawa). No longer the guest "/"
+  // home (that's now the lookup tools) — kept public at its own path.
+  { path: "/portfolio", component: PortfolioLanding, isPublic: true },
   // Marketing / portfolio about page — the landing nav's "About" links here.
   { path: "/about", component: PortfolioAbout, isPublic: true },
   // Standalone Awwwards-style Sakura showcase landing for the Hanabun

@@ -98,7 +98,7 @@ export default function KanjiDetailPage() {
     );
 
   return (
-    <KanjiLayout hideNav={focus}>
+    <KanjiLayout hideNav={focus} pageScroll>
       <div className="max-w-3xl mx-auto pb-10">
         {focus ? (
           /* In-exercise: the only way out is back to the question. */

@@ -73,7 +73,7 @@ export default function QuizDetailPage() {
 
   if (loading) {
     return (
-      <MainLayout pathName={{ "/quizzes": "Quizzes" }}>
+      <MainLayout pathName={{ "/quizzes": "Quizzes" }} pageScroll>
         <div className="flex items-center justify-center h-60"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
       </MainLayout>
     );
@@ -87,7 +87,7 @@ export default function QuizDetailPage() {
   const noAttemptsLeft = attemptsLeft === 0;
 
   return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz.title }}>
+    <MainLayout pathName={{ "/quizzes": "Quizzes", [`/quizzes/${id}`]: quiz.title }} pageScroll>
       <div className="space-y-5 max-w-5xl">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">

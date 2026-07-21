@@ -52,7 +52,7 @@ export default function LeaderboardPage() {
     };
 
     return (
-        <MainLayout>
+        <MainLayout pageScroll>
             <div className="w-full space-y-5">
                 {/* ─── Hero ────────────────────────────────────────────────── */}
                 <div

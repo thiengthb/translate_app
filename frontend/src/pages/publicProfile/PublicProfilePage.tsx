@@ -27,7 +27,7 @@ export default function PublicProfilePage() {
 
     if (isLoading) {
         return (
-            <MainLayout>
+            <MainLayout pageScroll>
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
@@ -37,7 +37,7 @@ export default function PublicProfilePage() {
 
     if (isError || !profile) {
         return (
-            <MainLayout>
+            <MainLayout pageScroll>
                 <div className="max-w-md mx-auto pt-16 text-center">
                     <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
                         <ShieldOff size={28} />
@@ -58,7 +58,7 @@ export default function PublicProfilePage() {
     }
 
     return (
-        <MainLayout>
+        <MainLayout pageScroll>
             <div className="w-full space-y-6">
                 <Button
                     variant="ghost"

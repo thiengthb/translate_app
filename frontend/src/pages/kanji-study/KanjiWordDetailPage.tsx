@@ -61,7 +61,7 @@ export default function KanjiWordDetailPage() {
   }, [id]);
 
   return (
-    <KanjiLayout hideNav={focus}>
+    <KanjiLayout hideNav={focus} pageScroll>
       <div className="max-w-3xl mx-auto pb-10">
         <button
           onClick={() => (focus && returnUrl ? navigate(returnUrl) : navigate(-1))}

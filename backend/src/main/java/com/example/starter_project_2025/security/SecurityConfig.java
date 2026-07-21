@@ -19,6 +19,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -85,6 +86,23 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
+                        // ── Guest tools (/tra-cuu) — chỉ mở đúng các endpoint ĐỌC.
+                        // KHÔNG mở cả /api/dictionary/** vì controller đó còn có
+                        // POST /words (tạo từ) + import/export. Ghi vào từ vựng/sổ tay
+                        // vẫn yêu cầu đăng nhập. Chống lạm dụng DeepL đã có RateLimitFilter
+                        // (120 req/phút/IP) + giới hạn độ dài input ở frontend.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/dictionary/search",
+                                "/api/dictionary/suggest",
+                                "/api/dictionary/kanji-search",
+                                "/api/dictionary/examples",
+                                "/api/dictionary/audio",
+                                "/api/dictionary/featured",
+                                "/api/translate/languages").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/analyze",
+                                "/api/translate",
+                                "/api/translate/analyze/grammar").permitAll()
                         .requestMatchers(
                                 "/",
                                 "/index.html",

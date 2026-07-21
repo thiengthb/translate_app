@@ -94,7 +94,7 @@ export default function AssignmentStatsPage() {
 
   if (loading) {
     return (
-      <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />}>
+      <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />} pageScroll>
         <div className="flex items-center justify-center h-60">
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
@@ -103,7 +103,7 @@ export default function AssignmentStatsPage() {
   }
 
   return (
-    <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />}>
+    <MainLayout pathName={pathName} ignorePaths={ignorePaths} breadcrumbIcon={<BarChart3 className="size-[18px] text-primary" />} pageScroll>
       <div className="space-y-5">
         {/* ── Assignment header ── */}
         <div className="rounded-xl border border-border bg-card p-5">

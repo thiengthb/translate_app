@@ -151,7 +151,7 @@ export default function GrammarDetailPage() {
   ]);
 
   return (
-    <MainLayout pathName={{ [`/grammar/detail/${subUseId}`]: "Chi tiết ngữ pháp" }}>
+    <MainLayout pathName={{ [`/grammar/detail/${subUseId}`]: "Chi tiết ngữ pháp" }} pageScroll>
       <div ref={topRef} className="w-full max-w-6xl mx-auto flex flex-col gap-5">
         {loading ? (
           <div className="flex justify-center h-40 items-center">

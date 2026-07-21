@@ -114,7 +114,7 @@ export default function KanjiDeckListPage() {
   );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="pb-8">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="text-rose-500" size={22} />

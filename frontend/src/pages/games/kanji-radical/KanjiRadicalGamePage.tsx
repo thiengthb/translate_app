@@ -9,7 +9,7 @@ const PATH_NAME = { "/kanji-radical": "Bộ Thủ Karuta" };
  */
 export default function KanjiRadicalGamePage() {
     return (
-        <MainLayout pathName={PATH_NAME}>
+        <MainLayout pathName={PATH_NAME} pageScroll>
             {/* Full-bleed: fill the whole width + height <main> gives us (no
                 max-width cap), so the karuta table matches the kanji-study
                 pages instead of sitting boxed in the middle. */}

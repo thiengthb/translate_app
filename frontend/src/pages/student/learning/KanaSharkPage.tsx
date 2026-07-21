@@ -126,6 +126,7 @@ export default function KanaSharkPage() {
       ignorePaths={["student", "learning"]}
       pageDescription="Typing Shark bằng PixiJS, lấy item từ deck/SRS thật và ghi kết quả về review log."
       breadcrumbIcon={<Keyboard className="size-[18px] text-primary" />}
+      pageScroll
     >
       <motion.div
         initial={{ opacity: 0, y: 8 }}

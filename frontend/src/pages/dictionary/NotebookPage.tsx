@@ -166,7 +166,7 @@ export default function NotebookPage() {
     const totalAll = notebooks.reduce((s, n) => s + n.wordCount + n.kanjiCount, 0);
 
     return (
-        <MainLayout pathName={{ "/notebook": "Sổ tay" }}>
+        <MainLayout pathName={{ "/notebook": "Sổ tay" }} pageScroll>
             <div className="w-full space-y-4">
 
                 {/* ── Hero ── */}

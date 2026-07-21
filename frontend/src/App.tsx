@@ -13,7 +13,7 @@ import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
 import { usePublicModules } from "./hooks/usePublicModules";
 import { NotFoundRedirect } from "./pages/error/NotFoundRedirect";
-import PortfolioLanding from "./pages/portfolio/PortfolioLanding";
+import GuestToolsPage from "./pages/guest/GuestToolsPage";
 import { MetadataDrivenCrudPage } from "./pages/management/MetadataDrivenCrudPage";
 import { routes, type RouteComponent } from "./router/component-registry";
 import type { RootState } from "./store/store";
@@ -59,12 +59,14 @@ function AppRoutes() {
     // titles from the BE feed the title resolver directly.
     useAppMeta();
 
-    // Authenticated users go to role home; guests get the portfolio landing.
-    // (The cherry auth screen now lives at /login + /register.)
+    // Authenticated users go to role home; guests land on the no-login
+    // lookup tools (/tra-cuu content) as the first pre-login page. From there
+    // the header "Đăng nhập" button routes to the cherry auth screen (/login).
+    // The marketing portfolio landing stays reachable at /portfolio.
     const rootElement = isAuthenticated ? (
         <Navigate to={getHomePathByRole(activeRole)} replace />
     ) : (
-        <PortfolioLanding />
+        <GuestToolsPage />
     );
 
     // Public module URLs — skipped from protected routes

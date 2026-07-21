@@ -237,6 +237,7 @@ export default function AnkiCardEditPage() {
         [`/deck/${deckId}`]: deckTitle || "Bộ thẻ",
         [`/deck/${deckId}/card/${flashcardId}/edit`]: "Sửa thẻ",
       }}
+      pageScroll
     >
       <div className="flex h-full min-h-0 w-full flex-col gap-4 py-2">
         {/* Actions — top right. Save stays disabled until something changes. */}

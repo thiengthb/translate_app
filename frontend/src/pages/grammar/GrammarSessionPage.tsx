@@ -441,7 +441,7 @@ export default function GrammarSessionPage() {
   // ── Render ──
   if (phase === "loading") {
     return (
-      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit}>
+      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit} pageScroll>
         <div className="flex justify-center h-60 items-center">
           <Loader2 className="animate-spin text-primary" size={32} />
         </div>
@@ -453,7 +453,7 @@ export default function GrammarSessionPage() {
   // practicing immediately (see fetchSession).
   if (phase === "intro" && session) {
     return (
-      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit}>
+      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit} pageScroll>
         <div ref={introRef} className="w-full max-w-xl flex flex-col gap-5">
           <h1 className="text-xl font-bold">
             {challenge ? "Thử thách" : "Phiên học hôm nay"}
@@ -513,7 +513,7 @@ export default function GrammarSessionPage() {
 
   if (phase === "result" && session) {
     return (
-      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit}>
+      <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit} pageScroll>
         <div ref={resultRef} className="w-full max-w-xl flex flex-col gap-5">
           <Card data-anim="card" className="p-8 gap-4 items-center text-center">
             <span data-fx="trophy" className="inline-flex">
@@ -552,7 +552,7 @@ export default function GrammarSessionPage() {
   const isLast = index + 1 >= (session?.items.length ?? 0);
 
   return (
-    <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit}>
+    <MainLayout pathName={{ "/grammar/learn": "Phiên học" }} focus onBack={handleExit} pageScroll>
       <StreakBurst trigger={streak} />
       <div ref={practiceRef} className="w-full max-w-xl flex flex-col gap-4">
         <div className="flex items-center justify-between text-sm text-muted-foreground">

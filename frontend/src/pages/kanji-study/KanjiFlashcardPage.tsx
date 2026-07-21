@@ -92,7 +92,7 @@ export default function KanjiFlashcardPage() {
   const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0;
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="max-w-2xl mx-auto w-full pb-10">
         <button
           onClick={() => navigate(`/kanji-study/deck/${deckId}`)}

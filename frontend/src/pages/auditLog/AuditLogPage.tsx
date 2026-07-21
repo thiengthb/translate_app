@@ -92,7 +92,7 @@ export default function AuditLogPage() {
     }, [items, query]);
 
     return (
-        <MainLayout pathName={{ "/audit-logs": "Nhật ký hoạt động" }}>
+        <MainLayout pathName={{ "/audit-logs": "Nhật ký hoạt động" }} pageScroll>
             <div className="w-full space-y-4">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <header className="flex items-center gap-3">
