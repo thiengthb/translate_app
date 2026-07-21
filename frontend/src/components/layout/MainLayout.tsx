@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
+import { Outlet } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,13 @@ import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
 import { WritingQuoteHeader } from "@/components/layout/WritingQuoteHeader";
 
+import {
+    useLayoutHosts,
+    useLayoutStructural,
+    useOnBackRefValue,
+    useRegisterOnBack,
+    useRegisterStructuralConfig,
+} from "@/contexts/LayoutConfigContext";
 import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
 import { useAutoCheckIn } from "@/hooks/useStreak";
@@ -49,67 +58,73 @@ interface MainLayoutProps {
 }
 
 /**
- * App-wide layout shell.
+ * Per-page layout shim.
  *
- * Renders one of two trees depending on the viewer:
+ * The actual sidebar/header shell is `PersistentAppShell` below, mounted
+ * ONCE via a layout `<Route>` in App.tsx (outside every page's `<Outlet/>`
+ * subtree) — so it survives navigation instead of being torn down and
+ * rebuilt on every route change (which used to reset `WritingQuoteHeader`'s
+ * rotating-quote timer on every nav, since each page previously instantiated
+ * its own `<MainLayout>`, and `<Routes>` unmounts a route's whole subtree on
+ * navigation).
  *
- *   AUTHENTICATED (any role) → <AppShell />     sidebar + top bar + scrollable main
- *   guest visitor             → <GuestLayout /> horizontal landing-style navbar
- *
- * Every authenticated user — admin, student, teacher — gets the same
- * sidebar shell. The sidebar's content is permission-aware (each module
- * carries a `requiredPermission` checked by `useActiveModuleGroups`),
- * so a student naturally sees fewer entries than an admin without
- * needing a separate layout.
+ * Every page still calls `<MainLayout {...options}>{children}</MainLayout>`
+ * exactly as before — this component forwards `options` into
+ * `LayoutConfigContext` (see that file for why structural flags and content
+ * slots are synced differently) and renders `children` directly.
+ */
+export function MainLayout({
+    children,
+    pathName,
+    headerExtra,
+    focus,
+    onBack,
+    pageScroll,
+    sidePanel,
+}: MainLayoutProps) {
+    const focusTitle = pathName ? Object.values(pathName).at(-1) : undefined;
+    useRegisterStructuralConfig({ focus, focusTitle, pageScroll, hasSidePanel: !!sidePanel });
+    useRegisterOnBack(onBack);
+    const { headerExtraHost, sidePanelHost } = useLayoutHosts();
+
+    return (
+        <>
+            {headerExtra && headerExtraHost && createPortal(headerExtra, headerExtraHost)}
+            {pageScroll && sidePanel && sidePanelHost && createPortal(sidePanel, sidePanelHost)}
+            {children}
+        </>
+    );
+}
+
+/**
+ * The persistent app shell — sidebar + top header + scroll container, or
+ * FocusShell / GuestLayout. Mounted once by a layout `<Route>` (see
+ * App.tsx); `<Outlet/>` renders whichever page matched the URL.
  *
  * Concerns kept at this level (and only this level):
  *   - Auth gate (which shell to render)
- *   - Side-effects that run on every authenticated page mount
- *     (`useAutoCheckIn` — once-per-day streak ping)
- *   - Global keyboard-shortcut dialog state, mounted ONCE here so the
- *     dialog (and the `?` global listener inside the hook) is available
- *     regardless of which shell is active.
- *
- * Layout markup lives in the dedicated sub-components — keep this file
- * easy to skim.
+ *   - Side-effects that used to (incorrectly) re-run on every navigation
+ *     because each page re-instantiated `<MainLayout>`: `useAutoCheckIn`
+ *     (once-per-day streak ping), the keyboard-shortcuts dialog, and
+ *     `WritingQuoteHeader`'s rotation timer — all now genuinely mount once.
  */
-export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignorePaths, pageDescription, breadcrumbIcon, focus, onBack, pageScroll, sidePanel }: MainLayoutProps) {
-    const { isAuthenticated } = useSelector(
-        (state: RootState) => state.auth,
-    );
+export function PersistentAppShell() {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-    // Side-effect: once-per-day streak check-in. Fire-and-forget; component
-    // doesn't read the result. Placed here because the layout wraps every
-    // authenticated page.
     useAutoCheckIn();
-
-    // Global keyboard shortcuts mounted at the root so they work
-    // regardless of which shell is active.
-    //   - `?`       → open shortcuts dialog
-    //   - ⌘/Ctrl+⇧+L → log out (no-op for guests)
     const shortcuts = useKeyboardShortcutsDialog();
     useLogoutShortcut();
+
+    const { focus, focusTitle, pageScroll, hasSidePanel } = useLayoutStructural();
+    const onBackRef = useOnBackRefValue();
 
     return (
         <>
             {isAuthenticated ? (
                 focus ? (
-                    <FocusShell title={pathName ? Object.values(pathName).at(-1) : undefined} onBack={onBack}>
-                        {children}
-                    </FocusShell>
+                    <FocusShell title={focusTitle} onBackRef={onBackRef} />
                 ) : (
-                    <AppShell
-                        pathName={pathName}
-                        headerExtra={headerExtra}
-                        parentCrumb={parentCrumb}
-                        ignorePaths={ignorePaths}
-                        pageDescription={pageDescription}
-                        breadcrumbIcon={breadcrumbIcon}
-                        pageScroll={pageScroll}
-                        sidePanel={sidePanel}
-                    >
-                        {children}
-                    </AppShell>
+                    <AppShell pageScroll={pageScroll} hasSidePanel={hasSidePanel} />
                 )
             ) : (
                 <GuestLayout>
@@ -117,7 +132,7 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
                         navbar + content stay close to the edges where the
                         thumb naturally lands. */}
                     <div className="flex-1 px-4 sm:px-6 py-4 sm:py-6">
-                        {children}
+                        <Outlet />
                     </div>
                 </GuestLayout>
             )}
@@ -132,13 +147,11 @@ export function MainLayout({ children, pathName, headerExtra, parentCrumb, ignor
 
 // ─── Focus shell (distraction-free: back button + centered content) ──────────
 function FocusShell({
-    children,
     title,
-    onBack,
+    onBackRef,
 }: {
-    children: ReactNode;
     title?: string;
-    onBack?: () => void;
+    onBackRef: ReturnType<typeof useOnBackRefValue>;
 }) {
     return (
         <div className="flex h-svh max-h-[calc(100svh-16px)] flex-col overflow-hidden min-w-0 max-w-full">
@@ -147,7 +160,7 @@ function FocusShell({
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
-                    onClick={onBack ?? (() => window.history.back())}
+                    onClick={() => (onBackRef.current ?? (() => window.history.back()))()}
                     aria-label="Quay về"
                 >
                     <ArrowLeft size={18} />
@@ -162,7 +175,7 @@ function FocusShell({
                 without clipping the top when it doesn't. */}
             <div className="flex-1 min-h-0 overflow-y-auto">
                 <div className="min-h-full flex flex-col items-center justify-center px-4 py-6">
-                    {children}
+                    <Outlet />
                 </div>
             </div>
         </div>
@@ -171,15 +184,8 @@ function FocusShell({
 
 // ─── App shell (sidebar + main, one unified shell) ──────────────────────────
 interface AppShellProps {
-    children: ReactNode;
-    pathName?: MainLayoutProps["pathName"];
-    headerExtra?: MainLayoutProps["headerExtra"];
-    parentCrumb?: MainLayoutProps["parentCrumb"];
-    ignorePaths?: MainLayoutProps["ignorePaths"];
-    pageDescription?: MainLayoutProps["pageDescription"];
-    breadcrumbIcon?: MainLayoutProps["breadcrumbIcon"];
-    pageScroll?: MainLayoutProps["pageScroll"];
-    sidePanel?: MainLayoutProps["sidePanel"];
+    pageScroll?: boolean;
+    hasSidePanel?: boolean;
 }
 
 /**
@@ -207,12 +213,9 @@ interface AppShellProps {
  *     stays outside that internal scroll region so notifications/avatar
  *     remain reachable while a long list scrolls.
  */
-function AppShell({
-    children,
-    headerExtra,
-    pageScroll,
-    sidePanel,
-}: AppShellProps) {
+function AppShell({ pageScroll, hasSidePanel }: AppShellProps) {
+    const { setHeaderExtraHost, setSidePanelHost } = useLayoutHosts();
+
     // Shared page frame (padding, max-width, centering) — kept IDENTICAL
     // across both scroll models so the sidebar sits at the same position/size
     // on every page. Only the scroll model and sidePanel differ per page:
@@ -246,7 +249,7 @@ function AppShell({
 
                 <div
                     className={cn(
-                        "flex w-full gap-7",
+                        "flex w-full gap-7 mt-[15px]",
                         pageScroll
                             ? "flex-col items-start xl:flex-row"
                             : "min-h-0 flex-1",
@@ -261,25 +264,28 @@ function AppShell({
                         <SidebarMenu sticky={pageScroll} />
                         {pageScroll ? (
                             <main className="min-w-0 flex-1 px-6 pb-10 pt-7 sm:px-9 lg:px-10 lg:pt-[34px]">
-                                {children}
+                                <Outlet />
                             </main>
                         ) : (
                             <div className="bg-background relative flex h-full flex-1 flex-col overflow-hidden min-w-0 max-w-full">
-                                <MainLayoutTopBar headerExtra={headerExtra} />
+                                <MainLayoutTopBar setHeaderExtraHost={setHeaderExtraHost} />
                                 <ScrollHintContainer
                                     axis="vertical"
                                     className="flex-1 min-h-0 min-w-0 max-w-full"
                                     viewportClassName="flex flex-col px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
                                 >
                                     <main className="flex-1 min-h-0 flex flex-col min-w-0 max-w-full">
-                                        {children}
+                                        <Outlet />
                                     </main>
                                 </ScrollHintContainer>
                             </div>
                         )}
                     </div>
-                    {pageScroll && sidePanel && (
-                        <div className="w-full flex-none xl:w-[420px]">{sidePanel}</div>
+                    {pageScroll && hasSidePanel && (
+                        <div
+                            ref={setSidePanelHost}
+                            className="w-full flex-none xl:w-[420px]"
+                        />
                     )}
                 </div>
             </div>

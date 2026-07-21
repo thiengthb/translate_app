@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(layout): update MainLayout header height for improved layout consistency">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -298,14 +303,6 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-    </task>
-    <task id="LOCAL-00008" summary="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji">
-      <option name="closed" value="true" />
-      <created>1780036654773</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1780036654773</updated>
     </task>
     <task id="LOCAL-00009" summary="feat(dictionary): chinh them phan vi du tu vung">
       <option name="closed" value="true" />
@@ -691,7 +688,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784614865098</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="feat(layout): update MainLayout header height for improved layout consistency">
+      <option name="closed" value="true" />
+      <created>1784616632227</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1784616632228</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -742,7 +747,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage" />
     <MESSAGE value="feat(toaster): implement custom AppToaster component with theme support" />
@@ -767,7 +771,8 @@
     <MESSAGE value="feat(portfolio): add Hanabun project to portfolio and update project count" />
     <MESSAGE value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
     <MESSAGE value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
+    <MESSAGE value="feat(layout): update MainLayout header height for improved layout consistency" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(layout): update MainLayout header height for improved layout consistency" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

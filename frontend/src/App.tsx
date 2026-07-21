@@ -4,8 +4,10 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PersistentAppShell } from "./components/layout/MainLayout";
 import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
+import { LayoutConfigProvider } from "./contexts/LayoutConfigContext";
 import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
@@ -89,73 +91,92 @@ function AppRoutes() {
                     );
                 })}
 
-            {/* Authenticated module routes from backend Module table */}
-            {/* Dynamic routes from backend Module table.
-                Resolution order for each module URL:
-                  1. File-based entityConfig in src/pages/management/.../<entity>/index.tsx
-                  2. Fallback: MetadataDrivenCrudPage that pulls schema from
-                     /api/meta/entities at runtime — lets a BE-only entity
-                     (Entity + DTO is enough) appear with full CRUD UI. */}
-            {moduleGroups.flatMap((group) =>
-                group.modules.map((m) => {
-                    if (!m.url) return null;
-                    if (publicModuleUrls.has(m.url)) return null; // already registered above
+            {/* Public static routes (login, register, about, ...) — no auth,
+                no persistent shell; each renders its own complete layout. */}
+            {staticRoutes
+                .filter((route) => route.isPublic)
+                .map((route, index) => (
+                    <Route
+                        key={`static-public-${index}`}
+                        path={route.path}
+                        element={<RouteContent Component={route.component} />}
+                    />
+                ))}
 
-                    // A static route owns this path — DON'T register a
-                    // module-driven Route for it, the static block
-                    // below will handle it (otherwise a route with
-                    // identical path would shadow ours with a 404
-                    // redirect for non-AutoCrud pages like /streak,
-                    // /notifications, /audit-logs).
-                    if (staticRoutePaths.has(m.url)) return null;
+            {/* Everything below requires auth and shares ONE persistent shell
+                instance (top brand header incl. WritingQuoteHeader + sidebar)
+                via <Outlet/>, mounted once by this layout Route instead of
+                per-page — navigating between these routes no longer
+                unmounts/remounts the shell (which used to reset
+                WritingQuoteHeader's rotating-quote timer on every nav). */}
+            <Route
+                element={
+                    <LayoutConfigProvider>
+                        <PersistentAppShell />
+                    </LayoutConfigProvider>
+                }
+            >
+                {/* Dynamic routes from backend Module table.
+                    Resolution order for each module URL:
+                      1. File-based entityConfig in src/pages/management/.../<entity>/index.tsx
+                      2. Fallback: MetadataDrivenCrudPage that pulls schema from
+                         /api/meta/entities at runtime — lets a BE-only entity
+                         (Entity + DTO is enough) appear with full CRUD UI. */}
+                {moduleGroups.flatMap((group) =>
+                    group.modules.map((m) => {
+                        if (!m.url) return null;
+                        if (publicModuleUrls.has(m.url)) return null; // already registered above
 
-                    const Component = componentRegistry[m.url];
+                        // A static route owns this path — DON'T register a
+                        // module-driven Route for it, the static block
+                        // below will handle it (otherwise a route with
+                        // identical path would shadow ours with a 404
+                        // redirect for non-AutoCrud pages like /streak,
+                        // /notifications, /audit-logs).
+                        if (staticRoutePaths.has(m.url)) return null;
 
-                    // No Component → fall back to metadata-driven CRUD
-                    // UI. The BE side ships @AutoCrud + @ResourceMenu
-                    // without a matching FE entityConfig (e.g. Tag,
-                    // Translation); MetadataDrivenCrudPage builds the
-                    // table at runtime from `/api/meta/entities/<Name>`.
-                    const element = Component ? (
-                        <RouteContent Component={Component} />
-                    ) : (
-                        <MetadataDrivenCrudPage url={m.url} />
-                    );
+                        const Component = componentRegistry[m.url];
 
-                    return (
+                        // No Component → fall back to metadata-driven CRUD
+                        // UI. The BE side ships @AutoCrud + @ResourceMenu
+                        // without a matching FE entityConfig (e.g. Tag,
+                        // Translation); MetadataDrivenCrudPage builds the
+                        // table at runtime from `/api/meta/entities/<Name>`.
+                        const element = Component ? (
+                            <RouteContent Component={Component} />
+                        ) : (
+                            <MetadataDrivenCrudPage url={m.url} />
+                        );
+
+                        return (
+                            <Route
+                                key={m.id}
+                                path={m.url}
+                                element={
+                                    <ProtectedRoute requiredPermission={m.requiredPermission}>
+                                        {element}
+                                    </ProtectedRoute>
+                                }
+                            />
+                        );
+                    }),
+                )}
+
+                {/* Protected static routes from componentRegistry */}
+                {staticRoutes
+                    .filter((route) => !route.isPublic)
+                    .map((route, index) => (
                         <Route
-                            key={m.id}
-                            path={m.url}
+                            key={`static-protected-${index}`}
+                            path={route.path}
                             element={
-                                <ProtectedRoute requiredPermission={m.requiredPermission}>
-                                    {element}
+                                <ProtectedRoute requiredPermission={route.requiredPermission}>
+                                    <RouteContent Component={route.component} />
                                 </ProtectedRoute>
                             }
                         />
-                    );
-                }),
-            )}
-
-            {/* Static routes from componentRegistry */}
-            {staticRoutes.map((route, index) => {
-                const Component = route.component;
-
-                if (route.isPublic) {
-                    return <Route key={index} path={route.path} element={<RouteContent Component={Component} />} />;
-                }
-
-                return (
-                    <Route
-                        key={index}
-                        path={route.path}
-                        element={
-                            <ProtectedRoute requiredPermission={route.requiredPermission}>
-                                <RouteContent Component={Component} />
-                            </ProtectedRoute>
-                        }
-                    />
-                );
-            })}
+                    ))}
+            </Route>
 
             <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
