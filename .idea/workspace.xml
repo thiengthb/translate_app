@@ -6,9 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(layout): update MainLayout header height for improved layout consistency">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayoutTopBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

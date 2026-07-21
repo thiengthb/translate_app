@@ -2,6 +2,7 @@ import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
 import LandingPage from "@/pages/landing/LandingPage";
 import PortfolioAbout from "@/pages/portfolio/PortfolioAbout";
+import HanabunShowcase from "@/pages/showcase/HanabunShowcase";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
@@ -168,6 +169,10 @@ export const routes: RouteConfig[] = [
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
   // Marketing / portfolio about page — the landing nav's "About" links here.
   { path: "/about", component: PortfolioAbout, isPublic: true },
+  // Standalone Awwwards-style Sakura showcase landing for the Hanabun
+  // platform — fully self-contained (own scoped CSS + Three.js petals),
+  // public so it works without auth. Additive: touches no existing page.
+  { path: "/showcase", component: HanabunShowcase, isPublic: true },
   // The cherry auth screen (login/register tabs). It reads the pathname
   // (/register → register tab) and any ?error from the OAuth callback.
   { path: "/login", component: LandingPage, isPublic: true },

@@ -18,7 +18,7 @@ export default function KanjiHomePage() {
   const d = useKanjiDashboard();
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="space-y-6">
         {d.isLoading ? (
           <DashboardSkeleton />

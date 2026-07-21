@@ -15,11 +15,21 @@ import { KanjiContentNav } from "./KanjiStudyHeader";
  * Content stays centered at `max-w-6xl` to preserve the Kanji area's reading
  * width inside the wider shell.
  */
-export function KanjiLayout({ children }: { children: ReactNode }) {
+export function KanjiLayout({
+  children,
+  pageScroll,
+}: {
+  children: ReactNode;
+  /** Let the whole document scroll (like Dashboard) instead of the default
+   *  fixed-viewport frame with internal scroll. Only the Kanji home page
+   *  (dashboard-style cards, no ProTable) uses this. */
+  pageScroll?: boolean;
+}) {
   return (
     <MainLayout
       pathName={{ "/kanji-study": "Học Kanji" }}
       headerExtra={<KanjiContentNav />}
+      pageScroll={pageScroll}
     >
       <div className="mx-auto w-full max-w-6xl">{children}</div>
     </MainLayout>

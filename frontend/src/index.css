@@ -3,6 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Reserve the vertical scrollbar's width at all times. Some pages let the
+   whole document scroll (pageScroll shell, e.g. Dashboard) while others
+   keep the document height fixed to the viewport (e.g. Library) — without
+   this, the browser's native scrollbar appears/disappears when navigating
+   between the two, shifting the entire app shell (sidebar + navbar)
+   sideways by its width. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Hide the scrollbar visually while keeping scroll behaviour intact. */
 @utility scrollbar-hidden {
   scrollbar-width: none; /* Firefox */
