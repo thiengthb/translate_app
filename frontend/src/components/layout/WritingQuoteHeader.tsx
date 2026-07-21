@@ -16,8 +16,9 @@ import { usePrefersReducedMotion } from "@/pages/portfolio/usePrefersReducedMoti
  *     registered as `font-hand-jp` / `font-hand-vi` theme utilities in
  *     index.css, loaded via the Google Fonts link in index.html.
  *   - Mood: quiet and elegant, not flashy — slow blur/fade/rise transitions
- *     and a barely-there ambient glow, rotating every 5s. Pauses on hover so
- *     a mid-read visitor isn't interrupted.
+ *     and a barely-there ambient glow, rotating every 10s (long enough to
+ *     read both lines). Pauses on hover so a mid-read visitor isn't
+ *     interrupted.
  *
  * Not a Next.js project (Vite + react-router), so no 'use client' directive.
  */
@@ -42,7 +43,7 @@ const QUOTES: Quote[] = [
     },
 ];
 
-const ROTATE_MS = 5000;
+const ROTATE_MS = 10000;
 
 const lineTransition = { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const };
 
@@ -67,7 +68,7 @@ export function WritingQuoteHeader() {
         <div
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            className="relative hidden min-w-0 max-w-4xl flex-1 select-none flex-col justify-center overflow-hidden pl-6 lg:pl-10 md:flex"
+            className="relative hidden min-w-0 max-w-4xl flex-1 select-none flex-col items-start justify-center overflow-hidden ml-8 pl-2 sm:ml-10 lg:ml-16 lg:pl-2 md:flex"
         >
             {/* Ambient glow — a soft pink wash breathing behind the ink,
                 independent of the quote rotation. Purely decorative. */}

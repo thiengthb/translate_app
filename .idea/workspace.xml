@@ -4,21 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(portfolio): add Hanabun project to portfolio and update project count">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/AccountInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/AccountInfoCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/IdentityCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/IdentityCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/LanguageCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/LanguageCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/PasswordField.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/PersonalInfoCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/PersonalInfoCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/SecurityCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/SecurityCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" afterDir="false" />
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics">
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/WritingQuoteHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/WritingQuoteHeader.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -313,14 +300,6 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-    </task>
-    <task id="LOCAL-00007" summary="feat(dictionary): chinh sua UI va them de xuat tu vung">
-      <option name="closed" value="true" />
-      <created>1779969982686</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1779969982686</updated>
     </task>
     <task id="LOCAL-00008" summary="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji">
       <option name="closed" value="true" />
@@ -706,7 +685,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784609355903</updated>
     </task>
-    <option name="localTasksCounter" value="56" />
+    <task id="LOCAL-00056" summary="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics">
+      <option name="closed" value="true" />
+      <created>1784614865098</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1784614865098</updated>
+    </task>
+    <option name="localTasksCounter" value="57" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -757,7 +744,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
     <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage" />
@@ -782,7 +768,8 @@
     <MESSAGE value="feat(localization): update labels and messages to Vietnamese for improved accessibility" />
     <MESSAGE value="feat(portfolio): add Hanabun project to portfolio and update project count" />
     <MESSAGE value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
+    <MESSAGE value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
