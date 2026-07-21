@@ -22,12 +22,12 @@ export function CardSelectAllBar({
       <Checkbox
         checked={allSelected ? true : someSelected ? "indeterminate" : false}
         onCheckedChange={onToggleSelectAll}
-        aria-label="Select all cards"
+        aria-label="Chọn tất cả thẻ"
       />
       <span className="text-xs text-muted-foreground">
         {selectedCount > 0
-          ? `${selectedCount} of ${totalCount} selected`
-          : `Select all ${totalCount} items`}
+          ? `Đã chọn ${selectedCount}/${totalCount}`
+          : `Chọn tất cả ${totalCount} mục`}
       </span>
     </div>
   );

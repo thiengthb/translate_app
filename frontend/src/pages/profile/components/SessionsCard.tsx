@@ -23,7 +23,7 @@ function shortUserAgent(ua?: string): string | null {
         ua.match(/Safari\/([\d.]+)/);
     const browser = browserMatch
         ? browserMatch[0].split("/")[0].replace("Edg", "Edge")
-        : "Browser";
+        : "Trình duyệt";
     const osMatch =
         ua.match(/Windows NT [\d.]+/) ||
         ua.match(/Mac OS X [\d_]+/) ||

@@ -12,7 +12,7 @@ const folderSchema: EntitySchema = {
   fields: [
     {
       name: "name",
-      label: "Name",
+      label: "Tên",
       type: "text",
       sortable: true,
       bold: true,
@@ -21,7 +21,7 @@ const folderSchema: EntitySchema = {
     },
     {
       name: "userId",
-      label: "User",
+      label: "Người dùng",
       type: "number",
       sortable: true,
       filterable: true,
@@ -29,7 +29,7 @@ const folderSchema: EntitySchema = {
     },
     {
       name: "description",
-      label: "Description",
+      label: "Mô tả",
       type: "textarea",
       sortable: false,
     },
@@ -38,7 +38,7 @@ const folderSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Folder",
+  name: "Thư mục",
   path: "/folders",
   api: folderApi,
   schema: folderSchema,

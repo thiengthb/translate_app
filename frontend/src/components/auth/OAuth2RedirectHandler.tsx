@@ -61,7 +61,7 @@ export const OAuth2RedirectHandler = () => {
 
     return (
         <div className="flex h-screen items-center justify-center">
-            <p>Processing...</p>
+            <p>Đang xử lý...</p>
         </div>
     );
 };

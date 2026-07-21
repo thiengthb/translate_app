@@ -44,7 +44,7 @@ export function PortfolioNav() {
   return (
     <>
       <header className={`pf-nav${stuck ? " is-stuck" : ""}`}>
-        <Link to="/" className="pf-brand" onClick={() => setOpen(false)} aria-label={`${designer.name} — trang chủ`}>
+        <Link to="/" className="pf-brand" onClick={() => setOpen(false)} aria-label={`${designer.name} — home`}>
           <span className="pf-brand-mark" aria-hidden="true">
             橋
           </span>
@@ -54,18 +54,18 @@ export function PortfolioNav() {
           </span>
         </Link>
 
-        <nav className="pf-nav-links" aria-label="Điều hướng chính">
+        <nav className="pf-nav-links" aria-label="Primary navigation">
           <button type="button" className="pf-nav-link" onClick={() => goToSection("work")}>
-            Dự án
+            Work
           </button>
           <Link to="/about" className="pf-nav-link">
-            Giới thiệu
+            About
           </Link>
           <button type="button" className="pf-nav-link" onClick={() => goToSection("contact")}>
-            Liên hệ
+            Contact
           </button>
           <Link to="/login" className="pf-btn pf-nav-cta">
-            Đăng nhập
+            Sign in
             <span className="pf-arrow" aria-hidden="true">
               →
             </span>
@@ -88,16 +88,16 @@ export function PortfolioNav() {
       <div className={`pf-menu${open ? " is-open" : ""}`} aria-hidden={!open}>
         <span className="pf-menu-ja">メニュー · Menu</span>
         <button type="button" onClick={() => goToSection("work")}>
-          Dự án
+          Work
         </button>
         <Link to="/about" onClick={() => setOpen(false)}>
-          Giới thiệu
+          About
         </Link>
         <button type="button" onClick={() => goToSection("contact")}>
-          Liên hệ
+          Contact
         </button>
         <Link to="/login" onClick={() => setOpen(false)}>
-          Đăng nhập →
+          Sign in →
         </Link>
       </div>
     </>

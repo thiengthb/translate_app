@@ -81,7 +81,7 @@ const accentMap: Record<
     barFill: sakura.mint,
     badgeBorder: sakura.mint,
     badgeText: sakura.mintDeep,
-    badgeLabel: "Completed",
+    badgeLabel: "Hoàn thành",
   },
   sakura: {
     cardBg: sakura.pinkWash,
@@ -93,7 +93,7 @@ const accentMap: Record<
     barFill: `linear-gradient(90deg, ${sakura.pink}, ${sakura.pinkDeep})`,
     badgeBorder: sakura.honey,
     badgeText: sakura.honeyDeep,
-    badgeLabel: "in progress",
+    badgeLabel: "Đang tiến hành",
   },
   honey: {
     cardBg: sakura.honeyWash,
@@ -105,7 +105,7 @@ const accentMap: Record<
     barFill: sakura.honey,
     badgeBorder: sakura.honey,
     badgeText: sakura.honeyDeep,
-    badgeLabel: "challenge",
+    badgeLabel: "Thử thách",
   },
 };
 
@@ -119,7 +119,7 @@ function MissionCard({ mission }: { mission: Mission }) {
       : 0;
   const completed = mission.status === "completed";
   const showBadge = completed || mission.status === "in-progress";
-  const badgeLabel = completed ? "Completed" : "in progress";
+  const badgeLabel = completed ? "Hoàn thành" : "Đang tiến hành";
 
   return (
     <div
@@ -204,7 +204,7 @@ function MissionIllustration({
   if (url) {
     return (
       <div className="my-[6px] flex h-[74px] items-center justify-center">
-        <img src={url} alt="" className="h-full max-w-full object-contain" />
+        <img src={url} alt="hình minh họa" className="h-full max-w-full object-contain" />
       </div>
     );
   }
@@ -246,7 +246,7 @@ function MissionIllustration({
 // days + per-month active dates) and triggers the once-per-day auto check-in so
 // landing on the dashboard counts toward today's streak.
 
-const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOW_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 /** Local YYYY-MM-DD key (matches the backend's activeDates day keys). */
 function dayKey(d: Date): string {
@@ -371,7 +371,7 @@ function RecordCalendar() {
       <Card className="rounded-[24px] border-0 bg-white p-0 px-6 py-[22px] pb-6 shadow-[0_12px_30px_rgba(255,143,171,0.14)]">
         <div className="mb-[16px] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-display m-0 text-[20px] font-bold">Record</h3>
+            <h3 className="font-display m-0 text-[20px] font-bold">Lịch học tập</h3>
             {streak?.checkedInToday && (
               <span className="rounded-full bg-[#FFE5EC] px-2 py-0.5 text-[11px] font-semibold text-[#FF6B9D]">
                 ✓ hôm nay
@@ -639,13 +639,13 @@ export function SakuraDashboardContent({
 
         <div className="relative z-10 min-w-0 flex-1">
           <h2 className="font-display m-0 mb-[10px] text-[28px] font-semibold uppercase leading-[1.15] tracking-[0.5px] text-[#3A2E33] sm:text-[34px]">
-            This is your{" "}
+            Đây là ngày học thứ{" "}
             <span className="font-display align-[-4px] text-[44px] font-extrabold text-[#FF8FAB] sm:text-[54px]">
               {user.studyDay}
             </span>{" "}
-            day of study
+            của bạn
           </h2>
-          <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Go and study</p>
+          <p className="m-0 text-[18px] font-medium text-[#9A8E92]">Hãy bắt đầu học nào</p>
         </div>
       </div>
 
@@ -655,7 +655,7 @@ export function SakuraDashboardContent({
           <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-[#FFE5EC] text-[#FF6B9D]">
             <CheckSquare className="h-[19px] w-[19px]" />
           </span>
-          <h3 className="font-display m-0 text-[22px] font-bold">Mission</h3>
+          <h3 className="font-display m-0 text-[22px] font-bold">Nhiệm vụ</h3>
         </div>
         <CalendarDays className="h-[22px] w-[22px] text-[#B9AEB2]" />
       </div>

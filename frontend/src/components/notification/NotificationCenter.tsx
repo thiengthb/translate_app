@@ -48,7 +48,7 @@ export default function NotificationCenter() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative p-2 rounded-full hover:bg-accent transition-colors cursor-pointer"
-        aria-label="Notifications"
+        aria-label="Thông báo"
       >
         <Bell size={18} />
         {unreadCount > 0 && (
@@ -66,7 +66,7 @@ export default function NotificationCenter() {
           {/* Dropdown */}
           <div className="absolute right-0 top-full mt-2 w-80 bg-background border rounded-lg shadow-lg z-50 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
-              <span className="font-semibold text-sm">Notifications</span>
+              <span className="font-semibold text-sm">Thông báo</span>
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"
@@ -75,7 +75,7 @@ export default function NotificationCenter() {
                   onClick={() => markAllAsRead.mutate()}
                 >
                   <CheckCheck size={14} className="mr-1" />
-                  Mark all read
+                  Đánh dấu đã đọc hết
                 </Button>
               )}
             </div>

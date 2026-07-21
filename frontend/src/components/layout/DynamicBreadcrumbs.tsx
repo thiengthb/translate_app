@@ -35,7 +35,7 @@ type Props = {
 };
 
 function formatPath(path: string) {
-    if (/^\d+$/.test(path)) return "Details";
+    if (/^\d+$/.test(path)) return "Chi tiết";
     return path
         .replace(/-/g, " ")
         .replace(/_/g, " ")
@@ -43,14 +43,14 @@ function formatPath(path: string) {
 }
 
 const PAGE_DESCRIPTIONS: Record<string, string> = {
-    "/profile": "Your account profile and personal details.",
-    "/help/shortcuts": "All keyboard shortcuts available across the app.",
+    "/profile": "Hồ sơ tài khoản và thông tin cá nhân của bạn.",
+    "/help/shortcuts": "Tất cả phím tắt có sẵn trong toàn bộ ứng dụng.",
     "/library": "Bộ sưu tập deck học tập của bạn.",
     "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
     "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
-    "/translator": "Break down the grammar of a Japanese sentence.",
-    "/sentence_practice": "Practice composing Japanese sentences.",
-    "/notifications": "Your notification inbox.",
+    "/translator": "Phân tích ngữ pháp của một câu tiếng Nhật.",
+    "/sentence_practice": "Luyện tập đặt câu tiếng Nhật.",
+    "/notifications": "Hộp thư thông báo của bạn.",
     "/words/create":
         "Thêm từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ — tất cả trong một lần.",
 };
@@ -175,7 +175,7 @@ export default function DynamicBreadcrumbs({
                         ? pageDescription ??
                           activeModule?.description ??
                           PAGE_DESCRIPTIONS[href] ??
-                          `Current page: ${full}.`
+                          `Trang hiện tại: ${full}.`
                         : undefined;
                     const hasDescription =
                         !!description && description.trim().length > 0;

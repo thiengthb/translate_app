@@ -75,13 +75,13 @@ function BarChart({
 function StateBar({ newC, learning, relearning, review, total }: {
   newC: number; learning: number; relearning: number; review: number; total: number;
 }) {
-  if (total === 0) return <p className="text-sm text-muted-foreground py-4">No cards.</p>;
+  if (total === 0) return <p className="text-sm text-muted-foreground py-4">Không có thẻ.</p>;
   const pct = (v: number) => `${((v / total) * 100).toFixed(2)}%`;
   const segs = [
-    { label: "New",        v: newC,       dot: "bg-blue-500",   text: "text-blue-500" },
-    { label: "Learning",   v: learning,   dot: "bg-orange-400", text: "text-orange-400" },
-    { label: "Relearning", v: relearning, dot: "bg-red-500",    text: "text-red-500" },
-    { label: "Review",     v: review,     dot: "bg-green-500",  text: "text-green-500" },
+    { label: "Mới",        v: newC,       dot: "bg-blue-500",   text: "text-blue-500" },
+    { label: "Đang học",   v: learning,   dot: "bg-orange-400", text: "text-orange-400" },
+    { label: "Học lại",    v: relearning, dot: "bg-red-500",    text: "text-red-500" },
+    { label: "Ôn tập",     v: review,     dot: "bg-green-500",  text: "text-green-500" },
   ];
   return (
     <div className="space-y-3">
@@ -96,7 +96,7 @@ function StateBar({ newC, learning, relearning, review, total }: {
         <thead>
           <tr className="text-xs text-muted-foreground border-b border-border">
             <th className="text-left pb-1 font-normal" />
-            <th className="text-right pb-1 font-normal">Cards</th>
+            <th className="text-right pb-1 font-normal">Số thẻ</th>
             <th className="text-right pb-1 font-normal">%</th>
           </tr>
         </thead>
@@ -112,7 +112,7 @@ function StateBar({ newC, learning, relearning, review, total }: {
             </tr>
           ))}
           <tr className="leading-7 font-semibold">
-            <td className="pr-4 text-muted-foreground">Total</td>
+            <td className="pr-4 text-muted-foreground">Tổng</td>
             <td className="text-right tabular-nums">{total}</td>
             <td />
           </tr>
@@ -193,7 +193,7 @@ export default function AnkiStatsPage() {
     setLoading(true);
     ankiStudyApi.getStats(selectedDeckId)
       .then(setStats)
-      .catch(() => toast.error("Failed to load statistics."))
+      .catch(() => toast.error("Không thể tải thống kê."))
       .finally(() => setLoading(false));
   }, [selectedDeckId]);
 
@@ -222,23 +222,23 @@ export default function AnkiStatsPage() {
   const isFsrs        = stats?.algorithmType === "FSRS";
 
   return (
-    <MainLayout pathName={{ "/stats": "Statistics" }}>
+    <MainLayout pathName={{ "/stats": "Thống kê" }}>
       {/* ── Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h1 className="text-xl font-bold tracking-tight">Statistics</h1>
+        <h1 className="text-xl font-bold tracking-tight">Thống kê</h1>
         <Select value={selectedDeckId ? String(selectedDeckId) : ""} onValueChange={selectDeck}>
           <SelectTrigger className="w-72 h-9">
-            <SelectValue placeholder="Select an Anki deck…" />
+            <SelectValue placeholder="Chọn một bộ thẻ Anki…" />
           </SelectTrigger>
           {/* position="popper" forces the list to always open BELOW the trigger,
               preventing Radix from flipping it upward when the trigger is near
               the top of the scrollable content area. */}
           <SelectContent position="popper" sideOffset={4} className="w-72 max-h-64">
             {ankiDecks.length === 0
-              ? <div className="px-3 py-2 text-sm text-muted-foreground">No Anki decks.</div>
+              ? <div className="px-3 py-2 text-sm text-muted-foreground">Không có bộ thẻ Anki nào.</div>
               : ankiDecks.map((d) => (
                   <SelectItem key={d.id} value={String(d.id)}>
-                    <span className="truncate">{d.title ?? "Untitled"}</span>
+                    <span className="truncate">{d.title ?? "Chưa đặt tên"}</span>
                     <span className="ml-1.5 shrink-0 text-xs text-muted-foreground">({d.totalCards ?? 0})</span>
                   </SelectItem>
                 ))}
@@ -251,7 +251,7 @@ export default function AnkiStatsPage() {
         <EmptyState
           className="h-60"
           icon={<Brain className="size-7" />}
-          title="Select an Anki deck above to view statistics."
+          title="Chọn một bộ thẻ Anki ở trên để xem thống kê."
         />
       )}
       {loading && (
@@ -268,36 +268,36 @@ export default function AnkiStatsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:auto-rows-[minmax(300px,auto)]">
 
             {/* Today */}
-            <Panel title="Today">
+            <Panel title="Hôm nay">
               <div className="space-y-0.5">
                 {stats.studiedToday === 0 && (
-                  <p className="text-sm text-muted-foreground pb-2">No cards have been studied today.</p>
+                  <p className="text-sm text-muted-foreground pb-2">Chưa học thẻ nào hôm nay.</p>
                 )}
                 {stats.studiedToday > 0 && (
-                  <StatRow label="Studied today" value={stats.studiedToday} tone="text-primary" />
+                  <StatRow label="Đã học hôm nay" value={stats.studiedToday} tone="text-primary" />
                 )}
-                <StatRow label="Due review cards" value={stats.dueReviewCards} tone={stats.dueReviewCards > 0 ? "text-green-600" : undefined} />
-                <StatRow label="Due tomorrow"     value={stats.dueTomorrow} />
-                <StatRow label="Average memory"   value={`${stats.avgMemoryScore.toFixed(0)}%`} tone={memTone} />
-                <StatRow label="Total reviews"    value={stats.totalReviews} />
-                <StatRow label="Average interval" value={`${stats.avgIntervalDays.toFixed(1)} days`} />
-                <StatRow label="Lapses"           value={stats.totalLapses}  tone={stats.totalLapses > 0 ? "text-red-500" : undefined} />
+                <StatRow label="Thẻ ôn tập đến hạn" value={stats.dueReviewCards} tone={stats.dueReviewCards > 0 ? "text-green-600" : undefined} />
+                <StatRow label="Đến hạn ngày mai"    value={stats.dueTomorrow} />
+                <StatRow label="Trí nhớ trung bình"  value={`${stats.avgMemoryScore.toFixed(0)}%`} tone={memTone} />
+                <StatRow label="Tổng lượt ôn"        value={stats.totalReviews} />
+                <StatRow label="Khoảng ôn trung bình" value={`${stats.avgIntervalDays.toFixed(1)} ngày`} />
+                <StatRow label="Số lần quên"         value={stats.totalLapses}  tone={stats.totalLapses > 0 ? "text-red-500" : undefined} />
                 {stats.leechCards > 0 && (
-                  <StatRow label="Leeches" value={stats.leechCards} tone="text-red-500" />
+                  <StatRow label="Thẻ khó nhớ" value={stats.leechCards} tone="text-red-500" />
                 )}
                 {stats.suspendedCards > 0 && (
-                  <StatRow label="Suspended" value={stats.suspendedCards} tone="text-muted-foreground" />
+                  <StatRow label="Tạm ngưng" value={stats.suspendedCards} tone="text-muted-foreground" />
                 )}
               </div>
             </Panel>
 
             {/* Future Due */}
             <Panel
-              title="Future Due"
-              subtitle="The number of reviews due in the future."
+              title="Đến hạn trong tương lai"
+              subtitle="Số lượt ôn tập sẽ đến hạn trong tương lai."
               footer={
                 <>
-                  Total: {totalFuture} reviews &nbsp;·&nbsp; Avg: {(totalFuture / 30).toFixed(1)} / day
+                  Tổng: {totalFuture} lượt ôn &nbsp;·&nbsp; TB: {(totalFuture / 30).toFixed(1)} / ngày
                 </>
               }
             >
@@ -308,7 +308,7 @@ export default function AnkiStatsPage() {
             </Panel>
 
             {/* Card Counts */}
-            <Panel title="Card Counts">
+            <Panel title="Số lượng thẻ">
               <StateBar
                 newC={stats.newCards}
                 learning={stats.learningCards}
@@ -324,9 +324,9 @@ export default function AnkiStatsPage() {
 
             {/* Review Intervals */}
             <Panel
-              title="Review Intervals"
-              subtitle="Delays until review cards are shown again."
-              footer={<>Average interval: {stats.avgIntervalDays.toFixed(1)} days</>}
+              title="Khoảng ôn tập"
+              subtitle="Thời gian trước khi thẻ ôn tập xuất hiện lại."
+              footer={<>Khoảng trung bình: {stats.avgIntervalDays.toFixed(1)} ngày</>}
             >
               <BarChart
                 data={intervals}
@@ -337,30 +337,30 @@ export default function AnkiStatsPage() {
             {/* Card Ease (SM-2) — or FSRS memory (stability/difficulty) */}
             {isFsrs ? (
               <Panel
-                title="FSRS Memory"
-                subtitle="Stability (how long memory lasts) & difficulty (how hard the card is)."
-                footer={<>Avg difficulty: {stats.avgDifficulty.toFixed(1)} / 10</>}
+                title="Trí nhớ FSRS"
+                subtitle="Độ bền (trí nhớ kéo dài bao lâu) & độ khó (thẻ khó đến mức nào)."
+                footer={<>Độ khó TB: {stats.avgDifficulty.toFixed(1)} / 10</>}
               >
                 <div className="flex flex-1 flex-col justify-center gap-6 pt-1">
                   <FsrsMetric
-                    label="Average stability"
-                    value={`${stats.avgStability.toFixed(1)} days`}
-                    hint="Higher = memory decays slower, longer intervals."
+                    label="Độ bền trung bình"
+                    value={`${stats.avgStability.toFixed(1)} ngày`}
+                    hint="Càng cao = trí nhớ phai chậm hơn, khoảng ôn dài hơn."
                     tone="text-sky-500"
                   />
                   <FsrsMetric
-                    label="Average difficulty"
+                    label="Độ khó trung bình"
                     value={`${stats.avgDifficulty.toFixed(1)} / 10`}
-                    hint="Lower = easier to remember."
+                    hint="Càng thấp = càng dễ nhớ."
                     tone={stats.avgDifficulty <= 4 ? "text-green-600" : stats.avgDifficulty <= 7 ? "text-amber-500" : "text-red-500"}
                   />
                 </div>
               </Panel>
             ) : (
               <Panel
-                title="Card Ease"
-                subtitle="The lower the ease, the more frequently a card will appear."
-                footer={<>Average ease: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
+                title="Độ dễ của thẻ"
+                subtitle="Độ dễ càng thấp, thẻ càng xuất hiện thường xuyên."
+                footer={<>Độ dễ trung bình: {(stats.avgEaseFactor * 100).toFixed(0)}%</>}
               >
                 <BarChart
                   data={eases}
@@ -371,10 +371,10 @@ export default function AnkiStatsPage() {
 
             {/* Memory Score / Retention */}
             <Panel
-              title="Retention"
+              title="Tỷ lệ ghi nhớ"
               subtitle={isFsrs
-                ? "FSRS memory score — estimated recall probability per card."
-                : "SM2 memory score — estimated pass rate per card."}
+                ? "Điểm trí nhớ FSRS — xác suất nhớ lại ước tính cho mỗi thẻ."
+                : "Điểm trí nhớ SM2 — tỷ lệ vượt qua ước tính cho mỗi thẻ."}
             >
               <div className="space-y-5 pt-1">
                 {/* Big score */}
@@ -382,7 +382,7 @@ export default function AnkiStatsPage() {
                   <p className={cn("text-6xl font-bold tabular-nums leading-none", memTone)}>
                     {memScore.toFixed(0)}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">Average retention</p>
+                  <p className="text-xs text-muted-foreground mt-2">Tỷ lệ ghi nhớ trung bình</p>
                 </div>
 
                 {/* Gauge bar */}
@@ -400,12 +400,12 @@ export default function AnkiStatsPage() {
 
                 {/* State rows */}
                 <div className="space-y-0.5">
-                  <StatRow label="New"           value={stats.newCards}                             tone="text-blue-500" />
-                  <StatRow label="Learning"      value={stats.learningCards + stats.relearningCards} tone="text-orange-500" />
-                  <StatRow label="Review"        value={stats.reviewCards}                          tone="text-green-600" />
+                  <StatRow label="Mới"           value={stats.newCards}                             tone="text-blue-500" />
+                  <StatRow label="Đang học"      value={stats.learningCards + stats.relearningCards} tone="text-orange-500" />
+                  <StatRow label="Ôn tập"        value={stats.reviewCards}                          tone="text-green-600" />
                   {isFsrs
-                    ? <StatRow label="Avg stability" value={`${stats.avgStability.toFixed(1)}d`} />
-                    : <StatRow label="Ease factor"   value={`${(stats.avgEaseFactor * 100).toFixed(0)}%`} />}
+                    ? <StatRow label="Độ bền TB" value={`${stats.avgStability.toFixed(1)} ngày`} />
+                    : <StatRow label="Hệ số dễ"  value={`${(stats.avgEaseFactor * 100).toFixed(0)}%`} />}
                 </div>
               </div>
             </Panel>

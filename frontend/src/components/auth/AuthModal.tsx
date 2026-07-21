@@ -95,7 +95,7 @@ export function AuthModal({ open, mode, initialError, defaultEmail, onModeChange
                     {/* Close */}
                     <DialogPrimitive.Close
                         className="absolute right-4 top-4 text-white/70 hover:text-white transition-colors"
-                        aria-label="Close"
+                        aria-label="Đóng"
                     >
                         <X size={18} />
                     </DialogPrimitive.Close>

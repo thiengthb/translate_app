@@ -524,8 +524,8 @@ export default function GrammarSessionPage() {
               {session.items.length} / {session.items.length} câu
             </div>
             <div className="flex gap-6 text-sm pt-2">
-              <span>Mastered: <b data-fx="mastered" className="text-foreground">+{masteredGain}</b></span>
-              <span>Review: <b data-fx="review" className="text-foreground">{session.reviewCount}</b></span>
+              <span>Đã thành thạo: <b data-fx="mastered" className="text-foreground">+{masteredGain}</b></span>
+              <span>Ôn tập: <b data-fx="review" className="text-foreground">{session.reviewCount}</b></span>
             </div>
             {goal && (
               <div className="text-sm text-muted-foreground">
@@ -792,9 +792,9 @@ export default function GrammarSessionPage() {
                   <span className="ml-auto text-sm">Lần ôn tới: <b>{result.goodPreview}</b></span>
                 </div>
                 <div className="flex gap-6 text-sm">
-                  <span>Grammar: <b className="text-foreground">{result.detectorPassed ? "✓" : "✗"}</b></span>
+                  <span>Ngữ pháp: <b className="text-foreground">{result.detectorPassed ? "✓" : "✗"}</b></span>
                   {result.judgeScore != null && (
-                    <span>Writing: <b className="text-foreground">{Math.round(result.judgeScore * 100)}</b></span>
+                    <span>Viết: <b className="text-foreground">{Math.round(result.judgeScore * 100)}</b></span>
                   )}
                   <span className="text-muted-foreground">→ {result.ratingApplied}</span>
                 </div>

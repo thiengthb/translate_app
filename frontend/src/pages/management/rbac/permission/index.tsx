@@ -12,27 +12,27 @@ const permissionSchema: EntitySchema = {
   fields: [
     {
       name: "name",
-      label: "Name",
+      label: "Tên",
       type: "text",
       sortable: true,
       bold: true,
     },
     {
       name: "description",
-      label: "Description",
+      label: "Mô tả",
       type: "textarea",
       sortable: true,
     },
     {
       name: "resource",
-      label: "Resource",
+      label: "Tài nguyên",
       type: "text",
       sortable: true,
       filterable: true,
     },
     {
       name: "action",
-      label: "Action",
+      label: "Hành động",
       type: "text",
       sortable: true,
       filterable: true,
@@ -42,7 +42,7 @@ const permissionSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Permission",
+  name: "Quyền hạn",
   path: "/permissions",
   api: permissionApi,
   schema: permissionSchema,

@@ -40,7 +40,7 @@ export default function HeaderRight() {
                     variant="secondary"
                     className="hidden sm:inline-flex text-[10px] uppercase tracking-wide"
                 >
-                    Preview
+                    Xem trước
                 </Badge>
             )}
         </div>

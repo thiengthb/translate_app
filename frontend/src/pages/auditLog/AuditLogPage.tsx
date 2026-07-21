@@ -92,7 +92,7 @@ export default function AuditLogPage() {
     }, [items, query]);
 
     return (
-        <MainLayout pathName={{ "/audit-logs": "Audit Log" }}>
+        <MainLayout pathName={{ "/audit-logs": "Nhật ký hoạt động" }}>
             <div className="w-full space-y-4">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <header className="flex items-center gap-3">
@@ -101,7 +101,7 @@ export default function AuditLogPage() {
                     </div>
                     <div className="flex-1">
                         <h1 className="text-2xl font-semibold tracking-tight">
-                            Audit Log
+                            Nhật ký hoạt động
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Theo dõi tất cả thay đổi entity:{" "}
@@ -130,7 +130,7 @@ export default function AuditLogPage() {
                         <button
                             type="button"
                             onClick={() => setQuery("")}
-                            aria-label="Clear"
+                            aria-label="Xóa"
                             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                         >
                             <X size={14} />
@@ -262,7 +262,7 @@ function AuditRow({
             {expanded && (log.diff || log.beforeData || log.afterData) && (
                 <div className="px-4 pb-3 pl-15 space-y-2 bg-muted/30">
                     {log.diff && (
-                        <DiffBlock title="Diff" json={log.diff} />
+                        <DiffBlock title="Thay đổi" json={log.diff} />
                     )}
                     {log.beforeData && (
                         <DiffBlock

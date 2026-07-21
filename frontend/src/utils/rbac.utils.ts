@@ -136,12 +136,23 @@ export const resolveEffectivePermissions = (
   return uniquePermissions(allPermissions);
 };
 
-export const formatRoleLabel = (role: string): string =>
-  normalizeRole(role)
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+const ROLE_LABELS_VI: Record<string, string> = {
+  ADMIN: "Quản trị viên",
+  STUDENT: "Học viên",
+  TEACHER: "Giáo viên",
+};
+
+export const formatRoleLabel = (role: string): string => {
+  const normalized = normalizeRole(role);
+  return (
+    ROLE_LABELS_VI[normalized] ??
+    normalized
+      .toLowerCase()
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  );
+};
 
 /**
  * Every role lands on the Sakura dashboard — it is role-aware itself

@@ -64,7 +64,7 @@ function FormCell({ form, furigana }: { form?: ConjForm; furigana: boolean }) {
                 <button
                     type="button"
                     onClick={copy}
-                    title="Copy"
+                    title="Sao chép"
                     className="h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
                 >
                     {copied ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" /> : <Copy className="h-3.5 w-3.5" />}

@@ -19,7 +19,7 @@ const grammarSchema: EntitySchema = {
     },
     {
       name: "slug",
-      label: "Slug",
+      label: "Đường dẫn",
       type: "text",
       sortable: true,
     },

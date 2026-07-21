@@ -64,7 +64,7 @@ export default function GrammarLevelPage() {
           <h1 className="text-xl font-bold">{level}</h1>
           {data && (
             <span className="text-sm text-muted-foreground">
-              {data.unlocked} / {data.total} unlocked
+              {data.unlocked} / {data.total} đã mở khóa
             </span>
           )}
           <Button
@@ -81,9 +81,9 @@ export default function GrammarLevelPage() {
           </div>
         ) : data ? (
           <>
-            <Section title="✓ Mastered" items={data.mastered} onClick={go} />
-            <Section title="📖 Learning" items={data.learning} onClick={go} />
-            <Section title="🔒 Locked" items={data.locked} locked onClick={go} />
+            <Section title="✓ Đã thành thạo" items={data.mastered} onClick={go} />
+            <Section title="📖 Đang học" items={data.learning} onClick={go} />
+            <Section title="🔒 Đã khóa" items={data.locked} locked onClick={go} />
           </>
         ) : null}
       </div>

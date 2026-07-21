@@ -31,7 +31,7 @@ const scenarioStubSchema: EntitySchema = {
     },
     {
       name: "register",
-      label: "Register",
+      label: "Văn phong",
       type: "text",
       sortable: true,
       filterable: true,
@@ -39,7 +39,7 @@ const scenarioStubSchema: EntitySchema = {
     },
     {
       name: "l1PromptTemplate",
-      label: "L1 Prompt Template",
+      label: "Mẫu prompt (L1)",
       type: "textarea",
       sortable: false,
     },

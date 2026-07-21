@@ -15,21 +15,21 @@ const questionTagSchema: EntitySchema = {
   fields: [
     {
       name: "name",
-      label: "Name",
+      label: "Tên",
       type: "text",
       sortable: true,
       bold: true,
     },
     {
       name: "code",
-      label: "Code",
+      label: "Mã",
       type: "text",
       sortable: true,
       filterable: true,
     },
     {
       name: "description",
-      label: "Description",
+      label: "Mô tả",
       type: "textarea",
       visible: false,
     },
@@ -38,7 +38,7 @@ const questionTagSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Question Tag",
+  name: "Thẻ câu hỏi",
   path: "/question-tags",
   api: questionTagApi,
   schema: questionTagSchema,

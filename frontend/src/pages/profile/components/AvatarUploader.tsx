@@ -66,7 +66,7 @@ export function AvatarUploader({ profile, onAvatarChange }: Props) {
                 {profile?.avatarUrl ? (
                     <img
                         src={profile.avatarUrl}
-                        alt="Avatar"
+                        alt="Ảnh đại diện"
                         className="h-28 w-28 rounded-full object-cover ring-4 ring-background shadow-lg"
                     />
                 ) : (
@@ -80,7 +80,7 @@ export function AvatarUploader({ profile, onAvatarChange }: Props) {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
                     className="absolute bottom-1 right-1 h-8 w-8 rounded-full bg-background border text-foreground flex items-center justify-center hover:bg-accent transition-colors shadow-md cursor-pointer disabled:opacity-60"
-                    aria-label="Change avatar"
+                    aria-label="Đổi ảnh đại diện"
                 >
                     {uploading ? (
                         <Loader2 size={14} className="animate-spin" />

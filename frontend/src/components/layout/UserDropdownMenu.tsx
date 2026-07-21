@@ -88,7 +88,7 @@ export function UserDropdownMenu({
         email?.charAt(0)?.toUpperCase() ||
         "?";
     const fullName =
-        [firstName, lastName].filter(Boolean).join(" ") || email || "User";
+        [firstName, lastName].filter(Boolean).join(" ") || email || "Người dùng";
 
     useEffect(() => {
         let active = true;
@@ -116,7 +116,7 @@ export function UserDropdownMenu({
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
-                    aria-label="User menu"
+                    aria-label="Menu người dùng"
                     className={cn(
                         "cursor-pointer transition-colors",
                         isFull
@@ -201,11 +201,11 @@ export function UserDropdownMenu({
                             {/* XP progress — its own row */}
                             <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground tabular-nums">
                                 <span>{exp} XP</span>
-                                <span>{expToNext === 0 ? "Max level" : `${expToNext} XP to Lv ${level + 1}`}</span>
+                                <span>{expToNext === 0 ? "Đã đạt cấp tối đa" : `${expToNext} XP nữa lên Lv ${level + 1}`}</span>
                             </div>
                             <div
                                 className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-                                title={`${expIntoLevel} / ${levelSpan} XP into Level ${level}`}
+                                title={`${expIntoLevel} / ${levelSpan} XP của Cấp ${level}`}
                             >
                                 <div
                                     className="h-full rounded-full bg-primary transition-[width]"
@@ -301,7 +301,7 @@ function Avatar({
         return (
             <img
                 src={avatarUrl}
-                alt="Avatar"
+                alt="Ảnh đại diện"
                 className={cn(
                     "rounded-full object-cover border shrink-0",
                     sizeClass,

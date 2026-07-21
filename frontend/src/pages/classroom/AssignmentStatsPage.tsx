@@ -20,6 +20,12 @@ const ASSIGNMENT_STATUS_STYLE: Record<string, string> = {
   CLOSED:    "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
+const ASSIGNMENT_STATUS_LABEL: Record<string, string> = {
+  DRAFT: "Nháp",
+  PUBLISHED: "Đã đăng",
+  CLOSED: "Đã đóng",
+};
+
 export default function AssignmentStatsPage() {
   const { classroomId, assignmentId } = useParams<{ classroomId: string; assignmentId: string }>();
   const cid = Number(classroomId);
@@ -44,7 +50,7 @@ export default function AssignmentStatsPage() {
         if (cancelled) return;
         setClassroom(c); setAssignment(a); setGradebook(g);
       })
-      .catch(() => toast.error("Failed to load assignment statistics."))
+      .catch(() => toast.error("Không thể tải thống kê bài tập."))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [cid, aid]);
@@ -76,9 +82,9 @@ export default function AssignmentStatsPage() {
   }, [gradebook]);
 
   const pathName = {
-    "/classrooms": "Groups",
-    [`/classrooms/${cid}`]: classroom?.name ?? "Group",
-    [`/classrooms/${cid}/stats/${aid}`]: assignment?.title ?? "Statistics",
+    "/classrooms": "Lớp học",
+    [`/classrooms/${cid}`]: classroom?.name ?? "Lớp học",
+    [`/classrooms/${cid}/stats/${aid}`]: assignment?.title ?? "Thống kê",
   };
   // Hide only the fixed "stats" keyword segment. The remaining crumbs are the
   // group (a valid link) and the assignment (the current page) — so the
@@ -110,7 +116,7 @@ export default function AssignmentStatsPage() {
                     "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                     ASSIGNMENT_STATUS_STYLE[assignment.status] ?? ASSIGNMENT_STATUS_STYLE.DRAFT
                   )}>
-                    {assignment.status}
+                    {ASSIGNMENT_STATUS_LABEL[assignment.status] ?? assignment.status}
                   </span>
                 )}
               </div>
@@ -120,15 +126,15 @@ export default function AssignmentStatsPage() {
                   <>
                     <span>·</span>
                     <span className="flex items-center gap-1">
-                      <CalendarClock className="size-3.5" />Due {formatDateTime(assignment.deadline)}
+                      <CalendarClock className="size-3.5" />Hạn: {formatDateTime(assignment.deadline)}
                     </span>
                   </>
                 )}
                 {assignment?.maxAttempts != null && (
-                  <><span>·</span><span>{assignment.maxAttempts} attempts max</span></>
+                  <><span>·</span><span>{assignment.maxAttempts} lượt làm tối đa</span></>
                 )}
                 <span>·</span>
-                <span>Scoring: {assignment?.scoreStrategy === "HIGHEST" ? "Highest" : "Latest"}</span>
+                <span>Tính điểm: {assignment?.scoreStrategy === "HIGHEST" ? "Cao nhất" : "Gần nhất"}</span>
               </div>
             </div>
           </div>

@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 import { PortfolioNav } from "./PortfolioNav";
 import { PortfolioFooter } from "./PortfolioFooter";
-import { designer, skills, timeline, tools } from "./portfolio-data";
+import akiraPortrait from "@/assets/portfolio/akira-portrait.png";
+import { designer, skills, story, tools } from "./portfolio-data";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 import "./portfolio.css";
 
@@ -53,28 +54,23 @@ export default function PortfolioAbout() {
           <header className="pf-about-hero">
             <div className="pf-reveal">
               <Link to="/" className="pf-backlink">
-                ← Back to work
+                ← Back to home
               </Link>
               <h1 className="pf-about-title">
-                Hi, I'm <span className="pf-em">Rin</span>. I design the quiet parts of learning.
+                Hello, I'm <span className="pf-em">Akira</span>. I design the bridge between systems and
+                people.
               </h1>
               <p className="pf-about-intro">
-                For seven years I've drawn interfaces for one stubborn, wonderful problem: how do you help
-                someone learn a language through a screen, without the screen getting in the way?
-              </p>
-              <p className="pf-about-intro">
-                My answer keeps coming back to restraint. Fewer choices, gentler pacing, and moments of
-                delight small enough to earn a smile but never big enough to distract. Hanabun is where that
-                philosophy lives now.
+                I was born in Khanh Hoa and now study at university in Ho Chi Minh City. In every project, I
+                devote my full focus to frontend performance, designs that hold up across every device, and
+                keeping the interface clean and intuitive.
               </p>
             </div>
 
-            <div className="pf-portrait pf-reveal" aria-label="Portrait — a sakura motif standing in for Rin">
-              <span className="pf-portrait-glyph" aria-hidden="true">
-                凛
-              </span>
+            <div className="pf-portrait pf-reveal">
+              <img className="pf-portrait-shot" src={akiraPortrait} alt={`${designer.name} — portrait`} />
               <span className="pf-portrait-tag" aria-hidden="true">
-                相沢 凛
+                黒凪 明
               </span>
             </div>
           </header>
@@ -93,50 +89,10 @@ export default function PortfolioAbout() {
                 How I got here
               </div>
               <div>
-                <p className="pf-about-intro">
-                  I started out nudging pixels at a tiny studio — the kind of place where you learn the whole
-                  craft because there's no one else to hand it to. Buttons, illustration, a little code. I
-                  loved that everything I made had to actually work.
-                </p>
-                <p className="pf-about-intro">
-                  Language learning found me by accident. A friend was building flashcards and asked for help;
-                  I stayed for three years. Watching a beginner go from guessing at かな to reading a menu is
-                  the most satisfying feedback loop I've found in design.
-                </p>
-                <p className="pf-about-intro">
-                  Today I work independently, mostly on Hanabun. I still redraw the buttons.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="pf-wrap">
-          <hr className="pf-rule" />
-        </div>
-
-        {/* ========================= TIMELINE ========================= */}
-        <section className="pf-section">
-          <div className="pf-wrap">
-            <div className="pf-cols">
-              <div className="pf-cols-label pf-reveal">
-                <small>道 · Michi · the path</small>
-                A few seasons
-              </div>
-              <div className="pf-timeline">
-                {timeline.map((m) => (
-                  <div className="pf-milestone pf-reveal" key={m.year}>
-                    <div className="pf-milestone-when">
-                      <span className="pf-milestone-season" aria-hidden="true">
-                        {m.season}
-                      </span>
-                      <span className="pf-milestone-year">{m.year}</span>
-                    </div>
-                    <div>
-                      <h3 className="pf-milestone-title">{m.title}</h3>
-                      <p className="pf-milestone-body">{m.body}</p>
-                    </div>
-                  </div>
+                {story.map((p) => (
+                  <p className="pf-about-intro" key={p.slice(0, 24)}>
+                    {p}
+                  </p>
                 ))}
               </div>
             </div>

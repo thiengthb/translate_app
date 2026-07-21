@@ -27,7 +27,7 @@ export function PasswordField<TFormValues extends FieldValues>({
                 type="button"
                 onClick={() => setShow((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                aria-label={show ? "Hide password" : "Show password"}
+                aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>

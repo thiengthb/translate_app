@@ -149,7 +149,7 @@ function LevelCard({ s, onContinue, onDetail }: {
       <div className="flex items-center gap-3">
         <span className="text-lg font-bold">{s.level}</span>
         <span className="text-sm text-muted-foreground">
-          Unlocked {s.unlocked} / {s.total}
+          Đã mở khóa {s.unlocked} / {s.total}
         </span>
         {s.reviewDue > 0 && (
           <Badge className="ml-auto gap-1 bg-amber-500 hover:bg-amber-500">
@@ -161,9 +161,9 @@ function LevelCard({ s, onContinue, onDetail }: {
       <Progress value={pct} className="h-2" />
 
       <div className="flex gap-4 text-sm text-muted-foreground">
-        <span>📖 Learning: <b className="text-foreground">{s.learning}</b></span>
-        <span>⏰ Review due: <b className="text-foreground">{s.reviewDue}</b></span>
-        <span>✓ Mastered: <b className="text-foreground">{s.mastered}</b></span>
+        <span>📖 Đang học: <b className="text-foreground">{s.learning}</b></span>
+        <span>⏰ Cần ôn: <b className="text-foreground">{s.reviewDue}</b></span>
+        <span>✓ Đã thành thạo: <b className="text-foreground">{s.mastered}</b></span>
       </div>
 
       <div className="flex gap-2">

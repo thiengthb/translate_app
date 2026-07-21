@@ -69,7 +69,7 @@ export default function QuestionBankPage() {
       : assessmentApi.fetchQuestions(term ? { search: debounced.trim() } : {});
     request
       .then(setQuestions)
-      .catch(() => toast.error("Failed to load questions."))
+      .catch(() => toast.error("Không thể tải câu hỏi."))
       .finally(() => setLoading(false));
   };
 
@@ -96,9 +96,9 @@ export default function QuestionBankPage() {
       setSelectedTagIds(new Set([created.id]));
       setNewTagName("");
       setNewTagOpen(false);
-      toast.success("Tag created.");
+      toast.success("Đã tạo thẻ.");
     } catch {
-      toast.error("Failed to create tag (it may already exist).");
+      toast.error("Không thể tạo thẻ (có thể đã tồn tại).");
     } finally {
       setIsSavingTag(false);
     }

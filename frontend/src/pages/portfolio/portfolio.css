@@ -149,6 +149,13 @@
   color: var(--sumi);
 }
 
+/* Force the Japanese-glyph font on inline JP accents that otherwise sit in a
+   Latin/Vietnamese element (kickers, small labels). Higher specificity so it
+   wins over .pf-kicker / .pf-cols-label small. */
+.pf-root .pf-jp {
+  font-family: var(--font-jp);
+}
+
 /* reveal helper — GSAP toggles .is-in; base state is graceful for no-JS / RM */
 .pf-reveal {
   opacity: 0;
@@ -609,6 +616,50 @@
   z-index: -1;
   background: var(--_panel, var(--washi-deep));
 }
+.pf-work-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.pf-work:hover .pf-work-shot {
+  transform: scale(1.045);
+}
+.pf-work-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--_panel, var(--washi-deep));
+  opacity: 0.24;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.pf-work-seal {
+  position: absolute;
+  top: 6%;
+  right: 6%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(2.6rem, 6vw, 3.4rem);
+  height: clamp(2.6rem, 6vw, 3.4rem);
+  border-radius: 50%;
+  background: rgba(251, 243, 241, 0.85);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 10px 26px -14px rgba(32, 26, 30, 0.55);
+}
+.pf-work-seal span {
+  font-family: var(--font-jp);
+  font-weight: 800;
+  font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+  line-height: 1;
+  color: var(--_glyph, var(--sumi));
+}
 .pf-work-visual[data-tint="sakura"] {
   --_panel: linear-gradient(150deg, #fde4ec 0%, #f9c9dc 100%);
   --_glyph: #d65e8c;
@@ -624,19 +675,6 @@
 .pf-work-visual[data-tint="sumi"] {
   --_panel: linear-gradient(150deg, #efe7e5 0%, #d7c9c8 100%);
   --_glyph: #201a1e;
-}
-.pf-work-glyph {
-  font-family: var(--font-jp);
-  font-weight: 800;
-  font-size: clamp(6rem, 18vw, 12rem);
-  line-height: 1;
-  color: var(--_glyph, var(--sumi));
-  opacity: 0.9;
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-.pf-work:hover .pf-work-glyph {
-  transform: scale(1.06) rotate(-2deg);
 }
 /* a hint of "product UI" — a floating card + progress, drawn in CSS */
 .pf-work-chip {
@@ -943,17 +981,29 @@
   place-items: center;
   isolation: isolate;
 }
-.pf-portrait-glyph {
-  font-family: var(--font-jp);
-  font-weight: 800;
-  font-size: clamp(9rem, 22vw, 15rem);
-  color: rgba(255, 255, 255, 0.82);
-  line-height: 0.8;
+.pf-portrait-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.pf-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(160deg, #fde4ec 0%, #f4bcd1 55%, #e79bbb 100%);
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 .pf-portrait-tag {
   position: absolute;
   bottom: 6%;
   left: 6%;
+  z-index: 2;
   writing-mode: vertical-rl;
   font-family: var(--font-jp);
   color: #fff;

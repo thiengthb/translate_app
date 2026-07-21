@@ -31,11 +31,11 @@ export function SearchableSelect({
   value,
   onValueChange,
   options,
-  placeholder = "Select…",
+  placeholder = "Chọn…",
   className,
   align = "start",
   maxVisible = 5,
-  searchPlaceholder = "Search…",
+  searchPlaceholder = "Tìm kiếm…",
   disabled,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
@@ -101,7 +101,7 @@ export function SearchableSelect({
         {/* Options (max `maxVisible` rows, then scroll) */}
         <div className="scrollbar-hidden overflow-y-auto p-1" style={{ maxHeight: maxVisible * ROW_PX + 8 }}>
           {filtered.length === 0 ? (
-            <p className="px-2 py-3 text-center text-xs text-muted-foreground">No results</p>
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">Không có kết quả</p>
           ) : (
             filtered.map((o) => (
               <button

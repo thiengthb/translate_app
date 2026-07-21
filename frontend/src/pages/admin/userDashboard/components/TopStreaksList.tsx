@@ -43,7 +43,7 @@ export function TopStreaksList({ users }: Props) {
                                         {u.currentStreak}
                                     </div>
                                     <p className="text-[10px] text-muted-foreground">
-                                        best {u.longestStreak}
+                                        cao nhất {u.longestStreak}
                                     </p>
                                 </div>
                             </li>

@@ -1,42 +1,48 @@
 /**
  * Content for the designer-portfolio landing + about pages.
  *
- * Owner: Akira Kuronagi (Nguyễn Đình Ngọc Ân) — sinh viên Kỹ sư Cầu nối tại
- * ĐH FPT, lập trình viên Frontend. Copy sống ở đây (không nhúng trong JSX) để
- * các component đọc như bố cục, không phải văn bản.
+ * Owner: Akira Kuronagi (Nguyễn Đình Ngọc Ân) — a Bridge System Engineering
+ * student at FPT University and a frontend developer. Copy lives here (not
+ * inline in JSX) so the components read as layout, not prose.
  */
+
+import evRentalShot from "@/assets/portfolio/ev-rental.png";
+import ojtLearningShot from "@/assets/portfolio/ojt-learning.png";
 
 export const designer = {
   name: "Akira Kuronagi",
   nameJa: "黒凪 明",
   realName: "Nguyễn Đình Ngọc Ân",
-  role: "Kỹ sư Cầu nối · Frontend",
+  role: "Bridge SE · Frontend",
   roleJa: "ブリッジSE",
-  based: "Quảng Nam → TP.HCM → 日本",
-  // TODO(bạn): thay bằng email thật của bạn.
-  email: "ngocan.dev@gmail.com",
-  heroLead: "Xây dựng giải pháp kết nối công nghệ và văn hóa.",
+  based: "Quảng Nam → Ho Chi Minh City → 日本",
+  email: "dinhngocannguyen@gmail.com",
+  heroLead: "Building solutions that connect technology and culture.",
   heroSub:
-    "Chào bạn, tôi là Akira Kuronagi (Nguyễn Đình Ngọc Ân) — sinh viên ngành Kỹ thuật Phần mềm tại Đại học FPT, chuyên ngành Kỹ sư Cầu nối. Tôi tập trung thiết kế kiến trúc frontend gọn gàng, hiệu quả và đang chuẩn bị hành trang để trở thành cầu nối vững chắc giữa công nghệ Việt Nam và ngành IT Nhật Bản.",
+    "Hi, I'm Akira Kuronagi (Nguyễn Đình Ngọc Ân) — a Software Engineering student at FPT University, majoring in Bridge System Engineering. I focus on designing clean, efficient frontend architecture, and I'm getting ready to become a solid bridge between Vietnamese technology and Japan's IT industry.",
 } as const;
 
-// TODO(bạn): thay các liên kết "#" bằng hồ sơ thật của bạn.
 export const socials = [
-  { label: "GitHub", handle: "@akirakuronagi", href: "#" },
-  { label: "LinkedIn", handle: "/ngoc-an", href: "#" },
-  { label: "Facebook", handle: "/akira", href: "#" },
+  { label: "GitHub", handle: "@AkiraKuronagi", href: "https://github.com/AkiraKuronagi" },
+  {
+    label: "LinkedIn",
+    handle: "/đình-ngọc-ân-nguyễn",
+    href: "https://www.linkedin.com/in/%C4%91%C3%ACnh-ng%E1%BB%8Dc-%C3%A2n-nguy%E1%BB%85n-65a706317/",
+  },
+  { label: "Facebook", handle: "/nguyen.inh.ngoc.an", href: "https://www.facebook.com/nguyen.inh.ngoc.an" },
   { label: "Email", handle: designer.email, href: `mailto:${designer.email}` },
 ] as const;
 
 export interface Work {
-  index: string; // nhãn thứ tự (tategaki)
+  index: string; // ordinal label (tategaki)
   title: string;
-  glyph: string; // kanji neo cho phần hình
-  gloss: string; // phụ đề công nghệ (Latin)
+  glyph: string; // kanji anchoring the visual (fallback / accent)
+  image: string; // real project screenshot
+  gloss: string; // tech subtitle (Latin)
   summary: string;
   roleTags: string[];
   year: string;
-  chip: string; // gợi ý UI trang trí trên panel dự án
+  chip: string; // decorative UI hint shown on the project panel
   tint: "sakura" | "beni" | "hazakura" | "sumi";
 }
 
@@ -45,74 +51,83 @@ export const works: Work[] = [
     index: "作品 01",
     title: "EV Station Rental System",
     glyph: "電",
+    image: evRentalShot,
     gloss: "SWP391 · ReactJS",
     summary:
-      "Kiến trúc frontend phát triển trong khuôn khổ đồ án môn học SWP391, tập trung mang lại trải nghiệm tương tác mượt mà cho người dùng.",
-    roleTags: ["Lập trình Frontend", "ReactJS"],
+      "Frontend architecture built for the SWP391 course project, focused on delivering a smooth, responsive interaction experience for users.",
+    roleTags: ["Frontend Development", "ReactJS"],
     year: "2025",
-    chip: "Trạm sạc · sẵn sàng",
+    chip: "Station · ready",
     tint: "sakura",
   },
   {
     index: "作品 02",
     title: "OJT — Learning Base",
     glyph: "学",
+    image: ojtLearningShot,
     gloss: "Product Design · Web",
     summary:
-      "Ứng dụng web giáo dục toàn diện: theo dõi điểm danh chính xác, đồng bộ hóa lịch trình và quản lý hiệu quả các ca học lẫn ca làm việc.",
-    roleTags: ["Thiết kế Sản phẩm", "Giao diện Web"],
+      "A comprehensive educational web app: accurate attendance tracking, schedule synchronization, and efficient management of study and work shifts.",
+    roleTags: ["Product Design", "Web Interface"],
     year: "2026",
-    chip: "Điểm danh · hôm nay",
+    chip: "Attendance · today",
     tint: "hazakura",
   },
 ];
 
 export interface Step {
-  numeral: string; // số Hán — một trình tự có thứ tự thật (thứ tự nét)
+  numeral: string; // kanji numeral — a genuinely ordered sequence (stroke order)
   kanji: string;
   romaji: string;
   label: string;
   body: string;
 }
 
-/** Quy trình làm việc, kể theo "thứ tự nét" — thứ tự ở đây mang ý nghĩa. */
+/** Working process, told as "stroke order" — the order here carries meaning. */
 export const process: Step[] = [
   {
     numeral: "一",
     kanji: "研究",
     romaji: "kenkyū",
-    label: "Nghiên cứu",
-    body: "Hiểu rõ yêu cầu và người dùng trước khi viết dòng code đầu tiên.",
+    label: "Research",
+    body: "Understand the requirements and the users before writing the first line of code.",
   },
   {
     numeral: "二",
     kanji: "下書き",
     romaji: "shitagaki",
-    label: "Phác thảo",
-    body: "Dựng bố cục và luồng thao tác nhanh gọn, trên giấy trước khi lên màn hình.",
+    label: "Sketch",
+    body: "Rough out the layout and flow quickly — on paper before it reaches the screen.",
   },
   {
     numeral: "三",
     kanji: "制作",
     romaji: "seisaku",
-    label: "Lập trình",
-    body: "Hiện thực giao diện bằng ReactJS + TypeScript — dữ liệu thật, cảm giác thật.",
+    label: "Build",
+    body: "Realize the interface with ReactJS + TypeScript — real data, real feel.",
   },
   {
     numeral: "四",
     kanji: "推敲",
     romaji: "suikō",
-    label: "Tinh chỉnh",
-    body: "Trau chuốt hiệu suất, khoảng cách và chi tiết cho tới khi thật mượt.",
+    label: "Refine",
+    body: "Polish performance, spacing, and detail until it feels effortless.",
   },
 ];
 
-/** Lĩnh vực chuyên môn. */
+/** Story paragraphs — the "how I got here" narrative on the About page. */
+export const story: string[] = [
+  "My tech journey revolves around modern frontend web development. I build interfaces mainly with ReactJS, TypeScript, Tailwind CSS, Redux and Axios, grounded in the logical thinking I picked up from Java Core. I'd rather go deep and master this toolset than spread myself thin across backend frameworks.",
+  "Beyond the code, my greatest passion is the Japanese language and culture. I just sat the JLPT in July 2026, and I keep up a daily habit of practicing vocabulary and conversation. My long-term goal is to work in Japan directly, as a Bridge System Engineer.",
+  "Away from the screen, you might find me teaching chess, reading, cooking, swimming, or playing badminton. To recharge, I put on YOASOBI, watch anime like Frieren: Beyond Journey's End, or lose myself in worlds like Honkai: Star Rail and Wuthering Waves.",
+];
+
+/** Areas of expertise. */
 export const skills = [
-  "Lập trình Web Frontend",
-  "Kỹ sư Cầu nối",
-  "Phát triển giao diện (UI/UX)",
+  "Frontend Web Development",
+  "Bridge System Engineering",
+  "UI/UX Implementation",
 ] as const;
 
-/** Công cụ thường dùng. */
+/** Tools I reach for. */
 export const tools = ["ReactJS", "TypeScript", "Tailwind CSS", "Redux", "Axios", "Java Core"] as const;

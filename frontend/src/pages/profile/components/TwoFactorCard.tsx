@@ -207,7 +207,7 @@ export function TwoFactorCard() {
                             <div className="flex justify-center">
                                 <img
                                     src={setupData.qrDataUri}
-                                    alt="TOTP QR code"
+                                    alt="Mã QR xác thực hai lớp"
                                     className="h-48 w-48 rounded-md border bg-white p-2"
                                 />
                             </div>

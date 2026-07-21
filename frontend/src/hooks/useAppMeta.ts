@@ -29,10 +29,10 @@ const STATIC_TITLES: Array<[path: string, title: string]> = [
     ["/profile", "Hồ sơ"],
     ["/leaderboard", "Bảng xếp hạng"],
     ["/notifications", "Thông báo"],
-    ["/audit-logs", "Audit log"],
+    ["/audit-logs", "Nhật ký hoạt động"],
 
     // Home
-    ["/dashboard", "Dashboard"],
+    ["/dashboard", "Tổng quan"],
 
     // Auth flows
     ["/login", "Đăng nhập"],

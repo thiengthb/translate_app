@@ -40,7 +40,7 @@ export default function UsersPage() {
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)}>
             <TabsList>
                 <TabsTrigger value="manage">Quản lý</TabsTrigger>
-                <TabsTrigger value="analytic">Analytic</TabsTrigger>
+                <TabsTrigger value="analytic">Phân tích</TabsTrigger>
             </TabsList>
         </Tabs>
     );

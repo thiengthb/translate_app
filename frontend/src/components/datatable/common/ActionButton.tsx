@@ -26,7 +26,7 @@ const ActionButton = ({
     className,
 }: ActionButtonProps) => {
     return (
-        <TooltipWrapper content={tooltip || title || "Action"}>
+        <TooltipWrapper content={tooltip || title || "Hành động"}>
             <Button
                 variant={variant}
                 size="icon"

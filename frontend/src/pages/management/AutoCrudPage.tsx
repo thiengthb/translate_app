@@ -18,8 +18,8 @@ export const AutoCrudPage = ({ entity }: any) => {
         <PermissionGate permission={createPermission}>
             <ActionButton
                 onClick={() => navigate(entity.createRoute)}
-                tooltip="Create new data"
-                title="Create"
+                tooltip="Tạo dữ liệu mới"
+                title="Tạo"
                 variant="default"
                 icon={<Plus size={16} />}
             />

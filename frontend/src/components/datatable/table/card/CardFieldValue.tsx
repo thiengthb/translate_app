@@ -52,7 +52,7 @@ export function CardFieldValue({
   }
 
   if (field.type === "boolean") {
-    const labels = field.booleanLabels || { true: "Yes", false: "No" };
+    const labels = field.booleanLabels || { true: "Có", false: "Không" };
     const label = value ? labels.true : labels.false;
 
     // When the toggle isn't actionable (catalog viewers, locked views),
@@ -203,7 +203,7 @@ export function CardFieldValue({
       return (
         <TooltipWrapper content={optionsText}>
           <span className="text-xs text-muted-foreground cursor-help">
-            {value.length} option{value.length !== 1 ? "s" : ""}
+            {value.length} lựa chọn
           </span>
         </TooltipWrapper>
       );

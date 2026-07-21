@@ -89,7 +89,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       },
       onStompError: (frame) => {
         logger.error("STOMP error:", frame.headers["message"]);
-        setState((s) => ({ ...s, error: frame.headers["message"] ?? "STOMP error" }));
+        setState((s) => ({ ...s, error: frame.headers["message"] ?? "Lỗi kết nối thời gian thực" }));
       },
       onWebSocketClose: () => {
         setState({ connected: false, connecting: false, error: null });

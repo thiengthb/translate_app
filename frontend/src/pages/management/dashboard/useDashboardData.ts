@@ -158,7 +158,7 @@ export function useDashboardData(): SakuraDashboardProps {
                 title: "ĐIỂM DANH",
                 description:
                     "Ghé Hanabun mỗi ngày để giữ chuỗi streak của bạn cháy mãi.",
-                kind: "check-in",
+                kind: "điểm danh",
                 status: checkedIn ? "completed" : "in-progress",
                 accent: "mint",
                 done: checkedIn ? 1 : 0,
@@ -171,7 +171,7 @@ export function useDashboardData(): SakuraDashboardProps {
                 title: "HỌC ĐỀU 7 NGÀY",
                 description:
                     "Duy trì thói quen — mỗi ngày ghé học một chút là đủ.",
-                kind: "streak",
+                kind: "chuỗi ngày",
                 status: activeThisWeek >= 7 ? "completed" : "in-progress",
                 accent: "sakura",
                 done: activeThisWeek,

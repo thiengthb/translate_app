@@ -24,14 +24,14 @@ const grammarMarkerSchema: EntitySchema = {
     },
     {
       name: "markerPattern",
-      label: "Pattern",
+      label: "Mẫu",
       type: "text",
       sortable: true,
       bold: true,
     },
     {
       name: "register",
-      label: "Register",
+      label: "Văn phong",
       type: "text",
       sortable: true,
       filterable: true,
@@ -39,13 +39,13 @@ const grammarMarkerSchema: EntitySchema = {
     },
     {
       name: "frequencyRank",
-      label: "Frequency Rank",
+      label: "Xếp hạng tần suất",
       type: "number",
       sortable: true,
     },
     {
       name: "detectorSubkey",
-      label: "Detector Subkey",
+      label: "Mã phụ nhận diện",
       type: "text",
       sortable: true,
     },

@@ -52,8 +52,8 @@ const IMAGE_ASPECTS: Choice<CardLayoutConfig["imageAspect"]>[] = [
 ];
 
 const IMAGE_FITS: Choice<CardLayoutConfig["imageFit"]>[] = [
-    { id: "cover", label: "Cover", hint: "Lấp đầy, cắt phần thừa" },
-    { id: "contain", label: "Contain", hint: "Hiện hết, có viền nền" },
+    { id: "cover", label: "Lấp đầy", hint: "Lấp đầy, cắt phần thừa" },
+    { id: "contain", label: "Vừa khung", hint: "Hiện hết, có viền nền" },
 ];
 
 const TITLE_SIZES: Choice<CardLayoutConfig["titleSize"]>[] = [
@@ -74,7 +74,7 @@ const DISPLAY_MODES: Choice<CardLayoutConfig["fieldDisplay"]>[] = [
 ];
 
 const RADII: Choice<CardLayoutConfig["cardRadius"]>[] = [
-    { id: "sharp", label: "Sharp" },
+    { id: "sharp", label: "Vuông" },
     { id: "default", label: "Bo" },
     { id: "soft", label: "Mềm" },
 ];
@@ -98,13 +98,13 @@ const DENSITIES: Choice<CardLayoutConfig["cardDensity"]>[] = [
 ];
 
 const ACTIONS_POSITIONS: Choice<CardLayoutConfig["actionsPosition"]>[] = [
-    { id: "header", label: "Header" },
-    { id: "footer", label: "Footer" },
-    { id: "hover", label: "Hover" },
+    { id: "header", label: "Đầu card" },
+    { id: "footer", label: "Cuối card" },
+    { id: "hover", label: "Khi rê chuột" },
 ];
 
 const GRID_COLS: Choice<CardLayoutConfig["gridColumns"]>[] = [
-    { id: 0, label: "Auto" },
+    { id: 0, label: "Tự động" },
     { id: 1, label: "1" },
     { id: 2, label: "2" },
     { id: 3, label: "3" },

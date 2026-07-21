@@ -18,7 +18,7 @@ export function Dashboard() {
             pageScroll
             headerExtra={
                 <h1 className="font-display m-0 text-[26px] font-bold text-[#3A2E33]">
-                    Hi! {data.user.name}, welcome
+                    Chào {data.user.name}!
                 </h1>
             }
             sidePanel={<SakuraDashboardSidePanel {...data} />}

@@ -20,26 +20,26 @@ const userSchema: EntitySchema = {
     },
     {
       name: "firstName",
-      label: "First Name",
+      label: "Tên",
       type: "text",
       sortable: true,
     },
     {
       name: "lastName",
-      label: "Last Name",
+      label: "Họ",
       type: "text",
       sortable: true,
     },
     {
       name: "password",
-      label: "Password",
+      label: "Mật khẩu",
       type: "password",
       visible: false,
       hideable: false,
     },
     {
       name: "roleIds",
-      label: "Role",
+      label: "Vai trò",
       type: "relation",
       relation: {
         api: roleApi,
@@ -55,7 +55,7 @@ const userSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "User",
+  name: "Người dùng",
   path: "/users",
   api: userApi,
   schema: userSchema,

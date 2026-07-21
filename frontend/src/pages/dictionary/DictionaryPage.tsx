@@ -719,8 +719,8 @@ export function WordCard({ word, onSearch, furigana, savedIds, onSavedChange, li
                         )}
                         <Button size="sm" variant="ghost" onClick={copy} className="h-8 px-2 text-xs">
                             {copied
-                                ? <><Check className="h-3 w-3 text-green-600 dark:text-green-400" />Đã copy</>
-                                : <><Copy className="h-3 w-3" />Copy</>}
+                                ? <><Check className="h-3 w-3 text-green-600 dark:text-green-400" />Đã sao chép</>
+                                : <><Copy className="h-3 w-3" />Sao chép</>}
                         </Button>
                     </div>
                 </div>

@@ -9,18 +9,18 @@ export function PortfolioFooter() {
       <div className="pf-wrap">
         <div className="pf-contact pf-reveal">
           <div>
-            <span className="pf-kicker">問い合わせ · Contact</span>
+            <span className="pf-kicker pf-jp">問い合わせ</span>
             <h2 className="pf-contact-title">
-              Let's make something
+              Let's build something
               <br />
-              that helps people learn.
+              that connects people.
             </h2>
             <a className="pf-contact-mail pf-inklink" href={`mailto:${designer.email}`}>
               {designer.email}
             </a>
           </div>
 
-          <nav className="pf-socials" aria-label="Elsewhere">
+          <nav className="pf-socials" aria-label="Other links">
             {socials.map((s) => (
               <a key={s.label} className="pf-social" href={s.href}>
                 {s.label}
@@ -32,9 +32,9 @@ export function PortfolioFooter() {
 
         <div className="pf-footer-base">
           <span>
-            © {year} {designer.name}. Crafted with sumi ink & sakura.
+            © {year} {designer.name} ({designer.realName}).
           </span>
-          <span>Hanabun · 花文 — 日本語を、やさしく</span>
+          <span className="pf-jp">架け橋 — 日本とベトナムをつなぐ</span>
         </div>
       </div>
     </footer>

@@ -19,11 +19,11 @@ export default function NotFoundPage({ isAuthenticated }: NotFoundPageProps) {
         <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
             <h1 className="text-7xl font-bold text-primary">404</h1>
 
-            <p className="mt-4 text-xl font-semibold">Page Not Found</p>
+            <p className="mt-4 text-xl font-semibold">Không tìm thấy trang</p>
 
             <p className="mt-2 max-w-md text-muted-foreground">
-                Sorry, the page you are looking for does not exist or has been moved.
-                Please check the URL or return to the dashboard.
+                Rất tiếc, trang bạn đang tìm không tồn tại hoặc đã được di chuyển.
+                Vui lòng kiểm tra lại đường dẫn hoặc quay về trang chính.
             </p>
 
             <div className="mt-6 flex gap-3">
@@ -32,14 +32,14 @@ export default function NotFoundPage({ isAuthenticated }: NotFoundPageProps) {
                         to={homePath}
                         className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
                     >
-                        Go to Home
+                        Về trang chủ
                     </Link>
                 ) : (
                     <Link
                         to="/login"
                         className="rounded-md border px-5 py-2 text-sm font-medium hover:bg-muted"
                     >
-                        Back to Login
+                        Quay lại đăng nhập
                     </Link>
                 )}
 
@@ -48,7 +48,7 @@ export default function NotFoundPage({ isAuthenticated }: NotFoundPageProps) {
                     onClick={() => navigate(-1)}
                     className="rounded-md border px-5 py-2 text-sm font-medium hover:bg-muted"
                 >
-                    Go Back
+                    Quay lại
                 </button>
             </div>
         </div>

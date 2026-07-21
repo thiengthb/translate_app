@@ -57,7 +57,7 @@ export function RoleSwitcher({ primaryRole, roles }: RoleSwitcherProps) {
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
-                    title={`${formatRoleLabel(currentRole)} view — click để đổi`}
+                    title={`Đang xem với vai trò ${formatRoleLabel(currentRole)} — bấm để đổi`}
                     className={cn(
                         "flex items-center gap-1 h-7 px-2 rounded-full text-xs font-medium border transition-colors cursor-pointer max-w-[120px]",
                         isStudentRole
@@ -106,7 +106,7 @@ export function RoleSwitcher({ primaryRole, roles }: RoleSwitcherProps) {
                         >
                             <Icon size={14} />
                             <span className="flex-1">
-                                {formatRoleLabel(availableRole)} View
+                                Xem với vai trò {formatRoleLabel(availableRole)}
                             </span>
                             {selected && (
                                 <span
@@ -123,7 +123,7 @@ export function RoleSwitcher({ primaryRole, roles }: RoleSwitcherProps) {
                             )}
                             {!isAssigned && !selected && (
                                 <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                                    Preview
+                                    Xem thử
                                 </span>
                             )}
                         </DropdownMenuItem>

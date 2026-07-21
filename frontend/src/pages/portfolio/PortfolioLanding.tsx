@@ -109,8 +109,8 @@ export default function PortfolioLanding() {
         });
       }
 
-      // --- work glyphs slide subtly as they pass through the viewport ---
-      gsap.utils.toArray<HTMLElement>(".pf-work-glyph").forEach((g) => {
+      // --- work screenshots drift subtly as they pass through the viewport ---
+      gsap.utils.toArray<HTMLElement>(".pf-work-shot").forEach((g) => {
         gsap.fromTo(
           g,
           { yPercent: -8 },
@@ -166,20 +166,20 @@ export default function PortfolioLanding() {
             <div className="pf-hero-copy">
               <div className="pf-hero-eyebrow">
                 <span className="pf-ja">{designer.nameJa}</span>
-                <span className="pf-ro">Hồ sơ · 2026</span>
+                <span className="pf-ro">Portfolio · 2026</span>
               </div>
 
               <h1 className="pf-hero-title">
                 <span className="pf-line">
-                  <span>Xây dựng giải pháp</span>
+                  <span>Building solutions</span>
                 </span>
                 <span className="pf-line">
                   <span>
-                    <span className="pf-em">kết nối</span> công nghệ
+                    that <span className="pf-em">connect</span> technology
                   </span>
                 </span>
                 <span className="pf-line">
-                  <span>và văn hóa.</span>
+                  <span>and culture.</span>
                 </span>
               </h1>
 
@@ -201,13 +201,13 @@ export default function PortfolioLanding() {
                       ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
                   }}
                 >
-                  Xem dự án
+                  View work
                   <span className="pf-arrow" aria-hidden="true">
                     ↓
                   </span>
                 </a>
                 <Link className="pf-inklink" to="/about">
-                  Về Akira →
+                  About Akira →
                 </Link>
               </div>
             </div>
@@ -237,17 +237,17 @@ export default function PortfolioLanding() {
             <div className="pf-ma">
               <span className="pf-eyebrow pf-reveal">
                 間
-                <small>Ma · khoảng lặng</small>
+                <small>Ma · negative space</small>
               </span>
               <div className="pf-ma-body pf-reveal">
                 <p className="pf-ma-statement">
-                  Giao diện tốt là giao diện biết lùi lại. Tôi thiết kế cho <span className="pf-em">間</span> —
-                  khoảng thở giữa các phần tử, sự gọn gàng giúp người dùng tập trung vào điều quan trọng.
+                  A good interface knows when to step back. I design for <span className="pf-em">間</span> —
+                  the breathing room between elements, the calm that lets people focus on what matters.
                 </p>
                 <p className="pf-ma-note">
-                  Ít giao diện hơn, nhiều thấu hiểu hơn. Mỗi thành phần phải xứng đáng với chỗ nó chiếm, hoặc
-                  được lược bỏ. Tôi ưu tiên hiệu suất frontend, bố cục tối ưu trên mọi thiết bị và trải nghiệm
-                  luôn trực quan.
+                  Less interface, more understanding. Every component has to earn the space it takes, or it
+                  gets cut. I put frontend performance first, layouts that hold up across every device, and an
+                  experience that always feels intuitive.
                 </p>
               </div>
             </div>
@@ -263,18 +263,19 @@ export default function PortfolioLanding() {
           <div className="pf-wrap">
             <div className="pf-section-head">
               <div className="pf-reveal">
-                <span className="pf-kicker">選抜作品</span>
-                <h2 className="pf-section-title">Dự án tiêu biểu</h2>
+                <span className="pf-kicker pf-jp">選抜作品</span>
+                <h2 className="pf-section-title">Selected work</h2>
               </div>
-              <span className="pf-section-count pf-reveal">Hai dự án · 2025—2026</span>
+              <span className="pf-section-count pf-reveal">Two projects · 2025—2026</span>
             </div>
 
             <div className="pf-works">
               {works.map((w, i) => (
                 <article className="pf-work pf-reveal" key={w.title}>
                   <div className="pf-work-visual" data-tint={w.tint}>
-                    <span className="pf-work-glyph" aria-hidden="true">
-                      {w.glyph}
+                    <img className="pf-work-shot" src={w.image} alt={`${w.title} — project screenshot`} />
+                    <span className="pf-work-seal" aria-hidden="true">
+                      <span>{w.glyph}</span>
                     </span>
                     <div className="pf-work-chip" style={{ "--_p": `${58 + i * 12}%` } as CSSProperties}>
                       <b>{w.chip}</b>
@@ -299,7 +300,7 @@ export default function PortfolioLanding() {
                       </div>
                       <div className="pf-work-foot">
                         <Link className="pf-inklink" to="/about">
-                          Xem chi tiết →
+                          View details →
                         </Link>
                         <span className="pf-work-year">{w.year}</span>
                       </div>
@@ -317,11 +318,11 @@ export default function PortfolioLanding() {
             <div className="pf-approach pf-reveal">
               <span className="pf-eyebrow">
                 書き順
-                <small>Kakijun · thứ tự nét</small>
+                <small>Kakijun · stroke order</small>
               </span>
               <p className="pf-approach-lead">
-                Mỗi giao diện, như mỗi con chữ, được dựng nên <span className="pf-em">từng nét một</span> — theo
-                đúng thứ tự.
+                Every interface, like every character, is built <span className="pf-em">one stroke at a
+                time</span> — in the right order.
               </p>
               <div className="pf-steps">
                 {process.map((s) => (
@@ -347,10 +348,10 @@ export default function PortfolioLanding() {
           <div className="pf-wrap">
             <div className="pf-teaser pf-reveal">
               <div>
-                <span className="pf-kicker">私について</span>
-                <h2 className="pf-teaser-title">Một người viết code, và đang xây cầu sang Nhật Bản.</h2>
+                <span className="pf-kicker pf-jp">私について</span>
+                <h2 className="pf-teaser-title">A developer writing code — and building a bridge to Japan.</h2>
                 <Link className="pf-btn pf-btn--ghost" to="/about">
-                  Tìm hiểu thêm
+                  Learn more
                   <span className="pf-arrow" aria-hidden="true">
                     →
                   </span>
