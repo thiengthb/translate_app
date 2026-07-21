@@ -4,66 +4,29 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(kanji): enhance kanji data structure and add DeepSeek client for translation">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(guest): add guest lookup tools and update navigation links">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/security/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/sidebar/SidebarMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/deck-study/DeckStudyPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/deck-study/DeckStudyPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionBankPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionBankPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionFormPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionFormPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizCreateEditPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizCreateEditPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizResultPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuizResultPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auditLog/AuditLogPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/auditLog/AuditLogPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/classroom/AssignmentStatsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/classroom/AssignmentStatsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/classroom/ClassroomDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/classroom/ClassroomDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/classroom/ClassroomListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/classroom/ClassroomListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/NotebookPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/NotebookPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/VocabularyBrowsePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/VocabularyBrowsePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/WordCreatePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/WordCreatePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/WordDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/WordDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/KanjiRadicalGamePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/games/kanji-radical/KanjiRadicalGamePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDashboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarLevelPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarLevelPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarSessionPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarSessionPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDeckBrowsePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDeckBrowsePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDeckListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDeckListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiFlashcardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiFlashcardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiQuizPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiQuizPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiRadicalDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiRadicalDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiRadicalListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiRadicalListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiReadingSetListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiReadingSetListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiReviewPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiReviewPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiSearchPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiSearchPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiSessionsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiSessionsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiWordDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiWordDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiWritingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/KanjiWritingPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/landing/LandingPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/leaderboard/LeaderboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/notifications/NotificationsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/notifications/NotificationsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/production/ProductionPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/production/ReviewPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/production/ReviewPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/ProfilePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/publicProfile/PublicProfilePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/publicProfile/PublicProfilePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStatsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStatsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/AnkiTemplateEditPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiTemplateEditPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/CardTemplateEditPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/CardTemplateEditPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/CardTemplatePreviewPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/CardTemplatePreviewPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/CommunityPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/CommunityPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/CreateDeckPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/CreateDeckPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/DeckPreviewPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/DeckPreviewPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/EditQuizletDeckPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/EditQuizletDeckPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardSchedulePreviewPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/FlashcardSchedulePreviewPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/ImportDeckPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/ImportDeckPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/LibraryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/LibraryPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/learning/KanaSharkPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/learning/KanaSharkPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/assets/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameHUD.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameResultModal.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameSetupPanel.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/PixiTypingScene.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/TypingInput.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useKanaSharkGame.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useKanaSharkItems.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useSrsReviewSubmitQueue.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/services/kanaSharkApi.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/types/kanaShark.types.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/calculateTypingRating.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/createEnemyFromSrsItem.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/isAnswerAccepted.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/normalizeRomaji.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/performanceMode.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/ratingToScore.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/guest/GuestDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/guest/GuestDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/guest/GuestSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/guest/GuestSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/learning/KanaSharkPage.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -361,14 +324,6 @@
       <workItem from="1784562392334" duration="3075000" />
       <workItem from="1784631119163" duration="5578000" />
       <workItem from="1784644777571" duration="841000" />
-    </task>
-    <task id="LOCAL-00014" summary="feat(configuration) update workspace.xml to reflect recent changes and task updates">
-      <option name="closed" value="true" />
-      <created>1780073660156</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1780073660156</updated>
     </task>
     <task id="LOCAL-00015" summary="feat(translation): integrate DeepL API for text translation and add language selection features">
       <option name="closed" value="true" />
@@ -754,7 +709,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784653706743</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="feat(guest): add guest lookup tools and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784656626070</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1784656626070</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -805,7 +768,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and remove theme customization" />
     <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
     <MESSAGE value="feat(branding): update branding to Hanabun and integrate new logo components" />
     <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
@@ -830,7 +792,8 @@
     <MESSAGE value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
     <MESSAGE value="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links" />
     <MESSAGE value="feat(kanji): enhance kanji data structure and add DeepSeek client for translation" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(kanji): enhance kanji data structure and add DeepSeek client for translation" />
+    <MESSAGE value="feat(guest): add guest lookup tools and update navigation links" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(guest): add guest lookup tools and update navigation links" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

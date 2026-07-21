@@ -128,8 +128,8 @@ export function GuestDashboard() {
                             <span className="text-[#FF6B9D]">Hanabun</span>
                         </h2>
                         <p className="m-0 mb-4 text-[16px] font-medium text-[#9A8E92]">
-                            Tra từ, Kanji, phân tích câu và dịch thuật — miễn phí, không cần
-                            đăng nhập. Đăng nhập để lưu tiến độ, flashcard và giữ chuỗi streak.
+                            Tra từ vựng và dịch thuật — miễn phí, không cần đăng nhập. Đăng
+                            nhập để lưu tiến độ, flashcard và giữ chuỗi streak.
                         </p>
                         <div className="flex flex-wrap gap-2">
                             <Button asChild>

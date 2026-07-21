@@ -31,7 +31,7 @@ const NAV: NavItem[] = [
  * Guest sidebar (labeled) — mirrors the authenticated Sakura rail's candy
  * styling, but wide enough to show text labels so a first-time visitor knows
  * exactly what each tool does. Holds the guest-usable tools + the Đăng nhập /
- * Đăng ký buttons pinned at the bottom.
+ * Đăng ký buttons right below the nav.
  */
 export function GuestSidebar({
     tab,
@@ -87,8 +87,8 @@ export function GuestSidebar({
                 })}
             </nav>
 
-            {/* Auth actions pinned to the bottom */}
-            <div className="mt-6 flex flex-col gap-2 lg:mt-auto lg:pt-6">
+            {/* Auth actions — right below the nav */}
+            <div className="mt-4 flex flex-col gap-2">
                 <div className="rounded-2xl bg-[#FFF7F9] p-3 text-center">
                     <p className="mb-2 text-xs text-[#9A8E92]">
                         Đăng nhập để lưu từ, flashcard và tiến độ học.
