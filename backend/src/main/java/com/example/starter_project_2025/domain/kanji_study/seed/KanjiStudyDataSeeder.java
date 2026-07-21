@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,10 +47,14 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
     private final KanjiDeckItemRepository deckItemRepository;
     private final ObjectMapper objectMapper;
 
+    /** Default study-batch size: pre-made (system) decks come grouped 20 kanji per nhóm. */
+    private static final int DEFAULT_GROUP_SIZE = 20;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
         if (detailRepository.count() > 0) {
+            backfillSystemDeckGroups();
             return; // already seeded
         }
 
@@ -103,6 +108,17 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
                         .priority(priority++)
                         .build());
             }
+
+            // Alternate-writing (cách viết khác) links.
+            int vp = 0;
+            for (JsonNode v : k.path("variants")) {
+                readingRepository.save(KanjiReading.builder()
+                        .kanji(detail)
+                        .readingType("VARIANT")
+                        .value(v.asText())
+                        .priority(vp++)
+                        .build());
+            }
         }
 
         // 3. Built-in system decks (one per level: N5 + grades 1-3). A kanji shared
@@ -126,6 +142,7 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
                 deckItemRepository.save(KanjiDeckItem.builder()
                         .deck(deck)
                         .kanji(detail)
+                        .groupIndex(order / DEFAULT_GROUP_SIZE)
                         .orderIndex(order++)
                         .build());
             }
@@ -133,6 +150,33 @@ public class KanjiStudyDataSeeder implements CommandLineRunner {
 
         log.info("Kanji Study seed complete: {} radicals, {} kanji, {} decks.",
                 byNumber.size(), byChar.size(), deckCount);
+    }
+
+    /**
+     * Databases seeded before group_index existed have every item in one flat group.
+     * Re-chunk those system decks into the default 20-per-nhóm layout. Decks the user
+     * already organised (more than one group) are left untouched.
+     */
+    private void backfillSystemDeckGroups() {
+        for (KanjiDeck deck : deckRepository.findAll()) {
+            if (!Boolean.TRUE.equals(deck.getIsSystem()) || Boolean.TRUE.equals(deck.getIsDeleted())) continue;
+
+            List<KanjiDeckItem> items = deckItemRepository
+                    .findByDeckIdAndIsDeletedFalseOrderByGroupIndexAscOrderIndexAsc(deck.getId());
+            if (items.size() <= DEFAULT_GROUP_SIZE) continue;
+
+            boolean flat = items.stream().allMatch(i -> i.getGroupIndex() == 0);
+            if (!flat) continue;
+
+            int order = 0;
+            for (KanjiDeckItem item : items) {
+                item.setGroupIndex(order / DEFAULT_GROUP_SIZE);
+                item.setOrderIndex(order++);
+            }
+            deckItemRepository.saveAll(items);
+            log.info("Kanji deck [{}] re-chunked into {} groups of {}.",
+                    deck.getTitle(), (items.size() + DEFAULT_GROUP_SIZE - 1) / DEFAULT_GROUP_SIZE, DEFAULT_GROUP_SIZE);
+        }
     }
 
     private static String text(JsonNode node, String field) {

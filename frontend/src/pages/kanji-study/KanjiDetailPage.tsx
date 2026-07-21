@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, GitFork, PenLine } from "lucide-react";
+import { ArrowLeft, GitFork, Maximize2, PenLine } from "lucide-react";
 import { kanjiDetailApi, kanjiReadingApi, kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiDetailDTO, KanjiReadingDTO, KanjiRadicalDTO } from "@/types";
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiStrokeAnimator } from "./components/KanjiStrokeAnimator";
-import { KanjiChietTu } from "./components/KanjiChietTu";
+import { KanjiChietTu, KanjiChietTuModal } from "./components/KanjiChietTu";
 import { KanjiDeckStrip } from "./components/KanjiDeckStrip";
+import { KanjiVariantLinks } from "./components/KanjiVariantLinks";
+import { KanjiVocabularySections } from "./components/KanjiVocabularySections";
+import { KanjiSentenceSection } from "./components/KanjiSentenceSection";
 import { parseKvg, hasDecomposition } from "./components/kanjiVg";
+import { recordViewedItem } from "./lib/kanjiSearchHistory";
 
 /**
  * Detail view of a single kanji (the Kanji-Study master record): character,
@@ -20,10 +24,21 @@ export default function KanjiDetailPage() {
   const [searchParams] = useSearchParams();
   const deckId = searchParams.get("deck");
 
+  // "Focus" mode: opened from inside an exercise (Học). The whole top nav is
+  // hidden and the only way out is back to the exact question being studied.
+  const focus = searchParams.get("focus") === "1";
+  const fromMode = searchParams.get("from"); // "quiz" | "writing"
+  const groupParam = searchParams.get("group");
+  const returnUrl =
+    deckId && fromMode
+      ? `/kanji-study/deck/${deckId}/${fromMode}?${groupParam ? `group=${groupParam}&` : ""}resume=1`
+      : null;
+
   const [kanji, setKanji] = useState<KanjiDetailDTO | null>(null);
   const [readings, setReadings] = useState<KanjiReadingDTO[]>([]);
   const [radical, setRadical] = useState<KanjiRadicalDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [zoomChietTu, setZoomChietTu] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -34,6 +49,14 @@ export default function KanjiDetailPage() {
       try {
         const k = await kanjiDetailApi.getById(id).catch(() => null);
         if (!cancelled) setKanji(k);
+        if (k?.id != null && k.character) {
+          recordViewedItem({
+            type: "kanji",
+            id: k.id,
+            label: k.character,
+            sub: k.meaning ?? undefined,
+          });
+        }
 
         const readingRes = await kanjiReadingApi.getPage(
           { page: 0, size: 50 },
@@ -60,6 +83,10 @@ export default function KanjiDetailPage() {
 
   const hanViet = readings.filter((r) => r.readingType === "HAN_VIET").map((r) => r.value).filter(Boolean);
   const nanori = readings.filter((r) => r.readingType === "NANORI").map((r) => r.value).filter(Boolean);
+  const variants = readings
+    .filter((r) => r.readingType === "VARIANT")
+    .map((r) => r.value)
+    .filter((v): v is string => !!v);
   const kvg = parseKvg(kanji?.strokeData);
 
   const Row = ({ label, value }: { label: string; value?: string | number | null }) =>
@@ -71,16 +98,28 @@ export default function KanjiDetailPage() {
     );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout hideNav={focus}>
       <div className="max-w-3xl mx-auto pb-10">
-        {deckId && <KanjiDeckStrip deckId={deckId} currentId={id ? Number(id) : undefined} />}
+        {focus ? (
+          /* In-exercise: the only way out is back to the question. */
+          <button
+            onClick={() => (returnUrl ? navigate(returnUrl) : navigate(-1))}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:border-rose-400"
+          >
+            <ArrowLeft size={16} /> Quay lại câu hỏi
+          </button>
+        ) : (
+          <>
+            {deckId && <KanjiDeckStrip deckId={deckId} currentId={id ? Number(id) : undefined} />}
 
-        <button
-          onClick={() => (deckId ? navigate(`/kanji-study/deck/${deckId}`) : navigate(-1))}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ArrowLeft size={16} /> {deckId ? "Tất cả Hán tự" : "Quay lại"}
-        </button>
+            <button
+              onClick={() => (deckId ? navigate(`/kanji-study/deck/${deckId}`) : navigate(-1))}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+            >
+              <ArrowLeft size={16} /> {deckId ? "Tất cả Hán tự" : "Quay lại"}
+            </button>
+          </>
+        )}
 
         {isLoading ? (
           <p className="text-muted-foreground">Đang tải...</p>
@@ -109,7 +148,8 @@ export default function KanjiDetailPage() {
                   label="Bộ thủ"
                   value={radical ? `${radical.character}${radical.hanViet ? ` (${radical.hanViet})` : ""}` : undefined}
                 />
-                <Row label="Cấp độ" value={kanji.jlptLevel} />
+                <Row label="Cấp độ" value={kanji.jlptLevel === "KHAC" ? undefined : kanji.jlptLevel} />
+                <KanjiVariantLinks variants={variants} />
               </div>
             </div>
 
@@ -124,9 +164,19 @@ export default function KanjiDetailPage() {
               </Section>
 
               {hasDecomposition(kvg?.tree ?? null) && (
-                <Section icon={<GitFork size={16} className="text-rose-500" />} title="Chiết tự">
-                  <KanjiChietTu tree={kvg?.tree ?? null} />
-                </Section>
+                <section className="rounded-2xl border border-border bg-card p-4">
+                  <button
+                    type="button"
+                    onClick={() => setZoomChietTu(true)}
+                    title="Bấm để phóng to chiết tự"
+                    className="w-full flex items-center gap-2 text-sm font-semibold text-foreground mb-3 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                  >
+                    <GitFork size={16} className="text-rose-500" />
+                    Chiết tự
+                    <Maximize2 size={14} className="ml-auto text-muted-foreground" />
+                  </button>
+                  <KanjiChietTu tree={kvg?.tree ?? null} maxHeight={340} />
+                </section>
               )}
             </div>
 
@@ -143,9 +193,19 @@ export default function KanjiDetailPage() {
                 </div>
               </Section>
             )}
+
+            {/* ── Vocabulary-driven sections (examples / recommended / full list) ── */}
+            {kanji.character && <KanjiVocabularySections character={kanji.character} />}
+
+            {/* ── Example sentences ("Câu") ── */}
+            {kanji.character && <KanjiSentenceSection character={kanji.character} />}
           </div>
         )}
       </div>
+
+      {zoomChietTu && kvg?.tree && (
+        <KanjiChietTuModal tree={kvg.tree} onClose={() => setZoomChietTu(false)} />
+      )}
     </KanjiLayout>
   );
 }

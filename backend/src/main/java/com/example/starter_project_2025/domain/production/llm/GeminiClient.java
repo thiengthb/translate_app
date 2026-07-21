@@ -1,6 +1,7 @@
 package com.example.starter_project_2025.domain.production.llm;
 
 import com.example.starter_project_2025.domain.production.grammar.model.CommonMistake;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -268,30 +269,113 @@ public class GeminiClient {
                 .build();
     }
 
+    private record ViItem(Integer i, String vi) {}
+
+    /**
+     * Batch-translate Japanese sentences into natural Vietnamese, using the English
+     * gloss only to disambiguate. Returns a list aligned 1:1 with the input —
+     * entries the model skipped are {@code null} so callers can leave those rows
+     * for a later retry. Returns {@code null} only on hard failure (no API key /
+     * network / unparseable response).
+     *
+     * <p>The reply is index-keyed ({@code {"i":N,"vi":"…"}}) rather than a bare
+     * array: with 100+ near-duplicate corpus sentences the model occasionally
+     * merges two items, and one dropped element must not invalidate the batch.</p>
+     */
+    public List<String> translateToVietnamese(List<String> japanese, List<String> english) {
+        if (apiKey.isBlank() || japanese == null || japanese.isEmpty()) {
+            return null;
+        }
+        int n = japanese.size();
+        StringBuilder items = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            items.append(i + 1).append(". JA: ").append(safe(japanese.get(i)));
+            if (english != null && i < english.size() && english.get(i) != null) {
+                items.append("  (EN: ").append(english.get(i)).append(")");
+            }
+            items.append("\n");
+        }
+
+        String prompt = """
+                Translate each numbered Japanese sentence below into natural, concise Vietnamese.
+                Use the English gloss only to disambiguate meaning; translate the Japanese, not the English.
+                Keep it faithful and natural (no notes, no romaji).
+                Sentences may look similar — translate EVERY numbered item separately, never merge or skip.
+
+                Reply with ONLY a JSON array of %d objects, one per input number:
+                [{"i":1,"vi":"<câu tiếng Việt>"},{"i":2,"vi":"<câu tiếng Việt>"}, ...]
+
+                Sentences:
+                %s
+                """.formatted(n, items.toString());
+
+        try {
+            int maxTokens = Math.min(32768, 200 + n * 110);
+            String response = generate(prompt, 0.3, maxTokens, true);
+            if (response == null) {
+                return null;
+            }
+            String json = extractJsonArray(response.trim());
+            List<ViItem> parsed = mapper.readValue(json, new TypeReference<List<ViItem>>() {});
+            if (parsed == null || parsed.isEmpty()) {
+                return null;
+            }
+            String[] out = new String[n];
+            int filled = 0;
+            for (ViItem item : parsed) {
+                if (item != null && item.i() != null && item.i() >= 1 && item.i() <= n
+                        && item.vi() != null && !item.vi().isBlank()) {
+                    if (out[item.i() - 1] == null) filled++;
+                    out[item.i() - 1] = item.vi().trim();
+                }
+            }
+            if (filled < n) {
+                log.info("Gemini VI translate: {}/{} items returned (missing rows retried later)", filled, n);
+            }
+            return java.util.Arrays.asList(out);
+        } catch (Exception e) {
+            log.warn("Gemini VI translate failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * POST one user message to the Gemini generateContent REST API and return the
      * first text part of the reply. Returns {@code null} when no API key is configured
      * or the call fails, so every caller degrades to its offline fallback.
      */
     private String generate(String prompt, double temperature, int maxTokens) {
+        return generate(prompt, temperature, maxTokens, false);
+    }
+
+    /**
+     * @param jsonMode force {@code application/json} output — guarantees parseable
+     *                 JSON for large batch responses where one stray quote would
+     *                 otherwise waste the whole (quota-counted) request.
+     */
+    private String generate(String prompt, double temperature, int maxTokens, boolean jsonMode) {
         if (apiKey.isBlank()) {
             log.warn("Gemini call skipped: GEMINI_API_KEY is not set");
             return null;
         }
         try {
             String url = BASE_URL + model + ":generateContent";
+            Map<String, Object> generationConfig = new java.util.LinkedHashMap<>();
+            generationConfig.put("temperature", temperature);
+            generationConfig.put("maxOutputTokens", maxTokens);
+            // gemini-flash-latest is a 2.5 "thinking" model; with our small
+            // maxOutputTokens the thinking budget would consume the whole
+            // response and return empty content. Disable thinking for these
+            // short structured-JSON tasks (compose/judge/alternatives/translate).
+            generationConfig.put("thinkingConfig", Map.of("thinkingBudget", 0));
+            if (jsonMode) {
+                generationConfig.put("responseMimeType", "application/json");
+            }
             Map<String, Object> payload = Map.of(
                     "contents", List.of(Map.of(
                             "role", "user",
                             "parts", List.of(Map.of("text", prompt)))),
-                    "generationConfig", Map.of(
-                            "temperature", temperature,
-                            "maxOutputTokens", maxTokens,
-                            // gemini-flash-latest is a 2.5 "thinking" model; with our small
-                            // maxOutputTokens the thinking budget would consume the whole
-                            // response and return empty content. Disable thinking for these
-                            // short structured-JSON tasks (compose/judge/alternatives).
-                            "thinkingConfig", Map.of("thinkingBudget", 0)));
+                    "generationConfig", generationConfig);
 
             return restClient.post()
                     .uri(url)
@@ -345,6 +429,15 @@ public class GeminiClient {
     private String extractJson(String text) {
         int start = text.indexOf('{');
         int end = text.lastIndexOf('}');
+        if (start != -1 && end != -1 && end > start) {
+            return text.substring(start, end + 1);
+        }
+        return text;
+    }
+
+    private String extractJsonArray(String text) {
+        int start = text.indexOf('[');
+        int end = text.lastIndexOf(']');
         if (start != -1 && end != -1 && end > start) {
             return text.substring(start, end + 1);
         }

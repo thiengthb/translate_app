@@ -57,6 +57,10 @@ public class KanjiDetail extends BaseEntity {
     @FieldMeta(label = "Meaning", type = "textarea", order = 4, group = "Basic")
     String meaning;
 
+    @Column(name = "meaning_vi", columnDefinition = "TEXT")
+    @FieldMeta(label = "Nghĩa (Tiếng Việt)", type = "textarea", order = 5, group = "Basic")
+    String meaningVi;
+
     @Column(name = "jlpt_level", length = 8)
     @FieldMeta(label = "Cấp độ", type = "text", order = 5, group = "Basic")
     String jlptLevel;

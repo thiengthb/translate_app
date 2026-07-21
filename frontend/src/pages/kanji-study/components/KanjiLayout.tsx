@@ -18,13 +18,28 @@ import { KanjiContentNav } from "./KanjiStudyHeader";
 export function KanjiLayout({
   children,
   pageScroll,
+  hideNav = false,
 }: {
   children: ReactNode;
   /** Let the whole document scroll (like Dashboard) instead of the default
    *  fixed-viewport frame with internal scroll. Only the Kanji home page
    *  (dashboard-style cards, no ProTable) uses this. */
   pageScroll?: boolean;
+  /** In-exercise "focus" mode: drop the shared sidebar/top-bar chrome so the
+   *  only way out is the page's own back control (quiz / writing / detail
+   *  focus). Renders a bare full-screen frame with the themed background. */
+  hideNav?: boolean;
 }) {
+  if (hideNav) {
+    return (
+      <div className="min-h-svh bg-background flex flex-col">
+        <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <MainLayout
       pathName={{ "/kanji-study": "Học Kanji" }}

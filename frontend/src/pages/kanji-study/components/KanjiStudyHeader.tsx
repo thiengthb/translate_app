@@ -5,6 +5,7 @@ import {
   Layers,
   Library,
   ScrollText,
+  Search,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -79,6 +80,20 @@ export function KanjiContentNav() {
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Link
+        to="/kanji-study/search"
+        aria-label="Tìm kiếm"
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+          location.pathname === "/kanji-study/search"
+            ? "text-rose-500"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <Search size={15} />
+        <span className="hidden sm:inline">Tìm kiếm</span>
+      </Link>
     </nav>
   );
 }

@@ -59,4 +59,12 @@ public class KanjiStudySession extends BaseEntity {
     @Builder.Default
     @Column(name = "completed_items", nullable = false)
     int completedItems = 0;
+
+    @Builder.Default
+    @Column(name = "correct_items", nullable = false)
+    int correctItems = 0;
+
+    /** Study-batch group inside the deck this session covered (null = whole deck). */
+    @Column(name = "group_index")
+    Integer groupIndex;
 }

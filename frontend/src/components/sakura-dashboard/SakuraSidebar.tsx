@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 import {
     BookOpen,
@@ -11,7 +12,10 @@ import {
     Home,
     Layers,
     LayoutGrid,
-    Power,
+    LogOut,
+    Puzzle,
+    Trophy,
+    User as UserIcon,
     type LucideIcon,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,6 +23,12 @@ import { useSelector } from "react-redux";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge.tsx";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RoleSwitcher } from "@/components/layout/header/RoleSwitcher";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { iconMap } from "@/components/datatable/iconMap";
@@ -64,19 +74,23 @@ type RailItem = {
 };
 
 const PRIMARY_NAV: RailItem[] = [
+    // ── Page 1 — daily core: the loop every learner touches every session ──
     { url: "/dictionary", label: "Từ điển", icon: BookOpen },
+    {
+        url: "/kanji-study",
+        label: "Học Kanji",
+        glyph: "漢",
+        permission: "KANJI_DECK_READ",
+    },
+    { url: "/kanji-radical", label: "Ghép bộ thủ", icon: Puzzle },
+    { url: "/leaderboard", label: "Bảng xếp hạng", icon: Trophy },
+    // ── Page 2 — extended tools; admin-only items live in the catalog ──────
     {
         url: "/library",
         label: "Thư viện thẻ",
         icon: Layers,
         permission: "FOLDER_READ",
         match: ["/deck/", "/create-deck", "/decks/", "/card-templates"],
-    },
-    {
-        url: "/kanji-study",
-        label: "Học Kanji",
-        glyph: "漢",
-        permission: "KANJI_DECK_READ",
     },
     {
         url: "/grammar",
@@ -131,7 +145,7 @@ function RailButton({
                 aria-label={label}
                 onClick={onClick}
                 className={cn(
-                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-colors cursor-pointer",
+                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95",
                     active ? "text-white" : "text-[#B9AEB2] hover:text-[#FF8FAB]",
                 )}
                 style={
@@ -206,7 +220,7 @@ function CatalogFlyout({ groups }: { groups: CatalogGroup[] }) {
                     if (e.key === "Escape") setOpen(false);
                 }}
                 className={cn(
-                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-colors cursor-pointer",
+                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95",
                     anyActive || open
                         ? "text-white"
                         : "text-[#B9AEB2] hover:text-[#FF8FAB]",
@@ -223,56 +237,75 @@ function CatalogFlyout({ groups }: { groups: CatalogGroup[] }) {
                 <LayoutGrid className="h-[22px] w-[22px]" />
             </button>
 
-            {open &&
-                coords &&
+            {coords &&
                 createPortal(
-                    <div
-                        style={{
-                            position: "fixed",
-                            left: coords.left,
-                            top: coords.top,
-                            maxHeight: `calc(100vh - ${coords.top}px - 16px)`,
-                        }}
-                        className="z-[60] w-64 overflow-y-auto rounded-2xl border border-[#FBEAF0] bg-white p-3 shadow-[0_18px_50px_rgba(255,143,171,0.22)]"
-                        onMouseEnter={openNow}
-                        onMouseLeave={closeSoon}
-                    >
-                        <div className="px-2 pb-2">
-                            <span className="font-display text-[14px] font-bold text-[#3A2E33]">
-                                Danh mục
-                            </span>
-                        </div>
-                        {groups.map((g) => (
-                            <div key={g.id} className="mb-2 last:mb-0">
-                                <div className="px-2 pb-0.5 pt-1 text-[10px] font-bold uppercase tracking-wide text-[#FF6B9D]">
-                                    {g.name}
+                    <AnimatePresence>
+                        {open && (
+                            <motion.div
+                                key="catalog-panel"
+                                initial={{ opacity: 0, x: -15, scale: 0.95 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -15, scale: 0.95 }}
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                style={{
+                                    position: "fixed",
+                                    left: coords.left,
+                                    top: coords.top,
+                                    maxHeight: `calc(100vh - ${coords.top}px - 16px)`,
+                                }}
+                                className="z-[60] w-[380px] overflow-y-auto rounded-3xl border border-pink-100 bg-white/90 p-5 shadow-2xl backdrop-blur-xl"
+                                onMouseEnter={openNow}
+                                onMouseLeave={closeSoon}
+                            >
+                                <div className="px-1 pb-3">
+                                    <span className="font-display text-[15px] font-bold text-[#3A2E33]">
+                                        Danh mục
+                                    </span>
                                 </div>
-                                {g.modules.map((m) => {
-                                    const Icon = m.icon;
-                                    const active = isActive(m.url);
-                                    return (
-                                        <button
-                                            key={m.url}
-                                            type="button"
-                                            onClick={() => {
-                                                navigate(m.url);
-                                                setOpen(false);
-                                            }}
-                                            className={cn(
-                                                "flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-[13px] transition-colors cursor-pointer",
-                                                active
-                                                    ? "bg-[#FFE5EC] font-semibold text-[#FF6B9D]"
-                                                    : "text-[#3A2E33] hover:bg-[#FFF0F4] hover:text-[#FF6B9D]",
-                                            )}
-                                        >
-                                            <Icon className="h-4 w-4 shrink-0 text-[#FF8FAB]" />
-                                            <span className="truncate">{m.title}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>,
+                                <div className="space-y-4">
+                                    {groups.map((g) => (
+                                        <div key={g.id}>
+                                            <div className="mb-2 inline-flex items-center rounded-full bg-[#FFE5EC] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#FF6B9D]">
+                                                {g.name}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {g.modules.map((m) => {
+                                                    const Icon = m.icon;
+                                                    const active = isActive(m.url);
+                                                    return (
+                                                        <motion.button
+                                                            key={m.url}
+                                                            type="button"
+                                                            whileHover={{ scale: 1.04 }}
+                                                            whileTap={{ scale: 0.97 }}
+                                                            transition={{
+                                                                type: "spring",
+                                                                stiffness: 400,
+                                                                damping: 22,
+                                                            }}
+                                                            onClick={() => {
+                                                                navigate(m.url);
+                                                                setOpen(false);
+                                                            }}
+                                                            className={cn(
+                                                                "flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] transition-all cursor-pointer",
+                                                                active
+                                                                    ? "bg-[#FFE5EC] font-semibold text-[#FF6B9D]"
+                                                                    : "text-[#3A2E33] hover:bg-pink-50 hover:text-pink-600",
+                                                            )}
+                                                        >
+                                                            <Icon className="h-4 w-4 shrink-0 text-[#FF8FAB]" />
+                                                            <span className="truncate">{m.title}</span>
+                                                        </motion.button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
                     document.body,
                 )}
         </>
@@ -284,22 +317,22 @@ function CatalogFlyout({ groups }: { groups: CatalogGroup[] }) {
  * by every authenticated shell. Renders the inner column only; the host
  * supplies the outer width / border.
  *
- *   ┌────┐
- *   │ 🟣 │ avatar (→ profile)
- *   │ 🏠 │ Home (→ /dashboard)
- *   │ 📖 │ Từ điển           — every role
- *   │ 🗂 │ Thư viện thẻ       — FOLDER_READ
- *   │ 漢 │ Học Kanji          — KANJI_DECK_READ
- *   │ 📝 │ Ngữ pháp           — GRAMMAR_PROGRESS_READ
- *   │ ✅ │ Kiểm tra           — QUIZ_READ
- *   │ 🎓 │ Lớp học            — CLASSROOM_READ
- *   │ ▦  │ Danh mục flyout    — mọi module còn lại (đã lọc permission)
- *   │ ⏻  │ Power (logout)
- *   └────┘
+ * Rail buttons paginate 5-per-page instead of scrolling — page 1 is the
+ * daily core loop, page 2+ is extended/admin tooling plus the catalog:
  *
- * The pinned buttons cover the core learning loop; everything else (games,
- * translator, leaderboard, admin management …) lives in the "Danh mục"
- * flyout, grouped and filtered by the viewer's effective permissions.
+ *   Page 1 (daily core)        Page 2+ (extended & admin)
+ *   ┌────┐                     ┌────┐
+ *   │ 🟣 │ avatar → dropdown   │ 🗂 │ Thư viện thẻ    — FOLDER_READ
+ *   │ 🏠 │ Home                │ 📝 │ Ngữ pháp        — GRAMMAR_PROGRESS_READ
+ *   │ 📖 │ Từ điển             │ ✅ │ Kiểm tra        — QUIZ_READ
+ *   │ 漢 │ Học Kanji           │ 🎓 │ Lớp học         — CLASSROOM_READ
+ *   │ 🧩 │ Ghép bộ thủ         │ ▦  │ Danh mục flyout — mọi module còn lại
+ *   │ 🏆 │ Bảng xếp hạng       └────┘   (Câu hỏi, Thẻ câu hỏi, Bộ đọc Kanji,
+ *   └────┘                             quản trị hệ thống … theo permission)
+ *
+ * Everything not pinned on the rail (games, translator, admin management …)
+ * lives in the "Danh mục" flyout, grouped by function and filtered by the
+ * viewer's effective permissions.
  */
 export function SakuraSidebarContent() {
     const location = useLocation();
@@ -448,19 +481,38 @@ export function SakuraSidebarContent() {
 
     return (
         <>
-            {/* Avatar → profile */}
-            <button
-                type="button"
-                onClick={() => navigate("/profile")}
-                aria-label="Trang cá nhân"
-                className="shrink-0 rounded-full border-2 border-[#FFC2D4] bg-[#FFF0F4] p-1 transition-transform hover:scale-105 cursor-pointer"
-            >
-                <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-[#FFE5EC] font-semibold text-[#FF6B9D]">
-                        {initial}
-                    </AvatarFallback>
-                </Avatar>
-            </button>
+            {/* Avatar → dropdown (Tài khoản / Đăng xuất) */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        type="button"
+                        aria-label="Menu người dùng"
+                        className="shrink-0 rounded-full border-2 border-[#FFC2D4] bg-[#FFF0F4] p-1 transition-transform hover:scale-105 cursor-pointer"
+                    >
+                        <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-[#FFE5EC] font-semibold text-[#FF6B9D]">
+                                {initial}
+                            </AvatarFallback>
+                        </Avatar>
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-44">
+                    <DropdownMenuItem
+                        onSelect={() => navigate("/profile")}
+                        className="gap-2 cursor-pointer"
+                    >
+                        <UserIcon className="h-4 w-4" />
+                        Tài khoản
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={() => void logout()}
+                        className="gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-500/10"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Đăng xuất
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Primary nav — fixed-height page of up to RAIL_PAGE_SIZE rail
                 buttons; pagination controls in the footer switch pages. */}
@@ -528,10 +580,6 @@ export function SakuraSidebarContent() {
                         </button>
                     </div>
                 )}
-
-                <RailButton label="Đăng xuất" onClick={() => void logout()}>
-                    <Power className="h-[22px] w-[22px]" />
-                </RailButton>
             </div>
         </>
     );

@@ -2,11 +2,13 @@ package com.example.starter_project_2025.domain.kanji_study.detail;
 
 import com.example.starter_project_2025.base.crud.dto.OnCreate;
 import com.example.starter_project_2025.base.crud.dto.OnUpdate;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,21 @@ public class KanjiDetailController {
     @PreAuthorize("hasAuthority('KANJI_DETAIL_READ')")
     public ResponseEntity<KanjiDetailDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(kanjiDetailService.getById(id));
+    }
+
+    @GetMapping("/by-component/{component}")
+    @PreAuthorize("hasAuthority('KANJI_DETAIL_READ')")
+    @Operation(summary = "Hán tự chứa một thành phần chiết tự (element/original trong cây KanjiVG)")
+    public ResponseEntity<Page<KanjiDetailDTO>> byComponent(
+            @PathVariable String component,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size) {
+        if (component == null || component.isBlank()) {
+            return ResponseEntity.ok(Page.empty());
+        }
+        return ResponseEntity.ok(kanjiDetailService.findByComponent(
+                component.trim(),
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 60))));
     }
 
     @PostMapping

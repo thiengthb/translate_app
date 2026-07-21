@@ -74,10 +74,10 @@ export function KanjiStrokeAnimator({
   const [phase, setPhase] = useState<"loading" | "ok" | "error">("loading");
   const [drawn, setDrawn] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [speedIdx, setSpeedIdx] = useState(2); // default to "Nhanh" (fast)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const ms = SPEEDS[speedIdx].ms;
+  // Fixed animation speed — "Nhanh" (fast); the speed selector UI is hidden.
+  const ms = SPEEDS[2].ms;
 
   // Load strokes: imported data first, else CDN fallback.
   useEffect(() => {
@@ -234,22 +234,6 @@ export function KanjiStrokeAnimator({
         >
           <ChevronRight size={16} />
         </button>
-      </div>
-
-      <div className="flex gap-1 text-[11px]">
-        {SPEEDS.map((s, i) => (
-          <button
-            key={s.label}
-            onClick={() => setSpeedIdx(i)}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-              speedIdx === i
-                ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
       </div>
     </div>
   );

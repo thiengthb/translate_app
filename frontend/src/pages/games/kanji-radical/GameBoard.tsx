@@ -12,6 +12,7 @@ import { ScorePanel } from "./components/ScorePanel";
 import { BuffTray } from "./components/BuffTray";
 import { HowToPlayDialog, ResultOverlay } from "./components/Overlays";
 import { RewardOverlay } from "./components/RewardOverlay";
+import { SakuraField } from "./components/SakuraField";
 
 export function GameBoard() {
     const game = useKanjiGame();
@@ -31,12 +32,17 @@ export function GameBoard() {
     return (
         <>
             {/* flex-1 min-h-0 fills the viewport height slice given by the page
-                wrapper — board never grows taller than the available space. */}
-            <div className="relative flex flex-1 min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 p-3 shadow-2xl">
-                {/* soft ambient glows */}
-                <div className="pointer-events-none absolute -top-24 right-10 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
+                wrapper — the karuta "table" never grows taller than the space.
+                Glass sakura surface (matches the app shell) instead of the old
+                casino-dark board. */}
+            <div className="relative flex flex-1 min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-b from-white/85 via-[#fff2f6]/80 to-[#ffe4ee]/75 p-3 shadow-[0_20px_60px_-24px_rgba(255,107,157,0.45)] backdrop-blur-md sm:p-4">
+                {/* ambient sakura petal field + soft pink/gold glows */}
+                <SakuraField />
+                <div className="pointer-events-none absolute -top-24 right-10 h-56 w-56 rounded-full bg-[#ff8fab]/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-[#ffc95c]/20 blur-3xl" />
 
+                {/* content rides above the petal layer */}
+                <div className="relative z-10 flex flex-1 min-h-0 flex-col gap-3">
                 <TopBar
                     score={state.score}
                     targetScore={state.targetScore}
@@ -50,8 +56,8 @@ export function GameBoard() {
                 />
 
                 {/* charm shelf — the run's collected buffs */}
-                <div className="flex shrink-0 items-center justify-between gap-2 rounded-xl bg-slate-950/40 px-3 py-1.5 ring-1 ring-white/5">
-                    <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                <div className="flex shrink-0 items-center justify-between gap-2 rounded-xl border border-white/60 bg-white/60 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[#c77a99]">
                         Lá bùa
                     </span>
                     <BuffTray buffs={state.buffs} />
@@ -63,10 +69,10 @@ export function GameBoard() {
                     <div className="flex flex-1 min-h-0 flex-col items-center gap-2">
                         <PromptStand prompt={state.prompt} revealed={state.hintUsed} />
                         <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/50 px-3 py-1 text-xs text-slate-400 ring-1 ring-white/10">
-                                <Puzzle className="size-3.5 text-amber-400" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs text-[#6b5b61] shadow-sm backdrop-blur-sm">
+                                <Puzzle className="size-3.5 text-[#ff6b9d]" />
                                 Cần tìm{" "}
-                                <b className="text-amber-300">{radicalCount}</b> bộ thủ
+                                <b className="text-[#ff6b9d]">{radicalCount}</b> bộ thủ
                             </span>
                             <button
                                 type="button"
@@ -79,7 +85,7 @@ export function GameBoard() {
                                               GAME_CONFIG.hintPenalty * 100,
                                           )}% điểm lượt này)`
                                 }
-                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-amber-500/15 text-amber-200 ring-amber-400/40 hover:bg-amber-500/25"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-[#ffc95c]/50 bg-[#ffc95c]/20 px-3 py-1 text-xs font-semibold text-[#a06a12] shadow-sm transition-colors hover:bg-[#ffc95c]/35 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Lightbulb className="size-3.5" />
                                 {state.hintUsed
@@ -93,7 +99,7 @@ export function GameBoard() {
                     </div>
 
                     {/* right rail: score + controls */}
-                    <div className="w-full lg:w-76">
+                    <div className="w-full lg:w-80 lg:shrink-0">
                         <ScorePanel
                             readout={state.readout}
                             selectedCount={state.selectedIds.length}
@@ -111,12 +117,12 @@ export function GameBoard() {
                 </div>
 
                 {/* hand across the bottom — shrink-0 keeps height fixed */}
-                <div className="shrink-0 rounded-2xl bg-slate-950/40 p-2 ring-1 ring-white/5">
+                <div className="shrink-0 rounded-2xl border border-white/60 bg-white/60 p-2 shadow-sm backdrop-blur-sm">
                     <div className="mb-1.5 flex items-center justify-between px-1">
-                        <span className="text-xs uppercase tracking-wide text-slate-500">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[#c77a99]">
                             Bài trên tay
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-[#9a8e92]">
                             Đã chọn {state.selectedIds.length}/{GAME_CONFIG.maxSelect}
                         </span>
                     </div>
@@ -127,6 +133,8 @@ export function GameBoard() {
                         onToggle={game.toggleSelect}
                     />
                 </div>
+                </div>
+                {/* end z-10 content — overlays below cover the whole table */}
 
                 {state.phase === "roundClear" && (
                     <RewardOverlay

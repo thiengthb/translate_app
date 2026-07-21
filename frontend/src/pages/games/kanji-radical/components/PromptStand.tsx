@@ -7,11 +7,11 @@ const JP_SERIF =
     '"Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", "MS Mincho", serif';
 
 const LEVEL_TINT: Record<string, string> = {
-    N5: "bg-emerald-500/20 text-emerald-200 ring-emerald-400/40",
-    N4: "bg-sky-500/20 text-sky-200 ring-sky-400/40",
-    N3: "bg-amber-500/20 text-amber-200 ring-amber-400/40",
-    N2: "bg-orange-500/20 text-orange-200 ring-orange-400/40",
-    N1: "bg-rose-500/20 text-rose-200 ring-rose-400/40",
+    N5: "bg-emerald-50 text-emerald-600 ring-emerald-300/60",
+    N4: "bg-sky-50 text-sky-600 ring-sky-300/60",
+    N3: "bg-amber-50 text-amber-600 ring-amber-300/60",
+    N2: "bg-orange-50 text-orange-600 ring-orange-300/60",
+    N1: "bg-rose-50 text-rose-600 ring-rose-300/60",
 };
 
 export function PromptStand({
@@ -24,7 +24,7 @@ export function PromptStand({
 }) {
     return (
         <div className="flex flex-col items-center gap-1 text-center">
-            <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-xs font-medium uppercase tracking-[0.2em] text-[#c77a99]">
                 Tìm bộ thủ của chữ
             </span>
 
@@ -39,7 +39,7 @@ export function PromptStand({
                 >
                     {/* hiragana furigana */}
                     <span
-                        className="text-base text-amber-200/90 sm:text-lg"
+                        className="text-base text-[#c77a99] sm:text-lg"
                         style={{ fontFamily: JP_SERIF }}
                     >
                         {prompt.hiragana}
@@ -54,20 +54,20 @@ export function PromptStand({
                             initial={{ opacity: 0, scale: 0.8, rotateX: -40 }}
                             animate={{ opacity: 1, scale: 1, rotateX: 0 }}
                             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                            className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[4.5rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.3)] sm:text-[5.5rem]"
+                            className="bg-gradient-to-b from-[#ff6b9d] to-[#ff8fab] bg-clip-text text-[4.5rem] leading-none text-transparent drop-shadow-[0_4px_18px_rgba(255,107,157,0.3)] sm:text-[5.5rem]"
                             style={{ fontFamily: JP_SERIF }}
                         >
                             {prompt.kanji}
                         </motion.span>
                     ) : (
-                        <span className="bg-gradient-to-b from-white to-amber-100 bg-clip-text text-[3rem] font-bold leading-tight text-transparent drop-shadow-[0_4px_18px_rgba(251,191,36,0.25)] sm:text-[4rem]">
+                        <span className="bg-gradient-to-b from-[#ff6b9d] to-[#ff8fab] bg-clip-text text-[3rem] font-bold leading-tight text-transparent drop-shadow-[0_4px_18px_rgba(255,107,157,0.25)] sm:text-[4rem]">
                             {prompt.hanViet}
                         </span>
                     )}
 
                     <div className="mt-1 flex items-center gap-2">
                         {revealed && (
-                            <span className="text-lg font-bold text-amber-300 sm:text-xl">
+                            <span className="text-lg font-bold text-[#ff6b9d] sm:text-xl">
                                 {prompt.hanViet}
                             </span>
                         )}
@@ -80,7 +80,7 @@ export function PromptStand({
                             {prompt.level}
                         </span>
                     </div>
-                    <span className="mt-0.5 text-sm text-slate-300">
+                    <span className="mt-0.5 text-sm text-[#6b5b61]">
                         {prompt.meaning}
                     </span>
                 </motion.div>

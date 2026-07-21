@@ -19,7 +19,7 @@ interface ResultOverlayProps {
 }
 
 const PRIMARY_BTN =
-    "flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-amber-400 to-orange-500 px-6 py-3 text-base font-bold text-slate-900 shadow-lg shadow-orange-500/30 transition-all hover:from-amber-300 hover:to-orange-400 active:scale-[0.98]";
+    "flex items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#ff6b9d] to-[#ff8fab] px-6 py-3 text-base font-bold text-white shadow-lg shadow-[#ff6b9d]/30 transition-all hover:from-[#ff5b93] hover:to-[#ff7fa1] active:scale-[0.98]";
 
 /**
  * End-of-run overlay for victory / game-over. The round-clear case is handled
@@ -37,14 +37,14 @@ export function ResultOverlay({
 
     const config = {
         victory: {
-            icon: <PartyPopper className="size-12 text-emerald-300" />,
+            icon: <PartyPopper className="size-12 text-emerald-500" />,
             title: "Xuất sắc! Hoàn thành tất cả các vòng!",
-            tint: "from-emerald-500/20",
+            tint: "from-emerald-50",
         },
         gameOver: {
-            icon: <Skull className="size-12 text-rose-300" />,
+            icon: <Skull className="size-12 text-rose-400" />,
             title: "Hết lượt rồi!",
-            tint: "from-rose-500/20",
+            tint: "from-rose-50",
         },
     }[phase];
 
@@ -52,31 +52,31 @@ export function ResultOverlay({
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-slate-950/80 p-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-[#3a2e33]/20 p-4 backdrop-blur-sm"
         >
             <motion.div
                 initial={{ scale: 0.85, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 280, damping: 24 }}
-                className={`flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl bg-gradient-to-b ${config.tint} to-slate-900 p-8 text-center ring-1 ring-white/10`}
+                className={`flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl bg-gradient-to-b ${config.tint} to-white p-8 text-center shadow-2xl ring-1 ring-white/70`}
             >
                 {config.icon}
-                <h2 className="text-2xl font-black text-white">{config.title}</h2>
+                <h2 className="text-2xl font-black text-[#3a2e33]">{config.title}</h2>
 
                 <div className="grid w-full grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-slate-950/40 px-3 py-3">
-                        <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                    <div className="rounded-xl bg-[#fff0f4] px-3 py-3 ring-1 ring-[#fbeaf0]">
+                        <div className="text-[11px] uppercase tracking-wide text-[#9a8e92]">
                             Tổng điểm
                         </div>
-                        <div className="text-2xl font-black tabular-nums text-amber-200">
+                        <div className="text-2xl font-black tabular-nums text-[#ff6b9d]">
                             {formatNumber(runTotal)}
                         </div>
                     </div>
-                    <div className="rounded-xl bg-slate-950/40 px-3 py-3">
-                        <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                    <div className="rounded-xl bg-[#fff0f4] px-3 py-3 ring-1 ring-[#fbeaf0]">
+                        <div className="text-[11px] uppercase tracking-wide text-[#9a8e92]">
                             Kỷ lục
                         </div>
-                        <div className="text-2xl font-black tabular-nums text-slate-100">
+                        <div className="text-2xl font-black tabular-nums text-[#3a2e33]">
                             {formatNumber(highScore)}
                         </div>
                     </div>

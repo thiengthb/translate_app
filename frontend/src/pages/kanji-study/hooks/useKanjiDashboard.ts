@@ -6,6 +6,11 @@ import {
 import { kanjiApi } from "@/api/features/words/kanji.api";
 import type { KanjiDeckDTO, KanjiProgressDTO } from "@/types";
 import { getCurrentUserId } from "@/utils/auth.utils";
+import {
+  emptyProficiencyCounts,
+  normalizeProficiency,
+  type KanjiProficiency,
+} from "../lib/kanjiProficiency";
 
 /** One JLPT (or custom) level row in the progress panel. */
 export interface LevelProgress {
@@ -28,7 +33,8 @@ export interface KanjiDashboardData {
   decks: KanjiDeckDTO[];
   /** Deck surfaced on the "study by deck" card (most recent, else first). */
   featuredDeck?: KanjiDeckDTO;
-  statusCounts: { new: number; learning: number; known: number };
+  /** How many studied kanji sit at each proficiency level. */
+  proficiencyCounts: Record<KanjiProficiency, number>;
   totalLearned: number;
   /** SRS items whose nextReviewAt has passed (due now). */
   dueCount: number;
@@ -78,7 +84,7 @@ export function useKanjiDashboard(): KanjiDashboardData {
   const [data, setData] = useState<KanjiDashboardData>({
     isLoading: true,
     decks: [],
-    statusCounts: { new: 0, learning: 0, known: 0 },
+    proficiencyCounts: emptyProficiencyCounts(),
     totalLearned: 0,
     dueCount: 0,
     levels: [],
@@ -101,15 +107,13 @@ export function useKanjiDashboard(): KanjiDashboardData {
           .catch(() => [] as KanjiProgressDTO[]),
       ]);
 
-      // ── Status breakdown ───────────────────────────────────────────────
-      const statusCounts = { new: 0, learning: 0, known: 0 };
+      // ── Proficiency breakdown (the 5 "Tiến độ" levels) ─────────────────
+      const proficiencyCounts = emptyProficiencyCounts();
       for (const p of progress) {
-        const s = (p.status ?? "NEW").toUpperCase();
-        if (s === "KNOWN") statusCounts.known++;
-        else if (s === "LEARNING") statusCounts.learning++;
-        else statusCounts.new++;
+        proficiencyCounts[normalizeProficiency(p.status)]++;
       }
-      const totalLearned = statusCounts.learning + statusCounts.known;
+      // "Learned" = studied and at least "Đã biết" (i.e. not still "Chưa biết").
+      const totalLearned = progress.length - proficiencyCounts.NEW;
 
       // ── SRS due now ────────────────────────────────────────────────────
       const now = Date.now();
@@ -162,7 +166,7 @@ export function useKanjiDashboard(): KanjiDashboardData {
       const learnedIds = Array.from(
         new Set(
           progress
-            .filter((p) => (p.status ?? "").toUpperCase() !== "NEW")
+            .filter((p) => normalizeProficiency(p.status) !== "NEW")
             .map((p) => p.kanjiId)
             .filter((x): x is number => x != null)
         )
@@ -204,7 +208,7 @@ export function useKanjiDashboard(): KanjiDashboardData {
         isLoading: false,
         decks,
         featuredDeck,
-        statusCounts,
+        proficiencyCounts,
         totalLearned,
         dueCount,
         levels,

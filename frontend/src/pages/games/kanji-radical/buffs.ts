@@ -48,27 +48,27 @@ export const RARITY_META: Record<
 > = {
     common: {
         label: "Thường",
-        ring: "ring-slate-400/40",
-        text: "text-slate-200",
-        glow: "from-slate-500/15",
+        ring: "ring-slate-400/50",
+        text: "text-slate-600",
+        glow: "from-slate-400/20",
     },
     uncommon: {
         label: "Hiếm",
-        ring: "ring-emerald-400/50",
-        text: "text-emerald-200",
-        glow: "from-emerald-500/20",
+        ring: "ring-emerald-400/60",
+        text: "text-emerald-600",
+        glow: "from-emerald-400/25",
     },
     rare: {
         label: "Quý",
         ring: "ring-sky-400/60",
-        text: "text-sky-200",
-        glow: "from-sky-500/25",
+        text: "text-sky-600",
+        glow: "from-sky-400/25",
     },
     legendary: {
         label: "Huyền thoại",
         ring: "ring-amber-400/70",
-        text: "text-amber-200",
-        glow: "from-amber-500/30",
+        text: "text-amber-600",
+        glow: "from-amber-400/30",
     },
 };
 

@@ -21,4 +21,6 @@ public class KanjiDeckItemDTO extends BaseDTO {
     Long kanjiId;
 
     Integer orderIndex;
+
+    Integer groupIndex;
 }
