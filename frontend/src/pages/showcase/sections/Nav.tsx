@@ -11,20 +11,11 @@ export default function Nav({ onJump }: { onJump: (id: string) => void }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-3 px-4 py-3 sm:px-8">
-      <div className="sk-glass flex items-center gap-2.5 rounded-full py-2 pl-2.5 pr-4">
-        <img
-          src="/hanabun-logo.svg"
-          alt=""
-          className="h-7 w-7"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-        <span className="sk-display text-lg leading-none text-[color:var(--sk-ink)]">
-          {brand.name}
-          <span className="ml-1 align-middle text-[color:var(--sk-pink)]">{brand.glyph}</span>
-        </span>
-      </div>
+      <img
+        src="/hanabun-logo-full.png"
+        alt={brand.name}
+        className="h-20 w-auto object-contain"
+      />
 
       <nav className="sk-glass hidden items-center gap-1 rounded-full px-2 py-1.5 md:flex">
         {links.map((l) => (

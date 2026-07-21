@@ -60,17 +60,11 @@ export default function CTAFooter({ onJump }: { onJump: (id: string) => void }) 
 
       {/* footer row */}
       <div className="mx-auto mt-8 flex max-w-6xl flex-col items-center justify-between gap-4 px-2 sm:flex-row">
-        <div className="flex items-center gap-2">
-          <img
-            src="/hanabun-logo.svg"
-            alt=""
-            className="h-6 w-6"
-            onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = "none")}
-          />
-          <span className="sk-display text-base text-[color:var(--sk-ink)]">
-            {brand.name} <span className="text-[color:var(--sk-pink)]">{brand.glyph}</span>
-          </span>
-        </div>
+        <img
+          src="/hanabun-logo-full.png"
+          alt={brand.name}
+          className="h-10 w-auto object-contain"
+        />
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-[color:var(--sk-ink-soft)]">
           <button onClick={() => onJump("features")} className="transition-colors hover:text-[color:var(--sk-pink-deep)]">
             Features
