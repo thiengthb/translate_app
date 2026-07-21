@@ -4,10 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(layout): update MainLayout header height for improved layout consistency">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/HanabunShowcase.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/anim.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/CTAFooter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/CTAFooter.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Features.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Features.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/LivePreview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Roles.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/sections/Roles.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/showcase/showcase.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/showcase/showcase.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -94,12 +99,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/thiengthb/translate_app.git",
+    "accountId": "f6f81030-4e38-4841-a11b-4754b5a2dc53"
   }
-}</component>
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -225,8 +230,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -302,14 +306,7 @@
       <workItem from="1783828721002" duration="3180000" />
       <workItem from="1783910917781" duration="2632000" />
       <workItem from="1784562392334" duration="3075000" />
-    </task>
-    <task id="LOCAL-00009" summary="feat(dictionary): chinh them phan vi du tu vung">
-      <option name="closed" value="true" />
-      <created>1780047806236</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1780047806237</updated>
+      <workItem from="1784631119163" duration="446000" />
     </task>
     <task id="LOCAL-00010" summary="feat(dictionary): add word">
       <option name="closed" value="true" />
@@ -695,7 +692,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784616632228</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling">
+      <option name="closed" value="true" />
+      <created>1784627621371</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1784627621371</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -746,7 +751,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages" />
     <MESSAGE value="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage" />
     <MESSAGE value="feat(toaster): implement custom AppToaster component with theme support" />
     <MESSAGE value="feat(sakura-dashboard): add Sakura Study Dashboard component and related types" />
@@ -771,7 +775,8 @@
     <MESSAGE value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
     <MESSAGE value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
     <MESSAGE value="feat(layout): update MainLayout header height for improved layout consistency" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(layout): update MainLayout header height for improved layout consistency" />
+    <MESSAGE value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

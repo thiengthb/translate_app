@@ -1,8 +1,32 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Check, Flame, Medal, Sparkles } from "lucide-react";
 import { dash } from "../showcase-data";
-import { fadeUp, inView } from "../anim";
+
+const PINK = "#ff6b9d";
+const MINT = "#3fb99a";
+const HONEY = "#e2a53a";
+
+/** Native IntersectionObserver — reliable here where Framer's useInView isn't. */
+function useInViewOnce<T extends Element>() {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, inView] as const;
+}
 
 /** Ease-out count-up; snaps to target under reduced motion. */
 function useCountUp(target: number, active: boolean, reduced: boolean, dur = 1100) {
@@ -27,13 +51,9 @@ function useCountUp(target: number, active: boolean, reduced: boolean, dur = 110
   return v;
 }
 
-const PINK = "#ff6b9d";
-const MINT = "#3fb99a";
-const HONEY = "#e2a53a";
-
 export default function LivePreview({ reduced }: { reduced: boolean }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const live = useInView(ref, { once: true, margin: "-20% 0px -20% 0px" });
+  const [ref, rawInView] = useInViewOnce<HTMLDivElement>();
+  const live = rawInView || reduced;
 
   const streak = useCountUp(dash.streak.current, live, reduced);
   const longest = useCountUp(dash.streak.longest, live, reduced);
@@ -41,7 +61,7 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
 
   return (
     <section id="preview" className="relative z-10 mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-8">
-      <motion.div initial="hidden" whileInView="show" viewport={inView} variants={fadeUp} className="mb-12 max-w-2xl">
+      <div className="sk-reveal mb-12 max-w-2xl">
         <span className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--sk-pink-deep)]">
           Your daily dashboard
         </span>
@@ -51,18 +71,10 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
         <p className="mt-4 text-lg text-[color:var(--sk-ink-soft)]">
           Streaks, EXP and missions turn everyday study into a habit. Here’s the real thing, in motion.
         </p>
-      </motion.div>
+      </div>
 
       {/* mock app window */}
-      <motion.div
-        ref={ref}
-        initial="hidden"
-        whileInView="show"
-        viewport={inView}
-        variants={fadeUp}
-        className="sk-glass overflow-hidden rounded-[30px] p-3 sm:p-5"
-      >
-        {/* window chrome */}
+      <div ref={ref} className="sk-reveal sk-glass overflow-hidden rounded-[30px] p-3 sm:p-5">
         <div className="mb-4 flex items-center gap-2 px-2">
           <span className="h-3 w-3 rounded-full" style={{ background: PINK }} />
           <span className="h-3 w-3 rounded-full" style={{ background: HONEY }} />
@@ -101,23 +113,23 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
             {/* month grid */}
             <div className="mt-4 grid grid-cols-7 gap-1.5">
               {Array.from({ length: 35 }).map((_, i) => {
-                const studied = i % 9 !== 4 && i % 7 !== 6 && i < 30; // scattered check-ins
+                const studied = i % 9 !== 4 && i % 7 !== 6 && i < 30;
                 const today = i === 29;
                 return (
-                  <motion.span
+                  <span
                     key={i}
-                    initial={reduced ? false : { scale: 0, opacity: 0 }}
-                    animate={live ? { scale: 1, opacity: 1 } : undefined}
-                    transition={{ delay: 0.2 + i * 0.012, type: "spring", stiffness: 320, damping: 20 }}
                     className="grid aspect-square place-items-center rounded-lg text-[10px] font-bold"
                     style={{
                       background: studied ? "color-mix(in srgb, #ff6b9d 20%, white)" : "rgba(255,255,255,0.7)",
                       color: studied ? PINK : "#c9b8bf",
                       boxShadow: today ? `0 0 0 2px ${PINK}` : undefined,
+                      opacity: live ? 1 : 0,
+                      transform: live ? "scale(1)" : "scale(0.4)",
+                      transition: `opacity .4s ease ${0.2 + i * 0.012}s, transform .4s cubic-bezier(.16,1,.3,1) ${0.2 + i * 0.012}s`,
                     }}
                   >
                     {studied ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
-                  </motion.span>
+                  </span>
                 );
               })}
             </div>
@@ -125,19 +137,17 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
 
           {/* right column */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            {/* EXP chart */}
             <div className="rounded-3xl bg-white/70 p-5">
               <div className="flex items-baseline justify-between">
                 <span className="sk-display text-lg text-[color:var(--sk-ink)]">Thành tích</span>
                 <span className="text-xs font-semibold text-[color:var(--sk-ink-soft)]">EXP · tuần này</span>
               </div>
-              <ExpChart live={live} reduced={reduced} />
+              <ExpChart live={live} />
             </div>
 
-            {/* Donut + rank */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-2">
               <div className="rounded-3xl bg-white/70 p-4 text-center">
-                <Donut live={live} reduced={reduced} />
+                <Donut live={live} />
                 <div className="mt-1 text-[11px] font-semibold text-[color:var(--sk-ink-soft)]">
                   {dash.weekly.done}/{dash.weekly.of} ngày tuần này
                 </div>
@@ -169,12 +179,13 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
               </div>
               <div className="mt-1 text-[11px] font-semibold text-[color:var(--sk-ink-soft)]">{m.note}</div>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--sk-pink-wash)]">
-                <motion.div
+                <div
                   className="h-full rounded-full"
-                  style={{ background: i === 0 ? MINT : i === 2 ? HONEY : PINK }}
-                  initial={reduced ? false : { width: 0 }}
-                  animate={live ? { width: `${(m.done / m.of) * 100}%` } : undefined}
-                  transition={{ duration: 1, delay: 0.3 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                  style={{
+                    background: i === 0 ? MINT : i === 2 ? HONEY : PINK,
+                    width: live ? `${(m.done / m.of) * 100}%` : "0%",
+                    transition: `width 1s cubic-bezier(.16,1,.3,1) ${0.3 + i * 0.12}s`,
+                  }}
                 />
               </div>
               <div className="mt-1.5 text-right text-[11px] font-bold text-[color:var(--sk-ink-soft)]">
@@ -183,13 +194,13 @@ export default function LivePreview({ reduced }: { reduced: boolean }) {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
 
-/* ---- EXP sparkline (animated draw) ---------------------------------- */
-function ExpChart({ live, reduced }: { live: boolean; reduced: boolean }) {
+/* ---- EXP sparkline (draws in via stroke-dashoffset) ------------------ */
+function ExpChart({ live }: { live: boolean }) {
   const W = 280;
   const H = 96;
   const pad = 10;
@@ -204,6 +215,7 @@ function ExpChart({ live, reduced }: { live: boolean; reduced: boolean }) {
   const area = `${line} L ${pts[pts.length - 1][0].toFixed(1)} ${H - pad} L ${pts[0][0].toFixed(1)} ${H - pad} Z`;
   const peakIdx = vals.indexOf(max);
   const peak = pts[peakIdx];
+  const DASH = 420;
 
   return (
     <div className="relative mt-2">
@@ -214,35 +226,32 @@ function ExpChart({ live, reduced }: { live: boolean; reduced: boolean }) {
             <stop offset="100%" stopColor={PINK} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <motion.path
-          d={area}
-          fill="url(#sk-exp-fill)"
-          initial={reduced ? false : { opacity: 0 }}
-          animate={live ? { opacity: 1 } : undefined}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        />
-        <motion.path
+        <path d={area} fill="url(#sk-exp-fill)" style={{ opacity: live ? 1 : 0, transition: "opacity .8s ease .6s" }} />
+        <path
           d={line}
           fill="none"
           stroke={PINK}
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={reduced ? false : { pathLength: 0 }}
-          animate={live ? { pathLength: 1 } : undefined}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            strokeDasharray: DASH,
+            strokeDashoffset: live ? 0 : DASH,
+            transition: "stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)",
+          }}
         />
-        <motion.circle
+        <circle
           cx={peak[0]}
           cy={peak[1]}
           r={4}
           fill="#fff"
           stroke={PINK}
           strokeWidth={2.5}
-          initial={reduced ? false : { scale: 0 }}
-          animate={live ? { scale: 1 } : undefined}
-          transition={{ delay: 1.4, type: "spring", stiffness: 300, damping: 15 }}
-          style={{ transformOrigin: `${peak[0]}px ${peak[1]}px` }}
+          style={{
+            transformOrigin: `${peak[0]}px ${peak[1]}px`,
+            transform: live ? "scale(1)" : "scale(0)",
+            transition: "transform .5s cubic-bezier(.16,1,.3,1) 1.3s",
+          }}
         />
       </svg>
       <div className="mt-1 flex justify-between px-1 text-[9px] font-semibold text-[color:var(--sk-ink-soft)]">
@@ -261,7 +270,7 @@ function ExpChart({ live, reduced }: { live: boolean; reduced: boolean }) {
 }
 
 /* ---- weekly-consistency donut --------------------------------------- */
-function Donut({ live, reduced }: { live: boolean; reduced: boolean }) {
+function Donut({ live }: { live: boolean }) {
   const r = 34;
   const c = 2 * Math.PI * r;
   const pct = dash.weekly.done / dash.weekly.of;
@@ -270,7 +279,7 @@ function Donut({ live, reduced }: { live: boolean; reduced: boolean }) {
     <div className="relative mx-auto grid h-24 w-24 place-items-center">
       <svg viewBox="0 0 84 84" className="-rotate-90">
         <circle cx="42" cy="42" r={r} fill="none" stroke="var(--sk-pink-wash)" strokeWidth="9" />
-        <motion.circle
+        <circle
           cx="42"
           cy="42"
           r={r}
@@ -278,13 +287,16 @@ function Donut({ live, reduced }: { live: boolean; reduced: boolean }) {
           stroke={PINK}
           strokeWidth="9"
           strokeLinecap="round"
-          strokeDasharray={c}
-          initial={reduced ? false : { strokeDashoffset: c }}
-          animate={live ? { strokeDashoffset: c * (1 - pct) } : undefined}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+          style={
+            {
+              strokeDasharray: c,
+              strokeDashoffset: live ? c * (1 - pct) : c,
+              transition: "stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1) .3s",
+            } as CSSProperties
+          }
         />
       </svg>
-      <div className="absolute sk-display text-xl text-[color:var(--sk-ink)]">{label}%</div>
+      <div className="sk-display absolute text-xl text-[color:var(--sk-ink)]">{label}%</div>
     </div>
   );
 }

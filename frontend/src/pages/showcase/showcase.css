@@ -78,6 +78,20 @@
   border-radius: 14px;
 }
 
+/* ---- scroll reveal (native IntersectionObserver + CSS) --------------
+   Framer Motion's whileInView/useInView don't fire in this runtime, but a
+   plain IntersectionObserver does — so reveals are driven by toggling
+   `.is-in` (see HanabunShowcase useRevealAll). */
+.sk-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sk-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
 /* ---- GSAP hero title mask ------------------------------------------- */
 .sk-line {
   display: block;

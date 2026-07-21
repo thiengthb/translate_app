@@ -1,20 +1,14 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { brand } from "../showcase-data";
-import { fadeUp, inView } from "../anim";
 
 /** Pink-gradient closing CTA + footer. */
 export default function CTAFooter({ onJump }: { onJump: (id: string) => void }) {
   const year = 2026;
   return (
     <footer className="relative z-10 px-4 pb-8 pt-10 sm:px-8">
-      <motion.section
-        initial="hidden"
-        whileInView="show"
-        viewport={inView}
-        variants={fadeUp}
-        className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] px-6 py-16 text-center sm:px-12 sm:py-24"
+      <section
+        className="sk-reveal relative mx-auto max-w-6xl overflow-hidden rounded-[36px] px-6 py-16 text-center sm:px-12 sm:py-24"
         style={{ background: "linear-gradient(135deg, #ff5d94 0%, #ff86ac 42%, #ffc06a 108%)" }}
       >
         {/* glow + petals */}
@@ -62,7 +56,7 @@ export default function CTAFooter({ onJump }: { onJump: (id: string) => void }) 
             </Link>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* footer row */}
       <div className="mx-auto mt-8 flex max-w-6xl flex-col items-center justify-between gap-4 px-2 sm:flex-row">

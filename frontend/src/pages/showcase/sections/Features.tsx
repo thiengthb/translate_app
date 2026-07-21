@@ -1,6 +1,5 @@
-import { useRef, type ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { motion, useMotionValue, useSpring, useTransform, type MotionStyle } from "framer-motion";
 import {
   ArrowUpRight,
   BookOpen,
@@ -18,7 +17,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { brand, features, type Tone } from "../showcase-data";
-import { fadeUp, inView } from "../anim";
 
 const ICONS: Record<string, LucideIcon> = {
   PenLine,
@@ -45,31 +43,32 @@ const TONE: Record<Tone, string> = {
 
 const SPAN: Record<2 | 3, string> = { 2: "lg:col-span-2", 3: "lg:col-span-3" };
 
-/** 3D tilt wrapper (fine-pointer hover). Falls back to a static card. */
+/** Vanilla pointer-tilt card (no dependency on Framer's runtime). */
 function TiltCard({ tone, reduced, children }: { tone: string; reduced: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), { stiffness: 180, damping: 18 });
-  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-9, 9]), { stiffness: 180, damping: 18 });
 
   const onMove = (e: React.PointerEvent) => {
-    const r = ref.current?.getBoundingClientRect();
-    if (!r) return;
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
+    if (reduced) return;
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `perspective(900px) rotateX(${(-py * 8).toFixed(2)}deg) rotateY(${(px * 10).toFixed(2)}deg) translateY(-4px)`;
   };
   const reset = () => {
-    mx.set(0);
-    my.set(0);
+    const el = ref.current;
+    if (el) el.style.transform = "";
   };
 
-  const base =
-    "group sk-glass relative flex h-full flex-col overflow-hidden rounded-[26px] p-6 transition-[border-color,box-shadow] duration-300";
-
-  const inner = (
-    <>
-      {/* hover glow in the card's tone */}
+  return (
+    <div
+      ref={ref}
+      onPointerMove={onMove}
+      onPointerLeave={reset}
+      className="group sk-glass relative flex h-full flex-col overflow-hidden rounded-[26px] p-6 transition-[transform,border-color,box-shadow] duration-300 will-change-transform"
+      style={{ "--tone": tone } as CSSProperties}
+    >
       <span
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{ background: `radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, ${tone} 24%, transparent), transparent 62%)` }}
@@ -81,35 +80,14 @@ function TiltCard({ tone, reduced, children }: { tone: string; reduced: boolean;
         aria-hidden="true"
       />
       <div className="relative z-10 flex h-full flex-col">{children}</div>
-    </>
-  );
-
-  if (reduced) {
-    return (
-      <div ref={ref} className={base}>
-        {inner}
-      </div>
-    );
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      onPointerMove={onMove}
-      onPointerLeave={reset}
-      whileHover={{ y: -4 }}
-      style={{ rotateX, rotateY, transformPerspective: 900 } as MotionStyle}
-      className={base}
-    >
-      {inner}
-    </motion.div>
+    </div>
   );
 }
 
 export default function Features({ reduced }: { reduced: boolean }) {
   return (
     <section id="features" className="relative z-10 mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-8">
-      <motion.div initial="hidden" whileInView="show" viewport={inView} variants={fadeUp} className="mb-12 max-w-2xl">
+      <div className="sk-reveal mb-12 max-w-2xl">
         <span className="text-sm font-bold uppercase tracking-[0.22em] text-[color:var(--sk-pink-deep)]">
           Everything to learn Japanese
         </span>
@@ -120,21 +98,19 @@ export default function Features({ reduced }: { reduced: boolean }) {
           From spaced-repetition kanji to AI writing feedback and classroom tools — every feature is built to keep
           you coming back tomorrow.
         </p>
-      </motion.div>
+      </div>
 
-      <motion.div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6"
-        initial="hidden"
-        whileInView="show"
-        viewport={inView}
-        variants={{ show: { transition: { staggerChildren: 0.055 } } }}
-      >
-        {features.map((f) => {
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        {features.map((f, i) => {
           const Icon = ICONS[f.icon] ?? Layers;
           const tone = TONE[f.tone];
           return (
-            <motion.div key={f.title} variants={fadeUp} className={SPAN[f.span]}>
-              <Link to={brand.startHref} className="block h-full [perspective:900px]">
+            <div
+              key={f.title}
+              className={`sk-reveal ${SPAN[f.span]}`}
+              style={{ transitionDelay: `${(i % 6) * 0.05}s` } as CSSProperties}
+            >
+              <Link to={brand.startHref} className="block h-full">
                 <TiltCard tone={tone} reduced={reduced}>
                   <div className="mb-5 flex items-start justify-between">
                     <span
@@ -155,23 +131,21 @@ export default function Features({ reduced }: { reduced: boolean }) {
 
                   <h3 className="sk-display flex items-baseline gap-2 text-2xl text-[color:var(--sk-ink)]">
                     {f.title}
-                    <span className="text-base font-normal text-[color:var(--sk-ink-soft)]" style={{ fontFamily: "'Baloo 2', cursive" }}>
-                      {f.ja}
-                    </span>
+                    <span className="text-base font-normal text-[color:var(--sk-ink-soft)]">{f.ja}</span>
                   </h3>
 
                   <p className="mt-2 text-[15px] leading-relaxed text-[color:var(--sk-ink-soft)]">{f.blurb}</p>
 
                   <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-bold" style={{ color: tone }}>
                     Explore
-                    <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </span>
                 </TiltCard>
               </Link>
-            </motion.div>
+            </div>
           );
         })}
-      </motion.div>
+      </div>
     </section>
   );
 }
