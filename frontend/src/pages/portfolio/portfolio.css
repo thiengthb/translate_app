@@ -629,16 +629,6 @@
 .pf-work:hover .pf-work-shot {
   transform: scale(1.045);
 }
-.pf-work-visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: var(--_panel, var(--washi-deep));
-  opacity: 0.24;
-  mix-blend-mode: multiply;
-  pointer-events: none;
-}
 .pf-work-seal {
   position: absolute;
   top: 6%;

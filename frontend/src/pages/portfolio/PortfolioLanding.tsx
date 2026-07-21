@@ -266,7 +266,7 @@ export default function PortfolioLanding() {
                 <span className="pf-kicker pf-jp">選抜作品</span>
                 <h2 className="pf-section-title">Selected work</h2>
               </div>
-              <span className="pf-section-count pf-reveal">Two projects · 2025—2026</span>
+              <span className="pf-section-count pf-reveal">Three projects · 2025—2026</span>
             </div>
 
             <div className="pf-works">

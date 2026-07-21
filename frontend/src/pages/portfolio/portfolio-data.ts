@@ -8,6 +8,7 @@
 
 import evRentalShot from "@/assets/portfolio/ev-rental.png";
 import ojtLearningShot from "@/assets/portfolio/ojt-learning.png";
+import hanabunDashboardShot from "@/assets/portfolio/hanabun-dashboard.png";
 
 export const designer = {
   name: "Akira Kuronagi",
@@ -72,6 +73,19 @@ export const works: Work[] = [
     year: "2026",
     chip: "Attendance · today",
     tint: "hazakura",
+  },
+  {
+    index: "作品 03",
+    title: "Hanabun — Japanese Learning Platform",
+    glyph: "花",
+    image: hanabunDashboardShot,
+    gloss: "Full-Stack · React + Spring Boot",
+    summary:
+      "A gamified Japanese-learning platform — kanji and vocabulary decks, quizzes, grammar practice, and classroom tools — wrapped in a daily-streak sakura UI, built end-to-end on a custom Spring Boot auto-CRUD framework.",
+    roleTags: ["Product Design", "Full-Stack Development"],
+    year: "2026",
+    chip: "Streak · day 21",
+    tint: "beni",
   },
 ];
 

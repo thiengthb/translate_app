@@ -5,74 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics">
-      <change afterPath="$PROJECT_DIR$/frontend/src/assets/portfolio/akira-portrait.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/assets/portfolio/ev-rental.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/assets/portfolio/ojt-learning.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/AuthModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/auth/AuthModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/DevQuickLogin.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/auth/DevQuickLogin.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/OAuth2RedirectHandler.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/auth/OAuth2RedirectHandler.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/common/PaginationBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/common/PaginationBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/common/SearchableSelect.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/common/SearchableSelect.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/ActionButton.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/common/Loading.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/common/Loading.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardFieldValue.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardFieldValue.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardItem.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardItem.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardLayoutEditor.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardLayoutEditor.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardSelectAllBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/card/CardSelectAllBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/CellRenderer.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/EditableCell.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/datatable/table/cell/EditableCell.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/DynamicBreadcrumbs.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/DynamicBreadcrumbs.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/HeaderRight.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/UserDropdownMenu.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/header/RoleSwitcher.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/notification/NotificationCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/notification/NotificationCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraStudyDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useAppMeta.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useClassroom.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useClassroom.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useWebSocket.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useWebSocket.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/TopStreaksList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/admin/userDashboard/components/TopStreaksList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/analyze/AnalyzePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionBankPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/QuestionBankPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/assessment/_shared.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/assessment/_shared.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/auditLog/AuditLogPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/auditLog/AuditLogPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/classroom/AssignmentStatsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/classroom/AssignmentStatsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/ConjugationTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/ConjugationTable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/HandwritingInput.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/HandwritingInput.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/error/NotFoundPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/error/NotFoundPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/error/Unauthorized.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/error/Unauthorized.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarDashboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarLevelPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarLevelPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarSessionPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/grammar/GrammarSessionPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/AutoCrudPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/AutoCrudPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/assessment/question-tag/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/assessment/question-tag/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar-marker/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar-marker/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar-sub-use/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar-sub-use/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/grammar/grammar/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/grammar/scenario-stub/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/grammar/scenario-stub/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/library/folder/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/library/folder/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/menu/module/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/menu/module/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/rbac/permission/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/rbac/permission/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/rbac/role/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/rbac/role/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/rbac/user/UsersPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/rbac/user/UsersPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/rbac/user/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/rbac/user/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioAbout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioAbout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioFooter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioFooter.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioLanding.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioLanding.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioNav.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/PortfolioNav.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio-data.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio-data.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/portfolio/portfolio.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/AvatarUploader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/PasswordField.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/PasswordField.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/SessionsCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/profile/components/TwoFactorCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiCardEditPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStatsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/AnkiStatsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/shared/deckCardParts.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/student/shared/deckCardParts.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/utils/rbac.utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +98,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
+    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -290,7 +226,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
       </set>
     </attachedChunks>
   </component>
