@@ -3,8 +3,6 @@ package com.example.starter_project_2025.system.auth.token.refresh;
 import com.example.starter_project_2025.exception.BadRequestException;
 import com.example.starter_project_2025.security.UserPrincipal;
 import com.example.starter_project_2025.system.auth.util.TokenUtil;
-import com.example.starter_project_2025.system.rbac.role.Role;
-import com.example.starter_project_2025.system.rbac.role.RoleRepository;
 import com.example.starter_project_2025.system.rbac.user.User;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -16,19 +14,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +30,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     JwtEncoder jwtEncoder;
     JwtDecoder jwtDecoder;
     RefreshTokenRepository refreshTokenRepository;
-    RoleRepository roleRepository;
 
     @NonFinal
     @Value("${jwt.access-token.duration}")
@@ -66,20 +57,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             .claim("type", "AccessToken");
 
         if (authentication.getPrincipal() instanceof UserPrincipal principal) {
-            User user = principal.getUser();
-            Set<String> roles = resolveRoles(user);
-            Set<String> permissions = resolvePermissions(user);
-            Map<String, Set<String>> rolePermissions = resolveRolePermissions(user, roles);
-
-            claimsBuilder
-                .claim("userId", user.getId())
-                .claim("email", user.getEmail())
-                .claim("firstName", user.getFirstName())
-                .claim("lastName", user.getLastName())
-                .claim("role", roles.stream().findFirst().orElse(null))
-                .claim("roles", roles)
-                .claim("permissions", permissions)
-                .claim("rolePermissions", rolePermissions);
+            // Keep the access token SMALL: it carries only the user id (the client reads it via
+            // getCurrentUserId). Authorization is resolved server-side from the DB on every request
+            // (JwtAuthenticationFilter -> UserDetailsService), and the client fetches its roles and
+            // permissions from GET /api/me — so none of that belongs in the token. Fat tokens
+            // (admin ~18 KB) overflowed nginx's request AND response header buffers (400 / 502).
+            claimsBuilder.claim("userId", principal.getUser().getId());
         }
 
         JwtClaimsSet claims = claimsBuilder.build();
@@ -172,89 +155,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         tokens.forEach(t -> t.setRevoked(true));
 
         refreshTokenRepository.saveAll(tokens);
-    }
-
-    private Set<String> resolveRoles(User user) {
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            return new LinkedHashSet<>();
-        }
-
-        return user.getRoles().stream()
-                .map(Role::getName)
-                .filter(StringUtils::hasText)
-                .map(this::normalizeRoleName)
-                .sorted()
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private Set<String> resolvePermissions(User user) {
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            return new LinkedHashSet<>();
-        }
-
-        return user.getRoles().stream()
-                .filter(role -> role.getPermissions() != null)
-                .flatMap(role -> role.getPermissions().stream())
-                .map(permission -> permission.getName())
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .sorted()
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private Map<String, Set<String>> resolveRolePermissions(User user, Set<String> sortedRoles) {
-        Map<String, Set<String>> rolePermissions = new LinkedHashMap<>();
-
-        if (user.getRoles() != null) {
-            Map<String, Role> rolesByName = user.getRoles().stream()
-                    .filter(role -> StringUtils.hasText(role.getName()))
-                    .collect(Collectors.toMap(
-                            role -> normalizeRoleName(role.getName()),
-                            role -> role,
-                            (first, second) -> first,
-                            LinkedHashMap::new
-                    ));
-
-            for (String roleName : sortedRoles) {
-                Role role = rolesByName.get(roleName);
-                if (role != null) {
-                    rolePermissions.put(roleName, mapRolePermissions(role));
-                }
-            }
-        }
-
-        if (sortedRoles.contains("ADMIN")) {
-            includePreviewRolePermissions(rolePermissions, "STUDENT");
-            includePreviewRolePermissions(rolePermissions, "TEACHER");
-        }
-
-        return rolePermissions;
-    }
-
-    private void includePreviewRolePermissions(Map<String, Set<String>> rolePermissions, String roleName) {
-        if (rolePermissions.containsKey(roleName)) {
-            return;
-        }
-
-        roleRepository.findByName(roleName)
-                .ifPresent(role -> rolePermissions.put(roleName, mapRolePermissions(role)));
-    }
-
-    private Set<String> mapRolePermissions(Role role) {
-        if (role.getPermissions() == null || role.getPermissions().isEmpty()) {
-            return new LinkedHashSet<>();
-        }
-
-        return role.getPermissions().stream()
-                .map(permission -> permission.getName())
-                .filter(StringUtils::hasText)
-                .map(String::trim)
-                .sorted()
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private String normalizeRoleName(String roleName) {
-        return roleName.trim().toUpperCase();
     }
 
 }

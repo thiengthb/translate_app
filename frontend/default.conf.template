@@ -1,0 +1,75 @@
+# Single-origin front door for translate_app (nginx template — the entrypoint runs envsubst
+# with NGINX_ENVSUBST_FILTER=BACKEND_, so ONLY ${BACKEND_HOST} is substituted; nginx's own
+# $host / $remote_addr / $http_upgrade are left intact).
+#   - Static SPA is served from /usr/share/nginx/html.
+#   - A few path prefixes are reverse-proxied to the Spring Boot backend so the browser talks
+#     to ONE origin (no CORS, cookies + Google OAuth just work).
+# Only cloudflared reaches this container; the public side is always HTTPS via the tunnel.
+
+upstream backend {
+    server ${BACKEND_HOST};
+}
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    # Uploads flow through /api → backend caps files ~10 MB by default; give some headroom.
+    client_max_body_size 20m;
+
+    # The access-token JWT carries the full permission set, so an admin token can reach ~18 KB.
+    # That single Authorization header exceeds nginx's default 8k buffer and gets rejected with
+    # "400 Request Header Or Cookie Too Large" before it ever reaches the backend. Give headroom.
+    large_client_header_buffers 8 32k;
+
+    # Same JWT rides BACK in response headers: after a successful Google login the backend issues a
+    # redirect whose Location is /oauth2/redirect?token=<~18 KB JWT>. The default 4k/8k proxy buffer
+    # can't hold that header, so nginx aborts the callback with 502 "upstream sent too big header".
+    proxy_buffer_size 32k;
+    proxy_buffers 8 32k;
+    proxy_busy_buffers_size 64k;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # X-Forwarded-Proto is pinned to https because the ONLY way in is the Cloudflare tunnel; the
+    # backend runs with forward-headers-strategy=framework so it builds the Google OAuth
+    # redirect_uri as https://<host>/login/oauth2/code/google.
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+    location /api/ {
+        proxy_pass http://backend;
+    }
+
+    # Start Google OAuth. /oauth2/redirect is a FRONT-END route → NOT matched here, falls to SPA.
+    location /oauth2/authorization/ {
+        proxy_pass http://backend;
+    }
+
+    # Google OAuth callback (Spring default).
+    location /login/oauth2/ {
+        proxy_pass http://backend;
+    }
+
+    location = /actuator/health {
+        proxy_pass http://backend;
+    }
+
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+}
