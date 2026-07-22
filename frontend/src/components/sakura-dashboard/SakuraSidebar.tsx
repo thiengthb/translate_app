@@ -40,7 +40,7 @@ import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
 import { useLogout } from "@/hooks/useLogout";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
-import { getHomePathByRole } from "@/utils/rbac.utils";
+import { ADMIN_ROLE, getHomePathByRole, TEACHER_ROLE } from "@/utils/rbac.utils";
 import type { RootState } from "@/store/store";
 
 const PINK = "#FF8FAB";
@@ -74,6 +74,11 @@ type RailItem = {
     /** Kanji has no lucide glyph — render a display-font character instead. */
     glyph?: string;
     match?: string[];
+    /** URL of the CRUD data table backing this feature (e.g. the Kanji
+     *  Radical puzzle's `/kanji-radicals` management grid). When set, ADMIN/
+     *  TEACHER get a hover flyout with a shortcut to it instead of the plain
+     *  tooltip everyone else sees. */
+    manageUrl?: string;
 };
 
 const PRIMARY_NAV: RailItem[] = [
@@ -85,7 +90,12 @@ const PRIMARY_NAV: RailItem[] = [
         glyph: "漢",
         permission: "KANJI_DECK_READ",
     },
-    { url: "/kanji-radical", label: "Ghép bộ thủ", icon: Puzzle },
+    {
+        url: "/kanji-radical",
+        label: "Ghép bộ thủ",
+        icon: Puzzle,
+        manageUrl: "/kanji-radicals",
+    },
     { url: "/leaderboard", label: "Bảng xếp hạng", icon: Trophy },
     // ── Page 2 — extended tools; admin-only items live in the catalog ──────
     {
@@ -175,6 +185,142 @@ function RailButton({
                 {children}
             </button>
         </TooltipWrapper>
+    );
+}
+
+/**
+ * ADMIN/TEACHER variant of a rail button: hovering opens a glassmorphism
+ * flyout with a shortcut to the feature's game page AND its CRUD data table,
+ * instead of the plain tooltip everyone else gets from {@link RailButton}.
+ * Positioned via a `document.body` portal (like {@link CatalogFlyout}) so it
+ * floats over the content without affecting the sidebar's fixed width, and
+ * never gets clipped by an ancestor's `overflow` (the sticky rail variant
+ * sets `overflow-y-auto`, which would otherwise crop it).
+ */
+function RailButtonFlyout({
+    label,
+    active,
+    icon: Icon,
+    glyph,
+    playUrl,
+    manageUrl,
+}: {
+    label: string;
+    active: boolean;
+    icon?: LucideIcon;
+    glyph?: string;
+    playUrl: string;
+    manageUrl: string;
+}) {
+    const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
+    const [coords, setCoords] = useState<{ left: number; top: number } | null>(
+        null,
+    );
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const closeTimer = useRef<number | null>(null);
+
+    const cancelClose = () => {
+        if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+    const openNow = () => {
+        cancelClose();
+        const r = btnRef.current?.getBoundingClientRect();
+        if (r) setCoords({ left: r.right + 16, top: r.top });
+        setOpen(true);
+    };
+    // Generous grace period — long enough to cross the gap between the rail
+    // icon and the flyout without it snapping shut mid-move.
+    const closeSoon = () => {
+        cancelClose();
+        closeTimer.current = window.setTimeout(() => setOpen(false), 250);
+    };
+
+    return (
+        <>
+            <button
+                ref={btnRef}
+                type="button"
+                aria-label={label}
+                aria-haspopup="true"
+                aria-expanded={open}
+                onClick={() => navigate(playUrl)}
+                onMouseEnter={openNow}
+                onMouseLeave={closeSoon}
+                onFocus={openNow}
+                onBlur={closeSoon}
+                onKeyDown={(e) => {
+                    if (e.key === "Escape") setOpen(false);
+                }}
+                className={cn(
+                    "flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[20px] transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95",
+                    active || open
+                        ? "text-white"
+                        : "text-[#B9AEB2] hover:text-[#FF8FAB]",
+                )}
+                style={
+                    active || open
+                        ? {
+                              background: `linear-gradient(145deg, ${PINK}, ${PINK_DEEP})`,
+                              boxShadow: "0 8px 18px rgba(255,143,171,0.5)",
+                          }
+                        : undefined
+                }
+            >
+                {glyph ? (
+                    <span className="font-display text-[22px] font-bold leading-none">
+                        {glyph}
+                    </span>
+                ) : (
+                    Icon && <Icon className="h-[22px] w-[22px]" />
+                )}
+            </button>
+
+            {coords &&
+                createPortal(
+                    <AnimatePresence>
+                        {open && (
+                            <motion.div
+                                key="rail-flyout"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.18, ease: "easeOut" }}
+                                style={{
+                                    position: "fixed",
+                                    left: coords.left,
+                                    top: coords.top,
+                                }}
+                                className="z-50 flex w-56 flex-col gap-1 rounded-xl border border-pink-100 bg-white/90 p-2 shadow-lg backdrop-blur-md"
+                                onMouseEnter={openNow}
+                                onMouseLeave={closeSoon}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigate(playUrl);
+                                        setOpen(false);
+                                    }}
+                                    className="rounded-lg px-3 py-2 text-left text-[13px] text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600 cursor-pointer"
+                                >
+                                    Chơi game
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigate(manageUrl);
+                                        setOpen(false);
+                                    }}
+                                    className="rounded-lg px-3 py-2 text-left text-[13px] text-gray-700 transition-colors hover:bg-pink-50 hover:text-pink-600 cursor-pointer"
+                                >
+                                    Quản lý dữ liệu
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
+                    document.body,
+                )}
+        </>
     );
 }
 
@@ -376,6 +522,12 @@ export function SakuraSidebarContent() {
         ? PRIMARY_NAV.filter((item) => !item.permission || hasPermission(item.permission))
         : GUEST_NAV;
 
+    // ADMIN/TEACHER see the interactive hover flyout (game + manage-data
+    // shortcuts) on items that have a `manageUrl`; everyone else just gets
+    // the plain tooltip + direct navigation.
+    const isAdminOrTeacher =
+        activeRole === ADMIN_ROLE || activeRole === TEACHER_ROLE;
+
     const isItemActive = (item: RailItem) =>
         location.pathname === item.url ||
         location.pathname.startsWith(`${item.url}/`) ||
@@ -433,24 +585,42 @@ export function SakuraSidebarContent() {
                 </RailButton>
             ),
         },
-        ...navItems.map((item) => ({
-            key: item.url,
-            node: (
-                <RailButton
-                    label={item.label}
-                    active={isItemActive(item)}
-                    onClick={() => navigate(item.url)}
-                >
-                    {item.glyph ? (
-                        <span className="font-display text-[22px] font-bold leading-none">
-                            {item.glyph}
-                        </span>
-                    ) : (
-                        item.icon && <item.icon className="h-[22px] w-[22px]" />
-                    )}
-                </RailButton>
-            ),
-        })),
+        ...navItems.map((item) => {
+            const showManageFlyout =
+                isAuthenticated && isAdminOrTeacher && Boolean(item.manageUrl);
+            const active =
+                isItemActive(item) ||
+                (showManageFlyout &&
+                    location.pathname.startsWith(item.manageUrl as string));
+
+            return {
+                key: item.url,
+                node: showManageFlyout ? (
+                    <RailButtonFlyout
+                        label={item.label}
+                        active={active}
+                        icon={item.icon}
+                        glyph={item.glyph}
+                        playUrl={item.url}
+                        manageUrl={item.manageUrl as string}
+                    />
+                ) : (
+                    <RailButton
+                        label={item.label}
+                        active={active}
+                        onClick={() => navigate(item.url)}
+                    >
+                        {item.glyph ? (
+                            <span className="font-display text-[22px] font-bold leading-none">
+                                {item.glyph}
+                            </span>
+                        ) : (
+                            item.icon && <item.icon className="h-[22px] w-[22px]" />
+                        )}
+                    </RailButton>
+                ),
+            };
+        }),
         // Catalog flyout + role switcher are authed-only concerns.
         ...(isAuthenticated && catalogGroups.length > 0
             ? [{ key: "catalog", node: <CatalogFlyout groups={catalogGroups} /> }]
