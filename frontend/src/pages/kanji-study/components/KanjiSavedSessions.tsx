@@ -35,15 +35,15 @@ export function KanjiSavedSessions() {
   };
 
   return (
-    <section className="rounded-2xl border border-teal-400/50 bg-teal-500/5 p-4">
+    <section className="rounded-2xl border border-chart-2/50 bg-chart-2/10 p-4">
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Play size={16} className="text-teal-500" /> Học tiếp
+        <Play size={16} className="text-[color:var(--sk-mint-deep)]" /> Học tiếp
       </h2>
       <div className="flex flex-col divide-y divide-border/60">
         {sessions.map((s) => (
           <div key={`${s.mode}:${s.deckId}:${s.groupIndex ?? "all"}`} className="flex items-center gap-3 py-2.5">
             <button onClick={() => go(s)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-teal-500/15 text-teal-600 dark:text-teal-400">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-chart-2/15 text-[color:var(--sk-mint-deep)]">
                 {s.mode === "QUIZ" ? <ListChecks size={16} /> : <BrushIcon size={16} />}
               </span>
               <span className="min-w-0 flex-1">

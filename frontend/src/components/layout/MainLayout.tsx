@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { KeyboardShortcutsDialog } from "@/components/common/KeyboardShortcutsDialog";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
-import { GuestLayout } from "@/components/layout/GuestLayout";
 import { MainLayoutTopBar } from "@/components/layout/MainLayoutTopBar";
 import { SidebarMenu } from "@/components/layout/sidebar";
 import { WritingQuoteHeader } from "@/components/layout/WritingQuoteHeader";
@@ -23,7 +21,6 @@ import { useKeyboardShortcutsDialog } from "@/hooks/useKeyboardShortcutsDialog";
 import { useLogoutShortcut } from "@/hooks/useLogoutShortcut";
 import { useAutoCheckIn } from "@/hooks/useStreak";
 import { cn } from "@/lib/utils";
-import type { RootState } from "@/store/store";
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -97,20 +94,20 @@ export function MainLayout({
 }
 
 /**
- * The persistent app shell — sidebar + top header + scroll container, or
- * FocusShell / GuestLayout. Mounted once by a layout `<Route>` (see
+ * The persistent app shell — sidebar + top header + scroll container, or the
+ * distraction-free FocusShell. Mounted once by a layout `<Route>` (see
  * App.tsx); `<Outlet/>` renders whichever page matched the URL.
  *
- * Concerns kept at this level (and only this level):
- *   - Auth gate (which shell to render)
+ * Rendered for BOTH guests and authenticated users (Mazii open access) — the
+ * sidebar itself adapts to auth state. Concerns kept at this level (and only
+ * this level):
+ *   - Choosing focus vs. full shell
  *   - Side-effects that used to (incorrectly) re-run on every navigation
  *     because each page re-instantiated `<MainLayout>`: `useAutoCheckIn`
  *     (once-per-day streak ping), the keyboard-shortcuts dialog, and
  *     `WritingQuoteHeader`'s rotation timer — all now genuinely mount once.
  */
 export function PersistentAppShell() {
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
     useAutoCheckIn();
     const shortcuts = useKeyboardShortcutsDialog();
     useLogoutShortcut();
@@ -118,23 +115,17 @@ export function PersistentAppShell() {
     const { focus, focusTitle, pageScroll, hasSidePanel } = useLayoutStructural();
     const onBackRef = useOnBackRefValue();
 
+    // ONE shell for everyone (Mazii open access). Guests get the same sidebar +
+    // header shell as authenticated users — the sidebar itself adapts to auth
+    // state (login/register pill vs. avatar + logout). Guest-only concerns that
+    // used to force the bare GuestLayout are gone; `useAutoCheckIn` and the
+    // sidebar's authed queries already no-op for guests.
     return (
         <>
-            {isAuthenticated ? (
-                focus ? (
-                    <FocusShell title={focusTitle} onBackRef={onBackRef} />
-                ) : (
-                    <AppShell pageScroll={pageScroll} hasSidePanel={hasSidePanel} />
-                )
+            {focus ? (
+                <FocusShell title={focusTitle} onBackRef={onBackRef} />
             ) : (
-                <GuestLayout>
-                    {/* Mobile-first padding: tighter on small screens so the
-                        navbar + content stay close to the edges where the
-                        thumb naturally lands. */}
-                    <div className="flex-1 px-4 sm:px-6 py-4 sm:py-6">
-                        <Outlet />
-                    </div>
-                </GuestLayout>
+                <AppShell pageScroll={pageScroll} hasSidePanel={hasSidePanel} />
             )}
 
             <KeyboardShortcutsDialog

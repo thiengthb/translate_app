@@ -4,29 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(guest): add guest lookup tools and update navigation links">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(layout): enhance MainLayout for consistent sidebar height across pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/init/StudentMenuInitializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/assets/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameHUD.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameResultModal.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/GameSetupPanel.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/PixiTypingScene.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/components/TypingInput.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useKanaSharkGame.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useKanaSharkItems.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/hooks/useSrsReviewSubmitQueue.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/services/kanaSharkApi.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/types/kanaShark.types.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/calculateTypingRating.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/createEnemyFromSrsItem.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/isAnswerAccepted.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/normalizeRomaji.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/performanceMode.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/kana-shark/utils/ratingToScore.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/axios.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/axios.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/ProtectedRoute.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/ProtectedRoute.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/AuthModal.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/LoginForm.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/Logout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/auth/Logout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/RegisterForm.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/auth/auth-modal.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/MainLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/sakura-dashboard/SakuraSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/contexts/AuthModalContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/contexts/AuthModalContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useLogout.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useLogout.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/DictionaryPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/dictionary/NotebookPicker.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/dictionary/NotebookPicker.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/error/NotFoundRedirect.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/error/NotFoundRedirect.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/pages/guest/GuestDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/guest/GuestDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/guest/GuestSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/guest/GuestSidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/pages/student/learning/KanaSharkPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiActionCards.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiActionCards.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiActivityChart.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiActivityChart.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiForecastChart.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiForecastChart.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLevelProgress.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiLevelProgress.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiRecentSessions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiRecentSessions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiSavedSessions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiSavedSessions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/components/KanjiStudyHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/kanji-study/lib/kanjiProficiency.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/kanji-study/lib/kanjiProficiency.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -117,7 +122,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
-    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
+    &quot;accountId&quot;: &quot;32d5ed62-08dd-467c-a3b4-0dd1bfec836d&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -194,7 +199,7 @@
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\Admin\\OneDrive\\Documents\\FPT_University\\SWD\\frontend\\node_modules\\typescript\\lib&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.2.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -245,8 +250,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -324,14 +328,7 @@
       <workItem from="1784562392334" duration="3075000" />
       <workItem from="1784631119163" duration="5578000" />
       <workItem from="1784644777571" duration="841000" />
-    </task>
-    <task id="LOCAL-00015" summary="feat(translation): integrate DeepL API for text translation and add language selection features">
-      <option name="closed" value="true" />
-      <created>1780131669704</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1780131669704</updated>
+      <workItem from="1784695616755" duration="2661000" />
     </task>
     <task id="LOCAL-00016" summary="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files">
       <option name="closed" value="true" />
@@ -717,7 +714,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784656626070</updated>
     </task>
-    <option name="localTasksCounter" value="64" />
+    <task id="LOCAL-00064" summary="feat(guest): update guest dashboard content and remove Kana Shark page from navigation">
+      <option name="closed" value="true" />
+      <created>1784657776287</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1784657776287</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -768,7 +773,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(landing): update landing page content and add ShineButton component" />
     <MESSAGE value="feat(branding): update branding to Hanabun and integrate new logo components" />
     <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
     <MESSAGE value="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality" />
@@ -793,7 +797,8 @@
     <MESSAGE value="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links" />
     <MESSAGE value="feat(kanji): enhance kanji data structure and add DeepSeek client for translation" />
     <MESSAGE value="feat(guest): add guest lookup tools and update navigation links" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(guest): add guest lookup tools and update navigation links" />
+    <MESSAGE value="feat(guest): update guest dashboard content and remove Kana Shark page from navigation" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(guest): update guest dashboard content and remove Kana Shark page from navigation" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

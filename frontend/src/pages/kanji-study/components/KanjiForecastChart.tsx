@@ -23,7 +23,7 @@ export function KanjiForecastChart({ data }: { data: DayBucket[] }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="text-base flex items-center gap-2">
-          <CalendarClock size={18} className="text-rose-500" />
+          <CalendarClock size={18} className="text-primary" />
           Dự báo ôn tập
         </CardTitle>
         <span className="text-xs text-muted-foreground">{total} lượt / 7 ngày</span>
@@ -66,7 +66,7 @@ export function KanjiForecastChart({ data }: { data: DayBucket[] }) {
                 />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={48}>
                   {data.map((d, i) => (
-                    <Cell key={d.date} fill={i === 0 ? "#f43f5e" : "#fb7185"} fillOpacity={i === 0 ? 1 : 0.6} />
+                    <Cell key={d.date} fill={i === 0 ? "#ff6b9d" : "#ffc2d4"} fillOpacity={i === 0 ? 1 : 0.8} />
                   ))}
                 </Bar>
               </BarChart>

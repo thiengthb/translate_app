@@ -71,14 +71,14 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
     <>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* ── Left: study by deck ───────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/30 dark:to-card p-5 flex flex-col">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-secondary/60 to-card p-5 flex flex-col">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-rose-500">Học theo Deck</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-primary">Học theo Deck</span>
           {decks.length > 0 && (
             <select
               value={deckId ?? ""}
               onChange={(e) => setDeckId(e.target.value ? Number(e.target.value) : undefined)}
-              className="max-w-[55%] text-xs rounded-lg border border-border bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="max-w-[55%] text-xs rounded-lg border border-border bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {decks.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -100,7 +100,7 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
           <select
             value={groupIndex ?? ""}
             onChange={(e) => setGroupIndex(e.target.value !== "" ? Number(e.target.value) : null)}
-            className="mt-4 w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="mt-4 w-full text-sm rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label="Chọn nhóm để học"
           >
             {groups.map((g) => (
@@ -114,7 +114,7 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
         <button
           onClick={() => setShowStudy(true)}
           disabled={!selectedDeck || groupIndex == null}
-          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 text-white font-semibold py-3 text-sm hover:bg-rose-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground font-semibold py-3 text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <GraduationCap size={18} /> Học
         </button>
@@ -122,14 +122,14 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
         <button
           onClick={() => selectedDeck?.id && navigate(`/kanji-study/deck/${selectedDeck.id}`)}
           disabled={!selectedDeck}
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-rose-500 hover:text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed self-start"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed self-start"
         >
           Xem tất cả Hán tự trong deck <ChevronRight size={15} />
         </button>
       </div>
 
       {/* ── Right: SRS review ─────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-rose-500 to-rose-600 text-white p-5 flex flex-col">
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-5 flex flex-col">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-white/80">Ôn tập SRS</span>
           <Zap size={18} className="text-white/90" />
@@ -147,7 +147,7 @@ export function KanjiActionCards({ decks, featuredDeck, dueCount }: Props) {
           <button
             onClick={() => goReview("quiz")}
             disabled={dueCount === 0}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white text-rose-600 font-semibold py-2.5 text-sm hover:bg-rose-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white text-primary font-semibold py-2.5 text-sm hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ListChecks size={16} /> Trắc nghiệm
           </button>

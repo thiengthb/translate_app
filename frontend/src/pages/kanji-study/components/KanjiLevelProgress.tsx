@@ -25,7 +25,7 @@ export function KanjiLevelProgress({ levels, totalLearned, proficiencyCounts }: 
     <Card className="h-full">
       <CardHeader className="space-y-0 pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <TrendingUp size={18} className="text-rose-500" />
+          <TrendingUp size={18} className="text-primary" />
           Tiến độ Hán tự
         </CardTitle>
         <p className="text-sm text-muted-foreground pt-1">
@@ -82,7 +82,7 @@ export function KanjiLevelProgress({ levels, totalLearned, proficiencyCounts }: 
                   <span className="w-8 shrink-0 text-sm font-semibold text-foreground">{lv.level}</span>
                   <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

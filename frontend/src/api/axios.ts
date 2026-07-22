@@ -39,10 +39,8 @@ axiosInstance.interceptors.request.use(
 // boot with a stale access token), they must NOT each fire their own
 // /auth/refresh — that creates a "refresh storm" hammering the BE. Instead the
 // first 401 starts one refresh and every concurrent 401 awaits that same
-// promise. `isLoggingOut` guards against repeated clear()/redirect once the
-// refresh has definitively failed.
+// promise.
 let refreshPromise: Promise<string> | null = null;
-let isLoggingOut = false;
 
 const runRefresh = (): Promise<string> => {
     if (!refreshPromise) {
@@ -77,6 +75,16 @@ axiosInstance.interceptors.response.use(
             !requestUrl.includes("/auth/logout") &&
             !requestUrl.includes("/auth/refresh")
         ) {
+            // Pure guest (no access token at all) — don't attempt a refresh.
+            // Guests browse authed-optional endpoints all the time (the Mazii
+            // open-access model); a token-less 401 just means "no personal
+            // data", not "session expired". Reject quietly so the caller can
+            // fall back to empty/public content — NEVER redirect a guest.
+            const hasToken = !!localStorage.getItem("token");
+            if (!hasToken) {
+                return Promise.reject(error);
+            }
+
             originalReq._retry = true;
 
             try {
@@ -89,18 +97,16 @@ axiosInstance.interceptors.response.use(
 
                 return axiosInstance(originalReq);
             } catch (err) {
-                // Only the first failed refresh clears state + redirects; later
-                // waiters from the same storm fall through silently.
-                if (!isLoggingOut) {
-                    isLoggingOut = true;
-                    authStorage.clear();
-                    store.dispatch(setLogout());
-                    // Already on /login → don't hard-navigate (would reload the
-                    // page, re-fire the same failing request, and loop).
-                    if (window.location.pathname !== "/login") {
-                        window.location.href = "/login";
-                    }
-                }
+                // Refresh failed → the session is genuinely gone. Drop to guest
+                // mode IN PLACE: clear state so the app re-renders as a guest on
+                // the CURRENT page (Mazii-style — no hard redirect to /login,
+                // which used to reload the page and could loop). ProtectedRoute
+                // now shows an in-shell login gate for personal routes, and
+                // public routes keep working. clear()/setLogout() are idempotent
+                // so a 401 storm dropping here repeatedly is harmless (and the
+                // single-flight refreshPromise already dedupes the network call).
+                authStorage.clear();
+                store.dispatch(setLogout());
                 return Promise.reject(err);
             }
         }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import {
     Bookmark, BookmarkCheck, Check, Plus, Loader2, FolderPlus,
 } from "lucide-react";
@@ -8,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { notebooksApi } from "@/api/features/dictionary.api";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import type { NotebookSummary } from "@/types";
+import type { RootState } from "@/store/store";
 import { logger } from "@/lib/logger";
 
 // Đích để lưu — một từ vựng (theo id) hoặc một kanji (theo ký tự).
@@ -42,6 +45,8 @@ export function NotebookPicker({ target, savedAnywhere, onSavedChange }: {
 }) {
     const [open, setOpen] = useState(false);
     const qc = useQueryClient();
+    const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+    const { openLogin } = useAuthModal();
 
     const targetKey = target.kind === "word" ? `w${target.wordId}` : `k${target.character}`;
 
@@ -118,7 +123,19 @@ export function NotebookPicker({ target, savedAnywhere, onSavedChange }: {
     };
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+            open={open}
+            onOpenChange={(next) => {
+                // Guests can't save to a personal notebook — invite them to
+                // sign in (in place) instead of opening the picker. The notebook
+                // queries are `enabled: open`, so nothing authed ever fires.
+                if (next && !isAuthenticated) {
+                    openLogin();
+                    return;
+                }
+                setOpen(next);
+            }}
+        >
             <PopoverTrigger asChild>
                 <Button
                     size="icon-sm"

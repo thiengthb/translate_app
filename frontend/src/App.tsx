@@ -8,6 +8,7 @@ import { PersistentAppShell } from "./components/layout/MainLayout";
 import { RoleSwitchProvider } from "./contexts/RoleSwitchContext";
 import { I18nProvider } from "./contexts/I18nContext";
 import { LayoutConfigProvider } from "./contexts/LayoutConfigContext";
+import { AuthModalProvider } from "./contexts/AuthModalContext";
 import { useAppMeta } from "./hooks/useAppMeta";
 import { usePermissions } from "./hooks/usePermissions";
 import { useActiveModuleGroups } from "./hooks/useSidebarMenus";
@@ -33,6 +34,13 @@ const staticRoutes = routes.filter((r) => !r.isModuleDriven);
  * (such paths have no entry in `componentRegistry` by design).
  */
 const staticRoutePaths = new Set(staticRoutes.map((r) => r.path));
+
+// Guest-accessible routes (Mazii open access): registered ONCE, inside the
+// shell, for BOTH guests and authenticated users. They are skipped from the
+// module-driven, public-module, and static-protected blocks below so no path
+// is registered twice.
+const guestRoutes = routes.filter((r) => r.guestAccessible);
+const guestPaths = new Set(guestRoutes.map((r) => r.path));
 
 function RouteContent({ Component }: { Component: RouteComponent }) {
     return (
@@ -82,6 +90,10 @@ function AppRoutes() {
             {publicModules
                 .filter((m) => !!m.url)
                 .map((m) => {
+                    // Guest-accessible pages are rendered in-shell as guest
+                    // routes below — don't also register a bare (shell-less)
+                    // route for them here (would duplicate the path).
+                    if (guestPaths.has(m.url!)) return null;
                     const Component = componentRegistry[m.url!];
                     if (!Component) return null;
                     return (
@@ -118,6 +130,24 @@ function AppRoutes() {
                     </LayoutConfigProvider>
                 }
             >
+                {/* Guest-accessible routes (Mazii open access) — the public
+                    pages (dashboard, dictionary, vocabulary, kanji lookups, …)
+                    rendered inside the SAME shell for everyone. ProtectedRoute
+                    with `allowGuest` lets guests through without a redirect or
+                    permission check; authenticated users still clear any
+                    `requiredPermission`. */}
+                {guestRoutes.map((route, index) => (
+                    <Route
+                        key={`guest-${index}`}
+                        path={route.path}
+                        element={
+                            <ProtectedRoute allowGuest requiredPermission={route.requiredPermission}>
+                                <RouteContent Component={route.component} />
+                            </ProtectedRoute>
+                        }
+                    />
+                ))}
+
                 {/* Dynamic routes from backend Module table.
                     Resolution order for each module URL:
                       1. File-based entityConfig in src/pages/management/.../<entity>/index.tsx
@@ -136,6 +166,10 @@ function AppRoutes() {
                         // redirect for non-AutoCrud pages like /streak,
                         // /notifications, /audit-logs).
                         if (staticRoutePaths.has(m.url)) return null;
+
+                        // Registered above as a guest route (in-shell, open
+                        // access) — don't shadow it with an authed-only route.
+                        if (guestPaths.has(m.url)) return null;
 
                         const Component = componentRegistry[m.url];
 
@@ -167,17 +201,24 @@ function AppRoutes() {
                 {/* Protected static routes from componentRegistry */}
                 {staticRoutes
                     .filter((route) => !route.isPublic)
-                    .map((route, index) => (
-                        <Route
-                            key={`static-protected-${index}`}
-                            path={route.path}
-                            element={
-                                <ProtectedRoute requiredPermission={route.requiredPermission}>
-                                    <RouteContent Component={route.component} />
-                                </ProtectedRoute>
-                            }
-                        />
-                    ))}
+                    .map((route, index) => {
+                        // Guest-accessible static routes (e.g. /dashboard,
+                        // /kanji-radical, kanji lookups) are registered above
+                        // as open-access guest routes — skip here to avoid a
+                        // duplicate path that would re-gate them behind auth.
+                        if (guestPaths.has(route.path)) return null;
+                        return (
+                            <Route
+                                key={`static-protected-${index}`}
+                                path={route.path}
+                                element={
+                                    <ProtectedRoute requiredPermission={route.requiredPermission}>
+                                        <RouteContent Component={route.component} />
+                                    </ProtectedRoute>
+                                }
+                            />
+                        );
+                    })}
             </Route>
 
             <Route path="*" element={<NotFoundRedirect />} />
@@ -224,7 +265,9 @@ function App() {
                 <AppToaster />
                 <I18nProvider>
                     <RoleSwitchProvider>
-                        <AppRoutes />
+                        <AuthModalProvider>
+                            <AppRoutes />
+                        </AuthModalProvider>
                     </RoleSwitchProvider>
                 </I18nProvider>
             </BrowserRouter>

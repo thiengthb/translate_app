@@ -12,10 +12,12 @@ import {
     Home,
     Layers,
     LayoutGrid,
+    LogIn,
     LogOut,
     Puzzle,
     Trophy,
     User as UserIcon,
+    UserPlus,
     type LucideIcon,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -32,6 +34,7 @@ import {
 import { RoleSwitcher } from "@/components/layout/header/RoleSwitcher";
 import { TooltipWrapper } from "@/components/datatable/common/TooltipWrapper";
 import { iconMap } from "@/components/datatable/iconMap";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import { useRoleSwitch } from "@/contexts/RoleSwitchContext";
 import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
 import { useLogout } from "@/hooks/useLogout";
@@ -46,7 +49,7 @@ const PINK_DEEP = "#FF6B9D";
 /** Rail buttons are paginated instead of scrolled/expanded — this many per
  *  page, so the nav area's height stays fixed regardless of how many items
  *  the viewer's permissions unlock. */
-const RAIL_PAGE_SIZE = 5;
+const RAIL_PAGE_SIZE = 6;
 const RAIL_BUTTON_HEIGHT = 54;
 const RAIL_GAP = 26;
 /** Height of exactly `RAIL_PAGE_SIZE` buttons + the gaps between them —
@@ -110,6 +113,18 @@ const PRIMARY_NAV: RailItem[] = [
         icon: GraduationCap,
         permission: "CLASSROOM_READ",
     },
+];
+
+/**
+ * Guest rail — only genuinely public (guest-accessible) destinations, so a
+ * logged-out visitor never taps a button that would drop them onto an in-shell
+ * login gate. Mirrors the `guestAccessible` routes in component-registry.ts.
+ */
+const GUEST_NAV: RailItem[] = [
+    { url: "/dictionary", label: "Từ điển", icon: BookOpen },
+    { url: "/vocabulary", label: "Kho từ vựng", icon: Layers },
+    { url: "/kanji-study/search", label: "Tra Kanji", glyph: "漢" },
+    { url: "/kanji-radical", label: "Ghép bộ thủ", icon: Puzzle },
 ];
 
 /** Vietnamese display names for the DB module-group titles. */
@@ -338,12 +353,13 @@ export function SakuraSidebarContent() {
     const location = useLocation();
     const navigate = useNavigate();
     const logout = useLogout();
-    const { firstName, lastName, email, role, roles } = useSelector(
+    const { firstName, lastName, email, role, roles, isAuthenticated } = useSelector(
         (s: RootState) => s.auth,
     );
     const { activeRole, hasPermission } = usePermissions();
     const { data: moduleGroups = [] } = useActiveModuleGroups();
     const { isPreviewMode } = useRoleSwitch();
+    const { openLogin, openRegister } = useAuthModal();
     const [page, setPage] = useState(0);
     const [pageVisible, setPageVisible] = useState(true);
 
@@ -354,9 +370,11 @@ export function SakuraSidebarContent() {
         .charAt(0)
         .toUpperCase();
 
-    const visiblePrimary = PRIMARY_NAV.filter(
-        (item) => !item.permission || hasPermission(item.permission),
-    );
+    // Guests get a fixed public rail (GUEST_NAV); authenticated users get the
+    // permission-filtered feature set.
+    const navItems = isAuthenticated
+        ? PRIMARY_NAV.filter((item) => !item.permission || hasPermission(item.permission))
+        : GUEST_NAV;
 
     const isItemActive = (item: RailItem) =>
         location.pathname === item.url ||
@@ -415,7 +433,7 @@ export function SakuraSidebarContent() {
                 </RailButton>
             ),
         },
-        ...visiblePrimary.map((item) => ({
+        ...navItems.map((item) => ({
             key: item.url,
             node: (
                 <RailButton
@@ -433,10 +451,11 @@ export function SakuraSidebarContent() {
                 </RailButton>
             ),
         })),
-        ...(catalogGroups.length > 0
+        // Catalog flyout + role switcher are authed-only concerns.
+        ...(isAuthenticated && catalogGroups.length > 0
             ? [{ key: "catalog", node: <CatalogFlyout groups={catalogGroups} /> }]
             : []),
-        ...(roles && roles.length > 1
+        ...(isAuthenticated && roles && roles.length > 1
             ? [
                   {
                       key: "role",
@@ -481,38 +500,71 @@ export function SakuraSidebarContent() {
 
     return (
         <>
-            {/* Avatar → dropdown (Tài khoản / Đăng xuất) */}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <button
-                        type="button"
-                        aria-label="Menu người dùng"
-                        className="shrink-0 rounded-full border-2 border-[#FFC2D4] bg-[#FFF0F4] p-1 transition-transform hover:scale-105 cursor-pointer"
-                    >
-                        <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-[#FFE5EC] font-semibold text-[#FF6B9D]">
-                                {initial}
-                            </AvatarFallback>
-                        </Avatar>
-                    </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="start" className="w-44">
-                    <DropdownMenuItem
-                        onSelect={() => navigate("/profile")}
-                        className="gap-2 cursor-pointer"
-                    >
-                        <UserIcon className="h-4 w-4" />
-                        Tài khoản
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onSelect={() => void logout()}
-                        className="gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-500/10"
-                    >
-                        <LogOut className="h-4 w-4" />
-                        Đăng xuất
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {isAuthenticated ? (
+                /* Avatar → dropdown (Tài khoản / Đăng xuất) */
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label="Menu người dùng"
+                            className="shrink-0 rounded-full border-2 border-[#FFC2D4] bg-[#FFF0F4] p-1 transition-transform hover:scale-105 cursor-pointer"
+                        >
+                            <Avatar className="h-12 w-12">
+                                <AvatarFallback className="bg-[#FFE5EC] font-semibold text-[#FF6B9D]">
+                                    {initial}
+                                </AvatarFallback>
+                            </Avatar>
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start" className="w-44">
+                        <DropdownMenuItem
+                            onSelect={() => navigate("/profile")}
+                            className="gap-2 cursor-pointer"
+                        >
+                            <UserIcon className="h-4 w-4" />
+                            Tài khoản
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={() => void logout()}
+                            className="gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-500/10"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Đăng xuất
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ) : (
+                /* Guest → Đăng nhập / Đăng ký, paired side by side right where
+                   the avatar sits once logged in. Solid-primary + outline-
+                   secondary icon-button pair (lightswind style); both open the
+                   auth modal in place — never navigate the guest away. */
+                <div className="flex shrink-0 items-center gap-1.5">
+                    <TooltipWrapper content="Đăng nhập" side="right">
+                        <button
+                            type="button"
+                            aria-label="Đăng nhập"
+                            onClick={() => openLogin()}
+                            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl text-white transition-transform hover:scale-105 active:scale-95"
+                            style={{
+                                background: `linear-gradient(145deg, ${PINK}, ${PINK_DEEP})`,
+                                boxShadow: "0 6px 14px rgba(255,143,171,0.45)",
+                            }}
+                        >
+                            <LogIn className="h-[18px] w-[18px]" />
+                        </button>
+                    </TooltipWrapper>
+                    <TooltipWrapper content="Đăng ký miễn phí" side="right">
+                        <button
+                            type="button"
+                            aria-label="Đăng ký"
+                            onClick={() => openRegister()}
+                            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl border-2 border-[#FFC2D4] text-[#FF6B9D] transition-transform hover:scale-105 hover:bg-[#FFF0F4] active:scale-95 dark:border-[#5a3648] dark:text-[#ff8fab] dark:hover:bg-[#2c2029]"
+                        >
+                            <UserPlus className="h-[18px] w-[18px]" />
+                        </button>
+                    </TooltipWrapper>
+                </div>
+            )}
 
             {/* Primary nav — fixed-height page of up to RAIL_PAGE_SIZE rail
                 buttons; pagination controls in the footer switch pages. */}
@@ -534,8 +586,10 @@ export function SakuraSidebarContent() {
                 </div>
             </nav>
 
-            {/* Footer — pagination controls (only when the rail overflows a
-                single page), then the logout button. */}
+            {/* Footer — pagination controls only (only when the rail
+                overflows a single page). Logout now lives in the avatar
+                dropdown up top; freeing this slot lets the nav page fit
+                more buttons before it needs to paginate. */}
             <div className="flex w-full shrink-0 flex-col items-center gap-2">
                 {totalPages > 1 && (
                     <div className="flex flex-col items-center gap-1">

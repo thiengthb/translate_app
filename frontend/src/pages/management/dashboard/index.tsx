@@ -1,29 +1,29 @@
-import { MainLayout } from "@/components/layout/MainLayout";
-import { SakuraDashboardContent, SakuraDashboardSidePanel } from "@/components/sakura-dashboard/SakuraStudyDashboard";
+import { useSelector } from "react-redux";
 
-import { useDashboardData } from "./useDashboardData";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { GuestDashboard } from "@/pages/guest/GuestDashboard";
+import type { RootState } from "@/store/store";
+
+import { AuthedDashboard } from "./AuthedDashboard";
 
 /**
- * Home dashboard for every role — the Sakura study dashboard rendered inside
- * the app shell (candy rail + top bar), fed entirely by live data:
- * streak/check-in, weekly consistency, EXP rewards, leaderboard rank, and —
- * for admins — system user stats. See {@link useDashboardData}.
+ * Home dashboard.
+ *
+ * - Guests (Mazii open access) see the same shell with a teaser layout: the
+ *   personal widgets (missions, streak, achievement) are shown blurred behind a
+ *   "đăng nhập để…" glass overlay. No authenticated queries fire.
+ * - Authenticated users get the full live Sakura study dashboard.
  */
 export function Dashboard() {
-    const data = useDashboardData();
+    const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
 
-    return (
-        <MainLayout
-            pathName={{ "/dashboard": "Dashboard" }}
-            pageScroll
-            headerExtra={
-                <h1 className="font-display m-0 text-[26px] font-bold text-[#3A2E33]">
-                    Chào {data.user.name}!
-                </h1>
-            }
-            sidePanel={<SakuraDashboardSidePanel {...data} />}
-        >
-            <SakuraDashboardContent {...data} />
-        </MainLayout>
-    );
+    if (!isAuthenticated) {
+        return (
+            <MainLayout pathName={{ "/dashboard": "Dashboard" }} pageScroll>
+                <GuestDashboard />
+            </MainLayout>
+        );
+    }
+
+    return <AuthedDashboard />;
 }

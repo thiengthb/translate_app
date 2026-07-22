@@ -45,7 +45,7 @@ function mondayOf(d: Date): Date {
  * user-management card — both drawn from live data.
  */
 export function useDashboardData(): SakuraDashboardProps {
-    const { firstName, lastName, email } = useSelector(
+    const { firstName, lastName, email, isAuthenticated } = useSelector(
         (s: RootState) => s.auth,
     );
     const { hasPermission } = usePermissions();
@@ -54,29 +54,36 @@ export function useDashboardData(): SakuraDashboardProps {
     const today = useMemo(() => new Date(), []);
     const weekStart = useMemo(() => mondayOf(today), [today]);
 
-    const { data: streak } = useMyStreak();
+    // Every source below is a personal, authenticated endpoint. Gate them on
+    // the auth flag so a GUEST rendering a page that reuses this hook (e.g. the
+    // dictionary side panel) never fires a 401 → /auth/refresh. For guests the
+    // hook simply returns zeros/empties.
+    const { data: streak } = useMyStreak(isAuthenticated);
 
     // The current week can straddle two months — fetch both calendars then.
     const { data: calCurrent } = useStreakCalendar(
         today.getFullYear(),
         today.getMonth() + 1,
+        isAuthenticated,
     );
     const weekSpansPrevMonth = weekStart.getMonth() !== today.getMonth();
     const { data: calPrev } = useStreakCalendar(
         weekStart.getFullYear(),
         weekStart.getMonth() + 1,
-        weekSpansPrevMonth,
+        weekSpansPrevMonth && isAuthenticated,
     );
 
     const { data: reward } = useQuery({
         queryKey: ["rewards", "me"],
         queryFn: rewardApi.getMe,
+        enabled: isAuthenticated,
         staleTime: 60 * 1000,
     });
 
     const { data: profile } = useQuery({
         queryKey: ["profile", "me"],
         queryFn: profileApi.getProfile,
+        enabled: isAuthenticated,
         staleTime: 5 * 60 * 1000,
     });
     const { data: leaderboard = [] } = useLeaderboard(50, "current");
@@ -84,7 +91,7 @@ export function useDashboardData(): SakuraDashboardProps {
     const { data: adminStats } = useQuery({
         queryKey: ["dashboard", "stats"],
         queryFn: dashboardApi.getStats,
-        enabled: isAdmin,
+        enabled: isAdmin && isAuthenticated,
         staleTime: 60 * 1000,
     });
 

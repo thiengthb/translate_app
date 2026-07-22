@@ -60,7 +60,7 @@ export function KanjiRecentSessions() {
         className="mb-3 flex w-full items-center gap-2 text-sm font-semibold text-foreground"
         title="Xem tất cả phiên học"
       >
-        <History size={16} className="text-rose-500" /> Phiên gần đây
+        <History size={16} className="text-primary" /> Phiên gần đây
         <ChevronRight size={16} className="ml-auto text-muted-foreground" />
       </button>
       <div className="flex flex-col divide-y divide-border/60">
@@ -93,7 +93,7 @@ export function KanjiRecentSessions() {
       {sessions.length > MAX_PREVIEW && (
         <button
           onClick={() => navigate("/kanji-study/sessions")}
-          className="mt-2 w-full rounded-lg py-2 text-center text-sm font-medium text-rose-500 hover:bg-muted/50"
+          className="mt-2 w-full rounded-lg py-2 text-center text-sm font-medium text-primary hover:bg-muted/50"
         >
           Xem tất cả ({sessions.length})
         </button>

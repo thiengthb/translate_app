@@ -1,44 +1,15 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import {
     CalendarCheck,
     CheckSquare,
     Flame,
-    Lock,
     Trophy,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
-/**
- * Overlay that blurs its children and floats a "Đăng nhập để xem thêm" CTA on
- * top — used to gate the personal-progress widgets a guest can't see yet.
- */
-function GatedOverlay({
-    children,
-    message,
-}: {
-    children: ReactNode;
-    message: string;
-}) {
-    return (
-        <div className="relative">
-            <div className="pointer-events-none select-none blur-[3px] opacity-70" aria-hidden>
-                {children}
-            </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[24px] bg-white/55 px-4 text-center backdrop-blur-[1px]">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FFE5EC] text-[#FF6B9D]">
-                    <Lock className="h-5 w-5" />
-                </span>
-                <p className="max-w-[280px] text-sm font-medium text-[#3A2E33]">{message}</p>
-                <Button asChild size="sm">
-                    <Link to="/login">Đăng nhập để xem thêm</Link>
-                </Button>
-            </div>
-        </div>
-    );
-}
+import { GatedOverlay } from "@/components/auth/GatedOverlay";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 
 function TeaserMissionCard({
     className: sectionName,
@@ -103,6 +74,8 @@ function GuestStat({
  * sidebar; this page is the welcome / conversion surface.
  */
 export function GuestDashboard() {
+    const { openLogin, openRegister } = useAuthModal();
+
     return (
         <div className="flex flex-col gap-8 xl:flex-row">
             {/* Main column */}
@@ -132,11 +105,9 @@ export function GuestDashboard() {
                             nhập để lưu tiến độ, flashcard và giữ chuỗi streak.
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            <Button asChild>
-                                <Link to="/login">Đăng nhập</Link>
-                            </Button>
-                            <Button asChild variant="outline">
-                                <Link to="/register">Đăng ký miễn phí</Link>
+                            <Button onClick={() => openLogin()}>Đăng nhập</Button>
+                            <Button variant="outline" onClick={() => openRegister()}>
+                                Đăng ký miễn phí
                             </Button>
                         </div>
                     </div>
@@ -151,7 +122,7 @@ export function GuestDashboard() {
                         <h3 className="font-display m-0 text-[22px] font-bold">Nhiệm vụ</h3>
                     </div>
 
-                    <GatedOverlay message="Đăng nhập để nhận nhiệm vụ hằng ngày và theo dõi tiến độ học của bạn.">
+                    <GatedOverlay message="Đăng nhập để điểm danh & lưu tiến trình">
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                             <TeaserMissionCard
                                 className="Hằng ngày"

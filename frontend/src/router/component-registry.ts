@@ -82,16 +82,24 @@ export interface RouteConfig {
   requiredPermission?: string;
   isPublic?: boolean;
   isModuleDriven?: boolean;
+  /**
+   * Guest-accessible (Mazii open-access model): rendered inside the normal app
+   * shell for BOTH guests and authenticated users, WITHOUT an auth redirect or
+   * permission check. Registered explicitly in App.tsx (independent of the
+   * backend Module table, which is empty for guests). Personal *actions* on
+   * these pages still gate via the auth modal; only persistence is restricted.
+   */
+  guestAccessible?: boolean;
 }
 
 export const routes: RouteConfig[] = [
   // Static (not module-driven): /dashboard is every role's home, so the
   // route must always resolve — never gated behind a DB Module row (the BE
   // seeds one with USER_READ, which would 404 students/teachers).
-  { path: "/dashboard", component: Dashboard },
-  { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  { path: "/dashboard", component: Dashboard, guestAccessible: true },
+  { path: "/dictionary", component: DictionaryPage, isModuleDriven: true, guestAccessible: true },
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
-  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true, guestAccessible: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
   { path: "/words/:wordId", component: WordDetailPage, requiredPermission: "WORD_READ" },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
@@ -117,7 +125,7 @@ export const routes: RouteConfig[] = [
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
-  { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
+  { path: "/questions", component: QuestionBankPage, isModuleDriven: true, guestAccessible: true },
   { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
   { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
   // /question-tags is now driven by the entityConfig at
@@ -138,7 +146,7 @@ export const routes: RouteConfig[] = [
   // Static (always available to any authenticated user). The board is
   // fully client-side today; radical/prompt data is a placeholder that
   // can be swapped for a backend feed later without touching the route.
-  { path: "/kanji-radical", component: KanjiRadicalGamePage },
+  { path: "/kanji-radical", component: KanjiRadicalGamePage, guestAccessible: true },
 
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
@@ -150,11 +158,11 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study/deck/:deckId/flashcard", component: KanjiFlashcardPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId/quiz", component: KanjiQuizPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId/writing", component: KanjiWritingPage, requiredPermission: "KANJI_DECK_READ" },
-  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
-  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
-  { path: "/kanji-study/radical/:id", component: KanjiRadicalDetailPage, requiredPermission: "KANJI_RADICAL_READ" },
-  { path: "/kanji-study/word/:id", component: KanjiWordDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
-  { path: "/kanji-study/search", component: KanjiSearchPage, requiredPermission: "KANJI_DETAIL_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ", guestAccessible: true },
+  { path: "/kanji-study/radical/:id", component: KanjiRadicalDetailPage, requiredPermission: "KANJI_RADICAL_READ", guestAccessible: true },
+  { path: "/kanji-study/word/:id", component: KanjiWordDetailPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
+  { path: "/kanji-study/search", component: KanjiSearchPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
   { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
   { path: "/kanji-study/sessions", component: KanjiSessionsPage, requiredPermission: "KANJI_DECK_READ" },

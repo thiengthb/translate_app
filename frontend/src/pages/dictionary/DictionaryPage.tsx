@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 import {
     Search, Clock, Copy, Check, Book, BookOpen, ChevronDown, ChevronRight,
     Pen, Loader2, Volume2, Bookmark, X, Star, GitBranch,
@@ -73,7 +75,10 @@ type SearchMode = "vocabulary" | "kanji";
 // ══════════════════════════════════════════════════════════════════════
 export default function DictionaryPage() {
     // Same side-panel data (Record / Thành tích / Thống kê) as the dashboard —
-    // this page reuses the dashboard `pageScroll` shell + `sidePanel`.
+    // this page reuses the dashboard `pageScroll` shell + `sidePanel`. The hook
+    // no-ops (returns zeros) for guests, and the personal side panel is hidden
+    // for them below — dictionary search itself is fully public.
+    const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
     const dashboardData = useDashboardData();
 
     const [searchMode, setSearchMode]     = useState<SearchMode>("vocabulary");
@@ -112,11 +117,15 @@ export default function DictionaryPage() {
         ]).then(([w, k]) => setHubStats({ words: w.totalItems, kanjis: k.totalItems }))
           .catch(() => {});
         // Đồng bộ sổ tay từ server để icon bookmark đúng trạng thái đa thiết bị.
-        // Lỗi mạng → giữ cache localStorage (đã là initial state).
-        fetchNotebook()
-            .then(({ words, kanjis }) => { setSavedWords(words); setSavedKanjis(kanjis); })
-            .catch(() => {});
-    }, []);
+        // Lỗi mạng → giữ cache localStorage (đã là initial state). Chỉ chạy khi
+        // đã đăng nhập — khách không có sổ tay cá nhân (tránh gọi API 401).
+        if (isAuthenticated) {
+            fetchNotebook()
+                .then(({ words, kanjis }) => { setSavedWords(words); setSavedKanjis(kanjis); })
+                .catch(() => {});
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated]);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -247,7 +256,9 @@ export default function DictionaryPage() {
         <MainLayout
             pathName={{ "/dictionary": "Từ điển Nhật-Việt" }}
             pageScroll
-            sidePanel={<SakuraDashboardSidePanel {...dashboardData} />}
+            sidePanel={
+                isAuthenticated ? <SakuraDashboardSidePanel {...dashboardData} /> : undefined
+            }
         >
             <div className="w-full space-y-4">
 

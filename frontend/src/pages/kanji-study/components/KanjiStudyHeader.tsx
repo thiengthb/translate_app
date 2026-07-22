@@ -38,7 +38,7 @@ export function KanjiContentNav() {
   return (
     <nav className="flex items-center gap-1">
       <span className="mr-1 hidden items-center gap-1.5 sm:flex">
-        <span className="grid h-6 w-6 place-items-center rounded-md bg-rose-500 font-serif text-sm text-white">
+        <span className="grid h-6 w-6 place-items-center rounded-md bg-primary font-serif text-sm text-primary-foreground">
           漢
         </span>
         <span className="text-sm font-bold text-foreground">Kanji Study</span>
@@ -49,7 +49,7 @@ export function KanjiContentNav() {
         className={cn(
           "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
           isHome
-            ? "text-rose-500"
+            ? "text-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
@@ -69,7 +69,7 @@ export function KanjiContentNav() {
               onClick={() => navigate(item.to)}
               className="gap-3 p-2.5 rounded-lg cursor-pointer"
             >
-              <span className="grid place-items-center h-9 w-9 shrink-0 rounded-lg bg-muted text-rose-500">
+              <span className="grid place-items-center h-9 w-9 shrink-0 rounded-lg bg-muted text-primary">
                 <item.icon size={18} />
               </span>
               <span className="flex flex-col">
@@ -87,7 +87,7 @@ export function KanjiContentNav() {
         className={cn(
           "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
           location.pathname === "/kanji-study/search"
-            ? "text-rose-500"
+            ? "text-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >

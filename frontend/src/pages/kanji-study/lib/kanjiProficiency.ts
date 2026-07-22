@@ -23,10 +23,10 @@ export interface ProficiencyMeta {
 /** Ordered low → high; drives the legend order and the distribution bar. */
 export const PROFICIENCY_LEVELS: ProficiencyMeta[] = [
   { key: "NEW", label: "Chưa biết", color: "bg-muted-foreground/30" },
-  { key: "KNOWN", label: "Đã biết", color: "bg-rose-300" },
-  { key: "FAMILIAR", label: "Đã quen", color: "bg-rose-400" },
-  { key: "PROFICIENT", label: "Biết rõ", color: "bg-rose-600" },
-  { key: "MASTERED", label: "Thành thạo", color: "bg-amber-400", challengeOnly: true },
+  { key: "KNOWN", label: "Đã biết", color: "bg-chart-5" },
+  { key: "FAMILIAR", label: "Đã quen", color: "bg-chart-1" },
+  { key: "PROFICIENT", label: "Biết rõ", color: "bg-primary" },
+  { key: "MASTERED", label: "Thành thạo", color: "bg-chart-3", challengeOnly: true },
 ];
 
 /**
