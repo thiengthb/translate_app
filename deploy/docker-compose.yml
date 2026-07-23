@@ -1,0 +1,190 @@
+# translate_app — self-host deploy, TWO versions side by side.
+#
+#   main branch  → ${PUBLIC_URL_MAIN}   (frontend-main → backend-main → DB ${MYSQL_DB_MAIN})
+#   test branch  → ${PUBLIC_URL_TEST}   (frontend-test → backend-test → DB ${MYSQL_DB_TEST})
+#
+#   Shared to save RAM: one MySQL (a separate database per version, auto-created via the JDBC
+#   createDatabaseIfNotExist flag), one similarity service, one Cloudflare tunnel. Per version:
+#   its own backend, frontend and redis, so the two are functionally isolated.
+#
+#   Cloudflare Tunnel is the ONLY ingress (no host ports). Route BOTH hostnames in the dashboard:
+#     ${PUBLIC_URL_MAIN}  → http://frontend-main:80
+#     ${PUBLIC_URL_TEST}  → http://frontend-test:80
+#
+#   Do NOT run this by hand — use ./setup.sh (it creates the main worktree first). See README.md.
+
+x-backend-common: &backend-common
+  restart: unless-stopped
+  env_file:
+    - .env
+  # First boot creates the schema + seeds a lot of data (menus, words, decks, kanji…) which can
+  # take several minutes — a generous start_period so the healthcheck doesn't flag it early.
+  # Liveness = the JVM answers HTTP at all. We accept ANY status line (the test branch guards
+  # /actuator/health behind auth and returns 401 — still proof the server is up), so we grep for
+  # an "HTTP/" response line rather than requiring 2xx. Connection refused → no output → unhealthy.
+  healthcheck:
+    test: ['CMD-SHELL', "wget -S -O /dev/null http://127.0.0.1:8080/actuator/health 2>&1 | grep -q 'HTTP/' || exit 1"]
+    interval: 20s
+    timeout: 5s
+    start_period: 420s
+    retries: 5
+  # Shared, non-secret wiring (overrides .env). Per-version values are set on each service.
+  environment: &backend-env
+    APP_PROFILE: mysql
+    MYSQL_HOST: mysql
+    MYSQL_PORT: '3306'
+    REDIS_PORT: '6379'
+    CACHE_ENABLED: 'true'
+    SERVER_FORWARD_HEADERS_STRATEGY: framework   # trust nginx X-Forwarded-* → https OAuth redirect
+    APP_COOKIE_SECURE: 'true'
+
+x-frontend-common: &frontend-common
+  restart: unless-stopped
+  environment:
+    NGINX_ENVSUBST_FILTER: BACKEND_   # only substitute ${BACKEND_HOST}, leave nginx $vars alone
+
+services:
+  # ================= shared infra =================
+  mysql:
+    image: mysql:8.0
+    container_name: translate-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB_MAIN}          # test DB is auto-created by the backend on connect
+    volumes:
+      - translate_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # BGE-M3 similarity (shared, internal). NOTE: not yet wired into the app code — it boots and
+  # caches the ~2.2 GB model but nothing calls it. Comment out to save ~2-4 GB RAM until used.
+  similarity:
+    build:
+      context: ../similarity-service
+    image: translate-similarity:local
+    container_name: translate-similarity
+    restart: unless-stopped
+    volumes:
+      - translate_similarity_models:/models
+
+  # ================= main version =================
+  redis-main:
+    image: redis:7-alpine
+    container_name: translate-redis-main
+    restart: unless-stopped
+    volumes:
+      - translate_redis_main_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend-main:
+    <<: *backend-common
+    build:
+      context: ${MAIN_TREE}/backend
+    image: translate-backend:main
+    container_name: translate-backend-main
+    environment:
+      <<: *backend-env
+      MYSQL_DB: ${MYSQL_DB_MAIN}
+      REDIS_HOST: redis-main
+      APP_FRONTEND_DOMAIN: ${PUBLIC_URL_MAIN}
+      APP_BACKEND_DOMAIN: ${PUBLIC_URL_MAIN}
+      # The main branch's baked JDBC URL has an invalid Java charset (characterEncoding=utf8mb4)
+      # and no createDatabaseIfNotExist. Override with a correct URL (env wins over properties).
+      SPRING_DATASOURCE_URL: 'jdbc:mysql://mysql:3306/${MYSQL_DB_MAIN}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8'
+    volumes:
+      - translate_uploads_main:/app/uploads
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis-main: {condition: service_healthy}
+
+  frontend-main:
+    <<: *frontend-common
+    build:
+      context: ${MAIN_TREE}/frontend
+      args:
+        VITE_API_URL: /api
+        VITE_API_URL_FOR_GOOGLE: /oauth2/authorization/google
+    image: translate-frontend:main
+    container_name: translate-frontend-main
+    environment:
+      NGINX_ENVSUBST_FILTER: BACKEND_
+      BACKEND_HOST: backend-main:8080
+    depends_on:
+      - backend-main
+
+  # ================= test version (current branch) =================
+  redis-test:
+    image: redis:7-alpine
+    container_name: translate-redis-test
+    restart: unless-stopped
+    volumes:
+      - translate_redis_test_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend-test:
+    <<: *backend-common
+    build:
+      context: ../backend
+    image: translate-backend:test
+    container_name: translate-backend-test
+    environment:
+      <<: *backend-env
+      MYSQL_DB: ${MYSQL_DB_TEST}
+      REDIS_HOST: redis-test
+      APP_FRONTEND_DOMAIN: ${PUBLIC_URL_TEST}
+      APP_BACKEND_DOMAIN: ${PUBLIC_URL_TEST}
+    volumes:
+      - translate_uploads_test:/app/uploads
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis-test: {condition: service_healthy}
+
+  frontend-test:
+    <<: *frontend-common
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: /api
+        VITE_API_URL_FOR_GOOGLE: /oauth2/authorization/google
+    image: translate-frontend:test
+    container_name: translate-frontend-test
+    environment:
+      NGINX_ENVSUBST_FILTER: BACKEND_
+      BACKEND_HOST: backend-test:8080
+    depends_on:
+      - backend-test
+
+  # ================= ingress =================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: translate-cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - frontend-main
+      - frontend-test
+    restart: unless-stopped
+
+volumes:
+  translate_mysql_data:
+  translate_similarity_models:
+  translate_redis_main_data:
+  translate_redis_test_data:
+  translate_uploads_main:
+  translate_uploads_test:

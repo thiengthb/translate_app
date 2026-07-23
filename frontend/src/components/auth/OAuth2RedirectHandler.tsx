@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { jwtDecode } from "jwt-decode";
+import { authApi } from "@/api/features/auth.api";
 import { setLogin } from "@/store/slices/auth/authSlice";
-import type { LoginResponse } from "@/types";
-import { getHomePathByRole, normalizeAuthRolePayload } from "@/utils/rbac.utils";
+import { getHomePathByRole } from "@/utils/rbac.utils";
 
 export const OAuth2RedirectHandler = () => {
     const [searchParams] = useSearchParams();
@@ -25,43 +24,27 @@ export const OAuth2RedirectHandler = () => {
             return;
         }
 
-        try {
-            const decoded = jwtDecode<Record<string, unknown>>(token);
-            const normalized = normalizeAuthRolePayload({
-                role: typeof decoded.role === "string" ? decoded.role : "",
-                roles: Array.isArray(decoded.roles)
-                    ? decoded.roles.filter((item): item is string => typeof item === "string")
-                    : [],
-                permissions: Array.isArray(decoded.permissions)
-                    ? decoded.permissions.filter((item): item is string => typeof item === "string")
-                    : [],
-                rolePermissions:
-                    decoded.rolePermissions && typeof decoded.rolePermissions === "object"
-                        ? (decoded.rolePermissions as Record<string, string[]>)
-                        : {},
+        // The access token no longer carries the user's roles/permissions (kept small so the OAuth
+        // redirect's Location header fits nginx's proxy buffers). Persist the token so axios
+        // authenticates, then load the authorization payload from /api/me — the same data the
+        // password login receives in its own response body.
+        localStorage.setItem("token", token);
+
+        authApi
+            .getMe()
+            .then((me) => {
+                dispatch(setLogin({ ...me, token }));
+                navigate(getHomePathByRole(me.role), { replace: true });
+            })
+            .catch(() => {
+                localStorage.removeItem("token");
+                navigate("/login?error=google_auth_failed", { replace: true });
             });
-
-            const userData: LoginResponse = {
-                token,
-                email: typeof decoded.email === "string" ? decoded.email : "",
-                firstName: typeof decoded.firstName === "string" ? decoded.firstName : "",
-                lastName: typeof decoded.lastName === "string" ? decoded.lastName : "",
-                role: normalized.role,
-                roles: normalized.roles,
-                permissions: normalized.permissions,
-                rolePermissions: normalized.rolePermissions,
-            };
-
-            dispatch(setLogin(userData));
-            navigate(getHomePathByRole(userData.role), { replace: true });
-        } catch {
-            navigate("/login?error=google_token_invalid", { replace: true });
-        }
     }, [searchParams, dispatch, navigate]);
 
     return (
         <div className="flex h-screen items-center justify-center">
-            <p>Đang xử lý...</p>
+            <p>Processing...</p>
         </div>
     );
 };

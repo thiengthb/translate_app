@@ -1,0 +1,12 @@
+# Keep the build context small + never ship secrets into the image.
+target/
+.sudachi-cache/
+.grammar-data-cache/
+.git/
+.idea/
+.mvn/
+.env
+*.env
+!*.env.example
+scripts/_kanji_data/
+*.log
