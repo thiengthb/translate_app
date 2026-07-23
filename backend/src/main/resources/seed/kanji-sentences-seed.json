@@ -1,0 +1,26 @@
+{
+  "_comment": "Sample example-sentence seed (committed) so the per-kanji 'Câu' section works out of the box. The full corpus is regenerated from Tatoeba via backend/scripts/gen-sentence-seed.mjs (gitignored, see README-sentence-seed.md). Furigana is generated on import by KanjiSentenceSeeder (Sudachi), not stored here.",
+  "source": "Tatoeba",
+  "sentences": [
+    { "tatoebaId": 110509, "japanese": "コーヒー三つお願いします。", "en": "Three coffees, please.", "vi": "Cho tôi ba ly cà phê." },
+    { "tatoebaId": 200001, "japanese": "三日から五日。", "en": "Three to five days.", "vi": "Từ ngày ba đến ngày năm." },
+    { "tatoebaId": 200002, "japanese": "三時でどうでしょうか。", "en": "Would three o'clock be all right?", "vi": "Ba giờ thì thế nào?" },
+    { "tatoebaId": 200003, "japanese": "そのピザを三人で分けなさい。", "en": "Divide the pizza among you three.", "vi": "Hãy chia cái bánh pizza đó cho ba người." },
+    { "tatoebaId": 200004, "japanese": "日本人は一日三食です。", "en": "Japanese people take three meals a day.", "vi": "Người Nhật ăn ba bữa một ngày." },
+    { "tatoebaId": 200005, "japanese": "彼は日本に三年います。", "en": "He has been in Japan for three years.", "vi": "Anh ấy đã ở Nhật ba năm." },
+    { "tatoebaId": 200006, "japanese": "私は本を読みます。", "en": "I read a book.", "vi": "Tôi đọc sách." },
+    { "tatoebaId": 200007, "japanese": "今何時ですか。", "en": "What time is it now?", "vi": "Bây giờ là mấy giờ?" },
+    { "tatoebaId": 200008, "japanese": "彼は日本語を話します。", "en": "He speaks Japanese.", "vi": "Anh ấy nói tiếng Nhật." },
+    { "tatoebaId": 200009, "japanese": "あの人は先生です。", "en": "That person is a teacher.", "vi": "Người kia là giáo viên." },
+    { "tatoebaId": 200010, "japanese": "毎日水を飲みます。", "en": "I drink water every day.", "vi": "Tôi uống nước mỗi ngày." },
+    { "tatoebaId": 200011, "japanese": "学校は九時に始まります。", "en": "School starts at nine o'clock.", "vi": "Trường học bắt đầu lúc chín giờ." },
+    { "tatoebaId": 200012, "japanese": "母は朝ご飯を作ります。", "en": "My mother makes breakfast.", "vi": "Mẹ tôi làm bữa sáng." },
+    { "tatoebaId": 200013, "japanese": "私は毎朝新聞を読む。", "en": "I read the newspaper every morning.", "vi": "Tôi đọc báo mỗi sáng." },
+    { "tatoebaId": 200014, "japanese": "今日は天気がいいです。", "en": "The weather is nice today.", "vi": "Hôm nay thời tiết đẹp." },
+    { "tatoebaId": 200015, "japanese": "彼女は本を三冊買った。", "en": "She bought three books.", "vi": "Cô ấy đã mua ba quyển sách." },
+    { "tatoebaId": 200016, "japanese": "来年日本へ行きます。", "en": "I will go to Japan next year.", "vi": "Năm sau tôi sẽ đi Nhật." },
+    { "tatoebaId": 200017, "japanese": "友達と食事をしました。", "en": "I had a meal with my friend.", "vi": "Tôi đã ăn cơm với bạn." },
+    { "tatoebaId": 200018, "japanese": "三月に大学を卒業します。", "en": "I will graduate from university in March.", "vi": "Tôi sẽ tốt nghiệp đại học vào tháng ba." },
+    { "tatoebaId": 200019, "japanese": "この時計は私のです。", "en": "This watch is mine.", "vi": "Cái đồng hồ này là của tôi." }
+  ]
+}

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import ToggleTheme from "@/components/ToggleTheme";
 import { HeaderActionButton } from "./HeaderActionButton";
 import type { RootState } from "@/store/store";
 
@@ -63,9 +62,10 @@ export function MoreMenu({ streakCount }: MoreMenuProps) {
                 {showStreak && (
                     /* Clickable item — desktop has StreakBadge in header,
                        but mobile users would otherwise have no entry into
-                       /streak. Navigate on tap. */
+                       the streak record. The streak now lives on the
+                       dashboard's "Record" calendar. Navigate on tap. */
                     <DropdownMenuItem
-                        onSelect={() => navigate("/streak")}
+                        onSelect={() => navigate("/dashboard")}
                         className="gap-2 text-sm cursor-pointer"
                     >
                         <Flame size={14} className="text-orange-500" />
@@ -85,7 +85,6 @@ export function MoreMenu({ streakCount }: MoreMenuProps) {
                         </DropdownMenuLabel>
                         <div className="px-1 pb-1 flex items-center gap-1">
                             <LanguageSwitcher />
-                            <ToggleTheme className="!h-8 !w-8" />
                         </div>
                     </>
                 )}

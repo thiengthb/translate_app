@@ -3,6 +3,7 @@ package com.example.starter_project_2025.domain.grammar.review;
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgress;
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgressRepository;
 import com.example.starter_project_2025.domain.grammar.scheduler.GrammarScheduler;
+import com.example.starter_project_2025.domain.grammar.scheduler.Rating;
 import com.example.starter_project_2025.domain.production.grading.GradingService;
 import com.example.starter_project_2025.domain.production.grading.TranslationAttempt;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
@@ -44,7 +45,7 @@ public class GrammarReviewService {
         GrammarSubUse subUse = attempt.getPrompt().getSubUse();
 
         // 2. Map the mechanical/holistic signals to a deterministic SRS rating.
-        String rating = toRating(
+        Rating rating = toRating(
                 Boolean.TRUE.equals(attempt.getDetectorPassed()),
                 attempt.getFinalVerdict(),
                 attempt.getLlmJudgeScore());
@@ -75,17 +76,17 @@ public class GrammarReviewService {
                 .correction(attempt.getLlmCorrection())
                 .referenceAnswer(attempt.getPrompt().getReferenceSentence().getL2Text())
                 .subUseId(subUse.getId())
-                .ratingApplied(rating)
+                .ratingApplied(rating.name())
                 .state(progress.getState())
                 .intervalDays(progress.getIntervalDays())
                 .reviewCount(progress.getReviewCount())
                 .lapses(progress.getLapses())
                 .memoryScore(progress.getMemoryScore())
                 .nextReviewAt(progress.getNextReviewAt())
-                .againPreview(scheduler.previewLabel(progress, "AGAIN"))
-                .hardPreview(scheduler.previewLabel(progress, "HARD"))
-                .goodPreview(scheduler.previewLabel(progress, "GOOD"))
-                .easyPreview(scheduler.previewLabel(progress, "EASY"))
+                .againPreview(scheduler.previewLabel(progress, Rating.AGAIN))
+                .hardPreview(scheduler.previewLabel(progress, Rating.HARD))
+                .goodPreview(scheduler.previewLabel(progress, Rating.GOOD))
+                .easyPreview(scheduler.previewLabel(progress, Rating.EASY))
                 .build();
     }
 
@@ -97,14 +98,14 @@ public class GrammarReviewService {
      * card is rated AGAIN regardless of how good the sentence meaning was.
      * When the grammar IS used, the LLM holistic verdict refines the grade.</p>
      */
-    private String toRating(boolean detectorPassed, String finalVerdict, Double judgeScore) {
+    private Rating toRating(boolean detectorPassed, String finalVerdict, Double judgeScore) {
         if (!detectorPassed) {
-            return "AGAIN";
+            return Rating.AGAIN;
         }
         if ("PASS".equals(finalVerdict)) {
-            return judgeScore != null && judgeScore >= EASY_SCORE_THRESHOLD ? "EASY" : "GOOD";
+            return judgeScore != null && judgeScore >= EASY_SCORE_THRESHOLD ? Rating.EASY : Rating.GOOD;
         }
         // PARTIAL or FAIL but grammar form was correct → keep it short, review soon.
-        return "HARD";
+        return Rating.HARD;
     }
 }

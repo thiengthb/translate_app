@@ -8,7 +8,6 @@ import {
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb.tsx";
 import { iconMap } from "@/components/datatable/iconMap";
 import { InfoLabel } from "@/components/common/InfoLabel";
@@ -36,7 +35,7 @@ type Props = {
 };
 
 function formatPath(path: string) {
-    if (/^\d+$/.test(path)) return "Details";
+    if (/^\d+$/.test(path)) return "Chi tiết";
     return path
         .replace(/-/g, " ")
         .replace(/_/g, " ")
@@ -44,17 +43,14 @@ function formatPath(path: string) {
 }
 
 const PAGE_DESCRIPTIONS: Record<string, string> = {
-    "/profile": "Your account profile and personal details.",
-    "/settings": "Personalize theme, color, typography and language.",
-    "/help/shortcuts": "All keyboard shortcuts available across the app.",
-    "/student": "Learning area for students.",
-    "/teacher": "Workspace for teachers.",
+    "/profile": "Hồ sơ tài khoản và thông tin cá nhân của bạn.",
+    "/help/shortcuts": "Tất cả phím tắt có sẵn trong toàn bộ ứng dụng.",
     "/library": "Bộ sưu tập deck học tập của bạn.",
     "/community": "Duyệt và lưu các deck công khai được chia sẻ bởi cộng đồng.",
     "/create-deck": "Tạo bộ thẻ mới — học được ở mọi chế độ.",
-    "/translator": "Break down the grammar of a Japanese sentence.",
-    "/sentence_practice": "Practice composing Japanese sentences.",
-    "/notifications": "Your notification inbox.",
+    "/translator": "Phân tích ngữ pháp của một câu tiếng Nhật.",
+    "/sentence_practice": "Luyện tập đặt câu tiếng Nhật.",
+    "/notifications": "Hộp thư thông báo của bạn.",
     "/words/create":
         "Thêm từ vựng kèm nhiều nghĩa (đa ngôn ngữ) và ví dụ — tất cả trong một lần.",
 };
@@ -135,9 +131,12 @@ export default function DynamicBreadcrumbs({
                 {/* Optional explicit parent (e.g. "My Library" → /library) */}
                 {parentCrumb && (
                     <BreadcrumbItem className="flex items-center gap-2">
-                        <BreadcrumbSeparator className="text-muted-foreground/50">
+                        {/* Plain span — BreadcrumbSeparator is an <li>, and
+                            nesting it inside BreadcrumbItem's <li> is invalid
+                            HTML (React hydration warning). */}
+                        <span role="presentation" aria-hidden="true" className="text-muted-foreground/50">
                             <ChevronRight className="size-4" />
-                        </BreadcrumbSeparator>
+                        </span>
                         <BreadcrumbLink asChild>
                             {(() => {
                                 const { display, full, truncated } = truncateCrumb(parentCrumb.title);
@@ -176,7 +175,7 @@ export default function DynamicBreadcrumbs({
                         ? pageDescription ??
                           activeModule?.description ??
                           PAGE_DESCRIPTIONS[href] ??
-                          `Current page: ${full}.`
+                          `Trang hiện tại: ${full}.`
                         : undefined;
                     const hasDescription =
                         !!description && description.trim().length > 0;
@@ -186,9 +185,9 @@ export default function DynamicBreadcrumbs({
                             key={href}
                             className="flex items-center gap-2"
                         >
-                            <BreadcrumbSeparator className="text-muted-foreground/50">
+                            <span role="presentation" aria-hidden="true" className="text-muted-foreground/50">
                                 <ChevronRight className="size-4" />
-                            </BreadcrumbSeparator>
+                            </span>
 
                             {isLast && hasPage ? (
                                 <span className="flex items-center gap-2 px-2 py-1 rounded-md">

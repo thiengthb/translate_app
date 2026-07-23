@@ -2,6 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { AttemptStatus, CorrectAnswerSnapshot, DifficultyLevel, QuizStatus } from "@/types";
 
+const DIFFICULTY_LABELS: Record<string, string> = {
+  EASY: "Dễ",
+  MEDIUM: "Trung bình",
+  HARD: "Khó",
+};
+
 export function DifficultyBadge({ level }: { level: DifficultyLevel | null | undefined }) {
   if (!level) return null;
   const tone: Record<string, string> = {
@@ -14,8 +20,14 @@ export function DifficultyBadge({ level }: { level: DifficultyLevel | null | und
     N2: "bg-orange-500/15 text-orange-600",
     N1: "bg-rose-500/15 text-rose-600",
   };
-  return <Badge variant="outline" className={cn("border-0", tone[level])}>{level}</Badge>;
+  return <Badge variant="outline" className={cn("border-0", tone[level])}>{DIFFICULTY_LABELS[level] ?? level}</Badge>;
 }
+
+const QUIZ_STATUS_LABELS: Record<QuizStatus, string> = {
+  DRAFT: "Bản nháp",
+  PUBLISHED: "Đã xuất bản",
+  ARCHIVED: "Đã lưu trữ",
+};
 
 export function QuizStatusBadge({ status }: { status: QuizStatus }) {
   const tone: Record<QuizStatus, string> = {
@@ -23,8 +35,15 @@ export function QuizStatusBadge({ status }: { status: QuizStatus }) {
     PUBLISHED: "bg-green-500/15 text-green-600",
     ARCHIVED: "bg-zinc-500/15 text-zinc-500",
   };
-  return <Badge variant="outline" className={cn("border-0", tone[status])}>{status}</Badge>;
+  return <Badge variant="outline" className={cn("border-0", tone[status])}>{QUIZ_STATUS_LABELS[status] ?? status}</Badge>;
 }
+
+const ATTEMPT_STATUS_LABELS: Record<AttemptStatus, string> = {
+  IN_PROGRESS: "Đang làm",
+  SUBMITTED: "Đã nộp",
+  EXPIRED: "Hết hạn",
+  CANCELLED: "Đã hủy",
+};
 
 export function AttemptStatusBadge({ status }: { status: AttemptStatus }) {
   const tone: Record<AttemptStatus, string> = {
@@ -33,7 +52,7 @@ export function AttemptStatusBadge({ status }: { status: AttemptStatus }) {
     EXPIRED: "bg-red-500/15 text-red-600",
     CANCELLED: "bg-zinc-500/15 text-zinc-500",
   };
-  return <Badge variant="outline" className={cn("border-0", tone[status])}>{status.replace("_", " ")}</Badge>;
+  return <Badge variant="outline" className={cn("border-0", tone[status])}>{ATTEMPT_STATUS_LABELS[status] ?? status}</Badge>;
 }
 
 export function formatSeconds(total: number | null | undefined): string {

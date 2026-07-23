@@ -256,6 +256,24 @@
                             <overwrite>false</overwrite>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>download-jlpt-grammar-dataset</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                        <configuration>
+                            <!-- JLPT grammar dictionary. Packaged MIT by fluent-jp; the content
+                                 (meanings/examples) is © 日本語NET. Fetched at build like the Sudachi
+                                 dict rather than vendored into the repo. We extract ONLY
+                                 structurePattern from it (GrammarStructurePatternImporter) and never
+                                 ship its example sentences. Pinned to a commit SHA for reproducibility. -->
+                            <url>https://raw.githubusercontent.com/AlexW00/fluent-jp/85e39528149deeeac0ced1f2e7c12fd85dc8a223/languages/ja-JP/grammar/jlpt_grammar.json</url>
+                            <outputDirectory>${project.basedir}/.grammar-data-cache</outputDirectory>
+                            <outputFileName>jlpt_grammar.json</outputFileName>
+                            <overwrite>false</overwrite>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -285,6 +303,25 @@
                                     <!-- Flatten: strips parent folder from zip path -->
                                     <mapper type="flatten"/>
                                 </unzip>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-jlpt-grammar-dataset</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- Place the downloaded dataset on the classpath at seed/
+                                     so GrammarStructurePatternImporter can read it. Skipped
+                                     gracefully by the importer if the download was unavailable. -->
+                                <mkdir dir="${project.build.outputDirectory}/seed"/>
+                                <copy file="${project.basedir}/.grammar-data-cache/jlpt_grammar.json"
+                                      todir="${project.build.outputDirectory}/seed"
+                                      overwrite="false"
+                                      failonerror="false"/>
                             </target>
                         </configuration>
                     </execution>

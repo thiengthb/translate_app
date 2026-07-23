@@ -151,6 +151,7 @@ export default function DeckStudyPage() {
       ignorePaths={isAnkiPath ? ["deck", String(deckId)] : ["deck"]}
       pathName={{ [location.pathname]: deck?.title ?? "Study" }}
       breadcrumbIcon={breadcrumbIcon}
+      pageScroll
     >
       {/* Full view is a CSS overlay on the SAME subtree (not a separate tree)
           so toggling it never remounts the active mode / loses its session.

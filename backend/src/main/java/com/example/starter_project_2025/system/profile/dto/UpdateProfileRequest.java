@@ -15,6 +15,6 @@ public record UpdateProfileRequest(
         @Size(max = 20, message = "{validation.phone.max}")
         String phone,
 
-        @Size(max = 500, message = "{validation.bio.max}")
+        @Size(max = 5, message = "{validation.bio.max}")
         String bio
 ) {}

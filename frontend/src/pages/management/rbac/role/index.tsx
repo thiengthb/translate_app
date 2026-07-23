@@ -12,20 +12,20 @@ const roleSchema: EntitySchema = {
   fields: [
     {
       name: "name",
-      label: "Name",
+      label: "Tên",
       type: "text",
       sortable: true,
       bold: true,
     },
     {
       name: "description",
-      label: "Description",
+      label: "Mô tả",
       type: "textarea",
       sortable: true,
     },
     {
       name: "permissionIds",
-      label: "Permissions",
+      label: "Quyền hạn",
       type: "relation",
       editable: true,
       relation: {
@@ -42,7 +42,7 @@ const roleSchema: EntitySchema = {
 };
 
 export const entityConfig: EntityConfig = {
-  name: "Role",
+  name: "Vai trò",
   path: "/roles",
   api: roleApi,
   schema: roleSchema,

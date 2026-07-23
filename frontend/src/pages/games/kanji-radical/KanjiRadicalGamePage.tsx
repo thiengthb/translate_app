@@ -9,10 +9,11 @@ const PATH_NAME = { "/kanji-radical": "Bộ Thủ Karuta" };
  */
 export default function KanjiRadicalGamePage() {
     return (
-        <MainLayout pathName={PATH_NAME}>
-            {/* flex-1 min-h-0 lets the board fill the remaining viewport height
-                that MainLayout's ScrollHintContainer allocates to <main>. */}
-            <div className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col">
+        <MainLayout pathName={PATH_NAME} pageScroll>
+            {/* Full-bleed: fill the whole width + height <main> gives us (no
+                max-width cap), so the karuta table matches the kanji-study
+                pages instead of sitting boxed in the middle. */}
+            <div className="flex w-full min-w-0 flex-1 min-h-0 flex-col">
                 <GameBoard />
             </div>
         </MainLayout>

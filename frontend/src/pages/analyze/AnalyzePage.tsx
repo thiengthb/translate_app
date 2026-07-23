@@ -228,7 +228,7 @@ export default function AnalyzePage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <MainLayout pathName={{ "/translator": "Dịch thuật" }}>
+    <MainLayout pathName={{ "/translator": "Dịch thuật" }} pageScroll>
       <div className="w-full flex flex-col gap-4">
         {/* Main translator */}
         <Card className="p-0 overflow-hidden gap-0">
@@ -385,7 +385,7 @@ export default function AnalyzePage() {
               {isJa && translatedText && (alternatives.length > 0 || altLoading) && (
                 <div className="px-4 py-3 border-t">
                   <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    Alternatives:
+                    Các cách dịch khác:
                     {altLoading && <Loader2 className="animate-spin" size={14} />}
                   </div>
                   <div className="flex flex-col gap-3">

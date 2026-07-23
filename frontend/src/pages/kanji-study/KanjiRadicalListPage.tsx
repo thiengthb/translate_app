@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Grid, Search } from "lucide-react";
 import { kanjiRadicalApi } from "@/api/features/kanji_study";
 import type { KanjiRadicalDTO } from "@/types";
@@ -8,6 +9,7 @@ import { KanjiLayout } from "./components/KanjiLayout";
  * The 214 Kangxi radicals (bộ thủ) — the classifying components of kanji.
  */
 export default function KanjiRadicalListPage() {
+  const navigate = useNavigate();
   const [radicals, setRadicals] = useState<KanjiRadicalDTO[]>([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function KanjiRadicalListPage() {
   );
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="pb-8">
         <div className="flex items-center gap-2 mb-1">
           <Grid className="text-rose-500" size={22} />
@@ -52,9 +54,11 @@ export default function KanjiRadicalListPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {sorted.map((r) => (
-              <div
+              <button
                 key={r.id}
-                className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 flex items-center gap-3"
+                type="button"
+                onClick={() => navigate(`/kanji-study/radical/${r.id}`)}
+                className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 flex items-center gap-3 text-left hover:border-teal-400 hover:shadow-sm transition-all"
               >
                 <span className="text-3xl font-serif text-gray-900 dark:text-gray-100">{r.character}</span>
                 <div className="min-w-0">
@@ -68,7 +72,7 @@ export default function KanjiRadicalListPage() {
                     #{r.number} · {r.strokeCount ?? "?"} nét
                   </p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

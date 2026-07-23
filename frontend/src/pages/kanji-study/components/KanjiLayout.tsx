@@ -1,30 +1,52 @@
 import type { ReactNode } from "react";
 
-import { useColorPreset } from "@/hooks/useColorPreset";
-import { useTypography } from "@/hooks/useTypography";
-import { KanjiStudyHeader } from "./KanjiStudyHeader";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { KanjiContentNav } from "./KanjiStudyHeader";
 
 /**
- * Dedicated shell for the Kanji-study area.
+ * Shell for the Kanji-study area.
  *
- * Unlike the shared `MainLayout`, this deliberately renders **no** GENGO
- * sidebar — the feature has its own in-page nav (`KanjiStudyHeader`) and a
- * "back to Gengo" exit button. Routes here are already gated by
- * `ProtectedRoute`, so no auth gate is needed at this level.
+ * Uses the shared {@link MainLayout} so the Kanji pages get the same Hanabun
+ * sidebar + rounded shell + top bar as every other page. The feature's own
+ * sub-nav (Decks / Bộ Thủ / Bài đọc) rides in the top bar via `headerExtra`
+ * ({@link KanjiContentNav}); global nav + exit-to-home are handled by the
+ * shared sidebar.
  *
- * Color-preset + typography hooks are still applied so the theme is correct
- * even when the user deep-links straight into a kanji page.
+ * Content stays centered at `max-w-6xl` to preserve the Kanji area's reading
+ * width inside the wider shell.
  */
-export function KanjiLayout({ children }: { children: ReactNode }) {
-  useColorPreset();
-  useTypography();
+export function KanjiLayout({
+  children,
+  pageScroll,
+  hideNav = false,
+}: {
+  children: ReactNode;
+  /** Let the whole document scroll (like Dashboard) instead of the default
+   *  fixed-viewport frame with internal scroll. Only the Kanji home page
+   *  (dashboard-style cards, no ProTable) uses this. */
+  pageScroll?: boolean;
+  /** In-exercise "focus" mode: drop the shared sidebar/top-bar chrome so the
+   *  only way out is the page's own back control (quiz / writing / detail
+   *  focus). Renders a bare full-screen frame with the themed background. */
+  hideNav?: boolean;
+}) {
+  if (hideNav) {
+    return (
+      <div className="min-h-svh bg-background flex flex-col">
+        <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-svh bg-background flex flex-col">
-      <KanjiStudyHeader />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
-        {children}
-      </main>
-    </div>
+    <MainLayout
+      pathName={{ "/kanji-study": "Học Kanji" }}
+      headerExtra={<KanjiContentNav />}
+      pageScroll={pageScroll}
+    >
+      <div className="mx-auto w-full max-w-6xl">{children}</div>
+    </MainLayout>
   );
 }

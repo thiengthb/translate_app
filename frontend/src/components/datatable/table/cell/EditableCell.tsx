@@ -163,7 +163,7 @@ export function EditableCell({
                     onClick={commit}
                     disabled={saving}
                     className="h-7 w-7 rounded inline-flex items-center justify-center text-emerald-600 hover:bg-emerald-500/10 cursor-pointer disabled:opacity-50"
-                    aria-label="Save"
+                    aria-label="Lưu"
                 >
                     <Check size={14} />
                 </button>
@@ -173,7 +173,7 @@ export function EditableCell({
                     onClick={cancel}
                     disabled={saving}
                     className="h-7 w-7 rounded inline-flex items-center justify-center text-muted-foreground hover:bg-accent cursor-pointer disabled:opacity-50"
-                    aria-label="Cancel"
+                    aria-label="Hủy"
                 >
                     <X size={14} />
                 </button>

@@ -15,11 +15,14 @@ export const NotFoundRedirect = () => {
     return null;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
   const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+
+  // Guests get a real 404 (a public page), never a bounce to the auth screen —
+  // the Mazii open-access model keeps them where they are unless they choose
+  // to sign in.
+  if (!isAuthenticated) {
+    return <Navigate to="/not-found-page" replace state={{ requestedPath }} />;
+  }
 
   return (
     <Navigate

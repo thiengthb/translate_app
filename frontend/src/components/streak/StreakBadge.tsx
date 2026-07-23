@@ -21,7 +21,7 @@ export function StreakBadge() {
     return (
         <TooltipWrapper content={tooltipText}>
             <button
-                onClick={() => navigate("/streak")}
+                onClick={() => navigate("/dashboard")}
                 aria-label={tooltipText}
                 className={`flex items-center gap-1.5 h-9 px-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                     isActive

@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(routes): update paths for Analyze and Kanji Radical pages">
+    <list default="true" id="4620baa0-42ab-4715-b420-818e5a895f5f" name="Changes" comment="feat(layout): enhance MainLayout for consistent sidebar height across pages">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/profile/dto/UpdateProfileRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/profile/dto/UpdateProfileRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/starter_project_2025/system/rbac/user/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/management/dashboard/useDashboardData.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/component-registry.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,7 +85,7 @@
     <option name="INCOMING_COMMITS_CHECK_STRATEGY" value="FETCH" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="dev" />
+        <entry key="$PROJECT_DIR$" value="Test-theme-by-Akira-second" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -92,12 +96,12 @@
     &quot;assignee&quot;: &quot;khoahd14805&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/thiengthb/translate_app.git",
-    "accountId": "32d5ed62-08dd-467c-a3b4-0dd1bfec836d"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/thiengthb/translate_app.git&quot;,
+    &quot;accountId&quot;: &quot;f6f81030-4e38-4841-a11b-4754b5a2dc53&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -126,11 +130,12 @@
         <option name="modeId" value="Agent" />
         <option name="model">
           <model>
-            <option name="modelType" value="builtin_family" />
-            <option name="modelValue" value="gemini-3.1-pro-preview" />
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="auto" />
           </model>
         </option>
-        <option name="targetType" value="LOCAL" />
+        <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
       </template>
     </option>
   </component>
@@ -154,7 +159,8 @@
     &quot;Spring Boot.StarterProject2025Application.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Test-by-ân&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Test-theme-by-Akira-second&quot;,
     &quot;git.auto.fetch.suggestion.counter&quot;: &quot;2&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
@@ -221,8 +227,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
       </set>
     </attachedChunks>
   </component>
@@ -281,135 +286,27 @@
       <workItem from="1780595446343" duration="3702000" />
       <workItem from="1780635363057" duration="4543000" />
       <workItem from="1780670399027" duration="6634000" />
-      <workItem from="1780724509029" duration="429000" />
-    </task>
-    <task id="LOCAL-00001" summary="test add">
-      <option name="closed" value="true" />
-      <created>1779866076909</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1779866076909</updated>
-    </task>
-    <task id="LOCAL-00002" summary="fix dictionary">
-      <option name="closed" value="true" />
-      <created>1779870787937</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1779870787937</updated>
-    </task>
-    <task id="LOCAL-00003" summary="fix frontend">
-      <option name="closed" value="true" />
-      <created>1779874916299</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1779874916299</updated>
-    </task>
-    <task id="LOCAL-00004" summary="feat(dictionary): fix dictionary UI">
-      <option name="closed" value="true" />
-      <created>1779890592941</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1779890592941</updated>
-    </task>
-    <task id="LOCAL-00005" summary="feat(dictionary): fix UI and add voice">
-      <option name="closed" value="true" />
-      <created>1779950411909</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1779950411909</updated>
-    </task>
-    <task id="LOCAL-00006" summary="feat(dictionary): fix UI add search kanji likes mazii">
-      <option name="closed" value="true" />
-      <created>1779954232000</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1779954232000</updated>
-    </task>
-    <task id="LOCAL-00007" summary="feat(dictionary): chinh sua UI va them de xuat tu vung">
-      <option name="closed" value="true" />
-      <created>1779969982686</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1779969982686</updated>
-    </task>
-    <task id="LOCAL-00008" summary="feat(dictionary): chinh sua UI va them kanji breakdown va ve net kanji">
-      <option name="closed" value="true" />
-      <created>1780036654773</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1780036654773</updated>
-    </task>
-    <task id="LOCAL-00009" summary="feat(dictionary): chinh them phan vi du tu vung">
-      <option name="closed" value="true" />
-      <created>1780047806236</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1780047806237</updated>
-    </task>
-    <task id="LOCAL-00010" summary="feat(dictionary): add word">
-      <option name="closed" value="true" />
-      <created>1780053093512</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1780053093512</updated>
-    </task>
-    <task id="LOCAL-00011" summary="fix merge">
-      <option name="closed" value="true" />
-      <created>1780056910269</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1780056910269</updated>
-    </task>
-    <task id="LOCAL-00012" summary="feat(configuration) update database password and Hibernate ddl-auto setting; add base CRUD controller">
-      <option name="closed" value="true" />
-      <created>1780068282096</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1780068282096</updated>
-    </task>
-    <task id="LOCAL-00013" summary="feat(llm) integrate Ollama client for offline AI grading; update environment configuration and fallback logic">
-      <option name="closed" value="true" />
-      <created>1780073234215</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1780073234215</updated>
-    </task>
-    <task id="LOCAL-00014" summary="feat(configuration) update workspace.xml to reflect recent changes and task updates">
-      <option name="closed" value="true" />
-      <created>1780073660156</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1780073660156</updated>
-    </task>
-    <task id="LOCAL-00015" summary="feat(translation): integrate DeepL API for text translation and add language selection features">
-      <option name="closed" value="true" />
-      <created>1780131669704</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1780131669704</updated>
-    </task>
-    <task id="LOCAL-00016" summary="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files">
-      <option name="closed" value="true" />
-      <created>1780154891240</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1780154891240</updated>
+      <workItem from="1780724509029" duration="2344000" />
+      <workItem from="1780858834601" duration="5804000" />
+      <workItem from="1781059575916" duration="658000" />
+      <workItem from="1781071257608" duration="1201000" />
+      <workItem from="1782110583422" duration="10546000" />
+      <workItem from="1782180940648" duration="7742000" />
+      <workItem from="1783342248742" duration="3651000" />
+      <workItem from="1783524172095" duration="227000" />
+      <workItem from="1783524509152" duration="5687000" />
+      <workItem from="1783613138846" duration="558000" />
+      <workItem from="1783660763355" duration="2493000" />
+      <workItem from="1783700727940" duration="1096000" />
+      <workItem from="1783702620785" duration="4123000" />
+      <workItem from="1783749161961" duration="6143000" />
+      <workItem from="1783828721002" duration="3180000" />
+      <workItem from="1783910917781" duration="2632000" />
+      <workItem from="1784562392334" duration="3075000" />
+      <workItem from="1784631119163" duration="5578000" />
+      <workItem from="1784644777571" duration="841000" />
+      <workItem from="1784695616755" duration="3562000" />
+      <workItem from="1784807092421" duration="9000" />
     </task>
     <task id="LOCAL-00017" summary="feat(translation): implement translation analysis service with alternatives and grammar detection">
       <option name="closed" value="true" />
@@ -571,7 +468,239 @@
       <option name="project" value="LOCAL" />
       <updated>1780684519822</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="feat(workspace): update task summary and last commit message for Analyze and Kanji Radical pages">
+      <option name="closed" value="true" />
+      <created>1780724949011</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1780724949011</updated>
+    </task>
+    <task id="LOCAL-00038" summary="feat(theme): add Cool Theme Toggle component and refactor theme handling in HeaderRight and SettingsPage">
+      <option name="closed" value="true" />
+      <created>1780862450453</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1780862450453</updated>
+    </task>
+    <task id="LOCAL-00039" summary="feat(toaster): implement custom AppToaster component with theme support">
+      <option name="closed" value="true" />
+      <created>1780863561238</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1780863561238</updated>
+    </task>
+    <task id="LOCAL-00040" summary="feat(landing): update landing page content and add ShineButton component">
+      <option name="closed" value="true" />
+      <created>1780864489533</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1780864489534</updated>
+    </task>
+    <task id="LOCAL-00041" summary="feat(landing): update landing page content and add ShineButton component">
+      <option name="closed" value="true" />
+      <created>1782125198747</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1782125198747</updated>
+    </task>
+    <task id="LOCAL-00042" summary="feat(branding): update branding to Hanabun and integrate new logo components">
+      <option name="closed" value="true" />
+      <created>1782138930623</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1782138930623</updated>
+    </task>
+    <task id="LOCAL-00043" summary="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality">
+      <option name="closed" value="true" />
+      <created>1782139372944</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1782139372944</updated>
+    </task>
+    <task id="LOCAL-00044" summary="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality">
+      <option name="closed" value="true" />
+      <created>1782195263770</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1782195263770</updated>
+    </task>
+    <task id="LOCAL-00045" summary="feat(role-management): refactor role permissions and add utility methods for permission handling">
+      <option name="closed" value="true" />
+      <created>1782199676501</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1782199676501</updated>
+    </task>
+    <task id="LOCAL-00046" summary="feat(streak): remove streak page and clean up related references">
+      <option name="closed" value="true" />
+      <created>1783352481386</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1783352481386</updated>
+    </task>
+    <task id="LOCAL-00047" summary="feat(landing-page): rebuild login and registration forms with cherry-blossom design">
+      <option name="closed" value="true" />
+      <created>1783707675734</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1783707675734</updated>
+    </task>
+    <task id="LOCAL-00048" summary="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals">
+      <option name="closed" value="true" />
+      <created>1783707704054</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1783707704054</updated>
+    </task>
+    <task id="LOCAL-00049" summary="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements">
+      <option name="closed" value="true" />
+      <created>1783828907895</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1783828907895</updated>
+    </task>
+    <task id="LOCAL-00050" summary="feat(dashboard): enhance layout with side panel and welcome message">
+      <option name="closed" value="true" />
+      <created>1783920250736</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1783920250736</updated>
+    </task>
+    <task id="LOCAL-00051" summary="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns">
+      <option name="closed" value="true" />
+      <created>1783921032843</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1783921032843</updated>
+    </task>
+    <task id="LOCAL-00052" summary="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics">
+      <option name="closed" value="true" />
+      <created>1784558776331</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1784558776331</updated>
+    </task>
+    <task id="LOCAL-00053" summary="feat(portfolio): implement landing and about pages with navigation and footer components">
+      <option name="closed" value="true" />
+      <created>1784567220855</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1784567220855</updated>
+    </task>
+    <task id="LOCAL-00054" summary="feat(portfolio): add Hanabun project to portfolio and update project count">
+      <option name="closed" value="true" />
+      <created>1784607093567</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1784607093567</updated>
+    </task>
+    <task id="LOCAL-00055" summary="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher">
+      <option name="closed" value="true" />
+      <created>1784609355902</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1784609355903</updated>
+    </task>
+    <task id="LOCAL-00056" summary="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics">
+      <option name="closed" value="true" />
+      <created>1784614865098</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1784614865098</updated>
+    </task>
+    <task id="LOCAL-00057" summary="feat(layout): update MainLayout header height for improved layout consistency">
+      <option name="closed" value="true" />
+      <created>1784616632227</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1784616632228</updated>
+    </task>
+    <task id="LOCAL-00058" summary="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling">
+      <option name="closed" value="true" />
+      <created>1784627621371</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1784627621371</updated>
+    </task>
+    <task id="LOCAL-00059" summary="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency">
+      <option name="closed" value="true" />
+      <created>1784631585560</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1784631585560</updated>
+    </task>
+    <task id="LOCAL-00060" summary="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784634739104</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1784634739104</updated>
+    </task>
+    <task id="LOCAL-00061" summary="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784636240185</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1784636240185</updated>
+    </task>
+    <task id="LOCAL-00062" summary="feat(kanji): enhance kanji data structure and add DeepSeek client for translation">
+      <option name="closed" value="true" />
+      <created>1784653706743</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1784653706743</updated>
+    </task>
+    <task id="LOCAL-00063" summary="feat(guest): add guest lookup tools and update navigation links">
+      <option name="closed" value="true" />
+      <created>1784656626070</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1784656626070</updated>
+    </task>
+    <task id="LOCAL-00064" summary="feat(guest): update guest dashboard content and remove Kana Shark page from navigation">
+      <option name="closed" value="true" />
+      <created>1784657776287</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1784657776287</updated>
+    </task>
+    <task id="LOCAL-00065" summary="feat(auth): enhance guest experience with tailored redirects and UI updates">
+      <option name="closed" value="true" />
+      <created>1784698937827</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1784698937828</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -609,14 +738,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/feature/assessment" />
-                      </list>
-                    </value>
-                  </entry>
-                  <entry key="user">
-                    <value>
-                      <list>
-                        <option value="thi3n" />
+                        <option value="origin/Test-theme-by-Akira-second" />
                       </list>
                     </value>
                   </entry>
@@ -629,32 +751,32 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(configuration) update workspace.xml to reflect recent changes and task updates" />
-    <MESSAGE value="feat(translation): enhance AnalyzePage with DeepL Pro tools and update configuration files" />
-    <MESSAGE value="feat(translation): integrate DeepL API for text translation and add language selection features" />
-    <MESSAGE value="perf(grammar): replace runtime regex loop with Aho-Corasick + compiled-Pattern index&#10;&#10;- Add org.ahocorasick:ahocorasick 0.6.3 to pom.xml&#10;- Rewrite GrammarSpotterService: lazy-built GrammarIndex caches an&#10;  Aho-Corasick trie (plain-string markers, O(n) scan) plus pre-compiled&#10;  java.util.regex.Pattern entries (regex markers); double-checked locking&#10;  keeps the index thread-safe. Add invalidateIndex() called by seeder.&#10;- Remove spotGrammar() from OllamaClient — grammar detection is now&#10;  fully deterministic and offline; no Ollama at scan runtime.&#10;- TranslationAnalysisService: grammar = dictionary only (spotter.spot()).&#10;- GrammarDictionarySeeder: call grammarSpotter.invalidateIndex() after&#10;  each seed run so the fresh patterns are picked up immediately.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
-    <MESSAGE value="feat(translation): implement translation analysis service with alternatives and grammar detection" />
-    <MESSAGE value="feat(grammar): update grading logic and thresholds for improved accuracy" />
-    <MESSAGE value="fix(grammar): correct stray space in ～させる detection regex&#10;&#10;The saseru (causative) marker regex had &quot;さ せられ&quot; with an errant space,&#10;so the させられ alternative never matched. Remove the space.&#10;&#10;Co-Authored-By: Claude Sonnet 4.6 &lt;noreply@anthropic.com&gt;" />
-    <MESSAGE value="feat(generation): enhance fallback logic for exercise generation and improve regex patterns in grammar dictionary" />
-    <MESSAGE value="áp dụng gemini lại và cho sudachi vô thay thế tách ghép câu của kuromoji và mecab đồng thời áp dụng thư viện core" />
-    <MESSAGE value="feat(analyze): refactor translation handling to use submitted state and improve API call logic" />
-    <MESSAGE value="refactor(workspace): update workspace configuration and clean up unused paths" />
-    <MESSAGE value="feat(grammar): add bulk seeder for N3 grammar patterns and enhance existing seeder logic" />
-    <MESSAGE value="feat(grammar): implement GrammarSpotterBasicSeeder for basic grammar patterns" />
-    <MESSAGE value="feat(docs): update CLAUDE.md with Sudachi JP tokenizer download instructions&#10;refactor(pom): change Sudachi dictionary download phase to initialize" />
-    <MESSAGE value="feat(translator): update Ollama API configuration and enhance grammar analysis for Japanese" />
-    <MESSAGE value="feat(translator): update Ollama API configuration and adjust task duration in workspace settings" />
-    <MESSAGE value="feat(buffs): implement charm system with buffs and reward overlays for game progression" />
-    <MESSAGE value="feat(production): implement AI-generated exercise composition and enhance grading feedback" />
-    <MESSAGE value="feat(auth): implement global auth modal and redirect for login/register routes" />
-    <MESSAGE value="feat(auth): wrap AppRoutes with AuthModalProvider for global authentication" />
-    <MESSAGE value="feat(landing): replace background image with video on LandingPage" />
-    <MESSAGE value="feat(landing): simplify video background styling on LandingPage" />
-    <MESSAGE value="feat(landing): update task summary and last commit message for video background styling" />
-    <MESSAGE value="fix(workspace): update recent branch name and adjust GitHub settings" />
-    <MESSAGE value="feat(routes): update paths for Analyze and Kanji Radical pages" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(routes): update paths for Analyze and Kanji Radical pages" />
+    <MESSAGE value="feat(dashboard): refactor to use SakuraStudyDashboard and add logout functionality" />
+    <MESSAGE value="feat(sakura-sidebar): implement CatalogFlyout for module navigation and remove logout functionality" />
+    <MESSAGE value="feat(role-management): refactor role permissions and add utility methods for permission handling" />
+    <MESSAGE value="feat(streak): remove streak page and clean up related references" />
+    <MESSAGE value="feat(landing-page): rebuild login and registration forms with cherry-blossom design" />
+    <MESSAGE value="feat(landing-page): implement cherry-blossom themed login and registration forms with animated petals" />
+    <MESSAGE value="feat(landing-page): add &quot;forgot password&quot; functionality and update navigation elements" />
+    <MESSAGE value="feat(sidebar): update layout spacing and improve navigation element alignment" />
+    <MESSAGE value="feat(dashboard): enhance layout with side panel and welcome message" />
+    <MESSAGE value="feat(header): simplify header layout by removing keyboard shortcuts and consolidating dropdowns" />
+    <MESSAGE value="feat(dictionary-page): enhance layout and styling for improved user interaction and aesthetics" />
+    <MESSAGE value="feat(layout): implement sticky sidebar for improved navigation and user experience" />
+    <MESSAGE value="feat(portfolio): implement landing and about pages with navigation and footer components" />
+    <MESSAGE value="feat(localization): update labels and messages to Vietnamese for improved accessibility" />
+    <MESSAGE value="feat(portfolio): add Hanabun project to portfolio and update project count" />
+    <MESSAGE value="feat(layout): enhance MainLayout and SakuraSidebar with pagination and role switcher" />
+    <MESSAGE value="feat(theme): add WritingQuoteHeader component with rotating quotes and update styles for improved aesthetics" />
+    <MESSAGE value="feat(layout): update MainLayout header height for improved layout consistency" />
+    <MESSAGE value="feat(showcase): implement Hanabun showcase landing page with interactive elements and improved styling" />
+    <MESSAGE value="feat(showcase): refactor components to use native IntersectionObserver for scroll reveals and improve styling consistency" />
+    <MESSAGE value="feat(showcase): implement useScrollReveal hook for improved scroll animations and update navigation links" />
+    <MESSAGE value="feat(kanji): enhance kanji data structure and add DeepSeek client for translation" />
+    <MESSAGE value="feat(guest): add guest lookup tools and update navigation links" />
+    <MESSAGE value="feat(guest): update guest dashboard content and remove Kana Shark page from navigation" />
+    <MESSAGE value="feat(auth): enhance guest experience with tailored redirects and UI updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(auth): enhance guest experience with tailored redirects and UI updates" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

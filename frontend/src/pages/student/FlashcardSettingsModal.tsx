@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { srsAlgorithmConfigApi, ankiSrsSettingApi } from "@/api";
+import { srsAlgorithmConfigApi, ankiSrsSettingApi, ankiFsrsApi } from "@/api";
+import type { RescheduleResult } from "@/api";
 import type { SrsAlgorithmConfigDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCurrentUserId } from "@/utils/auth.utils";
 import { ScrollHintContainer } from "@/components/common/ScrollHintContainer";
 import {
   type SettingsDraft,
+  type FsrsConfigView,
   DEFAULT_DRAFT,
   parseAlgorithmConfig,
+  parseFsrsConfig,
+  isFsrsAlgorithm,
   normalizeSetting,
   normalizeDraft,
   toAlgorithmConfigJson,
@@ -18,7 +22,9 @@ import {
 import {
   CalendarDays,
   ChevronDown,
+  Cpu,
   Eye,
+  FlaskConical,
   Gauge,
   GraduationCap,
   HelpCircle,
@@ -28,6 +34,9 @@ import {
   Save,
   Shield,
   SlidersHorizontal,
+  TrendingDown,
+  TrendingUp,
+  Wand2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -52,6 +61,30 @@ function visibleAlgorithms(list: SrsAlgorithmConfigDTO[], userId: number) {
   });
 }
 
+type SchedulerChoice = "SM2" | "FSRS";
+
+function algorithmTypeOf(item?: SrsAlgorithmConfigDTO | null) {
+  return (item?.algorithmType ?? "SM2").toUpperCase();
+}
+
+function findSm2Algorithm(list: SrsAlgorithmConfigDTO[], userId: number, deckId: number) {
+  const deckCode = `USER_SM2_${userId}_${deckId}`;
+  return (
+    list.find((item) => item.code === deckCode) ??
+    list.find((item) => item.code === "SM2_DEFAULT") ??
+    list.find((item) => algorithmTypeOf(item) === "SM2") ??
+    null
+  );
+}
+
+function findFsrsAlgorithm(list: SrsAlgorithmConfigDTO[]) {
+  return (
+    list.find((item) => item.code === "FSRS_DEFAULT") ??
+    list.find((item) => algorithmTypeOf(item) === "FSRS") ??
+    null
+  );
+}
+
 export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: FlashcardSettingsModalProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -62,6 +95,13 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
   const selectedAlgorithm = useMemo(
     () => algorithms.find((item) => item.id === draft.algorithmConfigId) ?? null,
     [algorithms, draft.algorithmConfigId],
+  );
+
+  const isFsrs = isFsrsAlgorithm(selectedAlgorithm);
+  const selectedScheduler: SchedulerChoice = isFsrs ? "FSRS" : "SM2";
+  const fsrsView = useMemo<FsrsConfigView>(
+    () => parseFsrsConfig(selectedAlgorithm?.configJson),
+    [selectedAlgorithm],
   );
 
   const sanitizedDraft = useMemo(() => normalizeDraft(draft), [draft]);
@@ -120,12 +160,26 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
     setDraft((prev) => ({ ...prev, ...patch }));
   };
 
-  const handleAlgorithmChange = (algorithmConfigId: number) => {
-    const algorithm = algorithms.find((item) => item.id === algorithmConfigId) ?? null;
+  const handleSchedulerChange = (scheduler: SchedulerChoice) => {
+    const userId = getCurrentUserId();
+    const algorithm =
+      scheduler === "FSRS"
+        ? findFsrsAlgorithm(algorithms)
+        : userId
+          ? findSm2Algorithm(algorithms, userId, deckId)
+          : algorithms.find((item) => algorithmTypeOf(item) === "SM2") ?? null;
+
+    if (scheduler === "FSRS" && !algorithm) {
+      toast.error("FSRS-5 preset is not available.");
+      return;
+    }
+
+    const nextFsrsView = scheduler === "FSRS" ? parseFsrsConfig(algorithm?.configJson) : null;
     setDraft((prev) => ({
       ...prev,
       ...parseAlgorithmConfig(algorithm?.configJson),
-      algorithmConfigId,
+      algorithmConfigId: algorithm?.id ?? 0,
+      ...(nextFsrsView ? { targetRetention: nextFsrsView.desiredRetention } : {}),
     }));
   };
 
@@ -147,7 +201,11 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
     const nextDraft = normalizeDraft(draft);
     const payload = {
       algorithmConfigId: nextDraft.algorithmConfigId || undefined,
-      algorithmConfigJson: toAlgorithmConfigJson(nextDraft),
+      // For FSRS we link the chosen preset as-is (its weights/version live in the
+      // preset). Sending an SM-2 config JSON would force the deck back onto an
+      // SM-2 preset, so we only write the JSON when editing an SM-2 algorithm.
+      algorithmConfigJson: isFsrs ? undefined : toAlgorithmConfigJson(nextDraft),
+      // Target retention doubles as FSRS "desired retention".
       targetRetention: Number(nextDraft.targetRetention.toFixed(2)),
       maxReviewsPerDay: nextDraft.maxReviewsPerDay,
       maxItemsPerDay: nextDraft.maxItemsPerDay,
@@ -213,7 +271,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         {deckTitle ? `${deckTitle} — study settings` : "Deck study settings"}
                       </h2>
                       <p className="truncate text-xs text-muted-foreground">
-                        Anki SM2 scheduling &amp; daily limits · applies to this deck only
+                        {isFsrs
+                          ? "FSRS scheduling (Beta) · desired retention & daily limits · applies to this deck only"
+                          : "Anki SM2 scheduling & daily limits · applies to this deck only"}
                       </p>
                     </div>
                   </div>
@@ -221,17 +281,13 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                   <div className="flex flex-1 items-center gap-2 lg:justify-end">
                     <div className="relative flex-1 lg:max-w-md">
                       <select
-                        value={String(draft.algorithmConfigId)}
-                        onChange={(event) => handleAlgorithmChange(Number(event.target.value))}
+                        value={selectedScheduler}
+                        onChange={(event) => handleSchedulerChange(event.target.value as SchedulerChoice)}
                         disabled={loading || saving}
                         className="h-10 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-sm text-foreground outline-none transition-shadow focus:ring-1 focus:ring-ring disabled:opacity-50"
                       >
-                        <option value="0">Built-in Anki SM2</option>
-                        {algorithms.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name ?? item.code ?? "Algorithm preset"}
-                          </option>
-                        ))}
+                        <option value="SM2">SM-2</option>
+                        <option value="FSRS">FSRS-5</option>
                       </select>
                       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     </div>
@@ -248,9 +304,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
 
                     <button
                       onClick={openPreview}
-                      disabled={loading}
+                      disabled={loading || isFsrs}
                       className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-border px-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-                      title="See how the schedule & numbers work"
+                      title={isFsrs ? "Preview chỉ áp dụng cho SM-2" : "See how the schedule & numbers work"}
                     >
                       <Eye className="size-4" />
                       <span className="hidden sm:inline">Preview</span>
@@ -283,7 +339,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                     <Loader2 className="size-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="space-y-4">
+                    {isFsrs && <FsrsBetaBanner version={fsrsView.fsrsVersion} />}
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <SettingsPanel
                       title="Daily Limits"
                       icon={<CalendarDays className="size-5" />}
@@ -313,14 +371,20 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                     </SettingsPanel>
 
                     <SettingsPanel
-                      title="Retention"
+                      title={isFsrs ? "Desired Retention" : "Retention"}
                       icon={<Shield className="size-5" />}
-                      help="Target retention adjusts the interval modifier."
+                      help={
+                        isFsrs
+                          ? "Giá trị này càng cao, card xuất hiện thường xuyên hơn để tăng khả năng nhớ, nhưng số review mỗi ngày cũng tăng."
+                          : "Target retention adjusts the interval modifier."
+                      }
                     >
                       <div className="space-y-3">
                         <div className="flex items-end justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-foreground">Target retention</p>
+                            <p className="text-sm font-medium text-foreground">
+                              {isFsrs ? "Desired retention" : "Target retention"}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {retentionLabel(draft.targetRetention)}
                             </p>
@@ -347,6 +411,10 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                       </div>
                     </SettingsPanel>
 
+                    {isFsrs && <FsrsPanels view={fsrsView} deckId={deckId} />}
+
+                    {!isFsrs && (
+                    <>
                     <SettingsPanel
                       title="Learning"
                       icon={<GraduationCap className="size-5" />}
@@ -454,6 +522,9 @@ export function FlashcardSettingsModal({ open, onClose, deckId, deckTitle }: Fla
                         onChange={(value) => patchDraft({ newInterval: value })}
                       />
                     </SettingsPanel>
+                    </>
+                    )}
+                    </div>
                   </div>
                 )}
               </ScrollHintContainer>
@@ -564,6 +635,240 @@ function TextField({
         className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground outline-none transition-shadow focus:ring-1 focus:ring-ring"
       />
     </label>
+  );
+}
+
+/* ──────────────────────────────────────────
+   FSRS (Free Spaced Repetition Scheduler).
+
+   FSRS-5 (canonical 19-parameter model): schedules with real
+   Difficulty/Stability/Retrievability. Desired retention is editable per-deck;
+   FSRS weights are read-only (optimize/simulator are surfaced as "coming soon";
+   reschedule is available).
+────────────────────────────────────────── */
+
+function FsrsBetaBanner({ version }: { version: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-emerald-400/40 bg-emerald-400/10 p-4">
+      <FlaskConical className="mt-0.5 size-5 shrink-0 text-emerald-500" />
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+          FSRS đang hoạt động (Beta){version && version !== "—" ? ` · ${version}` : ""}
+        </p>
+        <p className="text-xs leading-relaxed text-emerald-700/90 dark:text-emerald-300/90">
+          Bộ thẻ này lập lịch bằng thuật toán <b>FSRS-5</b> thật (mô hình
+          Difficulty / Stability / Retrievability), điều khiển bởi <b>Desired Retention</b> bên dưới —
+          không dùng ease factor như SM-2. Đã có công cụ <b>reschedule</b> để dựng lại lịch từ lịch sử
+          review (hữu ích khi chuyển từ SM-2); <b>optimize / mô phỏng</b> sẽ bổ sung sau. Tham số hiện
+          dùng bộ mặc định.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function FsrsPanels({ view, deckId }: { view: FsrsConfigView; deckId: number }) {
+  const paramText =
+    view.parameters.length > 0
+      ? view.parameters.map((value) => Number(value.toFixed(4))).join(", ")
+      : "Chưa có — sẽ dùng tham số mặc định của FSRS.";
+
+  return (
+    <>
+      <SettingsPanel
+        title="FSRS Parameters"
+        icon={<Cpu className="size-5" />}
+        help="Bộ tham số của mô hình FSRS. Người dùng phổ thông không nên chỉnh tay; hệ thống có thể optimize từ lịch sử review khi đủ dữ liệu."
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Weights</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {view.parameters.length} tham số · read-only
+            </span>
+          </div>
+          <textarea
+            readOnly
+            value={paramText}
+            rows={4}
+            className="w-full resize-none rounded-lg border border-input bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed text-muted-foreground outline-none"
+          />
+          <ReadOnlyRow label="Maximum interval" value={`${view.maximumIntervalDays}d`} />
+        </div>
+      </SettingsPanel>
+
+      <SettingsPanel
+        title="Công cụ FSRS"
+        icon={<Wand2 className="size-5" />}
+        help="Optimize, mô phỏng và tính lại lịch — sẽ được bổ sung khi FSRS hoàn thiện."
+      >
+        <div className="space-y-2">
+          <ComingSoonRow
+            icon={<Wand2 className="size-4" />}
+            label="Optimize current preset"
+            desc="Phân tích lịch sử review để tìm bộ tham số phù hợp hơn."
+          />
+          <ComingSoonRow
+            icon={<FlaskConical className="size-4" />}
+            label="FSRS Simulator"
+            desc="Mô phỏng workload theo desired retention & new cards/day."
+          />
+          <RescheduleRow deckId={deckId} />
+        </div>
+      </SettingsPanel>
+    </>
+  );
+}
+
+function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
+      <span className="text-sm font-medium text-foreground">{label}</span>
+      <span className="text-sm font-semibold tabular-nums text-muted-foreground">{value}</span>
+    </div>
+  );
+}
+
+function ComingSoonRow({ icon, label, desc }: { icon: ReactNode; label: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 opacity-80">
+      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+            Sắp có
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────
+   Reschedule: rebuild this deck's FSRS schedule from review-log history.
+
+   Two-step flow so nothing changes by accident: "Tính lại" runs a dry-run and
+   shows the summary (how many cards move earlier/later, how many are seeded
+   from history vs estimated); "Áp dụng" commits it. This is the migration path
+   for cards carried over from SM-2 — without it they'd collapse to new-card
+   intervals on their next review.
+────────────────────────────────────────── */
+function RescheduleRow({ deckId }: { deckId: number }) {
+  const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [preview, setPreview] = useState<RescheduleResult | null>(null);
+
+  const runPreview = async () => {
+    setLoading(true);
+    try {
+      const result = await ankiFsrsApi.reschedule(deckId, true);
+      setPreview(result);
+      if (result.rescheduled === 0) {
+        toast.info("Lịch hiện tại đã khớp với FSRS — không có thẻ nào cần đổi.");
+      }
+    } catch {
+      toast.error("Không tính lại được lịch (bộ thẻ có đang dùng FSRS không?).");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const apply = async () => {
+    setApplying(true);
+    try {
+      const result = await ankiFsrsApi.reschedule(deckId, false);
+      toast.success(`Đã tính lại lịch cho ${result.rescheduled} thẻ.`);
+      setPreview(null);
+    } catch {
+      toast.error("Áp dụng thất bại.");
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Repeat2 className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-semibold text-foreground">Tính lại lịch (Reschedule)</span>
+          <p className="text-xs text-muted-foreground">
+            Dựng lại Stability/Difficulty &amp; due date từ lịch sử review — dùng khi chuyển thẻ từ SM-2 sang FSRS.
+          </p>
+        </div>
+        {preview == null && (
+          <button
+            onClick={runPreview}
+            disabled={loading}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Eye className="size-3.5" />}
+            Xem trước
+          </button>
+        )}
+      </div>
+
+      {preview != null && (
+        <div className="mt-3 space-y-3 border-t border-border pt-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <PreviewStat label="Sẽ đổi" value={preview.rescheduled} />
+            <PreviewStat
+              label="Sớm hơn"
+              value={preview.dueEarlier}
+              icon={<TrendingDown className="size-3.5 text-amber-500" />}
+            />
+            <PreviewStat
+              label="Muộn hơn"
+              value={preview.dueLater}
+              icon={<TrendingUp className="size-3.5 text-emerald-500" />}
+            />
+            <PreviewStat label="Ước lượng" value={preview.estimated} />
+          </div>
+
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            <b>{preview.fromHistory}</b> thẻ dựng lại từ lịch sử review (chính xác),{" "}
+            <b>{preview.estimated}</b> thẻ ước lượng từ interval (chưa có log).{" "}
+            Interval trung bình: <b>{preview.avgIntervalBefore}d → {preview.avgIntervalAfter}d</b>.
+          </p>
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => setPreview(null)}
+              disabled={applying}
+              className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+            >
+              Huỷ
+            </button>
+            <button
+              onClick={apply}
+              disabled={applying || preview.rescheduled === 0}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {applying ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              Áp dụng cho {preview.rescheduled} thẻ
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewStat({ label, value, icon }: { label: string; value: number; icon?: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 px-2.5 py-2">
+      <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="text-lg font-bold tabular-nums text-foreground">{value}</div>
+    </div>
   );
 }
 

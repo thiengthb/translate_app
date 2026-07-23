@@ -17,21 +17,21 @@ export interface DevAccount {
  */
 const DEV_ACCOUNTS: DevAccount[] = [
     {
-        label: "Admin",
+        label: "Quản trị viên",
         email: "admin@example.com",
         password: "password123",
         icon: ShieldCheck,
         accentClass: "text-amber-600 dark:text-amber-400",
     },
     {
-        label: "Student",
+        label: "Học viên",
         email: "student@example.com",
         password: "password123",
         icon: GraduationCap,
         accentClass: "text-green-600 dark:text-green-400",
     },
     {
-        label: "Teacher",
+        label: "Giáo viên",
         email: "teacher@example.com",
         password: "password123",
         icon: BookOpen,

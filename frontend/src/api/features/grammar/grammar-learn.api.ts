@@ -27,6 +27,30 @@ export interface LevelDetail {
   locked: GrammarItem[];
 }
 
+export interface SiblingUse {
+  subUseId: number;
+  orderNo: number | null;
+  name: string;
+}
+
+export interface ExampleSentence {
+  id: number;
+  jp: string;
+  vi: string;
+  highlight: string | null;
+}
+
+export interface CommonMistake {
+  pattern: string | null;
+  hint: string | null;
+}
+
+/** One furigana run: ruby is the hiragana reading, null for kana/latin runs. */
+export interface RubySegment {
+  text: string;
+  ruby: string | null;
+}
+
 export interface GrammarDetail {
   subUseId: number;
   name: string;
@@ -39,9 +63,21 @@ export interface GrammarDetail {
   lastReviewedAt: string | null;
   nextReviewAt: string | null;
   nuanceDescription: string | null;
+  aboutDetail: string | null;
   structurePattern: string | null;
   exampleJp: string | null;
   exampleVi: string | null;
+  exampleNote: string | null;
+  exampleJpHighlight: string | null;
+  grammarId: number | null;
+  grammarForm: string | null;
+  titleGloss: string | null;
+  textbookSources: string[];
+  grammarNotes: string | null;
+  orderNo: number | null;
+  siblings: SiblingUse[];
+  sentences: ExampleSentence[];
+  commonMistakes: CommonMistake[];
 }
 
 // ── Session ──
@@ -136,6 +172,12 @@ export const grammarLearnApi = {
 
   detail: async (subUseId: number): Promise<GrammarDetail> => {
     const res = await axiosInstance.get<GrammarDetail>(`/grammar/learn/detail/${subUseId}`);
+    return res.data;
+  },
+
+  furigana: async (texts: string[]): Promise<RubySegment[][]> => {
+    if (texts.length === 0) return [];
+    const res = await axiosInstance.post<RubySegment[][]>("/grammar/learn/furigana", { texts });
     return res.data;
   },
 

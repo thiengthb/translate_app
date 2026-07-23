@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
     Coins,
-    Keyboard,
     LogOut,
-    Settings2,
     Trophy,
     User as UserIcon,
 } from "lucide-react";
@@ -24,7 +22,6 @@ import { profileApi } from "@/api/features/profile.api";
 import { rewardApi, type RewardBalance } from "@/api/features/reward.api";
 import { useTranslation } from "@/contexts/I18nContext";
 import { useLogout } from "@/hooks/useLogout";
-import { SHORTCUTS_PAGE_PATH } from "@/lib/keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@/store/store";
 
@@ -48,9 +45,6 @@ interface UserDropdownMenuProps {
  *   │ [Avatar + Name + Email] │
  *   ├─────────────────────────┤
  *   │ 👤 Trang cá nhân         │
- *   ├─────────────────────────┤
- *   │ ⌨ Phím tắt          ?   │
- *   │ ⚙ Tùy chỉnh         →   │  ← single submenu (language + theme combined)
  *   ├─────────────────────────┤
  *   │ 🚪 Đăng xuất       ⇧+L  │
  *   └─────────────────────────┘
@@ -94,7 +88,7 @@ export function UserDropdownMenu({
         email?.charAt(0)?.toUpperCase() ||
         "?";
     const fullName =
-        [firstName, lastName].filter(Boolean).join(" ") || email || "User";
+        [firstName, lastName].filter(Boolean).join(" ") || email || "Người dùng";
 
     useEffect(() => {
         let active = true;
@@ -122,7 +116,7 @@ export function UserDropdownMenu({
             <DropdownMenuTrigger asChild>
                 <button
                     type="button"
-                    aria-label="User menu"
+                    aria-label="Menu người dùng"
                     className={cn(
                         "cursor-pointer transition-colors",
                         isFull
@@ -207,11 +201,11 @@ export function UserDropdownMenu({
                             {/* XP progress — its own row */}
                             <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground tabular-nums">
                                 <span>{exp} XP</span>
-                                <span>{expToNext === 0 ? "Max level" : `${expToNext} XP to Lv ${level + 1}`}</span>
+                                <span>{expToNext === 0 ? "Đã đạt cấp tối đa" : `${expToNext} XP nữa lên Lv ${level + 1}`}</span>
                             </div>
                             <div
                                 className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-                                title={`${expIntoLevel} / ${levelSpan} XP into Level ${level}`}
+                                title={`${expIntoLevel} / ${levelSpan} XP của Cấp ${level}`}
                             >
                                 <div
                                     className="h-full rounded-full bg-primary transition-[width]"
@@ -229,23 +223,6 @@ export function UserDropdownMenu({
                     icon={UserIcon}
                     label={t("nav.profile")}
                     onSelect={() => navigate("/profile")}
-                />
-
-                {/* ── Tools ────────────────────────────────────────────── */}
-                {/* Goes straight to the full docs page; the quick popup is
-                    still one `?` keypress away (hinted by the kbd). */}
-                <MenuRow
-                    icon={Keyboard}
-                    label="Phím tắt"
-                    hint="?"
-                    onSelect={() => navigate(SHORTCUTS_PAGE_PATH)}
-                />
-
-                {/* Full settings page — palette + theme + language. */}
-                <MenuRow
-                    icon={Settings2}
-                    label="Cài đặt"
-                    onSelect={() => navigate("/settings")}
                 />
 
                 <DropdownMenuSeparator />
@@ -324,7 +301,7 @@ function Avatar({
         return (
             <img
                 src={avatarUrl}
-                alt="Avatar"
+                alt="Ảnh đại diện"
                 className={cn(
                     "rounded-full object-cover border shrink-0",
                     sizeClass,

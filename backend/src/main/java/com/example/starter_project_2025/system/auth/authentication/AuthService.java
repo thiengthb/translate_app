@@ -11,6 +11,10 @@ public interface AuthService {
 
     AuthenticationResponse loginWithGoogle(String email, String firstName, String lastName);
 
+    /** Current authenticated user's profile + roles/permissions (no tokens) — the payload the
+     *  client fetches after login/OAuth now that the access token no longer carries it. */
+    AuthenticationResponse getCurrentUser(String email);
+
     void register(RegisterRequest request);
 
     AuthenticationResponse refresh(TokenRequest request);

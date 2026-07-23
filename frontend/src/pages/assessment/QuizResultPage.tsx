@@ -73,7 +73,7 @@ export default function QuizResultPage() {
 
   if (loading) {
     return (
-      <MainLayout pathName={{ "/quizzes": "Quizzes" }}>
+      <MainLayout pathName={{ "/quizzes": "Quizzes" }} pageScroll>
         <div className="flex items-center justify-center h-60 text-sm text-muted-foreground">Loading…</div>
       </MainLayout>
     );
@@ -121,6 +121,7 @@ export default function QuizResultPage() {
         ignorePaths: ["quizzes", String(id), "result"],
         breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
         pageDescription: "Submitted quiz result and answer review.",
+        pageScroll: true,
       }
     : {
         pathName: {
@@ -131,6 +132,7 @@ export default function QuizResultPage() {
         ignorePaths: ["result"],
         breadcrumbIcon: <ClipboardList className="size-4.5 text-primary" />,
         pageDescription: "Submitted quiz result and answer review.",
+        pageScroll: true,
       };
 
   return (

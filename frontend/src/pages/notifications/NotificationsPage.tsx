@@ -138,7 +138,7 @@ export default function NotificationsPage() {
     );
 
     return (
-        <MainLayout pathName={{ "/notifications": "Thông báo" }}>
+        <MainLayout pathName={{ "/notifications": "Thông báo" }} pageScroll>
             <div className="w-full space-y-4">
                 {/* ── Header ────────────────────────────────────────────── */}
                 <header className="flex items-center gap-3">

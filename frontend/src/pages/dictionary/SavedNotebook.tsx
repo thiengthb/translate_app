@@ -25,7 +25,7 @@ export function SavedSection({
     onSearchKanji: (ch: string) => void;
     onRemoveWord: (w: WordSearchResult) => void;
     onRemoveKanji: (k: DictionaryKanjiDetail) => void;
-    onClearAll: () => void;
+    onClearAll?: () => void;
     /** entryId + note theo word.id — chỉ có khi đã load được từ server. */
     wordNotes?: Record<number, NoteRef>;
     /** entryId + note theo kanji.character. */
@@ -84,17 +84,19 @@ export function SavedSection({
                 </Card>
             )}
 
-            <div className="flex justify-center">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClearAll}
-                    className="text-muted-foreground hover:text-destructive gap-1.5"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Xóa tất cả đã lưu
-                </Button>
-            </div>
+            {onClearAll && (
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClearAll}
+                        className="text-muted-foreground hover:text-destructive gap-1.5"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Xóa tất cả đã lưu
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

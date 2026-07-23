@@ -429,6 +429,7 @@ export default function AnkiTemplateEditPage() {
         [`/deck/${deckIdParam}`]: deck?.title || "Deck",
         [`/deck/${deckIdParam}/anki/template`]: "Card template",
       }}
+      pageScroll
     >
       {loading ? (
         <div className="flex flex-1 min-h-0 items-center justify-center">

@@ -1,5 +1,7 @@
 import { KanjiLayout } from "./components/KanjiLayout";
 import { KanjiActionCards } from "./components/KanjiActionCards";
+import { KanjiSavedSessions } from "./components/KanjiSavedSessions";
+import { KanjiRecentSessions } from "./components/KanjiRecentSessions";
 import { KanjiLevelProgress } from "./components/KanjiLevelProgress";
 import { KanjiForecastChart } from "./components/KanjiForecastChart";
 import { KanjiActivityChart } from "./components/KanjiActivityChart";
@@ -18,7 +20,7 @@ export default function KanjiHomePage() {
   const d = useKanjiDashboard();
 
   return (
-    <KanjiLayout>
+    <KanjiLayout pageScroll>
       <div className="space-y-6">
         {d.isLoading ? (
           <DashboardSkeleton />
@@ -26,10 +28,14 @@ export default function KanjiHomePage() {
           <>
             <KanjiActionCards decks={d.decks} featuredDeck={d.featuredDeck} dueCount={d.dueCount} />
 
+            <KanjiSavedSessions />
+
+            <KanjiRecentSessions />
+
             <KanjiLevelProgress
               levels={d.levels}
               totalLearned={d.totalLearned}
-              statusCounts={d.statusCounts}
+              proficiencyCounts={d.proficiencyCounts}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

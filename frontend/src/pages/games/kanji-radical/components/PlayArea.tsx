@@ -2,12 +2,17 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { RadicalCard } from "./RadicalCard";
 import { FloatingText } from "./FloatingText";
+import { PetalBurst } from "./PetalBurst";
 import type { FloatingText as FloatingTextType, PlayedCard } from "../types";
 
 interface PlayAreaProps {
     played: PlayedCard[];
     floats: FloatingTextType[];
 }
+
+const REDUCE_MOTION =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * The centre stage where thrown cards land while a turn resolves. Each card
@@ -37,6 +42,9 @@ export function PlayArea({ played, floats }: PlayAreaProps) {
                                     ))}
                                 </AnimatePresence>
                             </div>
+
+                            {/* petal + gold-spark puff the instant a match lands */}
+                            {!REDUCE_MOTION && pc.state === "success" && <PetalBurst />}
 
                             <RadicalCard card={pc.card} resolve={pc.state === "pending" ? null : pc.state} compact disabled />
                         </motion.div>

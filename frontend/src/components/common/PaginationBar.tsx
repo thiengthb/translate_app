@@ -40,7 +40,7 @@ export function PaginationBar({
     <div className={cn("flex items-center justify-center gap-1.5", className)}>
       {totalItems != null && (
         <span className="hidden sm:block mr-2 text-xs text-muted-foreground tabular-nums">
-          {totalItems} total
+          Tổng {totalItems}
         </span>
       )}
 
@@ -50,7 +50,7 @@ export function PaginationBar({
         className="size-9"
         disabled={!canPrev}
         onClick={() => onPageChange(1)}
-        aria-label="First page"
+        aria-label="Trang đầu"
       >
         <ChevronsLeft className="size-4" />
       </Button>
@@ -60,7 +60,7 @@ export function PaginationBar({
         className="size-9"
         disabled={!canPrev}
         onClick={() => onPageChange(currentPage - 1)}
-        aria-label="Previous page"
+        aria-label="Trang trước"
       >
         <ChevronLeft className="size-4" />
       </Button>
@@ -90,7 +90,7 @@ export function PaginationBar({
         className="size-9"
         disabled={!canNext}
         onClick={() => onPageChange(currentPage + 1)}
-        aria-label="Next page"
+        aria-label="Trang sau"
       >
         <ChevronRight className="size-4" />
       </Button>
@@ -100,7 +100,7 @@ export function PaginationBar({
         className="size-9"
         disabled={!canNext}
         onClick={() => onPageChange(totalPages)}
-        aria-label="Last page"
+        aria-label="Trang cuối"
       >
         <ChevronsRight className="size-4" />
       </Button>

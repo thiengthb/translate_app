@@ -12,7 +12,7 @@ const entityModules = import.meta.glob("../pages/management/**/index.tsx", {
 
 type EntityRoute = {
     path: string;
-    component: ComponentType<any>;
+    component: ComponentType<Record<string, never>>;
     isModuleDriven: boolean;
 };
 

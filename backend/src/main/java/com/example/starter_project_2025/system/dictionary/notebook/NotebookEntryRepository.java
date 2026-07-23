@@ -12,13 +12,13 @@ import java.util.Optional;
 public interface NotebookEntryRepository extends JpaRepository<NotebookEntry, Long> {
 
     /**
-     * Toàn bộ sổ tay của một user, mới lưu trước. Fetch sẵn word (+level,
-     * representation) và kanji để mapper không lazy-load từng dòng.
-     * Mục trỏ tới từ/kanji đã bị xóa (soft-delete) hoặc tắt hoạt động bị loại
-     * ngay tại query — thay cho bước "reconcile" cũ ở frontend.
+     * Toàn bộ mục đã lưu của một user (mọi sổ tay), mới lưu trước. Fetch sẵn
+     * notebook + word (+level, representation) + kanji để mapper không lazy-load
+     * từng dòng. Mục trỏ tới từ/kanji đã bị xóa/tắt bị loại ngay tại query.
      */
     @Query("""
             SELECT e FROM NotebookEntry e
+            JOIN FETCH e.notebook
             LEFT JOIN FETCH e.word w
             LEFT JOIN FETCH w.level
             LEFT JOIN FETCH w.representation
@@ -30,11 +30,46 @@ public interface NotebookEntryRepository extends JpaRepository<NotebookEntry, Lo
             """)
     List<NotebookEntry> findAllForUser(@Param("userId") Long userId);
 
-    Optional<NotebookEntry> findByUserIdAndWordId(Long userId, Long wordId);
+    /** Như findAllForUser nhưng giới hạn trong một sổ tay. */
+    @Query("""
+            SELECT e FROM NotebookEntry e
+            JOIN FETCH e.notebook
+            LEFT JOIN FETCH e.word w
+            LEFT JOIN FETCH w.level
+            LEFT JOIN FETCH w.representation
+            LEFT JOIN FETCH e.kanji k
+            WHERE e.user.id = :userId AND e.notebook.id = :notebookId
+            AND (w IS NULL OR (w.isDeleted = false AND w.isActive = true))
+            AND (k IS NULL OR (k.isDeleted = false AND k.isActive = true))
+            ORDER BY e.id DESC
+            """)
+    List<NotebookEntry> findAllForUserAndNotebook(@Param("userId") Long userId,
+                                                  @Param("notebookId") Long notebookId);
 
-    Optional<NotebookEntry> findByUserIdAndKanjiId(Long userId, Long kanjiId);
+    // ── Thao tác theo từng sổ tay ──────────────────────────────────────
+    Optional<NotebookEntry> findByNotebookIdAndWordId(Long notebookId, Long wordId);
 
+    Optional<NotebookEntry> findByNotebookIdAndKanjiId(Long notebookId, Long kanjiId);
+
+    /** Id các sổ tay (của user) đang chứa một từ — cho trạng thái picker. */
+    @Query("SELECT e.notebook.id FROM NotebookEntry e WHERE e.user.id = :userId AND e.word.id = :wordId")
+    List<Long> findNotebookIdsByUserIdAndWordId(@Param("userId") Long userId, @Param("wordId") Long wordId);
+
+    @Query("SELECT e.notebook.id FROM NotebookEntry e WHERE e.user.id = :userId AND e.kanji.id = :kanjiId")
+    List<Long> findNotebookIdsByUserIdAndKanjiId(@Param("userId") Long userId, @Param("kanjiId") Long kanjiId);
+
+    // ── Thao tác xuyên sổ tay (legacy/aggregate) ───────────────────────
     Optional<NotebookEntry> findByIdAndUserId(Long id, Long userId);
 
+    boolean existsByUserIdAndWordId(Long userId, Long wordId);
+
+    boolean existsByUserIdAndKanjiId(Long userId, Long kanjiId);
+
+    void deleteByUserIdAndWordId(Long userId, Long wordId);
+
+    void deleteByUserIdAndKanjiId(Long userId, Long kanjiId);
+
     void deleteByUserId(Long userId);
+
+    void deleteByNotebookId(Long notebookId);
 }

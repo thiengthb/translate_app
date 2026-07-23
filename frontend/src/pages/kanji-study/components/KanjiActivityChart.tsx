@@ -23,7 +23,7 @@ export function KanjiActivityChart({ data }: { data: DayBucket[] }) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="text-base flex items-center gap-2">
-          <Activity size={18} className="text-rose-500" />
+          <Activity size={18} className="text-primary" />
           Hoạt động
         </CardTitle>
         <span className="text-xs text-muted-foreground">{total} lượt / 14 ngày</span>
@@ -37,8 +37,8 @@ export function KanjiActivityChart({ data }: { data: DayBucket[] }) {
               <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="kanjiActivityFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#f43f5e" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#ff6b9d" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#ff6b9d" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/60" vertical={false} />
@@ -72,7 +72,7 @@ export function KanjiActivityChart({ data }: { data: DayBucket[] }) {
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke="#f43f5e"
+                  stroke="#ff6b9d"
                   strokeWidth={2}
                   fill="url(#kanjiActivityFill)"
                 />

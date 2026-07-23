@@ -63,7 +63,7 @@ export function useClassroom(classroomId: number | null): UseClassroomResult {
       setDecks(d);
       setAssignments(a);
     } catch {
-      setError("Failed to load classroom.");
+      setError("Không thể tải lớp học.");
     } finally {
       setLoading(false);
     }

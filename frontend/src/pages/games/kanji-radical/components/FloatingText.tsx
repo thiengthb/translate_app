@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils";
 import type { FloatingText as FloatingTextType } from "../types";
 
 const KIND_STYLE: Record<FloatingTextType["kind"], string> = {
-    base: "text-amber-200",
-    point: "text-emerald-300",
-    level: "text-emerald-300",
-    mult: "text-cyan-300",
-    chain: "text-orange-300",
-    fail: "text-rose-400",
-    penalty: "text-rose-300",
-    buff: "text-fuchsia-300",
+    base: "text-[#a06a12]",
+    point: "text-emerald-600",
+    level: "text-emerald-600",
+    mult: "text-cyan-600",
+    chain: "text-orange-500",
+    fail: "text-rose-500",
+    penalty: "text-rose-500",
+    buff: "text-fuchsia-600",
 };
 
 export function FloatingText({ float }: { float: FloatingTextType }) {
@@ -22,7 +22,7 @@ export function FloatingText({ float }: { float: FloatingTextType }) {
             exit={{ opacity: 0, y: -44 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className={cn(
-                "pointer-events-none whitespace-nowrap text-center text-sm font-bold drop-shadow",
+                "pointer-events-none whitespace-nowrap text-center text-sm font-extrabold [text-shadow:0_1px_2px_rgba(255,255,255,0.8)]",
                 KIND_STYLE[float.kind],
             )}
         >

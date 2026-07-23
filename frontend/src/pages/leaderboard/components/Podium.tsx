@@ -1,122 +1,149 @@
-import { Crown, Flame } from "lucide-react";
+import type { CSSProperties } from "react";
+import { Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatRoleLabel } from "@/utils/rbac.utils";
-import type { LeaderboardEntry } from "@/types/features/leaderboard";
+import type { LeaderboardEntry, LeaderboardSort } from "@/types/features/leaderboard";
+import { getTier, METRICS } from "../tier";
 
 interface Props {
     entries: LeaderboardEntry[];
+    activeSort: LeaderboardSort;
+    /** Highlight the current viewer's own podium card. */
+    meId?: number;
 }
 
-export function Podium({ entries }: Props) {
+// Rank accents drawn from the fixed Sakura candy palette (see
+// SakuraStudyDashboard.tsx): 1st = honey "gold", 2nd = a muted "silver", 3rd =
+// the brand's own deep pink standing in for bronze. No generic amber/zinc.
+const RANK_STYLE = {
+    1: { ring: "#FFC95C", medal: "#E0A02E", ribbon: "#FFE2A8", cardBg: "linear-gradient(180deg,#FFF6E2 0%,#FFFFFF 62%)", cardBorder: "#FFE2A8", label: "Hạng 1" },
+    2: { ring: "#C9BEC2", medal: "#9A8E92", ribbon: "#E7DEE1", cardBg: "linear-gradient(180deg,#F6F2F3 0%,#FFFFFF 62%)", cardBorder: "#EFE6E8", label: "Hạng 2" },
+    3: { ring: "#FF8FAB", medal: "#FF6B9D", ribbon: "#FFD7E1", cardBg: "linear-gradient(180deg,#FFF0F4 0%,#FFFFFF 62%)", cardBorder: "#FFE0E8", label: "Hạng 3" },
+} as const;
+
+export function Podium({ entries, activeSort, meId }: Props) {
     if (entries.length === 0) return null;
 
-    const first = entries[0];
-    const second = entries[1];
-    const third = entries[2];
-
     return (
-        <div className="grid grid-cols-3 gap-3 sm:gap-5 items-end">
-            <PodiumSlot entry={second} place={2} />
-            <PodiumSlot entry={first} place={1} />
-            <PodiumSlot entry={third} place={3} />
+        <div className="grid grid-cols-3 items-end gap-3 sm:gap-5">
+            <PodiumSlot entry={entries[1]} place={2} activeSort={activeSort} meId={meId} />
+            <PodiumSlot entry={entries[0]} place={1} activeSort={activeSort} meId={meId} />
+            <PodiumSlot entry={entries[2]} place={3} activeSort={activeSort} meId={meId} />
         </div>
     );
 }
 
-function PodiumSlot({ entry, place }: { entry?: LeaderboardEntry; place: 1 | 2 | 3 }) {
-    const heights = { 1: "h-48 sm:h-56", 2: "h-40 sm:h-44", 3: "h-36 sm:h-40" };
-    const styles = {
-        1: {
-            ring: "ring-amber-400",
-            badge: "bg-amber-500 text-white",
-            bg: "bg-gradient-to-b from-amber-500/15 to-transparent",
-            label: "Hạng 1",
-        },
-        2: {
-            ring: "ring-zinc-300 dark:ring-zinc-500",
-            badge: "bg-zinc-400 text-white",
-            bg: "bg-gradient-to-b from-zinc-300/15 to-transparent",
-            label: "Hạng 2",
-        },
-        3: {
-            ring: "ring-orange-600",
-            badge: "bg-orange-700 text-white",
-            bg: "bg-gradient-to-b from-orange-600/15 to-transparent",
-            label: "Hạng 3",
-        },
-    };
-    const style = styles[place];
+function PodiumSlot({
+    entry,
+    place,
+    activeSort,
+    meId,
+}: {
+    entry?: LeaderboardEntry;
+    place: 1 | 2 | 3;
+    activeSort: LeaderboardSort;
+    meId?: number;
+}) {
+    const heights = { 1: "min-h-[15.5rem]", 2: "min-h-[14rem]", 3: "min-h-[13rem]" };
+    const lift = place === 1 ? "sm:-translate-y-4" : "";
+    const style = RANK_STYLE[place];
 
     if (!entry) {
         return (
-            <Card className={`${heights[place]} ${style.bg} flex flex-col items-center justify-end p-4 opacity-50`}>
-                <p className="text-xs text-muted-foreground">{style.label}</p>
-            </Card>
+            <div className={`${heights[place]} flex flex-col items-center justify-center rounded-[22px] border border-dashed border-[#F0E3E8] p-4 opacity-70`}>
+                <span className="text-2xl opacity-40">🌸</span>
+                <p className="mt-2 text-xs font-medium text-[#B9AEB2]">{style.label}</p>
+            </div>
         );
     }
 
     const role = entry.roles[0];
+    const tier = getTier(entry.longestStreak);
+    const isMe = meId != null && entry.userId === meId;
 
     return (
-        <Link to={`/users/${entry.userId}`} className="block">
-            <Card
-                className={`${heights[place]} ${style.bg} flex flex-col items-center justify-end pt-5 px-3 pb-4 hover:scale-[1.02] transition-transform cursor-pointer relative overflow-hidden`}
+        <Link to={`/users/${entry.userId}`} className={`block ${lift}`}>
+            <div
+                className={`${heights[place]} relative flex flex-col items-center rounded-[22px] border px-3 pb-5 pt-7 shadow-[0_8px_22px_rgba(58,46,51,0.07)] transition-transform hover:-translate-y-1`}
+                style={{
+                    background: style.cardBg,
+                    borderColor: isMe ? "#FF6B9D" : style.cardBorder,
+                    boxShadow: isMe ? "0 0 0 2px #FF6B9D, 0 8px 22px rgba(58,46,51,0.07)" : undefined,
+                }}
             >
                 {place === 1 && (
-                    <Crown
-                        size={20}
-                        className="absolute top-3 right-3 text-amber-500 fill-amber-500"
-                    />
+                    <Crown size={26} className="absolute -top-3.5 rotate-[-8deg] fill-[#FFC95C] text-[#E0A02E] drop-shadow-sm" />
+                )}
+                {isMe && (
+                    <span className="absolute right-3 top-3 rounded-full bg-[#FF6B9D] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                        Bạn
+                    </span>
                 )}
 
-                <div className="flex-1 flex flex-col items-center justify-end gap-2 min-w-0 w-full">
-                    <UserAvatar
-                        name={entry.fullName}
-                        avatarUrl={entry.avatarUrl}
-                        size={place === 1 ? "lg" : "md"}
-                        ringClass={`ring-2 ${style.ring}`}
-                    />
-                    <div className="text-center min-w-0 w-full">
-                        <p className="text-sm font-semibold text-foreground truncate">
-                            {entry.fullName}
-                        </p>
-                        {role && (
-                            <Badge variant="outline" className="text-[10px] mt-0.5">
-                                {formatRoleLabel(role)}
-                            </Badge>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-bold tabular-nums">
-                        <Flame size={14} className="fill-current" />
-                        {entry.currentStreak}
-                    </div>
+                <Avatar name={entry.fullName} avatarUrl={entry.avatarUrl} big={place === 1} ringColor={style.ring} />
+
+                <p className="font-display mt-2.5 max-w-full truncate px-1 text-center text-sm font-bold text-[#3A2E33] sm:text-[15px]">
+                    {entry.fullName}
+                </p>
+                <div className="mt-1 flex items-center gap-1.5">
+                    <span
+                        className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                        style={{ color: tier.color, background: tier.bg, borderColor: tier.border }}
+                    >
+                        <span className="text-[11px] leading-none">{tier.emoji}</span>
+                        {tier.label}
+                    </span>
+                    {role && <span className="text-[10px] font-medium text-[#B9AEB2]">{formatRoleLabel(role)}</span>}
                 </div>
 
-                <div
-                    className={`mt-2 inline-flex items-center justify-center rounded-full h-7 w-7 text-xs font-bold ${style.badge}`}
-                >
-                    {place}
+                {/* Three real metrics, the sorted one emphasised — mirrors the
+                    reference's per-card stat row (Lokal stats / Winrate / KDA). */}
+                <div className="mt-3.5 grid w-full grid-cols-3 gap-1 border-t border-[#FBEAF0] pt-3">
+                    {METRICS.map((m) => {
+                        const on = m.key === activeSort;
+                        return (
+                            <div key={m.key} className="flex flex-col items-center gap-0.5">
+                                <span className="text-[13px] leading-none opacity-90">{m.icon}</span>
+                                <span
+                                    className="font-display text-[15px] font-bold leading-none tabular-nums"
+                                    style={{ color: on ? m.accent : "#3A2E33" }}
+                                >
+                                    {entry[m.field]}
+                                </span>
+                                <span className="text-[9px] font-medium leading-none text-[#B9AEB2]">{m.short}</span>
+                            </div>
+                        );
+                    })}
                 </div>
-            </Card>
+
+                <div className="relative mt-auto flex h-7 w-7 items-center justify-center pt-4">
+                    <span className="absolute top-2 h-4 w-2.5 -rotate-[16deg] rounded-b-[3px]" style={{ background: style.ribbon }} />
+                    <span className="absolute top-2 h-4 w-2.5 rotate-[16deg] rounded-b-[3px]" style={{ background: style.ribbon }} />
+                    <span
+                        className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ring-2 ring-white"
+                        style={{ background: style.medal }}
+                    >
+                        {place}
+                    </span>
+                </div>
+            </div>
         </Link>
     );
 }
 
-function UserAvatar({
+function Avatar({
     name,
     avatarUrl,
-    size,
-    ringClass,
+    big,
+    ringColor,
 }: {
     name: string;
     avatarUrl?: string | null;
-    size: "md" | "lg";
-    ringClass: string;
+    big: boolean;
+    ringColor: string;
 }) {
-    const dim = size === "lg" ? "h-16 w-16 sm:h-20 sm:w-20 text-lg" : "h-14 w-14 sm:h-16 sm:w-16 text-base";
+    const dim = big ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] text-lg" : "h-14 w-14 text-base";
     const initials = name
         .split(" ")
         .map((p) => p.charAt(0))
@@ -124,19 +151,15 @@ function UserAvatar({
         .slice(0, 2)
         .join("")
         .toUpperCase();
+    const ringStyle: CSSProperties = { boxShadow: `0 0 0 3px #ffffff, 0 0 0 5px ${ringColor}` };
 
     if (avatarUrl) {
-        return (
-            <img
-                src={avatarUrl}
-                alt={name}
-                className={`${dim} rounded-full object-cover shrink-0 ${ringClass} ring-offset-2 ring-offset-background`}
-            />
-        );
+        return <img src={avatarUrl} alt={name} className={`${dim} shrink-0 rounded-full object-cover`} style={ringStyle} />;
     }
     return (
         <div
-            className={`${dim} rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold shrink-0 ${ringClass} ring-offset-2 ring-offset-background`}
+            className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-[#FFE5EC] font-bold text-[#FF6B9D]`}
+            style={ringStyle}
         >
             {initials || "?"}
         </div>

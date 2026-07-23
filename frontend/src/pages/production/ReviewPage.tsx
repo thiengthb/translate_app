@@ -189,7 +189,7 @@ export default function ReviewPage() {
   }, [grammars]);
 
   return (
-    <MainLayout>
+    <MainLayout pageScroll>
       <div className="mx-auto w-full max-w-3xl p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div>

@@ -30,7 +30,7 @@ const grammarSubUseSchema: EntitySchema = {
     },
     {
       name: "detectorKey",
-      label: "Detector Key",
+      label: "Mã nhận diện",
       type: "text",
       sortable: true,
     },

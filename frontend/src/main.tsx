@@ -24,24 +24,13 @@ export const queryClient = new QueryClient({
   },
 });
 
-const THEME_STORAGE_KEY = "theme";
-const SYSTEM_THEME_QUERY = "(prefers-color-scheme: dark)";
-
+// The app uses a single, fixed light-only "Sakura" palette — dark mode and
+// the runtime color/typography presets were removed. Force light at boot so
+// no stale `.dark` class from a previous build lingers on <html>.
 const initializeTheme = () => {
-  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  const prefersDark = window.matchMedia(SYSTEM_THEME_QUERY).matches;
-  const resolvedTheme =
-    storedTheme === "light"
-      ? "light"
-      : storedTheme === "dark"
-        ? "dark"
-        : prefersDark
-          ? "dark"
-          : "light";
-
   const root = document.documentElement;
-  root.classList.toggle("dark", resolvedTheme === "dark");
-  root.style.colorScheme = resolvedTheme;
+  root.classList.remove("dark");
+  root.style.colorScheme = "light";
 };
 
 initializeTheme();

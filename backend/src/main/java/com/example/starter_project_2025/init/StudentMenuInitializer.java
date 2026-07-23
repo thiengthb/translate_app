@@ -31,6 +31,8 @@ public class StudentMenuInitializer implements CommandLineRunner {
 
         // Create Deck is no longer a sidebar entry — it lives as a button inside the Library page.
         moduleRepository.findByUrl("/create-deck").ifPresent(moduleRepository::delete);
+        // Kana Shark page removed.
+        moduleRepository.findByUrl("/student/learning/kana-shark").ifPresent(moduleRepository::delete);
 
         log.info("Student menu entries ensured: /library, /community, /stats");
     }

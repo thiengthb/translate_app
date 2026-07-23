@@ -1,5 +1,4 @@
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 import { authApi } from "@/api/features/auth.api";
 import { setLogout } from "@/store/slices/auth/authSlice";
@@ -16,11 +15,14 @@ import { logger } from "@/lib/logger";
  *   1. POST /auth/logout  (revokes refresh token + clears cookie server-side)
  *   2. authStorage.clear() (done inside authApi.logout's finally)
  *   3. dispatch(setLogout())  → wipes Redux auth slice
- *   4. navigate("/login", replace)
+ *
+ * Mazii-style: logout does NOT navigate anywhere. The user stays on the current
+ * URL and the app re-renders in guest mode in place — the shell flips to the
+ * guest sidebar, public pages keep working, and personal routes fall back to
+ * the in-shell login gate (see ProtectedRoute). No forced redirect to /login.
  */
 export function useLogout() {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
     return async () => {
         try {
@@ -29,7 +31,6 @@ export function useLogout() {
             logger.warn("Logout request failed; clearing local session anyway", err);
         } finally {
             dispatch(setLogout());
-            navigate("/login", { replace: true });
         }
     };
 }

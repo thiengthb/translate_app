@@ -330,7 +330,7 @@ export default function ProductionPage() {
     selected.size === 0 ? "Sinh câu ngẫu nhiên" : `Bắt đầu luyện (${selected.size * countPer} câu)`;
 
   return (
-    <MainLayout pathName={{ "/sentence_practice": "Luyện viết câu" }}>
+    <MainLayout pathName={{ "/sentence_practice": "Luyện viết câu" }} pageScroll>
       <div className="w-full flex flex-col gap-6 max-w-3xl">
         {/* ── Setup ─────────────────────────────────────────────── */}
         {setupLoading ? (

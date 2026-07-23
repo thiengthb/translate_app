@@ -86,7 +86,7 @@ export function CellRenderer({
   }
 
   if (field.type === "boolean") {
-    const labels = field.booleanLabels || { true: "Yes", false: "No" };
+    const labels = field.booleanLabels || { true: "Có", false: "Không" };
     const label = value ? labels.true : labels.false;
     return (
       <TableCell style={pinStyle} className={pinClassName}>
@@ -215,7 +215,7 @@ export function CellRenderer({
           <TableCell style={pinStyle} className={pinClassName}>
             <TooltipWrapper content={optionsText}>
               <span className="text-muted-foreground cursor-help">
-                {value.length} option{value.length !== 1 ? "s" : ""}
+                {value.length} lựa chọn
               </span>
             </TooltipWrapper>
           </TableCell>

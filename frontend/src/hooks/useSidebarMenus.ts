@@ -26,7 +26,41 @@ const HIDDEN_MODULE_URLS = new Set([
     "/word-kanjis",
     "/examples",
     "/notifications",
+    // Raw SRS progress table — internal bookkeeping, like the Anki/Quizlet groups.
+    "/grammar/progress",
+    // Stale DB row — the dedicated streak page was removed (streak lives on
+    // the dashboard now) but the persistent MySQL modules row survives.
+    "/streak",
 ]);
+
+/**
+ * Content-management menus whose DB rows ship without a `requiredPermission`
+ * (their @ResourceMenu never set one). Without a gate every learner would see
+ * raw admin CRUD tables they cannot actually use. Gate them on the resource's
+ * UPDATE permission — "you manage this content" — which only ADMIN holds.
+ */
+const MANAGEMENT_URL_PERMISSIONS: Record<string, string> = {
+    "/words": "WORD_UPDATE",
+    "/kanjis": "KANJI_UPDATE",
+    "/representations": "REPRESENTATION_UPDATE",
+    "/levels": "LEVEL_UPDATE",
+    "/languages": "LANGUAGE_UPDATE",
+    "/word-types": "WORD_TYPE_UPDATE",
+    "/grammars": "GRAMMAR_UPDATE",
+    "/grammar-sub-uses": "GRAMMAR_SUB_USE_UPDATE",
+    "/grammar-markers": "GRAMMAR_MARKER_UPDATE",
+    "/reference-sentences": "REFERENCE_SENTENCE_UPDATE",
+    "/scenario-stubs": "SCENARIO_STUB_UPDATE",
+    "/kanji-radicals": "KANJI_RADICAL_UPDATE",
+    "/kanji-readings": "KANJI_READING_UPDATE",
+    "/kanji-details": "KANJI_DETAIL_UPDATE",
+    "/kanji-decks": "KANJI_DECK_UPDATE",
+    "/kanji-reading-sets": "KANJI_READING_SET_UPDATE",
+    // Question authoring is for teachers/admins; learners only READ questions
+    // through quiz attempts, so the bank itself stays hidden from them.
+    "/questions": "QUESTION_CREATE",
+    "/question-tags": "QUESTION_TAG_CREATE",
+};
 
 const menuPagination: Pagination = {
     page: 0,
@@ -65,6 +99,12 @@ export function useActiveModuleGroups(enabled = true) {
                 .filter((module) => !HIDDEN_MODULE_URLS.has(module.url ?? ""))
                 .filter((module) =>
                     canAccessByPermission(module.requiredPermission, hasPermission),
+                )
+                .filter((module) =>
+                    canAccessByPermission(
+                        MANAGEMENT_URL_PERMISSIONS[module.url ?? ""],
+                        hasPermission,
+                    ),
                 );
 
             const groupedModules = modules.reduce<Record<string, SidebarModule[]>>((acc, module) => {

@@ -1,28 +1,38 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import { motion } from "motion/react";
+import { Link, useSearchParams } from "react-router-dom";
 
-import { GuestLayout } from "@/components/layout/GuestLayout";
-import { useTranslation } from "@/contexts/I18nContext";
-import { useAuthModal } from "@/contexts/AuthModalContext";
+import { CherryLoginForm } from "./CherryLoginForm";
+import { CherryRegisterForm } from "./CherryRegisterForm";
+import { CherryForgotForm } from "./CherryForgotForm";
+import { CherryPetals } from "./CherryPetals";
 
+import "./cherry-login.css";
+
+type Mode = "login" | "register" | "forgot";
+
+/**
+ * Landing = login/register page, rebuilt from the cherry-blossom-site template.
+ * Login and register now live on the page itself behind a segmented tab switch
+ * (no popup modal) with a soft slide/fade between them. Falling petals use the
+ * original cropped petal sprites (see {@link CherryPetals}).
+ */
 export default function LandingPage() {
-    const { t } = useTranslation();
-    const { openLogin, openRegister } = useAuthModal();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [email, setEmail] = useState("");
+    const [mode, setMode] = useState<Mode>("login");
+    const [loginError, setLoginError] = useState<string | undefined>();
 
-    // Auto-open the auth modal when arriving via /login or /register (which now
-    // redirect to `/?auth=...`), or from OAuth's `?error=` callback. Runs once.
+    // This screen is mounted at /login and /register (and still supports the
+    // legacy /?auth=… flag). Pick the tab from the path, and surface any
+    // ?error from the OAuth failure callback (/login?error=…).
     useEffect(() => {
+        const path = window.location.pathname;
         const auth = searchParams.get("auth");
-        if (auth === "login") {
-            openLogin({ error: searchParams.get("error") ?? undefined });
-        } else if (auth === "register") {
-            openRegister();
+        const err = searchParams.get("error");
+        if (auth === "register" || path === "/register") {
+            setMode("register");
         }
-        if (auth) {
+        if (err) setLoginError(err);
+        if (auth || err) {
             searchParams.delete("auth");
             searchParams.delete("error");
             setSearchParams(searchParams, { replace: true });
@@ -30,96 +40,125 @@ export default function LandingPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const onEmailSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        openRegister({ email: email.trim() || undefined });
-    };
-
     return (
-        <GuestLayout>
-            {/* ── Hero: Mt Fuji image as the section's own background ── */}
-            <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 py-24 text-white overflow-hidden">
-                {/* Background image + vignette (inside the section so it paints
-                    above GuestLayout's opaque background). */}
-                <video
-                    aria-hidden
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    poster="/login-bg.jpeg"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ backgroundColor: "#1e293b" }}
-                >
-                    <source src="/login-bg.mp4" type="video/mp4" />
-                </video>
-                <div
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{
-                        background:
-                            "radial-gradient(130% 100% at 50% 32%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%)",
-                    }}
-                />
+        <div className="cherry-body">
+            {/* Brand logo (girl + "Hanabun" wordmark) pinned to the top-left
+                viewport corner. The PNG has a TRANSPARENT background so it melts
+                straight into the sakura page — no white plate behind it. A soft
+                drop-shadow lifts it off the pink. Viewport-anchored sibling of
+                the stage (z-index 3) so it stacks above the draping branch; on
+                mobile it collapses to a centered logo (see the media query). */}
+            <img
+                className="cherry-logo"
+                src="/hanabun-logo-full.png"
+                alt="Hanabun — học tiếng Nhật"
+                draggable={false}
+            />
 
-                <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.9, ease: "easeOut" }}
-                    className="relative z-10 max-w-3xl"
-                >
-                    <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.1] drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]">
-                        {t("landing.heroTitleA")}{" "}
-                        {t("landing.heroTitleB")}{" "}
-                        <span className="bg-gradient-to-r from-sky-300 to-indigo-300 bg-clip-text text-transparent">
-                            {t("landing.heroTitleHighlight")}
-                        </span>
+            <main className="cherry-stage">
+                {/* Top marketing nav — INSIDE the stage so it uses the same
+                    %-of-canvas coordinates as the reference template (its nav
+                    row starts at left 46.147%, top 12.58%, ≈5% gaps between
+                    items). Styled to match the reference art: small uppercase
+                    Quicksand, wide tracking, active item bold + darker. */}
+                <nav className="cherry-nav" aria-label="Điều hướng">
+                    <Link to="/tra-cuu" className="cherry-nav-link">Tra cứu</Link>
+                    <Link to="/showcase" className="cherry-nav-link">Giới thiệu</Link>
+                    <Link to="/portfolio" className="cherry-nav-link">Về chúng tôi</Link>
+                </nav>
+
+                {/* ── Decorative artwork (positions identical to the template) ── */}
+                <img className="deco" style={{ left: "8.871%", top: "13.376%", width: "48.2%" }} src="/cherry/photo.webp" alt="" draggable={false} />
+                <img className="deco" style={{ left: "4.749%", top: "28.662%", width: "9.899%" }} src="/cherry/cloud.png" alt="" draggable={false} />
+                <img className="deco" style={{ left: "84.409%", top: "44.108%", width: "10.546%" }} src="/cherry/chibi.png" alt="" draggable={false} />
+
+                {/* ── Right column: tagline / heading / auth forms ── */}
+                <section className="cherry-panel">
+                    <p className="cherry-tagline">Mỗi ngày một cánh hoa</p>
+                    <h1 className="cherry-heading">
+                        {mode === "login"
+                            ? "Chào mừng trở lại!"
+                            : mode === "register"
+                              ? "Tạo tài khoản"
+                              : "Quên mật khẩu?"}
                     </h1>
+                    {mode === "login" && (
+                        <p className="cherry-sub">
+                            Đăng nhập để tiếp tục hành trình tiếng Nhật của bạn — flashcard,
+                            kanji và bài luyện đang chờ nở rộ.
+                        </p>
+                    )}
+                    {mode === "forgot" && (
+                        <p className="cherry-sub">
+                            Nhập email, chúng tôi sẽ gửi link đặt lại mật khẩu cho bạn.
+                        </p>
+                    )}
 
-                    <p className="mt-6 text-lg sm:text-xl text-white/85 max-w-2xl mx-auto drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
-                        {t("landing.heroSubtitle")}
-                    </p>
+                    {/* Segmented tab switch — only for the login/register pair.
+                        (pill position driven inline so it reliably wins the
+                        cascade & animates via CSS transition). */}
+                    {mode !== "forgot" && (
+                        <div className="cherry-tabs" data-mode={mode}>
+                            <span
+                                className="cherry-tabs-pill"
+                                style={{ left: mode === "register" ? "50%" : "1.6%" }}
+                            />
+                            <button type="button" data-active={mode === "login"} onClick={() => setMode("login")}>
+                                Đăng nhập
+                            </button>
+                            <button type="button" data-active={mode === "register"} onClick={() => setMode("register")}>
+                                Đăng ký
+                            </button>
+                        </div>
+                    )}
 
-                    {/* Mercury-style email pill → opens the register modal */}
-                    <form
-                        onSubmit={onEmailSubmit}
-                        className="mt-9 mx-auto flex w-full max-w-md items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1.5 pl-5 backdrop-blur-xl shadow-2xl"
-                    >
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder={t("auth.login.emailPlaceholder")}
-                            className="flex-1 bg-transparent text-white placeholder:text-white/55 outline-none text-sm sm:text-base min-w-0"
-                        />
-                        <button
-                            type="submit"
-                            className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition-colors"
-                        >
-                            {t("landing.ctaStart")}
-                            <ArrowRight size={15} />
-                        </button>
-                    </form>
-
-                    <p className="mt-4 text-sm text-white/70">
-                        {t("auth.register.alreadyHaveAccount")}{" "}
-                        <button
-                            type="button"
-                            onClick={() => openLogin()}
-                            className="font-semibold text-sky-300 hover:text-sky-200 hover:underline"
-                        >
-                            {t("nav.login")}
-                        </button>
-                    </p>
-                </motion.div>
-
-                {/* ── Legal / brand band (Mercury-style frosted strip) ── */}
-                <div className="absolute inset-x-0 bottom-5 z-10 px-4">
-                    <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-black/35 px-5 py-3 text-center text-xs text-white/75 backdrop-blur-md">
-                        Gengo · {t("landing.heroBadge")}
+                    {/* Forms crossfade/slide when the mode changes (keyed remount). */}
+                    <div className="cherry-formwrap" key={mode}>
+                        {mode === "login" ? (
+                            <CherryLoginForm
+                                initialError={loginError}
+                                onForgot={() => setMode("forgot")}
+                            />
+                        ) : mode === "register" ? (
+                            <CherryRegisterForm />
+                        ) : (
+                            <CherryForgotForm onBack={() => setMode("login")} />
+                        )}
                     </div>
-                </div>
-            </section>
-        </GuestLayout>
+
+                    <p className="cherry-register">
+                        {mode === "login" ? (
+                            <>
+                                Chưa có tài khoản?{" "}
+                                <button type="button" className="cherry-link" onClick={() => setMode("register")}>
+                                    Đăng ký miễn phí
+                                </button>
+                            </>
+                        ) : mode === "register" ? (
+                            <>
+                                Đã có tài khoản?{" "}
+                                <button type="button" className="cherry-link" onClick={() => setMode("login")}>
+                                    Đăng nhập
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                Nhớ ra mật khẩu rồi?{" "}
+                                <button type="button" className="cherry-link" onClick={() => setMode("login")}>
+                                    Đăng nhập
+                                </button>
+                            </>
+                        )}
+                    </p>
+                </section>
+            </main>
+
+            {/* Cherry branches anchored to the viewport edges (sway gently). */}
+            <img className="cherry-branch-top" src="/cherry/branch_top.png" alt="" draggable={false} />
+            <img className="cherry-branch-bottom" src="/cherry/branch_bottom.png" alt="" draggable={false} />
+
+            {/* Randomised falling petals across the whole viewport. */}
+            <CherryPetals />
+        </div>
     );
 }

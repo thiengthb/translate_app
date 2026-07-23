@@ -1,21 +1,25 @@
 import { Logout } from "@/components/auth/Logout";
 import { OAuth2RedirectHandler } from "@/components/auth/OAuth2RedirectHandler";
-import { LoginRouteRedirect, RegisterRouteRedirect } from "@/components/auth/AuthRouteRedirect";
+import LandingPage from "@/pages/landing/LandingPage";
+import GuestToolsPage from "@/pages/guest/GuestToolsPage";
+import PortfolioLanding from "@/pages/portfolio/PortfolioLanding";
+import PortfolioAbout from "@/pages/portfolio/PortfolioAbout";
+import HanabunShowcase from "@/pages/showcase/HanabunShowcase";
 import CheckYourEmailPage from "@/pages/auth/CheckYourEmailPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import NotFoundPage from "@/pages/error/NotFoundPage";
 import { Unauthorized } from "@/pages/error/Unauthorized";
 import { Dashboard } from "@/pages/management/dashboard";
 import AuditLogPage from "@/pages/auditLog/AuditLogPage";
-import KeyboardShortcutsPage from "@/pages/help/KeyboardShortcutsPage";
 import NotificationsPage from "@/pages/notifications/NotificationsPage";
-import StudentLandingPage from "@/pages/student/StudentLandingPage";
-import TeacherLandingPage from "@/pages/teacher/TeacherLandingPage";
 import ProfilePage from "@/pages/profile/ProfilePage";
-import SettingsPage from "@/pages/settings/SettingsPage";
-import StreakPage from "@/pages/streak/StreakPage";
+import DesignerProfilePage from "@/pages/profile/DesignerProfilePage";
+
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
+import DailyCheckinPage from "@/pages/engagement/DailyCheckinPage";
+import WeeklyStreakPage from "@/pages/engagement/WeeklyStreakPage";
+import LevelPage from "@/pages/engagement/LevelPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
@@ -28,10 +32,12 @@ import DictionaryPage from "@/pages/dictionary/DictionaryPage";
 import NotebookPage from "@/pages/dictionary/NotebookPage";
 import VocabularyBrowsePage from "@/pages/dictionary/VocabularyBrowsePage";
 import WordCreatePage from "@/pages/dictionary/WordCreatePage";
+import WordDetailPage from "@/pages/dictionary/WordDetailPage";
 import LibraryPage from "@/pages/student/LibraryPage";
 import CommunityPage from "@/pages/student/CommunityPage";
 import DeckPreviewPage from "@/pages/student/DeckPreviewPage";
 import CreateDeckPage from "@/pages/student/CreateDeckPage";
+import ImportDeckPage from "@/pages/student/ImportDeckPage";
 import EditQuizletDeckPage from "@/pages/student/EditQuizletDeckPage";
 import CardTemplateEditPage from "@/pages/student/CardTemplateEditPage";
 import CardTemplatePreviewPage from "@/pages/student/CardTemplatePreviewPage";
@@ -54,33 +60,56 @@ import AssignmentStatsPage from "@/pages/classroom/AssignmentStatsPage";
 import KanjiHomePage from "@/pages/kanji-study/KanjiHomePage";
 import KanjiDeckListPage from "@/pages/kanji-study/KanjiDeckListPage";
 import KanjiDeckBrowsePage from "@/pages/kanji-study/KanjiDeckBrowsePage";
+import KanjiFlashcardPage from "@/pages/kanji-study/KanjiFlashcardPage";
+import KanjiQuizPage from "@/pages/kanji-study/KanjiQuizPage";
+import KanjiWritingPage from "@/pages/kanji-study/KanjiWritingPage";
 import KanjiDetailPage from "@/pages/kanji-study/KanjiDetailPage";
 import KanjiRadicalListPage from "@/pages/kanji-study/KanjiRadicalListPage";
+import KanjiRadicalDetailPage from "@/pages/kanji-study/KanjiRadicalDetailPage";
+import KanjiWordDetailPage from "@/pages/kanji-study/KanjiWordDetailPage";
+import KanjiSearchPage from "@/pages/kanji-study/KanjiSearchPage";
 import KanjiReadingSetListPage from "@/pages/kanji-study/KanjiReadingSetListPage";
 import KanjiReviewPage from "@/pages/kanji-study/KanjiReviewPage";
-import type { ComponentType } from "react";
+import KanjiSessionsPage from "@/pages/kanji-study/KanjiSessionsPage";
+import type { ComponentType, LazyExoticComponent } from "react";
 import { buildEntityRoutes } from "./build-router";
+
+
+export type RouteComponent =
+  | ComponentType<Record<string, never>>
+  | LazyExoticComponent<ComponentType<Record<string, never>>>;
 
 export interface RouteConfig {
   path: string;
-  component: ComponentType<any>;
+  component: RouteComponent;
   requiredPermission?: string;
   isPublic?: boolean;
   isModuleDriven?: boolean;
+  /**
+   * Guest-accessible (Mazii open-access model): rendered inside the normal app
+   * shell for BOTH guests and authenticated users, WITHOUT an auth redirect or
+   * permission check. Registered explicitly in App.tsx (independent of the
+   * backend Module table, which is empty for guests). Personal *actions* on
+   * these pages still gate via the auth modal; only persistence is restricted.
+   */
+  guestAccessible?: boolean;
 }
 
 export const routes: RouteConfig[] = [
-  { path: "/dashboard", component: Dashboard, isModuleDriven: true },
-  { path: "/dictionary", component: DictionaryPage, isModuleDriven: true },
+  // Static (not module-driven): /dashboard is every role's home, so the
+  // route must always resolve — never gated behind a DB Module row (the BE
+  // seeds one with USER_READ, which would 404 students/teachers).
+  { path: "/dashboard", component: Dashboard, guestAccessible: true },
+  { path: "/dictionary", component: DictionaryPage, isModuleDriven: true, guestAccessible: true },
   { path: "/notebook", component: NotebookPage, isModuleDriven: true },
-  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true },
+  { path: "/vocabulary", component: VocabularyBrowsePage, isModuleDriven: true, guestAccessible: true },
   { path: "/words/create", component: WordCreatePage, requiredPermission: "WORD_CREATE" },
-  { path: "/student", component: StudentLandingPage },
-  { path: "/teacher", component: TeacherLandingPage },
+  { path: "/words/:wordId", component: WordDetailPage, requiredPermission: "WORD_READ" },
   { path: "/library", component: LibraryPage, isModuleDriven: true },
   { path: "/community", component: CommunityPage, isModuleDriven: true },
   { path: "/deck/:deckId/preview", component: DeckPreviewPage, requiredPermission: "DECK_READ" },
   { path: "/create-deck", component: CreateDeckPage, requiredPermission: "DECK_CREATE" },
+  { path: "/decks/import", component: ImportDeckPage, requiredPermission: "DECK_CREATE" },
   // Card-template management is the base-CRUD ProTable (entityConfig at
   // pages/management/library/card-template/index.tsx, auto-registered via
   // buildEntityRoutes + the @ResourceMenu module). Create / Edit route to the
@@ -99,7 +128,7 @@ export const routes: RouteConfig[] = [
   { path: "/stats", component: AnkiStatsPage, isModuleDriven: true },
 
   // ── Assessment ──
-  { path: "/questions", component: QuestionBankPage, isModuleDriven: true },
+  { path: "/questions", component: QuestionBankPage, isModuleDriven: true, guestAccessible: true },
   { path: "/questions/new", component: QuestionFormPage, requiredPermission: "QUESTION_CREATE" },
   { path: "/questions/:questionId/edit", component: QuestionFormPage, requiredPermission: "QUESTION_UPDATE" },
   // /question-tags is now driven by the entityConfig at
@@ -120,7 +149,7 @@ export const routes: RouteConfig[] = [
   // Static (always available to any authenticated user). The board is
   // fully client-side today; radical/prompt data is a placeholder that
   // can be swapped for a backend feed later without touching the route.
-  { path: "/kanji-radical", component: KanjiRadicalGamePage },
+  { path: "/kanji-radical", component: KanjiRadicalGamePage, guestAccessible: true },
 
   { path: "/classrooms/:classroomId/stats/:assignmentId", component: AssignmentStatsPage, requiredPermission: "CLASSROOM_READ" },
   // Static (not module-driven) so the route always resolves — the Kanji
@@ -129,18 +158,29 @@ export const routes: RouteConfig[] = [
   { path: "/kanji-study", component: KanjiHomePage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/decks", component: KanjiDeckListPage, requiredPermission: "KANJI_DECK_READ" },
   { path: "/kanji-study/deck/:deckId", component: KanjiDeckBrowsePage, requiredPermission: "KANJI_DECK_READ" },
-  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ" },
-  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ" },
+  { path: "/kanji-study/deck/:deckId/flashcard", component: KanjiFlashcardPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId/quiz", component: KanjiQuizPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/deck/:deckId/writing", component: KanjiWritingPage, requiredPermission: "KANJI_DECK_READ" },
+  { path: "/kanji-study/kanji/:id", component: KanjiDetailPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
+  { path: "/kanji-study/radicals", component: KanjiRadicalListPage, requiredPermission: "KANJI_RADICAL_READ", guestAccessible: true },
+  { path: "/kanji-study/radical/:id", component: KanjiRadicalDetailPage, requiredPermission: "KANJI_RADICAL_READ", guestAccessible: true },
+  { path: "/kanji-study/word/:id", component: KanjiWordDetailPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
+  { path: "/kanji-study/search", component: KanjiSearchPage, requiredPermission: "KANJI_DETAIL_READ", guestAccessible: true },
   { path: "/kanji-study/reading", component: KanjiReadingSetListPage, requiredPermission: "KANJI_READING_SET_READ" },
   { path: "/kanji-study/review", component: KanjiReviewPage, requiredPermission: "KANJI_PROGRESS_READ" },
+  { path: "/kanji-study/sessions", component: KanjiSessionsPage, requiredPermission: "KANJI_DECK_READ" },
   ...buildEntityRoutes(),
   { path: "/profile", component: ProfilePage },
-  { path: "/settings", component: SettingsPage },
-  { path: "/streak", component: StreakPage },
-  { path: "/help/shortcuts", component: KeyboardShortcutsPage },
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
+  // ── Engagement (dashboard mission cards) ──
+  // Reached from the "Hằng ngày" / "Tuần này" / "Cấp độ" mission cards on the
+  // Sakura dashboard. Guest-accessible so the cards resolve in-shell for any
+  // role; personal data simply reads empty for guests.
+  { path: "/daily-checkin", component: DailyCheckinPage, guestAccessible: true },
+  { path: "/weekly-streak", component: WeeklyStreakPage, guestAccessible: true },
+  { path: "/level", component: LevelPage, guestAccessible: true },
   // /users overrides the buildEntityRoutes AutoCrudPage default — wraps
   // it in a tabbed page that also exposes User Analytics. Static (not
   // module-driven) so App.tsx routes via staticRoutePaths short-circuit
@@ -160,9 +200,29 @@ export const routes: RouteConfig[] = [
   { path: "/grammar/detail/:subUseId", component: GrammarDetailPage, requiredPermission: "GRAMMAR_PROGRESS_READ" },
 
   { path: "/not-found-page", component: NotFoundPage, isPublic: true },
-  { path: "/login", component: LoginRouteRedirect, isPublic: true },
+  // Guest lookup tools (Mazii-style): word/kanji search, sentence analysis,
+  // translate — usable WITHOUT login. Also rendered for guests at "/" (see
+  // App.tsx rootElement); this is the shareable/bookmarkable alias.
+  { path: "/tra-cuu", component: GuestToolsPage, isPublic: true },
+  // Marketing / portfolio landing (Rin Aizawa). No longer the guest "/"
+  // home (that's now the lookup tools) — kept public at its own path.
+  { path: "/portfolio", component: PortfolioLanding, isPublic: true },
+  // Marketing / portfolio about page — the landing nav's "About" links here.
+  { path: "/about", component: PortfolioAbout, isPublic: true },
+  // Standalone Awwwards-style Sakura showcase landing for the Hanabun
+  // platform — fully self-contained (own scoped CSS + Three.js petals),
+  // public so it works without auth. Additive: touches no existing page.
+  { path: "/showcase", component: HanabunShowcase, isPublic: true },
+  // Standalone "Yozakura / Night Bloom" designer-profile showcase for a
+  // fictional UI/UX designer (Hana Mizuno). Full-bleed + public, fully
+  // self-contained (own scoped CSS + Three.js petals). Kept OFF /profile so
+  // the real user Profile & Account Settings page owns that route.
+  { path: "/designer-portfolio", component: DesignerProfilePage, isPublic: true },
+  // The cherry auth screen (login/register tabs). It reads the pathname
+  // (/register → register tab) and any ?error from the OAuth callback.
+  { path: "/login", component: LandingPage, isPublic: true },
   { path: "/logout", component: Logout, isPublic: true },
-  { path: "/register", component: RegisterRouteRedirect, isPublic: true },
+  { path: "/register", component: LandingPage, isPublic: true },
   { path: "/check-email", component: CheckYourEmailPage, isPublic: true },
   { path: "/forgot-password", component: ForgotPasswordPage, isPublic: true },
   { path: "/oauth2/redirect", component: OAuth2RedirectHandler, isPublic: true,},

@@ -4,9 +4,15 @@ import com.example.starter_project_2025.domain.grammar.dashboard.GrammarDashboar
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgress;
 import com.example.starter_project_2025.domain.grammar.progress.GrammarProgressRepository;
 import com.example.starter_project_2025.domain.grammar.scheduler.GrammarScheduler;
+import com.example.starter_project_2025.domain.grammar.scheduler.SrsState;
+import com.example.starter_project_2025.domain.grammar.support.GrammarSpanLocator;
+import com.example.starter_project_2025.domain.production.grammar.Grammar;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUse;
 import com.example.starter_project_2025.domain.production.grammar.GrammarSubUseRepository;
+import com.example.starter_project_2025.domain.production.grammar.ReferenceSentenceRepository;
+import com.example.starter_project_2025.domain.production.llm.GeminiClient;
 import com.example.starter_project_2025.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,24 +41,32 @@ public class GrammarDashboardService {
 
     GrammarProgressRepository progressRepository;
     GrammarSubUseRepository subUseRepository;
+    ReferenceSentenceRepository referenceSentenceRepository;
     GrammarScheduler scheduler;
+    GeminiClient gemini;
+    GrammarSpanLocator spanLocator;
+    ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<LevelSummary> dashboard(Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        Map<Long, GrammarProgress> bySub = progressBySubUse(userId);
 
-        // Preserve a stable N5→N1 order via an ordered map keyed by level code.
+        // Per-level totals come from a cheap COUNT…GROUP BY (no rows materialized).
         Map<String, LevelSummary> byLevel = new LinkedHashMap<>();
-        for (GrammarSubUse su : subUseRepository.findAll()) {
-            String level = su.getJlptLevel();
-            if (level == null) continue;
-            LevelSummary s = byLevel.computeIfAbsent(level,
-                    l -> LevelSummary.builder().level(l).build());
-            s.setTotal(s.getTotal() + 1);
+        for (GrammarSubUseRepository.LevelCount c : subUseRepository.countByJlptLevel()) {
+            byLevel.put(c.getLevel(), LevelSummary.builder()
+                    .level(c.getLevel())
+                    .total((int) c.getTotal())
+                    .build());
+        }
 
-            GrammarProgress p = bySub.get(su.getId());
-            if (p == null) continue;
+        // Studied-state counters come only from the rows this user actually has,
+        // with their sub-use fetched so reading the level is not an N+1.
+        for (GrammarProgress p : progressRepository.findByUserIdWithSubUse(userId)) {
+            String level = p.getSubUse().getJlptLevel();
+            if (level == null) continue;
+            LevelSummary s = byLevel.get(level);
+            if (s == null) continue;
             s.setUnlocked(s.getUnlocked() + 1);
             if (isMastered(p)) {
                 s.setMastered(s.getMastered() + 1);
@@ -77,8 +91,7 @@ public class GrammarDashboardService {
         List<GrammarItem> learning = new ArrayList<>();
         List<GrammarItem> locked = new ArrayList<>();
 
-        List<GrammarSubUse> ofLevel = subUseRepository.findAll().stream()
-                .filter(su -> level.equalsIgnoreCase(su.getJlptLevel()))
+        List<GrammarSubUse> ofLevel = subUseRepository.findByLevel_CodeIgnoreCase(level).stream()
                 .sorted(Comparator.comparing(GrammarSubUse::getName,
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
@@ -111,11 +124,43 @@ public class GrammarDashboardService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    // Not readOnly: the first view of a grammar point may generate + cache its
+    // rich "About" write-up into the production GrammarSubUse row.
+    @Transactional
     public GrammarDetail detail(Long userId, Long subUseId) {
         GrammarSubUse su = subUseRepository.findById(subUseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grammar sub-use not found"));
         GrammarProgress p = progressRepository.findByUserIdAndSubUseId(userId, subUseId).orElse(null);
+
+        // Approved reference sentences double as the Examples section. Each carries the
+        // surface span of the grammar inside it so the FE can highlight it Bunpro-style.
+        List<String> cores = spanLocator.markerCores(subUseId);
+        List<ExampleSentence> sentences = referenceSentenceRepository
+                .findApprovedBySubUseId(subUseId).stream()
+                .map(r -> ExampleSentence.builder()
+                        .id(r.getId())
+                        .jp(r.getL2Text())
+                        .vi(r.getL1Text())
+                        .highlight(blankToNull(spanLocator.locateSpan(r.getL2Text(), cores)))
+                        .build())
+                .toList();
+
+        ensureAboutDetail(su, sentences);
+
+        List<Mistake> mistakes = su.getCommonMistakes() == null ? List.of()
+                : su.getCommonMistakes().stream()
+                        .map(m -> Mistake.builder().pattern(m.getPattern()).hint(m.getHint()).build())
+                        .toList();
+
+        Grammar g = su.getGrammar();
+        List<SiblingUse> siblings = g == null ? List.of()
+                : subUseRepository.findByGrammarIdOrderByOrderNoAsc(g.getId()).stream()
+                        .map(s -> SiblingUse.builder()
+                                .subUseId(s.getId())
+                                .orderNo(s.getOrderNo())
+                                .name(s.getName())
+                                .build())
+                        .toList();
 
         return GrammarDetail.builder()
                 .subUseId(su.getId())
@@ -129,10 +174,75 @@ public class GrammarDashboardService {
                 .lastReviewedAt(p != null ? p.getLastReviewedAt() : null)
                 .nextReviewAt(p != null ? p.getNextReviewAt() : null)
                 .nuanceDescription(su.getNuanceDescription())
+                .aboutDetail(su.getAboutDetail())
                 .structurePattern(su.getStructurePattern())
                 .exampleJp(su.getExampleJp())
                 .exampleVi(su.getExampleVi())
+                .exampleNote(su.getExampleNote())
+                .exampleJpHighlight(su.getExampleJp() != null
+                        ? blankToNull(spanLocator.locateSpan(su.getExampleJp(), cores)) : null)
+                .grammarId(g != null ? g.getId() : null)
+                .grammarForm(g != null ? g.getForm() : null)
+                .titleGloss(g != null ? g.getTitleGloss() : null)
+                .textbookSources(g != null && g.getTextbookSources() != null ? g.getTextbookSources() : List.of())
+                .grammarNotes(g != null ? g.getNotes() : null)
+                .orderNo(su.getOrderNo())
+                .siblings(siblings)
+                .sentences(sentences)
+                .commonMistakes(mistakes)
                 .build();
+    }
+
+    /**
+     * Generate the rich "About" write-up (usage contexts + comparison with
+     * near-equivalent grammar) the first time a point is viewed, and cache it on
+     * the sub-use row. No-op when already cached or the LLM is offline — the
+     * detail screen then falls back to the short seeded gloss.
+     */
+    private void ensureAboutDetail(GrammarSubUse su, List<ExampleSentence> sentences) {
+        // Regenerate when blank OR when the cache predates the structured-JSON format
+        // (early versions stored free text) — this self-upgrades old rows on next view.
+        if (isRichAbout(su.getAboutDetail())) return;
+        if (!gemini.isAvailable()) return;
+
+        StringBuilder examples = new StringBuilder();
+        if (su.getExampleJp() != null) {
+            examples.append(su.getExampleJp());
+            if (su.getExampleVi() != null) examples.append(" — ").append(su.getExampleVi());
+            examples.append("\n");
+        }
+        sentences.stream().limit(3).forEach(s ->
+                examples.append(s.getJp()).append(" — ").append(s.getVi()).append("\n"));
+
+        String generated = gemini.explainGrammar(
+                su.getName(),
+                su.getJlptLevel(),
+                su.getNuanceDescription(),
+                su.getStructurePattern(),
+                examples.isEmpty() ? "(không có)" : examples.toString());
+        if (generated != null) {
+            su.setAboutDetail(generated);
+            subUseRepository.save(su);
+        }
+    }
+
+    /**
+     * True when the cached About is the CURRENT structured JSON format (context items
+     * are objects carrying their own example). Older caches — free text or the early
+     * string-array format — fail this check and get regenerated on next view.
+     */
+    private boolean isRichAbout(String s) {
+        if (s == null || s.isBlank()) return false;
+        try {
+            var context = objectMapper.readTree(s).path("context");
+            return context.isArray() && !context.isEmpty() && context.get(0).hasNonNull("point");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s;
     }
 
     private Map<Long, GrammarProgress> progressBySubUse(Long userId) {
@@ -144,7 +254,7 @@ public class GrammarDashboardService {
     }
 
     private boolean isMastered(GrammarProgress p) {
-        return "REVIEW".equals(p.getState())
+        return SrsState.from(p.getState()) == SrsState.REVIEW
                 && p.getIntervalDays() != null
                 && p.getIntervalDays() >= MASTERED_INTERVAL_DAYS;
     }

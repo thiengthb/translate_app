@@ -42,7 +42,7 @@ export function DeckTitleRow({ deck, showVisibility = true }: { deck: DeckDTO; s
 
   const titleEl = (
     <h3 ref={titleRef} className="min-w-0 flex-1 truncate text-sm font-semibold leading-snug text-foreground">
-      {deck.title ?? "Untitled"}
+      {deck.title ?? "Chưa có tiêu đề"}
     </h3>
   );
   const showTip = truncated || !!description;
@@ -76,12 +76,13 @@ export function DeckStatsInline({ deck }: { deck: DeckDTO }) {
   }, [deck.id]);
   if (!stats) return null;
   const learning = stats.learningCards + stats.relearningCards;
+  const dueToday = stats.dueReviewCards ?? stats.dueToday ?? 0;
   // Pills shaped exactly like a TagChip (px-1.5 py-0.5 text-[10px] rounded-full),
   // neutral text, a coloured dot to tell them apart, full label on hover.
   const pills = [
-    { dot: "bg-blue-500", value: stats.newCards, label: `Thẻ mới: ${stats.newCards}` },
+    { dot: "bg-blue-500", value: stats.newCards, label: `Mới hôm nay: ${stats.newCards}` },
     { dot: "bg-orange-500", value: learning, label: `Đang học: ${learning}` },
-    { dot: "bg-emerald-600", value: stats.reviewCards, label: `Cần ôn: ${stats.reviewCards}` },
+    { dot: "bg-emerald-600", value: dueToday, label: `Đến hạn hôm nay: ${dueToday}` },
   ];
   return (
     <div className="flex shrink-0 items-center gap-1.5">

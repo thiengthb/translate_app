@@ -188,6 +188,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    public AuthenticationResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("error.auth.userNotFound"));
+
+        // Reuse the login response shape, minus the tokens (@JsonInclude(NON_NULL) drops them).
+        return buildAuthResponse(UserPrincipal.fromUser(user), null, null);
+    }
+
+    @Override
+    @Transactional
     public void register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {

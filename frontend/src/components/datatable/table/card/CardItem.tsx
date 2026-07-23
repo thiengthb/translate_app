@@ -181,17 +181,17 @@ export function CardItem({
         <>
             <ActionButton
                 onClick={() => onView(row)}
-                tooltip="View detail"
+                tooltip="Xem chi tiết"
                 icon={<Eye size={10} className="text-muted-foreground" />}
             />
             <ActionButton
                 onClick={() => onEdit(row)}
-                tooltip="Edit"
+                tooltip="Chỉnh sửa"
                 icon={<Pen size={10} className="text-muted-foreground" />}
             />
             <ActionButton
                 onClick={() => onDelete(row)}
-                tooltip="Delete"
+                tooltip="Xóa"
                 icon={<Trash2 size={10} className="text-red-500" />}
             />
         </>
@@ -214,7 +214,7 @@ export function CardItem({
             <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => onSelect(id)}
-                aria-label="Select card"
+                aria-label="Chọn thẻ"
             />
             {showIndex && (
                 <span className="text-xs text-muted-foreground font-medium">
@@ -307,7 +307,7 @@ export function CardItem({
             {imageUrl && (
                 <img
                     src={imageUrl}
-                    alt={titleValue || imageField?.label || "image"}
+                    alt={titleValue || imageField?.label || "hình ảnh"}
                     loading="lazy"
                     className={cn(
                         "absolute inset-0 h-full w-full transition-transform duration-500",

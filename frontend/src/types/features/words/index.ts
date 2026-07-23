@@ -330,3 +330,15 @@ export interface NotebookResponse {
   words: NotebookWordEntry[];
   kanjis: NotebookKanjiEntry[];
 }
+
+// Một sổ tay (đa sổ tay kiểu Mazii) — tóm tắt cho danh sách & picker.
+export interface NotebookSummary {
+  id: number;
+  name: string;
+  color?: string;
+  isDefault: boolean;
+  sortOrder: number;
+  wordCount: number;
+  kanjiCount: number;
+  createdAt?: string;
+}

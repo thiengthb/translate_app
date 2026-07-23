@@ -1,0 +1,216 @@
+/* =====================================================================
+   Hanabun showcase — scoped styling.
+   The app's Tailwind sakura tokens do most of the work; this file adds
+   only what utilities can't: the ambient petal field, glassmorphism,
+   soft glows, the GSAP title mask, and reduced-motion handling.
+   Everything is namespaced under `.sk-showcase`.
+   ===================================================================== */
+
+.sk-showcase {
+  --sk-pink: #ff6b9d; /* primary blossom (brief) */
+  --sk-pink-soft: #ff8fab;
+  --sk-pink-wash: #ffe5ec;
+  --sk-pink-deep: #e94f83; /* accent text with enough contrast on white */
+  --sk-mint: #6fd8bd;
+  --sk-honey: #ffc15c;
+  --sk-plum: #a4638a;
+  --sk-ink: #3a2e33;
+  --sk-ink-soft: #7c6a71;
+  --sk-glass: rgba(255, 255, 255, 0.55);
+  --sk-glass-line: rgba(255, 255, 255, 0.75);
+  --sk-shadow: 0 24px 60px -28px rgba(233, 79, 131, 0.4);
+
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: clip;
+  color: var(--sk-ink);
+  font-family: var(--font-sans, "Quicksand", system-ui, sans-serif);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Layered blush wash so the page never reads as flat white. */
+  background:
+    radial-gradient(60% 40% at 82% -6%, rgba(255, 143, 171, 0.28), transparent 68%),
+    radial-gradient(48% 38% at 4% 6%, rgba(155, 227, 201, 0.22), transparent 66%),
+    radial-gradient(70% 55% at 50% 116%, rgba(255, 107, 157, 0.2), transparent 72%),
+    linear-gradient(180deg, #fff7f9 0%, #fff2f6 48%, #fff7f9 100%);
+}
+
+.sk-showcase *,
+.sk-showcase *::before,
+.sk-showcase *::after {
+  box-sizing: border-box;
+}
+
+.sk-showcase ::selection {
+  background: var(--sk-pink);
+  color: #fff;
+}
+
+.sk-display {
+  font-family: var(--font-display, "Baloo 2", cursive);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Gradient blossom text. */
+.sk-grad {
+  background: linear-gradient(100deg, var(--sk-pink) 0%, #ff9ec4 45%, var(--sk-honey) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glassmorphism surfaces. */
+.sk-glass {
+  background: var(--sk-glass);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--sk-glass-line);
+  box-shadow: var(--sk-shadow);
+}
+
+/* Accessible focus ring, on-brand. */
+.sk-showcase :focus-visible {
+  outline: 3px solid var(--sk-pink);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+
+/* ---- scroll reveal (native IntersectionObserver + CSS) --------------
+   Framer Motion's whileInView/useInView don't fire in this runtime, but a
+   plain IntersectionObserver does — so reveals are driven by toggling
+   `.is-in` (see HanabunShowcase useRevealAll). */
+.sk-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sk-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- GSAP hero title mask ------------------------------------------- */
+.sk-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em; /* let descenders clear the mask */
+}
+.sk-line > span {
+  display: block;
+  will-change: transform;
+}
+
+/* ---- ambient drifting petals ---------------------------------------- */
+.sk-petals {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sk-petal {
+  position: absolute;
+  top: -8%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: sk-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes sk-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(6vw, 52vh, 0) rotate(180deg);
+  }
+  92% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-4vw, 112vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Soft pulsing glow behind hero elements. */
+.sk-glow {
+  animation: sk-pulse 6s ease-in-out infinite;
+}
+@keyframes sk-pulse {
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+/* Gentle mascot bob (GSAP also drives this; kept as a CSS fallback). */
+@keyframes sk-bob {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+/* Scroll cue tail. */
+@keyframes sk-cue {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+.sk-cue-tail {
+  animation: sk-cue 2s ease-in-out infinite;
+  transform-origin: top;
+}
+
+/* Marquee band of Japanese phrases. */
+.sk-marquee-row {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: sk-scroll 38s linear infinite;
+}
+@keyframes sk-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Live-preview EXP line + donut draw-in (triggered by adding .is-live). */
+.sk-draw {
+  stroke-dasharray: var(--len, 1000);
+  stroke-dashoffset: var(--len, 1000);
+}
+.sk-draw.is-live {
+  transition: stroke-dashoffset 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+  stroke-dashoffset: 0;
+}
+
+/* ---- reduced motion -------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .sk-showcase *,
+  .sk-showcase *::before,
+  .sk-showcase *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .sk-petals {
+    display: none;
+  }
+}

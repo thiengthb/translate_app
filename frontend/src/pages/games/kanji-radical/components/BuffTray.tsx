@@ -25,7 +25,7 @@ export function BuffTray({ buffs }: { buffs: string[] }) {
                         return (
                             <div
                                 key={`empty-${i}`}
-                                className="size-7 rounded-md border border-dashed border-white/10 bg-slate-950/40"
+                                className="size-7 rounded-md border border-dashed border-[#f3cbd9] bg-[#fff0f4]"
                             />
                         );
                     }
@@ -35,7 +35,7 @@ export function BuffTray({ buffs }: { buffs: string[] }) {
                             <TooltipTrigger asChild>
                                 <div
                                     className={cn(
-                                        "flex size-7 items-center justify-center rounded-md bg-slate-800/80 text-base font-bold ring-1 transition-transform hover:scale-110",
+                                        "flex size-7 items-center justify-center rounded-md bg-white text-base font-bold shadow-sm ring-1 transition-transform hover:scale-110",
                                         meta.ring,
                                         meta.text,
                                     )}
@@ -45,7 +45,7 @@ export function BuffTray({ buffs }: { buffs: string[] }) {
                             </TooltipTrigger>
                             <TooltipContent
                                 side="bottom"
-                                className="max-w-56 bg-slate-900 text-slate-100 ring-1 ring-white/10"
+                                className="max-w-56"
                             >
                                 <div className="flex items-center justify-between gap-2">
                                     <span className={cn("font-bold", meta.text)}>

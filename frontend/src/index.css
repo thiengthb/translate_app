@@ -3,6 +3,42 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Reserve the vertical scrollbar's width at all times. Some pages let the
+   whole document scroll (pageScroll shell, e.g. Dashboard) while others
+   keep the document height fixed to the viewport (e.g. Library) — without
+   this, the browser's native scrollbar appears/disappears when navigating
+   between the two, shifting the entire app shell (sidebar + navbar)
+   sideways by its width. */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Page scrollbar: soft pink to match the Sakura theme. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #f9a8d4 transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: #f9c9de;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: #f7b3cf;
+}
+
 /* Hide the scrollbar visually while keeping scroll behaviour intact. */
 @utility scrollbar-hidden {
   scrollbar-width: none; /* Firefox */
@@ -13,6 +49,12 @@
 }
 
 @theme inline {
+  /* Sakura Study Dashboard display font (fixed, outside the color-preset system). */
+  --font-display: "Baloo 2", cursive;
+  /* Top-header rotating quote (WritingQuoteHeader): JP brush calligraphy +
+     a Vietnamese-subset handwriting script for the caption line. */
+  --font-hand-jp: "Yuji Syuku", "Zen Kurenaido", cursive;
+  --font-hand-vi: "Caveat", cursive;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -54,81 +96,53 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  /* Typography defaults — overridden at runtime by useTypography. The
-     defaults keep the OS-native system stack so first paint never waits
-     on Google Fonts (the user can opt into a web font in /settings). */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  /* Rounder corners give every card / control the candy "Sakura" feel. */
+  --radius: 1rem;
+  /* Sakura reskin — body/UI is Quicksand, headings opt into Baloo 2 via the
+     `font-display` utility. Fixed (no runtime typography preset anymore). */
+  --font-sans: "Quicksand", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --app-font-size: 16px;
-  --background: oklch(0.985 0.006 78);
-  --foreground: oklch(0.145 0.012 55);
-  --card: oklch(0.992 0.004 78);
-  --card-foreground: oklch(0.145 0.012 55);
-  --popover: oklch(0.992 0.004 78);
-  --popover-foreground: oklch(0.145 0.012 55);
-  --primary: oklch(0.62 0.155 42);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.952 0.012 78);
-  --secondary-foreground: oklch(0.205 0.01 55);
-  --muted: oklch(0.952 0.012 78);
-  --muted-foreground: oklch(0.528 0.014 55);
-  --accent: oklch(0.936 0.018 52);
-  --accent-foreground: oklch(0.2 0.01 55);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.902 0.01 78);
-  --input: oklch(0.902 0.01 78);
-  --ring: oklch(0.62 0.155 42);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.972 0.009 78);
-  --sidebar-foreground: oklch(0.145 0.012 55);
-  --sidebar-primary: oklch(0.62 0.155 42);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.936 0.018 52);
-  --sidebar-accent-foreground: oklch(0.2 0.01 55);
-  --sidebar-border: oklch(0.902 0.01 78);
-  --sidebar-ring: oklch(0.62 0.155 42);
-}
 
-.dark {
-  --background: oklch(0.158 0.012 55);
-  --foreground: oklch(0.985 0.006 78);
-  --card: oklch(0.21 0.012 55);
-  --card-foreground: oklch(0.985 0.006 78);
-  --popover: oklch(0.21 0.012 55);
-  --popover-foreground: oklch(0.985 0.006 78);
-  --primary: oklch(0.72 0.15 42);
-  --primary-foreground: oklch(0.145 0.012 55);
-  --secondary: oklch(0.268 0.012 55);
-  --secondary-foreground: oklch(0.985 0.006 78);
-  --muted: oklch(0.268 0.012 55);
-  --muted-foreground: oklch(0.685 0.01 55);
-  --accent: oklch(0.285 0.018 52);
-  --accent-foreground: oklch(0.985 0.006 78);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.15 42);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.012 55);
-  --sidebar-foreground: oklch(0.985 0.006 78);
-  --sidebar-primary: oklch(0.72 0.15 42);
-  --sidebar-primary-foreground: oklch(0.985 0.006 78);
-  --sidebar-accent: oklch(0.285 0.018 52);
-  --sidebar-accent-foreground: oklch(0.985 0.006 78);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.15 42);
+  /* ── Fixed Sakura candy palette ──────────────────────────────────────
+     Hardcoded hex (light-only). The old runtime color-preset / dark-mode
+     systems were removed, so these :root values are the single source of
+     truth for the whole app. Mirrors the `sakura` token map in
+     components/sakura-dashboard/SakuraStudyDashboard.tsx. */
+  --background: #fff7f9;          /* sakura.bg */
+  --foreground: #3a2e33;          /* sakura.ink */
+  --card: #ffffff;
+  --card-foreground: #3a2e33;
+  --popover: #ffffff;
+  --popover-foreground: #3a2e33;
+  --primary: #ff6b9d;             /* sakura.pinkDeep */
+  --primary-foreground: #ffffff;
+  --secondary: #ffe5ec;           /* sakura.pinkWash */
+  --secondary-foreground: #ff6b9d;
+  --muted: #fff0f4;
+  --muted-foreground: #9a8e92;    /* sakura.muted */
+  --accent: #ffe5ec;              /* sakura.pinkWash */
+  --accent-foreground: #ff6b9d;
+  --destructive: #e5484d;
+  --border: #fbeaf0;              /* sakura.hairline */
+  --input: #fbeaf0;
+  --ring: #ff8fab;                /* sakura.pink */
+  --chart-1: #ff8fab;             /* pink */
+  --chart-2: #9be3c9;             /* mint */
+  --chart-3: #ffc95c;             /* honey */
+  --chart-4: #ff6b9d;             /* pinkDeep */
+  --chart-5: #ffc2d4;             /* pinkSoft */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3a2e33;
+  --sidebar-primary: #ff6b9d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffe5ec;
+  --sidebar-accent-foreground: #ff6b9d;
+  --sidebar-border: #fbeaf0;
+  --sidebar-ring: #ff8fab;
 }
 
 @layer base {
@@ -140,6 +154,7 @@
      "comfortable" density preset; lowering it gives "compact". */
   html {
     font-size: var(--app-font-size);
+    @apply bg-background;
   }
   body {
     font-family: var(--font-sans);
@@ -328,4 +343,19 @@
   [role="toolbar"][aria-label="Bulk actions"] {
     display: none !important;
   }
+}
+
+/* Sweeping highlight used by the Lightswind ShineButton (triggered on hover
+   via the button's `group` + `group-hover:opacity-100`). */
+@keyframes shine {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
+}
+
+.animate-shine {
+  animation: shine 1.2s ease-in-out infinite;
 }

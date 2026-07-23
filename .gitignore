@@ -11,10 +11,25 @@
 .DS_Store
 
 # Kanji seed: raw downloaded source data (KANJIDIC2 / Unihan, ~33MB).
-# Re-fetch via backend/scripts/README-kanji-seed.md; only the generator + SQL are kept.
+# Re-fetch via backend/scripts/README-kanji-seed.md; only the generator scripts are kept.
 backend/scripts/_kanji_data/
+
+# Vocabulary import CSV generated from JMdict (~20MB). Regenerate via gen-vocab-seed.mjs.
+backend/scripts/seed/words-jmdict.csv
+
+# Full example-sentence corpus generated from Tatoeba (~4.7MB, ~38k sentences).
+# The small sample kanji-sentences-seed.json IS committed; regenerate the full
+# corpus via gen-sentence-seed.mjs (see README-sentence-seed.md).
+backend/src/main/resources/seed/kanji-sentences-seed.full.json
+
+# Kanji study diagrams — local design artifacts, regenerate via gen-kanji-diagrams.mjs.
+backend/scripts/gen-kanji-diagrams.mjs
+docs/kanji-study/
 
 # Sudachi dictionary cache: downloaded zip (~70MB) + extracted .dic (~217MB).
 # Auto-fetched by Maven (download-maven-plugin) on first build; never commit
 # (the .dic exceeds GitHub's 100MB file limit). See pom.xml + SudachiTokenizer.java.
 backend/.sudachi-cache/
+# JLPT grammar dataset: downloaded at build (download-maven-plugin), copied onto
+# the classpath at seed/. Never committed — content is © 日本語NET. See pom.xml.
+backend/.grammar-data-cache/

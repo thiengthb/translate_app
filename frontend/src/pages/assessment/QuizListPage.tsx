@@ -94,7 +94,7 @@ export default function QuizListPage() {
   );
 
   return (
-    <MainLayout pathName={{ "/quizzes": "Quizzes" }} headerExtra={headerExtra}>
+    <MainLayout pathName={{ "/quizzes": "Quizzes" }} headerExtra={headerExtra} pageScroll>
       <div className="flex flex-col w-full flex-1 min-h-0 overflow-hidden">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 shrink-0 pb-4">

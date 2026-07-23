@@ -347,7 +347,7 @@ export default function CommunityPage() {
   }, [currentUserId, favoriteByDeckId]);
 
   return (
-    <MainLayout headerExtra={<KindTabs kind={kind} onChange={setKind} />}>
+    <MainLayout headerExtra={<KindTabs kind={kind} onChange={setKind} />} pageScroll>
       {kind === "template" ? (
         <TemplateLibrary mode="shared" />
       ) : (

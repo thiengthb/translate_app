@@ -68,7 +68,8 @@ public class ExerciseGenerationService {
         List<VocabWord> sample = vocabService.fetch(source, VOCAB_SAMPLE);
         List<String> wordHints = sample.stream().map(VocabWord::forPrompt).toList();
         ComposedExercise composed = gemini.compose(
-                subUse.getName(), subUse.getJlptLevel(), subUse.getNuanceDescription(), wordHints);
+                subUse.getName(), subUse.getJlptLevel(), subUse.getNuanceDescription(),
+                subUse.getStructurePattern(), subUse.getExampleJp(), wordHints);
         if (composed != null) {
             String l1Prompt = buildPromptBlock(composed);
             PromptCache cache = promptService.persistComposed(

@@ -42,4 +42,12 @@ public class KanjiDeckItem extends BaseEntity {
     @Builder.Default
     @Column(name = "order_index", nullable = false)
     int orderIndex = 0;
+
+    /**
+     * Study-batch group inside the deck (Nhóm 1, Nhóm 2…). Groups are implicit:
+     * items sharing a groupIndex form one group; split/merge just renumber.
+     */
+    @Builder.Default
+    @Column(name = "group_index", nullable = false)
+    int groupIndex = 0;
 }

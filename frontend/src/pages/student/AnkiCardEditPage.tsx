@@ -45,9 +45,9 @@ const CONTENT_TYPES: {
   label: string;
   icon: React.ReactNode;
 }[] = [
-  { value: "TEXT", label: "Text", icon: <Type className="size-3.5" /> },
-  { value: "IMAGE", label: "Image", icon: <ImageIcon className="size-3.5" /> },
-  { value: "AUDIO", label: "Audio", icon: <Mic className="size-3.5" /> },
+  { value: "TEXT", label: "Văn bản", icon: <Type className="size-3.5" /> },
+  { value: "IMAGE", label: "Hình ảnh", icon: <ImageIcon className="size-3.5" /> },
+  { value: "AUDIO", label: "Âm thanh", icon: <Mic className="size-3.5" /> },
   { value: "VIDEO", label: "Video", icon: <Video className="size-3.5" /> },
 ];
 
@@ -115,7 +115,7 @@ export default function AnkiCardEditPage() {
           }))
         );
       })
-      .catch(() => toast.error("Failed to load card."))
+      .catch(() => toast.error("Không thể tải thẻ."))
       .finally(() => setLoading(false));
   }, [flashcardId]);
 
@@ -153,15 +153,16 @@ export default function AnkiCardEditPage() {
 
     for (const target of ["FRONT", "BACK"] as const) {
       const s = sides.find((x) => x.side === target);
+      const targetLabel = target === "FRONT" ? "Mặt trước" : "Mặt sau";
       if (!s) {
-        toast.error(`${target} side is required.`);
+        toast.error(`${targetLabel} là bắt buộc.`);
         return;
       }
       const hasText = s.contents.some(
         (c) => (c.contentType === "TEXT" || c.contentType === "CLOZE") && c.contentValue.trim()
       );
       if (!hasText) {
-        toast.error(`${target} side needs at least one text/cloze content.`);
+        toast.error(`${targetLabel} cần ít nhất một nội dung văn bản/cloze.`);
         return;
       }
     }
@@ -185,7 +186,7 @@ export default function AnkiCardEditPage() {
               const attachment = await fileApi.upload(co.file, "flashcard", 0, fieldName);
               value = attachment.url;
             } catch {
-              toast.error(`Failed to upload ${co.contentType.toLowerCase()}.`);
+              toast.error(`Tải lên ${co.contentType.toLowerCase()} thất bại.`);
               continue;
             }
           }
@@ -207,10 +208,10 @@ export default function AnkiCardEditPage() {
         sides: builtSides,
       });
 
-      toast.success("Card updated.");
+      toast.success("Đã cập nhật thẻ.");
       navigate(backTo);
     } catch {
-      toast.error("Failed to save card.");
+      toast.error("Không thể lưu thẻ.");
     } finally {
       setSaving(false);
     }
@@ -229,19 +230,20 @@ export default function AnkiCardEditPage() {
 
   return (
     <MainLayout
-      parentCrumb={{ href: "/library", title: "My Library" }}
+      parentCrumb={{ href: "/library", title: "Thư viện của tôi" }}
       breadcrumbIcon={<SquarePen className="size-4 text-primary" />}
       ignorePaths={["deck", "card", String(flashcardId)]}
       pathName={{
-        [`/deck/${deckId}`]: deckTitle || "Deck",
+        [`/deck/${deckId}`]: deckTitle || "Bộ thẻ",
         [`/deck/${deckId}/card/${flashcardId}/edit`]: "Sửa thẻ",
       }}
+      pageScroll
     >
       <div className="flex h-full min-h-0 w-full flex-col gap-4 py-2">
         {/* Actions — top right. Save stays disabled until something changes. */}
         <div className="flex shrink-0 items-center justify-end gap-2">
           <Button variant="outline" onClick={() => navigate(backTo)} disabled={saving}>
-            Cancel
+            Huỷ
           </Button>
           <Button
             onClick={handleSave}
@@ -249,7 +251,7 @@ export default function AnkiCardEditPage() {
             title={!bothSidesFilled ? "Cả mặt trước và mặt sau đều cần có nội dung" : undefined}
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            Save
+            Lưu
           </Button>
         </div>
 
@@ -438,7 +440,7 @@ function ContentRow({
             {content.contentType === "IMAGE" && <ImageIcon className="size-4" />}
             {content.contentType === "AUDIO" && <Mic className="size-4" />}
             {content.contentType === "VIDEO" && <Video className="size-4" />}
-            Tải lên {content.contentType.toLowerCase()}
+            Tải lên {content.contentType === "IMAGE" ? "hình ảnh" : content.contentType === "AUDIO" ? "âm thanh" : "video"}
           </Button>
         ))}
 

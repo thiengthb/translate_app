@@ -7,7 +7,7 @@ import { useActiveModuleGroups } from "@/hooks/useSidebarMenus";
  * Brand name appended to every dynamic title. Lives here (not as a
  * runtime constant) so a future rebrand only touches this file.
  */
-const BRAND_NAME = "Gengo";
+const BRAND_NAME = "Hanabun";
 
 /**
  * Title separator. `·` (interpunct U+00B7) is the modern choice — visually
@@ -27,19 +27,16 @@ const SEPARATOR = " · ";
 const STATIC_TITLES: Array<[path: string, title: string]> = [
     // Personal pages
     ["/profile", "Hồ sơ"],
-    ["/settings", "Cài đặt"],
-    ["/streak", "Chuỗi học tập"],
     ["/leaderboard", "Bảng xếp hạng"],
     ["/notifications", "Thông báo"],
-    ["/audit-logs", "Audit log"],
+    ["/audit-logs", "Nhật ký hoạt động"],
 
-    // Help & support
-    ["/help/shortcuts", "Phím tắt"],
+    // Home
+    ["/dashboard", "Tổng quan"],
 
-    // Role landing pages
-    ["/student", "Khu vực học sinh"],
-    ["/teacher", "Khu vực giáo viên"],
-    ["/dashboard", "Dashboard"],
+    // Guest lookup tools (no-login)
+    ["/tra-cuu", "Tra cứu"],
+    ["/portfolio", "Portfolio"],
 
     // Auth flows
     ["/login", "Đăng nhập"],
@@ -99,11 +96,11 @@ function resolveTitle(
 /**
  * Keep `document.title` in sync with the active route.
  *
- *   "/users"            → "Người dùng · Gengo"
- *   "/users/42"         → "Người dùng · Gengo"   (prefix inheritance)
- *   "/settings"         → "Cài đặt · Gengo"
- *   "/"                 → "Gengo"                (root: brand only)
- *   (unknown)           → "Gengo"
+ *   "/users"            → "Người dùng · Hanabun"
+ *   "/users/42"         → "Người dùng · Hanabun"   (prefix inheritance)
+ *   "/settings"         → "Cài đặt · Hanabun"
+ *   "/"                 → "Hanabun"                (root: brand only)
+ *   (unknown)           → "Hanabun"
  *
  * Mounted at the App level (inside BrowserRouter so `useLocation`
  * works) so every navigation — programmatic, link click, browser

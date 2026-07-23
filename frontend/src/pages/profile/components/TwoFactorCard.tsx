@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Loader2, Lock, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoLabel } from "@/components/common/InfoLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +16,20 @@ import {
 } from "@/components/ui/dialog";
 import { profileApi } from "@/api/features/profile.api";
 import { useTranslation } from "@/contexts/I18nContext";
+import { usePrefersReducedMotion } from "@/pages/portfolio/usePrefersReducedMotion";
 import type { TotpSetupResponse, TotpStatusResponse } from "@/types/features/profile";
+
+import { CardHeading, RevealCard } from "./profile-ui";
 
 type Stage = "idle" | "enrolling" | "showCodes" | "disabling";
 
-export function TwoFactorCard() {
+interface Props {
+    index?: number;
+}
+
+export function TwoFactorCard({ index = 0 }: Props) {
     const { t } = useTranslation();
+    const reduce = usePrefersReducedMotion();
 
     const [status, setStatus] = useState<TotpStatusResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -122,18 +128,13 @@ export function TwoFactorCard() {
     const remaining = status?.remainingRecoveryCodes ?? 0;
 
     return (
-        <Card className="gap-3 py-4">
-            <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                    {enabled ? (
-                        <ShieldCheck size={16} className="text-primary" />
-                    ) : (
-                        <ShieldOff size={16} className="text-muted-foreground" />
-                    )}
-                    <InfoLabel title={t("twofa.title")} info={t("twofa.description")} />
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 space-y-4">
+        <RevealCard index={index} reduce={reduce} className="p-5 sm:p-6">
+            <CardHeading
+                icon={enabled ? <ShieldCheck size={18} /> : <ShieldOff size={18} />}
+                title={t("twofa.title")}
+                info={t("twofa.description")}
+            />
+            <div className="mt-5 space-y-4">
                 {loading ? (
                     <div className="flex justify-center py-4">
                         <Loader2 size={20} className="animate-spin text-primary" />
@@ -192,7 +193,7 @@ export function TwoFactorCard() {
                         )}
                     </>
                 )}
-            </CardContent>
+            </div>
 
             {/* Step 1 of enrollment — QR + 6-digit code */}
             <Dialog open={stage === "enrolling"} onOpenChange={(v) => { if (!v) setStage("idle"); }}>
@@ -207,7 +208,7 @@ export function TwoFactorCard() {
                             <div className="flex justify-center">
                                 <img
                                     src={setupData.qrDataUri}
-                                    alt="TOTP QR code"
+                                    alt="Mã QR xác thực hai lớp"
                                     className="h-48 w-48 rounded-md border bg-white p-2"
                                 />
                             </div>
@@ -327,6 +328,6 @@ export function TwoFactorCard() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </RevealCard>
     );
 }

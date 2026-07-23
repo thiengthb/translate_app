@@ -8,14 +8,14 @@ const moduleSchema: EntitySchema = {
     fields: [
         {
             name: "title",
-            label: "Title",
+            label: "Tiêu đề",
             type: "text",
             sortable: true,
             bold: true,
         },
         {
             name: "moduleGroupId",
-            label: "Module Group",
+            label: "Nhóm module",
             type: "relation",
             editable: true,
             relation: {
@@ -34,7 +34,7 @@ const moduleSchema: EntitySchema = {
         },
         {
             name: "icon",
-            label: "Icon",
+            label: "Biểu tượng",
             type: "icon",
             options: iconKeyOptions,
             filterable: true,
@@ -42,7 +42,7 @@ const moduleSchema: EntitySchema = {
         },
         {
             name: "requiredPermission",
-            label: "Permission",
+            label: "Quyền yêu cầu",
             type: "relation",
             editable: true,
             relation: {
@@ -55,7 +55,7 @@ const moduleSchema: EntitySchema = {
         },
         {
             name: "displayOrder",
-            label: "Display Order",
+            label: "Thứ tự hiển thị",
             type: "number",
             sortable: true,
         },

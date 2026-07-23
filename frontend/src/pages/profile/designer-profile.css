@@ -1,0 +1,1245 @@
+/* =====================================================================
+   Yozakura (夜桜) — Night Bloom · designer profile
+   A self-contained, dark "cherry-blossoms-at-night" identity for /profile.
+   Distinct from the app's two light Hana looks (candy-glass showcase,
+   washi-ink portfolio): deep plum-indigo sky, lantern gold, sakura glow,
+   moonlight. Every rule is namespaced under `.yz-root` so nothing leaks
+   into — or is overridden by — the global Sakura theme.
+   Type: Fraunces (display) · Shippori Mincho (JP glyphs) · Be Vietnam Pro (UI).
+   ===================================================================== */
+
+@property --yz-draw {
+  syntax: "<number>";
+  initial-value: 1;
+  inherits: false;
+}
+
+.yz-root {
+  /* ---- palette ---- */
+  --yz-night: #141021; /* base sky — warm plum-indigo, not black */
+  --yz-deep: #0d0a17; /* deepest — top of sky / footer */
+  --yz-panel: #1e1734; /* raised surfaces */
+  --yz-panel-2: #241c3f; /* hovered / lifted surfaces */
+  --yz-veil: rgba(255, 214, 236, 0.13); /* hairlines */
+  --yz-veil-soft: rgba(255, 214, 236, 0.07);
+  --yz-sakura: #ff9ec7; /* blossom pink — primary glow */
+  --yz-sakura-hot: #ff6fa5; /* emphasis pink */
+  --yz-gold: #f0c674; /* lantern gold — rare, metallic */
+  --yz-leaf: #9db98a; /* young-leaf green — very rare tertiary */
+  --yz-moon: #f7eef7; /* moonlight — near-white text */
+  --yz-mist: #b6a6c6; /* muted lavender-grey — captions */
+  --yz-faint: #7d7093;
+
+  --yz-maxw: 1180px;
+  --yz-gut: clamp(1.25rem, 5vw, 4.5rem);
+  --yz-font-display: "Fraunces", "Lora", Georgia, serif;
+  --yz-font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --yz-font-jp: "Shippori Mincho", "Yu Mincho", serif;
+
+  --yz-glow-pink: 0 0 60px -12px rgba(255, 111, 165, 0.55);
+  --yz-glow-gold: 0 0 44px -12px rgba(240, 198, 116, 0.5);
+
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: clip;
+  color: var(--yz-moon);
+  font-family: var(--yz-font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* layered night sky — a glow low-left (lantern) and low-centre (blossom
+     bank) over a vertical plum gradient, so the sky is never a flat fill */
+  background:
+    radial-gradient(52% 40% at 84% 8%, rgba(120, 92, 150, 0.35), transparent 70%),
+    radial-gradient(60% 45% at 8% 92%, rgba(240, 198, 116, 0.12), transparent 68%),
+    radial-gradient(75% 55% at 50% 118%, rgba(255, 111, 165, 0.16), transparent 72%),
+    linear-gradient(178deg, var(--yz-deep) 0%, var(--yz-night) 34%, #17122a 100%);
+}
+
+.yz-root *,
+.yz-root *::before,
+.yz-root *::after {
+  box-sizing: border-box;
+}
+
+.yz-root ::selection {
+  background: var(--yz-sakura-hot);
+  color: #1a1226;
+}
+
+.yz-root :focus-visible {
+  outline: 2px solid var(--yz-sakura);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---- shared primitives ---------------------------------------------- */
+.yz-shell {
+  position: relative;
+  z-index: 1;
+}
+.yz-wrap {
+  width: 100%;
+  max-width: var(--yz-maxw);
+  margin-inline: auto;
+  padding-inline: var(--yz-gut);
+}
+.yz-section {
+  position: relative;
+  padding-block: clamp(4.5rem, 11vw, 9rem);
+}
+.yz-rule {
+  height: 1px;
+  border: 0;
+  background: var(--yz-veil);
+  margin: 0;
+}
+
+/* vertical Japanese eyebrow — content-true structure (JP reads top-down) */
+.yz-eyebrow {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: var(--yz-font-jp);
+  font-size: 0.9rem;
+  letter-spacing: 0.34em;
+  color: var(--yz-sakura);
+  line-height: 1;
+}
+.yz-eyebrow::before {
+  content: "";
+  width: 1px;
+  height: 3em;
+  margin-top: 0.15em;
+  background: linear-gradient(var(--yz-sakura), transparent);
+}
+.yz-eyebrow small {
+  writing-mode: horizontal-tb;
+  font-family: var(--yz-font-body);
+  font-size: 0.6rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  margin-top: 0.2em;
+}
+
+.yz-kicker {
+  font-family: var(--yz-font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+}
+.yz-kicker--jp {
+  font-family: var(--yz-font-jp);
+  letter-spacing: 0.3em;
+  text-transform: none;
+  color: var(--yz-sakura);
+  font-size: 0.9rem;
+}
+
+.yz-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: clamp(2.2rem, 5vw, 3.6rem);
+}
+.yz-section-title {
+  font-family: var(--yz-font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(1.9rem, 4.5vw, 3.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0 0;
+  color: var(--yz-moon);
+}
+.yz-section-title .yz-em {
+  font-style: italic;
+  color: var(--yz-sakura);
+}
+.yz-section-note {
+  font-family: var(--yz-font-display);
+  font-size: 0.92rem;
+  color: var(--yz-mist);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* reveal helper — JS toggles .is-in; base state graceful for no-JS / RM */
+.yz-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.yz-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- buttons + links ------------------------------------------------- */
+.yz-btn {
+  --_bg: var(--yz-sakura-hot);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--yz-font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  color: #1a1020;
+  background: linear-gradient(135deg, #ffb0d3, var(--_bg));
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease, filter 0.3s ease;
+  box-shadow: var(--yz-glow-pink);
+}
+.yz-btn:hover,
+.yz-btn:focus-visible {
+  filter: brightness(1.05);
+  box-shadow: 0 0 66px -8px rgba(255, 111, 165, 0.7);
+}
+.yz-btn--ghost {
+  color: var(--yz-moon);
+  background: transparent;
+  border-color: var(--yz-veil);
+  box-shadow: none;
+}
+.yz-btn--ghost:hover,
+.yz-btn--ghost:focus-visible {
+  border-color: var(--yz-sakura);
+  color: var(--yz-sakura);
+  filter: none;
+  box-shadow: none;
+}
+.yz-btn .yz-arrow {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-btn:hover .yz-arrow {
+  transform: translateX(4px);
+}
+
+.yz-inklink {
+  --_c: var(--yz-sakura);
+  position: relative;
+  color: var(--yz-moon);
+  text-decoration: none;
+  font-weight: 500;
+  background-image: linear-gradient(var(--_c), var(--_c));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1.5px;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s ease;
+  padding-bottom: 2px;
+}
+.yz-inklink:hover,
+.yz-inklink:focus-visible {
+  background-size: 100% 1.5px;
+  color: var(--yz-sakura);
+}
+
+/* =====================================================================
+   NAV
+   ===================================================================== */
+.yz-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem var(--yz-gut);
+  transition: background 0.4s ease, box-shadow 0.4s ease, padding 0.4s ease;
+}
+.yz-nav.is-stuck {
+  background: rgba(15, 10, 23, 0.72);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 1px 0 var(--yz-veil);
+  padding-block: 0.75rem;
+}
+.yz-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--yz-moon);
+}
+.yz-brand-mark {
+  font-family: var(--yz-font-jp);
+  font-size: 1.4rem;
+  color: var(--yz-sakura);
+  line-height: 1;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-brand:hover .yz-brand-mark {
+  transform: rotate(-24deg);
+}
+.yz-brand-name {
+  font-family: var(--yz-font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+.yz-brand-name small {
+  display: block;
+  font-family: var(--yz-font-body);
+  font-size: 0.56rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  margin-top: 1px;
+}
+.yz-nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.1rem, 2.2vw, 2.2rem);
+}
+.yz-nav-link {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--yz-font-body);
+  position: relative;
+  padding: 0;
+}
+.yz-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 1.5px;
+  width: 0;
+  background: var(--yz-sakura);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-nav-link:hover,
+.yz-nav-link:focus-visible {
+  color: var(--yz-moon);
+}
+.yz-nav-link:hover::after,
+.yz-nav-link:focus-visible::after {
+  width: 100%;
+}
+.yz-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.yz-nav-gear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  text-decoration: none;
+  border: 1px solid var(--yz-veil);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+.yz-nav-gear:hover,
+.yz-nav-gear:focus-visible {
+  color: var(--yz-moon);
+  border-color: var(--yz-sakura);
+}
+.yz-nav-gear svg {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-nav-gear:hover svg {
+  transform: rotate(90deg);
+}
+.yz-nav-toggle {
+  display: none;
+}
+
+/* =====================================================================
+   HERO
+   ===================================================================== */
+.yz-hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding-block: 8rem 4rem;
+  overflow: hidden;
+}
+.yz-petals {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* the moon — a soft luminous disc high on the right */
+.yz-moon-disc {
+  position: absolute;
+  top: clamp(4rem, 12vh, 9rem);
+  right: clamp(-3rem, 4vw, 5rem);
+  width: clamp(150px, 26vw, 340px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 38% 36%, #fff, #fdeaf3 42%, #f4c9dd 70%, #e6a9c6 100%);
+  box-shadow: 0 0 120px 30px rgba(255, 200, 224, 0.28), inset -18px -14px 48px rgba(180, 120, 150, 0.35);
+  opacity: 0.9;
+  pointer-events: none;
+}
+.yz-hero-grid {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--yz-maxw);
+  margin-inline: auto;
+  padding-inline: var(--yz-gut);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: center;
+}
+.yz-hero-copy {
+  max-width: 42rem;
+}
+.yz-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.7rem;
+}
+.yz-hero-eyebrow .yz-ja {
+  font-family: var(--yz-font-jp);
+  font-size: 1rem;
+  letter-spacing: 0.24em;
+  color: var(--yz-sakura);
+}
+.yz-hero-eyebrow .yz-ro {
+  font-size: 0.64rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  border-left: 1px solid var(--yz-veil);
+  padding-left: 0.9rem;
+}
+.yz-hero-name {
+  font-family: var(--yz-font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(3rem, 9vw, 7rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: var(--yz-moon);
+  margin: 0;
+}
+.yz-hero-name .yz-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.06em;
+}
+.yz-hero-name .yz-line > span {
+  display: block;
+  will-change: transform;
+}
+.yz-hero-name .yz-em {
+  font-style: italic;
+  background: linear-gradient(100deg, var(--yz-sakura) 0%, #ffd0a8 60%, var(--yz-gold) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.yz-hero-role {
+  margin: 1.4rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  font-family: var(--yz-font-display);
+  font-size: clamp(1.05rem, 2.2vw, 1.5rem);
+  font-style: italic;
+  color: var(--yz-moon);
+}
+.yz-hero-role .yz-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--yz-gold);
+  display: inline-block;
+}
+.yz-hero-role .yz-loc {
+  font-style: normal;
+  font-family: var(--yz-font-body);
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+}
+.yz-hero-sub {
+  margin: 1.6rem 0 2rem;
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: var(--yz-mist);
+  max-width: 40ch;
+}
+.yz-hero-sub .yz-hl {
+  color: var(--yz-moon);
+}
+.yz-avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yz-moon);
+  background: rgba(157, 185, 138, 0.12);
+  border: 1px solid rgba(157, 185, 138, 0.4);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 2rem;
+}
+.yz-avail .yz-pulse {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yz-leaf);
+  box-shadow: 0 0 0 0 rgba(157, 185, 138, 0.6);
+  animation: yz-pulse 2.4s ease-out infinite;
+}
+@keyframes yz-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(157, 185, 138, 0.55); }
+  70% { box-shadow: 0 0 0 9px rgba(157, 185, 138, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(157, 185, 138, 0); }
+}
+.yz-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.4rem;
+}
+
+/* hero figure — the moonlit avatar medallion */
+.yz-hero-figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+}
+.yz-orb {
+  position: relative;
+  width: clamp(200px, 30vw, 320px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 34% 30%, #fff2f8 0%, #ffc7de 34%, #ff8fb8 62%, #b5567f 100%);
+  box-shadow: var(--yz-glow-pink), inset -14px -10px 40px rgba(120, 40, 74, 0.45),
+    inset 10px 8px 30px rgba(255, 255, 255, 0.4);
+}
+.yz-orb::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px solid var(--yz-veil);
+  z-index: -1;
+}
+.yz-orb-glyph {
+  font-family: var(--yz-font-jp);
+  font-weight: 700;
+  font-size: clamp(6rem, 14vw, 10rem);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 6px 24px rgba(120, 40, 74, 0.5);
+  user-select: none;
+}
+.yz-orb-ring {
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  border: 1px dashed rgba(240, 198, 116, 0.5);
+  z-index: -1;
+  animation: yz-spin 40s linear infinite;
+}
+@keyframes yz-spin {
+  to { transform: rotate(360deg); }
+}
+.yz-orb-tag {
+  position: absolute;
+  bottom: 4%;
+  right: -6%;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yz-moon);
+  background: rgba(15, 10, 23, 0.78);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--yz-veil);
+  border-radius: 999px;
+  padding: 0.42rem 0.75rem;
+}
+.yz-orb-tag b {
+  color: var(--yz-gold);
+  font-weight: 700;
+}
+
+.yz-scrollcue {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+}
+.yz-scrollcue span {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(var(--yz-sakura), transparent);
+  animation: yz-cue 2s ease-in-out infinite;
+  transform-origin: top;
+}
+@keyframes yz-cue {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* =====================================================================
+   STATS — lantern cards
+   ===================================================================== */
+.yz-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2vw, 1.4rem);
+}
+.yz-stat {
+  position: relative;
+  border: 1px solid var(--yz-veil);
+  border-radius: 18px;
+  padding: clamp(1.3rem, 2.6vw, 1.9rem);
+  background: linear-gradient(160deg, rgba(36, 28, 63, 0.6), rgba(20, 16, 33, 0.35));
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s ease;
+}
+.yz-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--yz-sakura), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.yz-stat:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 158, 199, 0.45);
+}
+.yz-stat:hover::before {
+  opacity: 1;
+}
+.yz-stat-glyph {
+  font-family: var(--yz-font-jp);
+  font-size: 1.1rem;
+  color: var(--yz-gold);
+  opacity: 0.85;
+}
+.yz-stat-value {
+  font-family: var(--yz-font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--yz-moon);
+  margin-top: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.yz-stat-label {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--yz-mist);
+}
+
+/* =====================================================================
+   CRAFT — the five-petal sakura bloom (signature)
+   ===================================================================== */
+.yz-craft {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: center;
+}
+.yz-bloom-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-width: 460px;
+  width: 100%;
+  justify-self: center;
+}
+.yz-bloom {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+/* each petal group scales in on reveal */
+.yz-petal-g {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  opacity: 0;
+  transform: scale(0.2) rotate(var(--rot, 0deg));
+  transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.4s ease;
+}
+.yz-craft.is-live .yz-petal-g {
+  opacity: 1;
+  transform: scale(1) rotate(var(--rot, 0deg));
+}
+.yz-petal-shape {
+  fill: url(#yz-petal-grad);
+  stroke: rgba(255, 158, 199, 0.6);
+  stroke-width: 1.2;
+  transition: fill 0.4s ease, filter 0.4s ease;
+}
+.yz-petal-g:hover .yz-petal-shape,
+.yz-petal-g.is-active .yz-petal-shape {
+  fill: url(#yz-petal-grad-hot);
+  filter: drop-shadow(0 0 14px rgba(255, 111, 165, 0.7));
+}
+.yz-bloom-center {
+  fill: url(#yz-center-grad);
+  filter: drop-shadow(0 0 16px rgba(240, 198, 116, 0.6));
+}
+.yz-stamen {
+  stroke: var(--yz-gold);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.yz-stamen-dot {
+  fill: var(--yz-gold);
+}
+.yz-petal-pct {
+  font-family: var(--yz-font-display);
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--yz-moon);
+  text-anchor: middle;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.yz-petal-g:hover .yz-petal-pct,
+.yz-petal-g.is-active .yz-petal-pct {
+  opacity: 1;
+}
+
+.yz-craft-copy .yz-section-title {
+  margin-bottom: 0.4rem;
+}
+.yz-craft-lead {
+  color: var(--yz-mist);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  max-width: 42ch;
+  margin: 0 0 1.8rem;
+}
+.yz-craft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.yz-craft-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.75rem 0.4rem;
+  border-top: 1px solid var(--yz-veil-soft);
+  cursor: default;
+  transition: background 0.3s ease;
+  border-radius: 8px;
+}
+.yz-craft-item:hover,
+.yz-craft-item.is-active {
+  background: rgba(255, 158, 199, 0.06);
+}
+.yz-craft-item-ja {
+  font-family: var(--yz-font-jp);
+  font-size: 1.05rem;
+  color: var(--yz-sakura);
+  width: 2.2ch;
+}
+.yz-craft-item-main b {
+  display: block;
+  font-family: var(--yz-font-body);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--yz-moon);
+}
+.yz-craft-item-main span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--yz-faint);
+  margin-top: 2px;
+}
+.yz-craft-item-pct {
+  font-family: var(--yz-font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--yz-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =====================================================================
+   SELECTED WORK
+   ===================================================================== */
+.yz-works {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.1rem, 2.5vw, 1.8rem);
+}
+.yz-work {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--yz-veil);
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(165deg, rgba(36, 28, 63, 0.55), rgba(20, 16, 33, 0.3));
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.5s ease,
+    box-shadow 0.5s ease;
+}
+.yz-work:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 158, 199, 0.4);
+  box-shadow: 0 30px 70px -40px rgba(255, 111, 165, 0.6);
+}
+.yz-work-visual {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.yz-work-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--_panel);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-work:hover .yz-work-visual::before {
+  transform: scale(1.06);
+}
+.yz-work-visual[data-tint="sakura"] { --_panel: radial-gradient(120% 120% at 30% 20%, #7a3a5e, #2a1830); --_glyph: #ffc0dc; }
+.yz-work-visual[data-tint="gold"] { --_panel: radial-gradient(120% 120% at 30% 20%, #6d5730, #241a2f); --_glyph: #f6d089; }
+.yz-work-visual[data-tint="leaf"] { --_panel: radial-gradient(120% 120% at 30% 20%, #46603f, #1c2230); --_glyph: #bcd3a6; }
+.yz-work-glyph {
+  font-family: var(--yz-font-jp);
+  font-weight: 700;
+  font-size: clamp(4rem, 9vw, 6rem);
+  line-height: 1;
+  color: var(--_glyph, #fff);
+  opacity: 0.9;
+  text-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-work:hover .yz-work-glyph {
+  transform: translateY(-6px) scale(1.04);
+}
+.yz-work-index {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  z-index: 2;
+  font-family: var(--yz-font-jp);
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  color: var(--yz-moon);
+  background: rgba(15, 10, 23, 0.6);
+  border: 1px solid var(--yz-veil);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+}
+.yz-work-metric {
+  position: absolute;
+  bottom: 0.9rem;
+  left: 0.9rem;
+  z-index: 2;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1a1020;
+  background: linear-gradient(135deg, #ffd8a0, var(--yz-gold));
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  box-shadow: var(--yz-glow-gold);
+}
+.yz-work-body {
+  padding: 1.3rem 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.yz-work-title {
+  font-family: var(--yz-font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--yz-moon);
+}
+.yz-work-gloss {
+  margin-top: 0.25rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yz-sakura);
+}
+.yz-work-summary {
+  margin: 0.85rem 0 1.1rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--yz-mist);
+}
+.yz-work-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+.yz-tag {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--yz-mist);
+  border: 1px solid var(--yz-veil);
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+}
+.yz-work-year {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 2;
+  font-family: var(--yz-font-display);
+  font-size: 0.82rem;
+  color: var(--yz-moon);
+  opacity: 0.85;
+}
+
+/* =====================================================================
+   RECOGNITION
+   ===================================================================== */
+.yz-honors {
+  display: flex;
+  flex-direction: column;
+}
+.yz-honor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 1.4rem 0.4rem;
+  border-top: 1px solid var(--yz-veil);
+  transition: padding-left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.yz-honor:last-child {
+  border-bottom: 1px solid var(--yz-veil);
+}
+.yz-honor:hover {
+  padding-left: 1.1rem;
+}
+.yz-honor-year {
+  font-family: var(--yz-font-display);
+  font-size: 1rem;
+  color: var(--yz-gold);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.yz-honor-title {
+  font-family: var(--yz-font-display);
+  font-weight: 500;
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  color: var(--yz-moon);
+  line-height: 1.2;
+}
+.yz-honor-org {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--yz-mist);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* =====================================================================
+   CONTACT / FOOTER
+   ===================================================================== */
+.yz-footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--yz-veil);
+  background: linear-gradient(180deg, transparent, rgba(13, 10, 23, 0.7));
+  padding-block: clamp(4rem, 9vw, 7rem) clamp(2rem, 4vw, 3rem);
+}
+.yz-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2.5rem;
+  align-items: end;
+}
+.yz-contact-title {
+  font-family: var(--yz-font-display);
+  font-weight: 500;
+  font-size: clamp(2.2rem, 6.5vw, 4.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0.8rem 0 1.4rem;
+  color: var(--yz-moon);
+}
+.yz-contact-title .yz-em {
+  font-style: italic;
+  color: var(--yz-sakura);
+}
+.yz-contact-mail {
+  font-family: var(--yz-font-display);
+  font-size: clamp(1.05rem, 2.6vw, 1.7rem);
+  color: var(--yz-sakura);
+  text-decoration: none;
+}
+.yz-contact-mail:hover {
+  color: var(--yz-gold);
+}
+.yz-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: right;
+}
+.yz-social {
+  font-size: 0.9rem;
+  color: var(--yz-moon);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.yz-social span {
+  color: var(--yz-mist);
+  margin-left: 0.5rem;
+  font-size: 0.78rem;
+}
+.yz-social:hover {
+  color: var(--yz-sakura);
+}
+.yz-footer-base {
+  margin-top: clamp(3rem, 7vw, 5rem);
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--yz-veil-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--yz-faint);
+  letter-spacing: 0.04em;
+}
+.yz-footer-base a {
+  color: var(--yz-mist);
+  text-decoration: none;
+}
+.yz-footer-base a:hover {
+  color: var(--yz-sakura);
+}
+
+/* =====================================================================
+   MOBILE MENU
+   ===================================================================== */
+.yz-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: linear-gradient(180deg, var(--yz-deep), #1a1330);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.3rem;
+  padding: var(--yz-gut);
+  transform: translateY(-100%);
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.yz-menu.is-open {
+  transform: none;
+}
+.yz-menu a,
+.yz-menu button {
+  font-family: var(--yz-font-display);
+  font-size: 2rem;
+  color: var(--yz-moon);
+  text-decoration: none;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+.yz-menu .yz-menu-ja {
+  font-family: var(--yz-font-jp);
+  font-size: 0.78rem;
+  color: var(--yz-mist);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 940px) {
+  .yz-nav-links {
+    display: none;
+  }
+  .yz-nav-gear span {
+    display: none;
+  }
+  .yz-nav-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+  }
+  .yz-nav-toggle span {
+    width: 26px;
+    height: 2px;
+    background: var(--yz-moon);
+    transition: transform 0.4s ease, opacity 0.3s ease;
+  }
+  .yz-nav-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .yz-nav-toggle.is-open span:nth-child(2) { opacity: 0; }
+  .yz-nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .yz-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .yz-hero-figure {
+    grid-row: 1;
+    justify-self: start;
+  }
+  .yz-orb {
+    width: clamp(150px, 40vw, 220px);
+  }
+  .yz-moon-disc {
+    width: clamp(120px, 34vw, 200px);
+    opacity: 0.7;
+  }
+  .yz-craft {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .yz-bloom-wrap {
+    max-width: 360px;
+  }
+  .yz-works {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .yz-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .yz-works {
+    grid-template-columns: 1fr;
+  }
+  .yz-contact {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .yz-socials {
+    text-align: left;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem 1.4rem;
+  }
+  .yz-honor {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+  }
+  .yz-honor-org {
+    grid-column: 2;
+    text-align: left;
+  }
+  .yz-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+}
+
+/* =====================================================================
+   REDUCED MOTION — keep it beautiful, just still
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .yz-root *,
+  .yz-root *::before,
+  .yz-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .yz-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .yz-petal-g {
+    opacity: 1;
+    transform: scale(1) rotate(var(--rot, 0deg));
+  }
+  .yz-scrollcue span,
+  .yz-avail .yz-pulse,
+  .yz-orb-ring {
+    animation: none;
+  }
+}

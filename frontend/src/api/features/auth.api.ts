@@ -26,6 +26,16 @@ export const authApi = {
         return mapAuthResponse(response.data) as LoginResponse;
     },
 
+    /**
+     * Current user's profile + roles/permissions. The access token is kept small and no longer
+     * carries them, so the Google OAuth redirect handler fetches them here (password login gets
+     * them in its own response body). The bearer token must already be in localStorage.
+     */
+    getMe: async (): Promise<LoginResponse> => {
+        const response = await axiosInstance.get<BackendAuthResponse>("/me");
+        return mapAuthResponse(response.data) as LoginResponse;
+    },
+
     logout: async () => {
         try {
             await axiosInstance.post("/auth/logout");

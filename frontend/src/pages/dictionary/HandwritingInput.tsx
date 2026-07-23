@@ -263,7 +263,7 @@ export function HandwritingInput({ onSelect }: { onSelect: (char: string) => voi
                                 disabled={strokeCount === 0}
                                 className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             >
-                                <UndoIcon className="h-3 w-3" /> Undo
+                                <UndoIcon className="h-3 w-3" /> Hoàn tác
                             </button>
                             <button
                                 onClick={clear}

@@ -325,6 +325,7 @@ export default function CreateDeckPage() {
     <MainLayout
       parentCrumb={{ href: "/library", title: "My Library" }}
       pathName={{ "/create-deck": "Tạo deck" }}
+      pageScroll
     >
       <div className="w-full space-y-4 pb-6 pt-1">
 

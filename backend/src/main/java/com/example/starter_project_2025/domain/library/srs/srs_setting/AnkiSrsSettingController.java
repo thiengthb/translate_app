@@ -81,7 +81,29 @@ public class AnkiSrsSettingController {
         setting.setMaxItemsPerDay(request.getMaxItemsPerDay() != null ? request.getMaxItemsPerDay() : 20);
         setting.setBuryRelatedItems(request.getBuryRelatedItems() != null ? request.getBuryRelatedItems() : true);
 
+        // Newer knobs (FSRS / leech). The request may omit them (the current SM-2
+        // UI doesn't send them), so keep any previously-saved value and only fall
+        // back to a default for a brand-new row — never silently reset.
+        setting.setMaximumIntervalDays(firstNonNull(
+                request.getMaximumIntervalDays(), setting.getMaximumIntervalDays(), 36500));
+        setting.setRescheduleCardsOnChange(firstNonNull(
+                request.getRescheduleCardsOnChange(), setting.getRescheduleCardsOnChange(), false));
+        setting.setSuspendLeeches(firstNonNull(
+                request.getSuspendLeeches(), setting.getSuspendLeeches(), false));
+        setting.setLeechThreshold(firstNonNull(
+                request.getLeechThreshold(), setting.getLeechThreshold(), 8));
+
         return ankiSrsSettingMapper.toResponse(ankiSrsSettingRepository.save(setting));
+    }
+
+    /** Returns the request value if present, else the already-saved value, else
+     *  the default — so a PUT that omits a field preserves it instead of nulling. */
+    @SafeVarargs
+    private static <T> T firstNonNull(T... values) {
+        for (T value : values) {
+            if (value != null) return value;
+        }
+        return null;
     }
 
     private SrsAlgorithmConfig resolveAlgorithmConfig(Long userId, Long deckId, AnkiSrsSettingsRequest request) {

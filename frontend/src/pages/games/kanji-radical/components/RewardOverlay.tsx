@@ -40,27 +40,27 @@ export function RewardOverlay({
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-slate-950/85 p-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 flex items-center justify-center rounded-3xl bg-[#3a2e33]/25 p-4 backdrop-blur-sm"
         >
             <motion.div
                 initial={{ scale: 0.9, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 280, damping: 24 }}
-                className="flex w-full max-w-xl flex-col items-center gap-4 rounded-2xl bg-gradient-to-b from-amber-500/15 to-slate-900 p-6 text-center ring-1 ring-white/10"
+                className="flex w-full max-w-xl flex-col items-center gap-4 rounded-2xl bg-gradient-to-b from-[#fff7e6] to-white p-6 text-center shadow-2xl ring-1 ring-white/70"
             >
                 <div className="flex flex-col items-center gap-1">
-                    <Trophy className="size-9 text-amber-300" />
-                    <h2 className="text-2xl font-black text-white">
+                    <Trophy className="size-9 text-[#e0a520]" />
+                    <h2 className="text-2xl font-black text-[#3a2e33]">
                         Qua vòng {round}! 🎉
                     </h2>
-                    <p className="text-xs text-slate-400">
-                        Chọn một <span className="text-fuchsia-300">lá bùa</span> để
+                    <p className="text-xs text-[#9a8e92]">
+                        Chọn một <span className="font-semibold text-fuchsia-600">lá bùa</span> để
                         mạnh hơn cho các vòng sau
                         {carry > 0 && (
                             <>
                                 {" "}
                                 · cộng dồn{" "}
-                                <span className="text-amber-200">
+                                <span className="font-semibold text-[#a06a12]">
                                     {formatNumber(carry)}
                                 </span>{" "}
                                 điểm
@@ -84,7 +84,7 @@ export function RewardOverlay({
                                 disabled={disabled}
                                 onClick={() => onChoose(def.id)}
                                 className={cn(
-                                    "group flex flex-col items-center gap-2 rounded-xl bg-gradient-to-b to-slate-950/60 p-3 text-center ring-1 transition-all",
+                                    "group flex flex-col items-center gap-2 rounded-xl bg-gradient-to-b to-white p-3 text-center shadow-sm ring-1 transition-all",
                                     meta.glow,
                                     meta.ring,
                                     disabled
@@ -94,24 +94,24 @@ export function RewardOverlay({
                             >
                                 <span
                                     className={cn(
-                                        "flex size-14 items-center justify-center rounded-lg bg-slate-900/70 text-3xl font-black ring-1",
+                                        "flex size-14 items-center justify-center rounded-lg bg-white text-3xl font-black shadow-sm ring-1",
                                         meta.ring,
                                         meta.text,
                                     )}
                                 >
                                     {def.glyph}
                                 </span>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-[#9a8e92]">
                                     {meta.label}
                                 </span>
                                 <span className={cn("text-sm font-bold", meta.text)}>
                                     {def.name}
                                 </span>
-                                <span className="text-[11px] leading-snug text-slate-300">
+                                <span className="text-[11px] leading-snug text-[#6b5b61]">
                                     {def.desc}
                                 </span>
                                 {owned && (
-                                    <span className="text-[10px] text-slate-500">
+                                    <span className="text-[10px] text-[#9a8e92]">
                                         Đã sở hữu
                                     </span>
                                 )}
@@ -121,7 +121,7 @@ export function RewardOverlay({
                 </div>
 
                 {full && (
-                    <p className="text-xs text-rose-300">
+                    <p className="text-xs text-rose-500">
                         Kho bùa đã đầy ({buffs.length}/{MAX_BUFFS}) — bỏ qua để
                         tiếp tục.
                     </p>
@@ -133,7 +133,7 @@ export function RewardOverlay({
                         type="button"
                         onClick={onReroll}
                         disabled={rerollsLeft <= 0}
-                        className="flex items-center gap-2 rounded-xl bg-slate-700/60 px-4 py-2.5 text-sm font-semibold text-slate-200 ring-1 ring-white/10 transition-all hover:bg-slate-600/60 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex items-center gap-2 rounded-xl bg-[#ffe5ec] px-4 py-2.5 text-sm font-semibold text-[#c23d6d] ring-1 ring-[#ffc2d4] transition-all hover:bg-[#ffd6e2] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         <Dices className="size-4" />
                         Đổi bùa ({rerollsLeft})
@@ -141,7 +141,7 @@ export function RewardOverlay({
                     <button
                         type="button"
                         onClick={onSkip}
-                        className="flex items-center gap-2 rounded-xl bg-slate-800/60 px-4 py-2.5 text-sm font-semibold text-slate-300 ring-1 ring-white/10 transition-all hover:bg-slate-700/60 active:scale-[0.98]"
+                        className="flex items-center gap-2 rounded-xl bg-[#fff0f4] px-4 py-2.5 text-sm font-semibold text-[#8a6b74] ring-1 ring-[#fbeaf0] transition-all hover:bg-[#ffe5ec] active:scale-[0.98]"
                     >
                         <SkipForward className="size-4" />
                         Bỏ qua
