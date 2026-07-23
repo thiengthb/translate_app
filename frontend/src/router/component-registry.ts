@@ -17,6 +17,9 @@ import DesignerProfilePage from "@/pages/profile/DesignerProfilePage";
 
 import UsersPage from "@/pages/management/rbac/user/UsersPage";
 import LeaderboardPage from "@/pages/leaderboard/LeaderboardPage";
+import DailyCheckinPage from "@/pages/engagement/DailyCheckinPage";
+import WeeklyStreakPage from "@/pages/engagement/WeeklyStreakPage";
+import LevelPage from "@/pages/engagement/LevelPage";
 import PublicProfilePage from "@/pages/publicProfile/PublicProfilePage";
 import AnalyzePage from "@/pages/analyze/AnalyzePage";
 import ProductionPage from "@/pages/production/ProductionPage";
@@ -171,6 +174,13 @@ export const routes: RouteConfig[] = [
   { path: "/notifications", component: NotificationsPage },
   { path: "/audit-logs", component: AuditLogPage, requiredPermission: "AUDIT_READ" },
   { path: "/leaderboard", component: LeaderboardPage, isModuleDriven: true },
+  // ── Engagement (dashboard mission cards) ──
+  // Reached from the "Hằng ngày" / "Tuần này" / "Cấp độ" mission cards on the
+  // Sakura dashboard. Guest-accessible so the cards resolve in-shell for any
+  // role; personal data simply reads empty for guests.
+  { path: "/daily-checkin", component: DailyCheckinPage, guestAccessible: true },
+  { path: "/weekly-streak", component: WeeklyStreakPage, guestAccessible: true },
+  { path: "/level", component: LevelPage, guestAccessible: true },
   // /users overrides the buildEntityRoutes AutoCrudPage default — wraps
   // it in a tabbed page that also exposes User Analytics. Static (not
   // module-driven) so App.tsx routes via staticRoutePaths short-circuit

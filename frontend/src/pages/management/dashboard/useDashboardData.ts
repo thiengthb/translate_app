@@ -170,7 +170,7 @@ export function useDashboardData(): SakuraDashboardProps {
                 accent: "mint",
                 done: checkedIn ? 1 : 0,
                 total: 1,
-                to: "/leaderboard",
+                to: "/daily-checkin",
             },
             {
                 id: "weekly-consistency",
@@ -183,7 +183,7 @@ export function useDashboardData(): SakuraDashboardProps {
                 accent: "sakura",
                 done: activeThisWeek,
                 total: 7,
-                to: hasPermission("ANKI_SRS_PROGRESS_READ") ? "/stats" : undefined,
+                to: "/weekly-streak",
             },
             isAdmin && adminStats
                 ? {
@@ -210,7 +210,7 @@ export function useDashboardData(): SakuraDashboardProps {
                       accent: "honey",
                       done: exp,
                       total: Math.max(levelTotal, 1),
-                      to: "/leaderboard",
+                      to: "/level",
                   },
         ];
 

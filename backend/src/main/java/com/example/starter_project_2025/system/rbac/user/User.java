@@ -65,7 +65,7 @@ public class User extends BaseEntity {
     @Column(length = 20)
     String phone;
 
-    @Column(length = 500)
+    @Column(length = 5)
     String bio;
 
     @Column(length = 512)
